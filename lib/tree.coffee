@@ -20,6 +20,6 @@ module.exports =
 
   createView: ->
     unless @treeView?
-      TreeView = require 'tree-view/lib/tree-view'
+      TreeView = require './tree-view'
       @treeView = new TreeView(@state)
     @treeView
