@@ -27,15 +27,16 @@ class DirectoryView extends View
     else
       iconClass = 'directory-icon'
 
-    if git?
+    repo = project.getRepo()
+    if repo?
       path = @directory.getPath()
       if parent
-        if git.isSubmodule(path)
+        if repo.isSubmodule(path)
           iconClass = 'submodule-icon'
         else
-          @subscribe git, 'status-changed', (path, status) =>
+          @subscribe repo, 'status-changed', (path, status) =>
             @updateStatus() if path.indexOf("#{@getPath()}/") is 0
-          @subscribe git, 'statuses-changed', =>
+          @subscribe repo, 'statuses-changed', =>
             @updateStatus()
           @updateStatus()
       else
@@ -46,13 +47,14 @@ class DirectoryView extends View
   updateStatus: ->
     @removeClass('ignored modified new')
     path = @directory.getPath()
-    if git.isPathIgnored(path)
+    repo = project.getRepo()
+    if repo.isPathIgnored(path)
       @addClass('ignored')
     else
-      status = git.getDirectoryStatus(path)
-      if git.isStatusModified(status)
+      status = repo.getDirectoryStatus(path)
+      if repo.isStatusModified(status)
         @addClass('modified')
-      else if git.isStatusNew(status)
+      else if repo.isStatusNew(status)
         @addClass('new')
 
   getPath: ->
@@ -60,12 +62,13 @@ class DirectoryView extends View
 
   isRepositoryRoot: ->
     try
-      git? and git.getWorkingDirectory() is fs.realpathSync(@getPath())
+      repo = project.getRepo()
+      repo? and repo.getWorkingDirectory() is fs.realpathSync(@getPath())
     catch e
       false
 
   isPathIgnored: (path) ->
-    config.get("core.hideGitIgnoredFiles") and git?.isPathIgnored(path)
+    config.get("core.hideGitIgnoredFiles") and project.getRepo()?.isPathIgnored(path)
 
   buildEntries: ->
     @unwatchDescendantEntries()
