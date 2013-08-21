@@ -7,9 +7,9 @@ fs = require 'fs'
 module.exports =
 class DirectoryView extends View
   @content: ({directory, isExpanded} = {}) ->
-    @li class: 'directory entry', =>
+    @li class: 'directory entry list-group-nested-item', =>
       @span class: 'highlight'
-      @div outlet: 'header', class: 'header', =>
+      @div outlet: 'header', class: 'header list-group-item', =>
         @span class: 'disclosure-arrow', outlet: 'disclosureArrow'
         @span directory.getBaseName(), class: 'name', outlet: 'directoryName'
 
@@ -45,17 +45,17 @@ class DirectoryView extends View
     @directoryName.addClass(iconClass)
 
   updateStatus: ->
-    @removeClass('ignored modified new')
+    @removeClass('subtle warning modified ignored modified new')
     path = @directory.getPath()
     repo = project.getRepo()
     if repo.isPathIgnored(path)
-      @addClass('ignored')
+      @addClass('subtle ignored')
     else
       status = repo.getDirectoryStatus(path)
       if repo.isStatusModified(status)
-        @addClass('modified')
+        @addClass('warning modified')
       else if repo.isStatusNew(status)
-        @addClass('new')
+        @addClass('info new')
 
   getPath: ->
     @directory.path

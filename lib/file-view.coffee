@@ -7,7 +7,7 @@ module.exports =
 class FileView extends View
 
   @content: ({file} = {}) ->
-    @li class: 'file entry', =>
+    @li class: 'file entry list-group-item', =>
       @span class: 'highlight'
       @span file.getBaseName(), class: 'name', outlet: 'fileName'
 
@@ -41,19 +41,19 @@ class FileView extends View
     @updateStatus()
 
   updateStatus: ->
-    @removeClass('ignored modified new')
+    @removeClass('subtle warning modified ignored modified new')
     repo = project.getRepo()
     return unless repo?
 
     filePath = @getPath()
     if repo.isPathIgnored(filePath)
-      @addClass('ignored')
+      @addClass('subtle ignored')
     else
       status = repo.statuses[filePath]
       if repo.isStatusModified(status)
-        @addClass('modified')
+        @addClass('warning modified')
       else if repo.isStatusNew(status)
-        @addClass('new')
+        @addClass('info new')
 
   getPath: ->
     @file.path
