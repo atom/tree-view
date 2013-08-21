@@ -41,7 +41,7 @@ class FileView extends View
     @updateStatus()
 
   updateStatus: ->
-    @removeClass('subtle warning modified ignored modified new')
+    @removeClass('subtle warning info ignored modified new')
     repo = project.getRepo()
     return unless repo?
 
