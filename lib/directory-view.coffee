@@ -45,7 +45,7 @@ class DirectoryView extends View
     @directoryName.addClass(iconClass)
 
   updateStatus: ->
-    @removeClass('subtle warning modified ignored modified new')
+    @removeClass('subtle warning info ignored modified new')
     path = @directory.getPath()
     repo = project.getRepo()
     if repo.isPathIgnored(path)
