@@ -45,7 +45,9 @@
       z-index: 1;
     }
 
+    &.selected, &.selected > .header.list-item { background-color: transparent; }
     &.selected > .highlight {
+      background-color: @tool-panel-background-highlight-color;
       position: absolute;
       left: 0;
       right: 0;
