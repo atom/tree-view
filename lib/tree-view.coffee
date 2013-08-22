@@ -15,7 +15,7 @@ class TreeView extends ScrollView
   @content: (rootView) ->
     @div class: 'tree-view-resizer', =>
       @div class: 'tree-view-scroller', outlet: 'scroller', =>
-        @ol class: 'list-unstyled tree-view tool-panel panel-left list-group', tabindex: -1, outlet: 'list'
+        @ol class: 'tree-view tool-panel panel-left list-tree has-collapsable-children', tabindex: -1, outlet: 'list'
       @div class: 'tree-view-resize-handle', outlet: 'resizeHandle'
 
   root: null

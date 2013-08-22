@@ -7,7 +7,7 @@ module.exports =
 class FileView extends View
 
   @content: ({file} = {}) ->
-    @li class: 'file entry list-group-item', =>
+    @li class: 'file entry list-item', =>
       @span class: 'highlight'
       @span file.getBaseName(), class: 'name', outlet: 'fileName'
 
