@@ -23,16 +23,16 @@ class DirectoryView extends View
     @disclosureArrow.on 'click', => @toggleExpansion()
 
     if @directory.symlink
-      iconClass = 'symlink-icon'
+      iconClass = 'icon-file-symlink-file'
     else
-      iconClass = 'directory-icon'
+      iconClass = 'icon-file-directory'
 
     repo = project.getRepo()
     if repo?
       path = @directory.getPath()
       if parent
         if repo.isSubmodule(path)
-          iconClass = 'submodule-icon'
+          iconClass = 'icon-file-submodule'
         else
           @subscribe repo, 'status-changed', (path, status) =>
             @updateStatus() if path.indexOf("#{@getPath()}/") is 0
@@ -40,7 +40,7 @@ class DirectoryView extends View
             @updateStatus()
           @updateStatus()
       else
-        iconClass = 'repository-icon' if @isRepositoryRoot()
+        iconClass = 'icon-repo' if @isRepositoryRoot()
 
     @directoryName.addClass(iconClass)
 

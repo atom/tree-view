@@ -15,21 +15,21 @@ class FileView extends View
 
   initialize: ({@file, @project} = {}) ->
     if @file.symlink
-      @fileName.addClass('symlink-icon')
+      @fileName.addClass('icon-file-symlink-file')
     else
       extension = path.extname(@getPath())
       if fsUtils.isReadmePath(@getPath())
-        @fileName.addClass('readme-icon')
+        @fileName.addClass('icon-book')
       else if fsUtils.isCompressedExtension(extension)
-        @fileName.addClass('compressed-icon')
+        @fileName.addClass('icon-file-zip')
       else if fsUtils.isImageExtension(extension)
-        @fileName.addClass('image-icon')
+        @fileName.addClass('icon-file-media')
       else if fsUtils.isPdfExtension(extension)
-        @fileName.addClass('pdf-icon')
+        @fileName.addClass('icon-file-pdf')
       else if fsUtils.isBinaryExtension(extension)
-        @fileName.addClass('binary-icon')
+        @fileName.addClass('icon-file-binary')
       else
-        @fileName.addClass('text-icon')
+        @fileName.addClass('icon-file-text')
 
     repo = project.getRepo()
     if repo?
