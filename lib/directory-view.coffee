@@ -7,9 +7,9 @@ fs = require 'fs'
 module.exports =
 class DirectoryView extends View
   @content: ({directory, isExpanded} = {}) ->
-    @li class: 'directory entry list-group-nested-item', =>
+    @li class: 'directory entry list-nested-item collapsed', =>
       @span class: 'highlight'
-      @div outlet: 'header', class: 'header list-group-item', =>
+      @div outlet: 'header', class: 'header list-item', =>
         @span class: 'disclosure-arrow', outlet: 'disclosureArrow'
         @span directory.getBaseName(), class: 'name', outlet: 'directoryName'
 
@@ -73,7 +73,7 @@ class DirectoryView extends View
   buildEntries: ->
     @unwatchDescendantEntries()
     @entries?.remove()
-    @entries = $$ -> @ol class: 'entries list-unstyled'
+    @entries = $$ -> @ol class: 'entries list-tree'
     for entry in @directory.getEntries()
       continue if @isPathIgnored(entry.path)
       if entry instanceof Directory
@@ -87,7 +87,7 @@ class DirectoryView extends View
 
   expand: ->
     return if @isExpanded
-    @addClass('expanded')
+    @addClass('expanded').removeClass('collapsed')
     @buildEntries()
     @watchEntries()
     @deserializeEntryExpansionStates(@entryStates) if @entryStates?
@@ -96,7 +96,7 @@ class DirectoryView extends View
 
   collapse: ->
     @entryStates = @serializeEntryExpansionStates()
-    @removeClass('expanded')
+    @removeClass('expanded').addClass('collapsed')
     @unwatchEntries()
     @entries.remove()
     @entries = null
