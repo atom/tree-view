@@ -8,7 +8,6 @@ module.exports =
 class DirectoryView extends View
   @content: ({directory, isExpanded} = {}) ->
     @li class: 'directory entry list-nested-item collapsed', =>
-      @span class: 'highlight'
       @div outlet: 'header', class: 'header list-item', =>
         @span class: 'disclosure-arrow', outlet: 'disclosureArrow'
         @span directory.getBaseName(), class: 'name icon', outlet: 'directoryName'
@@ -20,6 +19,7 @@ class DirectoryView extends View
 
   initialize: ({@directory, isExpanded, @project, parent} = {}) ->
     @expand() if isExpanded
+    # TODO: figure out how to remove this with no disclosure arrow
     @disclosureArrow.on 'click', => @toggleExpansion()
 
     if @directory.symlink
