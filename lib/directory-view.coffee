@@ -11,7 +11,7 @@ class DirectoryView extends View
       @span class: 'highlight'
       @div outlet: 'header', class: 'header list-item', =>
         @span class: 'disclosure-arrow', outlet: 'disclosureArrow'
-        @span directory.getBaseName(), class: 'name', outlet: 'directoryName'
+        @span directory.getBaseName(), class: 'name icon', outlet: 'directoryName'
 
   directory: null
   entries: null
