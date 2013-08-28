@@ -40,19 +40,19 @@ class FileView extends View
     @updateStatus()
 
   updateStatus: ->
-    @removeClass('subtle warning info ignored modified new')
+    @removeClass('status-ignored status-modified status-added')
     repo = project.getRepo()
     return unless repo?
 
     filePath = @getPath()
     if repo.isPathIgnored(filePath)
-      @addClass('subtle ignored')
+      @addClass('status-ignored')
     else
       status = repo.statuses[filePath]
       if repo.isStatusModified(status)
-        @addClass('warning modified')
+        @addClass('status-modified')
       else if repo.isStatusNew(status)
-        @addClass('info new')
+        @addClass('status-added')
 
   getPath: ->
     @file.path
