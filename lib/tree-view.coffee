@@ -43,7 +43,7 @@ class TreeView extends ScrollView
       else
         @selectActiveFile()
 
-    rootView.on 'pane:active-item-changed.tree-view pane:became-active.tree-view', => @selectActiveFile()
+    rootView.on 'pane-container:active-pane-item-changed.tree-view', => @selectActiveFile()
     project.on 'path-changed.tree-view', => @updateRoot()
     @observeConfig 'core.hideGitIgnoredFiles', => @updateRoot()
 
