@@ -957,20 +957,20 @@ describe "TreeView", ->
     describe "when a file is modified", ->
       it "adds a custom style", ->
         treeView.root.entries.find('.directory:contains(dir1)').view().expand()
-        expect(treeView.find('.file:contains(file1)')).toHaveClass 'modified'
+        expect(treeView.find('.file:contains(file1)')).toHaveClass 'status-modified'
 
     describe "when a directory if modified", ->
       it "adds a custom style", ->
-        expect(treeView.find('.directory:contains(dir1)')).toHaveClass 'modified'
+        expect(treeView.find('.directory:contains(dir1)')).toHaveClass 'status-modified'
 
     describe "when a file is new", ->
       it "adds a custom style", ->
-        expect(treeView.find('.file:contains(.gitignore)')).toHaveClass 'new'
+        expect(treeView.find('.file:contains(.gitignore)')).toHaveClass 'status-added'
 
     describe "when a directory is new", ->
       it "adds a custom style", ->
-        expect(treeView.find('.directory:contains(dir2)')).toHaveClass 'new'
+        expect(treeView.find('.directory:contains(dir2)')).toHaveClass 'status-added'
 
     describe "when a file is ignored", ->
       it "adds a custom style", ->
-        expect(treeView.find('.file:contains(tree-view.js)')).toHaveClass 'ignored'
+        expect(treeView.find('.file:contains(tree-view.js)')).toHaveClass 'status-ignored'
