@@ -102,6 +102,7 @@ class TreeView extends ScrollView
       when 1
         @selectEntry(entry)
         @openSelectedEntry(false) if entry instanceof FileView
+        entry.toggleExpansion() if entry instanceof DirectoryView
       when 2
         if entry.is('.selected.file')
           rootView.getActiveView().focus()
