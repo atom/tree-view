@@ -7,13 +7,13 @@ $ = require 'jquery'
 module.exports =
 class Dialog extends View
   @content: ({prompt} = {}) ->
-    @div class: 'tree-view-dialog', =>
-      @div outlet: 'prompt', class: 'prompt', =>
-        @span prompt, outlet: 'promptText'
-      @subview 'miniEditor', new Editor(mini: true)
+    @div class: 'tree-view-dialog tool-panel panel-bottom', =>
+      @div class: 'block', =>
+        @label prompt, class: 'icon', outlet: 'promptText'
+        @subview 'miniEditor', new Editor(mini: true)
 
   initialize: ({initialPath, @onConfirm, select, iconClass} = {}) ->
-    @prompt.addClass(iconClass) if iconClass
+    @promptText.addClass(iconClass) if iconClass
     @miniEditor.focus()
     @on 'core:confirm', => @onConfirm(@miniEditor.getText())
     @on 'core:cancel', => @cancel()

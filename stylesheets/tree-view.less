@@ -33,18 +33,12 @@
   padding: 0 @component-icon-padding;
 }
 
-.tree-view-dialog {
-  padding: 5px;
+.tree-view-dialog.tool-panel {
+  padding: @component-padding;
+  opacity: 1;
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
   z-index: 99;
-
-  .prompt {
-    padding-bottom: 3px;
-    font-size: 12px;
-    line-height: 16px;
-    &:before { margin-right: @component-icon-padding; }
-  }
 }
