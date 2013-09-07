@@ -7,7 +7,7 @@ fs = require 'fs'
 module.exports =
 class DirectoryView extends View
   @content: ({directory, isExpanded} = {}) ->
-    @li class: 'directory entry list-nested-item collapsed', =>
+    @li class: "directory entry list-nested-item #{if isExpanded then '' else 'collapsed'}", =>
       @div outlet: 'header', class: 'header list-item', =>
         @span directory.getBaseName(), class: 'name icon', outlet: 'directoryName'
 
