@@ -7,11 +7,9 @@ fs = require 'fs'
 module.exports =
 class DirectoryView extends View
   @content: ({directory, isExpanded} = {}) ->
-    @li class: 'directory entry', =>
-      @span class: 'highlight'
-      @div outlet: 'header', class: 'header', =>
-        @span class: 'disclosure-arrow', outlet: 'disclosureArrow'
-        @span directory.getBaseName(), class: 'name', outlet: 'directoryName'
+    @li class: "directory entry list-nested-item #{if isExpanded then '' else 'collapsed'}", =>
+      @div outlet: 'header', class: 'header list-item', =>
+        @span directory.getBaseName(), class: 'name icon', outlet: 'directoryName'
 
   directory: null
   entries: null
@@ -20,19 +18,18 @@ class DirectoryView extends View
 
   initialize: ({@directory, isExpanded, @project, parent} = {}) ->
     @expand() if isExpanded
-    @disclosureArrow.on 'click', => @toggleExpansion()
 
     if @directory.symlink
-      iconClass = 'symlink-icon'
+      iconClass = 'icon-file-symlink-file'
     else
-      iconClass = 'directory-icon'
+      iconClass = 'icon-file-directory'
 
     repo = project.getRepo()
     if repo?
       path = @directory.getPath()
       if parent
         if repo.isSubmodule(path)
-          iconClass = 'submodule-icon'
+          iconClass = 'icon-file-submodule'
         else
           @subscribe repo, 'status-changed', (path, status) =>
             @updateStatus() if path.indexOf("#{@getPath()}/") is 0
@@ -40,22 +37,22 @@ class DirectoryView extends View
             @updateStatus()
           @updateStatus()
       else
-        iconClass = 'repository-icon' if @isRepositoryRoot()
+        iconClass = 'icon-repo' if @isRepositoryRoot()
 
     @directoryName.addClass(iconClass)
 
   updateStatus: ->
-    @removeClass('ignored modified new')
+    @removeClass('status-ignored status-modified status-added')
     path = @directory.getPath()
     repo = project.getRepo()
     if repo.isPathIgnored(path)
-      @addClass('ignored')
+      @addClass('status-ignored')
     else
       status = repo.getDirectoryStatus(path)
       if repo.isStatusModified(status)
-        @addClass('modified')
+        @addClass('status-modified')
       else if repo.isStatusNew(status)
-        @addClass('new')
+        @addClass('status-added')
 
   getPath: ->
     @directory.path
@@ -73,7 +70,7 @@ class DirectoryView extends View
   buildEntries: ->
     @unwatchDescendantEntries()
     @entries?.remove()
-    @entries = $$ -> @ol class: 'entries list-unstyled'
+    @entries = $$ -> @ol class: 'entries list-tree'
     for entry in @directory.getEntries()
       continue if @isPathIgnored(entry.path)
       if entry instanceof Directory
@@ -87,7 +84,7 @@ class DirectoryView extends View
 
   expand: ->
     return if @isExpanded
-    @addClass('expanded')
+    @addClass('expanded').removeClass('collapsed')
     @buildEntries()
     @watchEntries()
     @deserializeEntryExpansionStates(@entryStates) if @entryStates?
@@ -96,7 +93,7 @@ class DirectoryView extends View
 
   collapse: ->
     @entryStates = @serializeEntryExpansionStates()
-    @removeClass('expanded')
+    @removeClass('expanded').addClass('collapsed')
     @unwatchEntries()
     @entries.remove()
     @entries = null

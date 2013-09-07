@@ -15,7 +15,7 @@ class TreeView extends ScrollView
   @content: (rootView) ->
     @div class: 'tree-view-resizer', =>
       @div class: 'tree-view-scroller', outlet: 'scroller', =>
-        @ol class: 'list-unstyled tree-view tool-panel', tabindex: -1, outlet: 'list'
+        @ol class: 'tree-view tool-panel panel-left list-tree has-collapsable-children', tabindex: -1, outlet: 'list'
       @div class: 'tree-view-resize-handle', outlet: 'resizeHandle'
 
   root: null
@@ -102,6 +102,7 @@ class TreeView extends ScrollView
       when 1
         @selectEntry(entry)
         @openSelectedEntry(false) if entry instanceof FileView
+        entry.toggleExpansion() if entry instanceof DirectoryView
       when 2
         if entry.is('.selected.file')
           rootView.getActiveView().focus()
@@ -173,7 +174,9 @@ class TreeView extends ScrollView
     selectedEntry = @selectedEntry()
     if selectedEntry
       if selectedEntry.is('.expanded.directory')
-        return if @selectEntry(selectedEntry.find('.entry:first'))
+        if @selectEntry(selectedEntry.find('.entry:first'))
+          @scrollToEntry(@selectedEntry())
+          return
       until @selectEntry(selectedEntry.next('.entry'))
         selectedEntry = selectedEntry.parents('.entry:first')
         break unless selectedEntry.length
@@ -225,7 +228,7 @@ class TreeView extends ScrollView
       prompt: prompt
       initialPath: project.relativize(oldPath)
       select: true
-      iconClass: 'move'
+      iconClass: 'icon-arrow-right'
       onConfirm: (newPath) =>
         newPath = project.resolve(newPath)
         if oldPath is newPath
@@ -270,7 +273,7 @@ class TreeView extends ScrollView
       prompt: "Enter the path for the new file/directory. Directories end with a '/'."
       initialPath: relativeDirectoryPath
       select: false
-      iconClass: 'add-directory'
+      iconClass: 'icon-file-directory-create'
 
       onConfirm: (relativePath) =>
         endsWithDirectorySeparator = /\/$/.test(relativePath)
@@ -293,9 +296,9 @@ class TreeView extends ScrollView
 
     dialog.miniEditor.getBuffer().on 'changed', =>
       if /\/$/.test(dialog.miniEditor.getText())
-        dialog.prompt.removeClass('add-file').addClass('add-directory')
+        dialog.promptText.removeClass('icon-file-add').addClass('icon-file-directory-create')
       else
-        dialog.prompt.removeClass('add-directory').addClass('add-file')
+        dialog.promptText.removeClass('icon-file-directory-create').addClass('icon-file-add')
 
     rootView.append(dialog)
 

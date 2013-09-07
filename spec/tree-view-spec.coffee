@@ -88,7 +88,7 @@ describe "TreeView", ->
 
   describe "serialization", ->
     it "restores expanded directories and selected file when deserialized", ->
-      treeView.find('.directory:contains(dir1)').click()
+      treeView.root.find('.directory:contains(dir1)').view().click()
       sampleJs.click()
 
       atom.deactivatePackage("tree-view")
@@ -211,25 +211,25 @@ describe "TreeView", ->
       expect(subdir).not.toHaveClass('expanded')
       expect(subdir.find('.entries')).not.toExist()
 
-      subdir.disclosureArrow.click()
+      subdir.click()
 
       expect(subdir).toHaveClass('expanded')
       expect(subdir.find('.entries')).toExist()
 
-      subdir.disclosureArrow.click()
+      subdir.click()
       expect(subdir).not.toHaveClass('expanded')
       expect(subdir.find('.entries')).not.toExist()
 
     it "restores the expansion state of descendant directories", ->
       child = treeView.root.find('.entries > li:contains(dir1)').view()
-      child.disclosureArrow.click()
+      child.click()
 
       grandchild = child.find('.entries > li:contains(sub-dir1)').view()
-      grandchild.disclosureArrow.click()
+      grandchild.click()
 
-      treeView.root.disclosureArrow.click()
+      treeView.root.click()
       expect(treeView.root.find('.entries')).not.toExist()
-      treeView.root.disclosureArrow.click()
+      treeView.root.click()
 
       # previously expanded descendants remain expanded
       expect(treeView.root.find('> .entries > li:contains(dir1) > .entries > li:contains(sub-dir1) > .entries').length).toBe 1
@@ -239,16 +239,16 @@ describe "TreeView", ->
 
     it "when collapsing a directory, removes change subscriptions from the collapsed directory and its descendants", ->
       child = treeView.root.entries.find('li:contains(dir1)').view()
-      child.disclosureArrow.click()
+      child.click()
 
       grandchild = child.entries.find('li:contains(sub-dir1)').view()
-      grandchild.disclosureArrow.click()
+      grandchild.click()
 
       expect(treeView.root.directory.subscriptionCount()).toBe 1
       expect(child.directory.subscriptionCount()).toBe 1
       expect(grandchild.directory.subscriptionCount()).toBe 1
 
-      treeView.root.disclosureArrow.click()
+      treeView.root.click()
 
       expect(treeView.root.directory.subscriptionCount()).toBe 0
       expect(child.directory.subscriptionCount()).toBe 0
@@ -291,8 +291,10 @@ describe "TreeView", ->
       subdir = treeView.root.find('.directory:first').view()
       subdir.trigger clickEvent(originalEvent: { detail: 1 })
       expect(subdir).toHaveClass 'selected'
-      subdir.trigger clickEvent(originalEvent: { detail: 2 })
       expect(subdir).toHaveClass 'expanded'
+      subdir.trigger clickEvent(originalEvent: { detail: 2 })
+      expect(subdir).toHaveClass 'selected'
+      expect(subdir).not.toHaveClass 'expanded'
       expect(rootView.getActiveView().isFocused).toBeFalsy()
 
   describe "when the active item changes on the active pane", ->
@@ -340,7 +342,6 @@ describe "TreeView", ->
       describe "when an expanded directory is selected", ->
         it "selects the first entry of the directory", ->
           subdir = treeView.root.find('.directory:eq(1)').view()
-          subdir.expand()
           subdir.click()
 
           treeView.trigger 'core:move-down'
@@ -366,6 +367,7 @@ describe "TreeView", ->
           nested.expand()
           nested2 = nested.entries.find('.entry:last').view()
           nested2.click()
+          nested2.collapse()
 
         describe "when the directory is collapsed", ->
           it "selects the entry after its grandparent directory", ->
@@ -512,8 +514,9 @@ describe "TreeView", ->
     describe "tree-view:expand-directory", ->
       describe "when a directory entry is selected", ->
         it "expands the current directory", ->
-          subdir = treeView.root.find('.directory:first')
+          subdir = treeView.root.find('.directory:first').view()
           subdir.click()
+          subdir.collapse()
 
           expect(subdir).not.toHaveClass 'expanded'
           treeView.trigger 'tree-view:expand-directory'
@@ -533,9 +536,9 @@ describe "TreeView", ->
 
       describe "when an expanded directory is selected", ->
         it "collapses the selected directory", ->
+          subdir.click().expand()
           expect(subdir).toHaveClass 'expanded'
 
-          subdir.click()
           treeView.trigger 'tree-view:collapse-directory'
 
           expect(subdir).not.toHaveClass 'expanded'
@@ -543,7 +546,7 @@ describe "TreeView", ->
 
       describe "when a collapsed directory is selected", ->
         it "collapses and selects the selected directory's parent directory", ->
-          subdir.find('.directory').click()
+          subdir.find('.directory').view().click().collapse()
           treeView.trigger 'tree-view:collapse-directory'
 
           expect(subdir).not.toHaveClass 'expanded'
@@ -576,8 +579,8 @@ describe "TreeView", ->
 
       describe "when a directory is selected", ->
         it "expands or collapses the directory", ->
-          subdir = treeView.root.find('.directory').first()
-          subdir.click()
+          subdir = treeView.root.find('.directory').first().view()
+          subdir.click().collapse()
 
           expect(subdir).not.toHaveClass 'expanded'
           treeView.root.trigger 'tree-view:open-selected-entry'
@@ -628,7 +631,7 @@ describe "TreeView", ->
       describe "when a file is selected", ->
         it "opens an add dialog with the file's current directory path populated", ->
           expect(addDialog).toExist()
-          expect(addDialog.prompt.text()).toBeTruthy()
+          expect(addDialog.promptText.text()).toBeTruthy()
           expect(project.relativize(dirPath)).toMatch(/[^\/]$/)
           expect(addDialog.miniEditor.getText()).toBe(project.relativize(dirPath) + "/")
           expect(addDialog.miniEditor.getCursorBufferPosition().column).toBe addDialog.miniEditor.getText().length
@@ -667,8 +670,8 @@ describe "TreeView", ->
               addDialog.miniEditor.insertText(path.basename(newPath))
               addDialog.trigger 'core:confirm'
 
-              expect(addDialog.prompt.text()).toContain 'Error'
-              expect(addDialog.prompt.text()).toContain 'already exists'
+              expect(addDialog.promptText.text()).toContain 'Error'
+              expect(addDialog.promptText.text()).toContain 'already exists'
               expect(addDialog).toHaveClass('error')
               expect(addDialog.hasParent()).toBeTruthy()
 
@@ -707,8 +710,8 @@ describe "TreeView", ->
               addDialog.miniEditor.insertText("new-dir/")
               addDialog.trigger 'core:confirm'
 
-              expect(addDialog.prompt.text()).toContain 'Error'
-              expect(addDialog.prompt.text()).toContain 'already exists'
+              expect(addDialog.promptText.text()).toContain 'Error'
+              expect(addDialog.promptText.text()).toContain 'already exists'
               expect(addDialog).toHaveClass('error')
               expect(addDialog.hasParent()).toBeTruthy()
 
@@ -734,7 +737,7 @@ describe "TreeView", ->
           addDialog = rootView.find(".tree-view-dialog").view()
 
           expect(addDialog).toExist()
-          expect(addDialog.prompt.text()).toBeTruthy()
+          expect(addDialog.promptText.text()).toBeTruthy()
           expect(project.relativize(dirPath)).toMatch(/[^\/]$/)
           expect(addDialog.miniEditor.getText()).toBe(project.relativize(dirPath) + "/")
           expect(addDialog.miniEditor.getCursorBufferPosition().column).toBe addDialog.miniEditor.getText().length
@@ -776,7 +779,7 @@ describe "TreeView", ->
           extension = path.extname(filePath)
           fileNameWithoutExtension = path.basename(filePath, extension)
           expect(moveDialog).toExist()
-          expect(moveDialog.prompt.text()).toBe "Enter the new path for the file."
+          expect(moveDialog.promptText.text()).toBe "Enter the new path for the file."
           expect(moveDialog.miniEditor.getText()).toBe(project.relativize(filePath))
           expect(moveDialog.miniEditor.getSelectedText()).toBe path.basename(fileNameWithoutExtension)
           expect(moveDialog.miniEditor.isFocused).toBeTruthy()
@@ -824,8 +827,8 @@ describe "TreeView", ->
 
                 moveDialog.trigger 'core:confirm'
 
-                expect(moveDialog.prompt.text()).toContain 'Error'
-                expect(moveDialog.prompt.text()).toContain 'already exists'
+                expect(moveDialog.promptText.text()).toContain 'Error'
+                expect(moveDialog.promptText.text()).toContain 'already exists'
                 expect(moveDialog).toHaveClass('error')
                 expect(moveDialog.hasParent()).toBeTruthy()
 
@@ -957,20 +960,20 @@ describe "TreeView", ->
     describe "when a file is modified", ->
       it "adds a custom style", ->
         treeView.root.entries.find('.directory:contains(dir1)').view().expand()
-        expect(treeView.find('.file:contains(file1)')).toHaveClass 'modified'
+        expect(treeView.find('.file:contains(file1)')).toHaveClass 'status-modified'
 
     describe "when a directory if modified", ->
       it "adds a custom style", ->
-        expect(treeView.find('.directory:contains(dir1)')).toHaveClass 'modified'
+        expect(treeView.find('.directory:contains(dir1)')).toHaveClass 'status-modified'
 
     describe "when a file is new", ->
       it "adds a custom style", ->
-        expect(treeView.find('.file:contains(.gitignore)')).toHaveClass 'new'
+        expect(treeView.find('.file:contains(.gitignore)')).toHaveClass 'status-added'
 
     describe "when a directory is new", ->
       it "adds a custom style", ->
-        expect(treeView.find('.directory:contains(dir2)')).toHaveClass 'new'
+        expect(treeView.find('.directory:contains(dir2)')).toHaveClass 'status-added'
 
     describe "when a file is ignored", ->
       it "adds a custom style", ->
-        expect(treeView.find('.file:contains(tree-view.js)')).toHaveClass 'ignored'
+        expect(treeView.find('.file:contains(tree-view.js)')).toHaveClass 'status-ignored'

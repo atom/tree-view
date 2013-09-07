@@ -7,29 +7,28 @@ module.exports =
 class FileView extends View
 
   @content: ({file} = {}) ->
-    @li class: 'file entry', =>
-      @span class: 'highlight'
-      @span file.getBaseName(), class: 'name', outlet: 'fileName'
+    @li class: 'file entry list-item', =>
+      @span file.getBaseName(), class: 'name icon', outlet: 'fileName'
 
   file: null
 
   initialize: ({@file, @project} = {}) ->
     if @file.symlink
-      @fileName.addClass('symlink-icon')
+      @fileName.addClass('icon-file-symlink-file')
     else
       extension = path.extname(@getPath())
       if fsUtils.isReadmePath(@getPath())
-        @fileName.addClass('readme-icon')
+        @fileName.addClass('icon-book')
       else if fsUtils.isCompressedExtension(extension)
-        @fileName.addClass('compressed-icon')
+        @fileName.addClass('icon-file-zip')
       else if fsUtils.isImageExtension(extension)
-        @fileName.addClass('image-icon')
+        @fileName.addClass('icon-file-media')
       else if fsUtils.isPdfExtension(extension)
-        @fileName.addClass('pdf-icon')
+        @fileName.addClass('icon-file-pdf')
       else if fsUtils.isBinaryExtension(extension)
-        @fileName.addClass('binary-icon')
+        @fileName.addClass('icon-file-binary')
       else
-        @fileName.addClass('text-icon')
+        @fileName.addClass('icon-file-text')
 
     repo = project.getRepo()
     if repo?
@@ -41,19 +40,19 @@ class FileView extends View
     @updateStatus()
 
   updateStatus: ->
-    @removeClass('ignored modified new')
+    @removeClass('status-ignored status-modified status-added')
     repo = project.getRepo()
     return unless repo?
 
     filePath = @getPath()
     if repo.isPathIgnored(filePath)
-      @addClass('ignored')
+      @addClass('status-ignored')
     else
       status = repo.statuses[filePath]
       if repo.isStatusModified(status)
-        @addClass('modified')
+        @addClass('status-modified')
       else if repo.isStatusNew(status)
-        @addClass('new')
+        @addClass('status-added')
 
   getPath: ->
     @file.path
