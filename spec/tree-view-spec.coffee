@@ -631,7 +631,7 @@ describe "TreeView", ->
       describe "when a file is selected", ->
         it "opens an add dialog with the file's current directory path populated", ->
           expect(addDialog).toExist()
-          expect(addDialog.prompt.text()).toBeTruthy()
+          expect(addDialog.promptText.text()).toBeTruthy()
           expect(project.relativize(dirPath)).toMatch(/[^\/]$/)
           expect(addDialog.miniEditor.getText()).toBe(project.relativize(dirPath) + "/")
           expect(addDialog.miniEditor.getCursorBufferPosition().column).toBe addDialog.miniEditor.getText().length
@@ -670,8 +670,8 @@ describe "TreeView", ->
               addDialog.miniEditor.insertText(path.basename(newPath))
               addDialog.trigger 'core:confirm'
 
-              expect(addDialog.prompt.text()).toContain 'Error'
-              expect(addDialog.prompt.text()).toContain 'already exists'
+              expect(addDialog.promptText.text()).toContain 'Error'
+              expect(addDialog.promptText.text()).toContain 'already exists'
               expect(addDialog).toHaveClass('error')
               expect(addDialog.hasParent()).toBeTruthy()
 
@@ -710,8 +710,8 @@ describe "TreeView", ->
               addDialog.miniEditor.insertText("new-dir/")
               addDialog.trigger 'core:confirm'
 
-              expect(addDialog.prompt.text()).toContain 'Error'
-              expect(addDialog.prompt.text()).toContain 'already exists'
+              expect(addDialog.promptText.text()).toContain 'Error'
+              expect(addDialog.promptText.text()).toContain 'already exists'
               expect(addDialog).toHaveClass('error')
               expect(addDialog.hasParent()).toBeTruthy()
 
@@ -737,7 +737,7 @@ describe "TreeView", ->
           addDialog = rootView.find(".tree-view-dialog").view()
 
           expect(addDialog).toExist()
-          expect(addDialog.prompt.text()).toBeTruthy()
+          expect(addDialog.promptText.text()).toBeTruthy()
           expect(project.relativize(dirPath)).toMatch(/[^\/]$/)
           expect(addDialog.miniEditor.getText()).toBe(project.relativize(dirPath) + "/")
           expect(addDialog.miniEditor.getCursorBufferPosition().column).toBe addDialog.miniEditor.getText().length
@@ -779,7 +779,7 @@ describe "TreeView", ->
           extension = path.extname(filePath)
           fileNameWithoutExtension = path.basename(filePath, extension)
           expect(moveDialog).toExist()
-          expect(moveDialog.prompt.text()).toBe "Enter the new path for the file."
+          expect(moveDialog.promptText.text()).toBe "Enter the new path for the file."
           expect(moveDialog.miniEditor.getText()).toBe(project.relativize(filePath))
           expect(moveDialog.miniEditor.getSelectedText()).toBe path.basename(fileNameWithoutExtension)
           expect(moveDialog.miniEditor.isFocused).toBeTruthy()
@@ -827,8 +827,8 @@ describe "TreeView", ->
 
                 moveDialog.trigger 'core:confirm'
 
-                expect(moveDialog.prompt.text()).toContain 'Error'
-                expect(moveDialog.prompt.text()).toContain 'already exists'
+                expect(moveDialog.promptText.text()).toContain 'Error'
+                expect(moveDialog.promptText.text()).toContain 'already exists'
                 expect(moveDialog).toHaveClass('error')
                 expect(moveDialog.hasParent()).toBeTruthy()
 
