@@ -174,7 +174,9 @@ class TreeView extends ScrollView
     selectedEntry = @selectedEntry()
     if selectedEntry
       if selectedEntry.is('.expanded.directory')
-        return if @selectEntry(selectedEntry.find('.entry:first'))
+        if @selectEntry(selectedEntry.find('.entry:first'))
+          @scrollToEntry(@selectedEntry())
+          return
       until @selectEntry(selectedEntry.next('.entry'))
         selectedEntry = selectedEntry.parents('.entry:first')
         break unless selectedEntry.length
@@ -294,9 +296,9 @@ class TreeView extends ScrollView
 
     dialog.miniEditor.getBuffer().on 'changed', =>
       if /\/$/.test(dialog.miniEditor.getText())
-        dialog.prompt.removeClass('icon-file-add').addClass('icon-file-directory-create')
+        dialog.promptText.removeClass('icon-file-add').addClass('icon-file-directory-create')
       else
-        dialog.prompt.removeClass('icon-file-directory-create').addClass('icon-file-add')
+        dialog.promptText.removeClass('icon-file-directory-create').addClass('icon-file-add')
 
     rootView.append(dialog)
 
