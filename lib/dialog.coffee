@@ -1,8 +1,5 @@
-{View} = require 'space-pen'
-Editor = require 'editor'
-fsUtils = require 'fs-utils'
+{$, Editor, View} = require 'atom-api'
 path = require 'path'
-$ = require 'jquery'
 
 module.exports =
 class Dialog extends View

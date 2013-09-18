@@ -1,8 +1,5 @@
-{View, $$} = require 'space-pen'
+{$, $$, fs, View} = require 'atom-api'
 FileView = require './file-view'
-Directory = require 'directory'
-$ = require 'jquery'
-fs = require 'fs'
 
 module.exports =
 class DirectoryView extends View
