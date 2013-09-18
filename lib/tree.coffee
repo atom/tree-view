@@ -7,7 +7,7 @@ module.exports =
     @createView() if @state.attached
     rootView.command 'tree-view:toggle', => @createView().toggle()
     rootView.command 'tree-view:reveal-active-file', => @createView().revealActiveFile()
-    atom.contextMenuMap.add '.tree-view', 'Add file', 'tree-view:add'
+    atom.contextMenu.add '.tree-view', { label: 'Add file', command: 'tree-view:add' }
 
   deactivate: ->
     @treeView?.deactivate()
