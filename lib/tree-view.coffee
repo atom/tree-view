@@ -1,4 +1,4 @@
-{_, $, $$, fs, ScrollView, View} = require 'atom-api'
+{_, $, $$, fs, ScrollView, View} = require 'atom'
 DirectoryView = require './directory-view'
 FileView = require './file-view'
 Dialog = require './dialog'

@@ -1,4 +1,4 @@
-{$, Editor, View} = require 'atom-api'
+{$, Editor, View} = require 'atom'
 path = require 'path'
 
 module.exports =

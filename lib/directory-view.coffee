@@ -1,4 +1,4 @@
-{$, $$, Directory, fs, View} = require 'atom-api'
+{$, $$, Directory, fs, View} = require 'atom'
 FileView = require './file-view'
 
 module.exports =
