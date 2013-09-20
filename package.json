@@ -1,6 +1,6 @@
 {
   "name": "tree-view",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "main": "./lib/tree",
   "description": "Display, add, move, and delete the files and folders in the current project.",
   "repository": {

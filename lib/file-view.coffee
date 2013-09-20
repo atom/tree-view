@@ -1,6 +1,4 @@
-{View} = require 'space-pen'
-$ = require 'jquery'
-fsUtils = require 'fs-utils'
+{$, fs, View} = require 'atom'
 path = require 'path'
 
 module.exports =
@@ -17,15 +15,15 @@ class FileView extends View
       @fileName.addClass('icon-file-symlink-file')
     else
       extension = path.extname(@getPath())
-      if fsUtils.isReadmePath(@getPath())
+      if fs.isReadmePath(@getPath())
         @fileName.addClass('icon-book')
-      else if fsUtils.isCompressedExtension(extension)
+      else if fs.isCompressedExtension(extension)
         @fileName.addClass('icon-file-zip')
-      else if fsUtils.isImageExtension(extension)
+      else if fs.isImageExtension(extension)
         @fileName.addClass('icon-file-media')
-      else if fsUtils.isPdfExtension(extension)
+      else if fs.isPdfExtension(extension)
         @fileName.addClass('icon-file-pdf')
-      else if fsUtils.isBinaryExtension(extension)
+      else if fs.isBinaryExtension(extension)
         @fileName.addClass('icon-file-binary')
       else
         @fileName.addClass('icon-file-text')
