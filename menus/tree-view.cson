@@ -1,3 +1,5 @@
 'context-menu':
   '.tree-view':
-    'Add file': 'tree-view:add'
+    'Add File': 'tree-view:add'
+    'Rename': 'tree-view:move'
+    'Delete': 'tree-view:remove'
