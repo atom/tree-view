@@ -249,6 +249,17 @@ describe "TreeView", ->
       expect(child.directory.subscriptionCount()).toBe 0
       expect(grandchild.directory.subscriptionCount()).toBe 0
 
+  describe "when mouse down fires on a file or directory", ->
+    it "selects then entry", ->
+      dir = treeView.root.entries.find('li:contains(dir1)').view()
+      expect(dir).not.toHaveClass 'selected'
+      dir.mousedown()
+      expect(dir).toHaveClass 'selected'
+
+      expect(sampleJs).not.toHaveClass 'selected'
+      sampleJs.mousedown()
+      expect(sampleJs).toHaveClass 'selected'
+
   describe "when a file is single-clicked", ->
     it "selects the files and opens it in the active editor, without changing focus", ->
       expect(rootView.getActiveView()).toBeUndefined()

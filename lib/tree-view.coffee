@@ -21,6 +21,10 @@ class TreeView extends ScrollView
   initialize: (state) ->
     super
     @on 'click', '.entry', (e) => @entryClicked(e)
+    @on 'mousedown', '.entry', (e) =>
+      e.stopPropagation()
+      @selectEntry($(e.currentTarget).view())
+
     @on 'mousedown', '.tree-view-resize-handle', (e) => @resizeStarted(e)
     @command 'core:move-up', => @moveUp()
     @command 'core:move-down', => @moveDown()
