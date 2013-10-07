@@ -1,10 +1,10 @@
-menu: [
+'menu': [
   {
-    label: 'View'
-    submenu: [
+    'label': 'View'
+    'submenu': [
       {
-        label: 'Toggle Treeview'
-        command: 'tree-view:toggle'
+        'label': 'Toggle Treeview'
+        'command': 'tree-view:toggle'
       }
     ]
   }
