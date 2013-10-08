@@ -1,6 +1,9 @@
 path = require 'path'
 
 module.exports =
+  configDefaults:
+    hideVcsIgnoredFiles: false
+
   treeView: null
 
   activate: (@state) ->
