@@ -15,5 +15,8 @@
   },
   "publishConfig": {
     "registry": "https://atom.cloudant.com/registry/_design/app/_rewrite"
+  },
+  "dependencies": {
+    "temp": "~0.6.0"
   }
 }

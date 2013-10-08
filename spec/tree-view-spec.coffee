@@ -1,6 +1,7 @@
 {_, $, $$, fs, RootView} = require 'atom'
 TreeView = require '../lib/tree-view'
 path = require 'path'
+temp = require 'temp'
 
 describe "TreeView", ->
   [treeView, sampleJs, sampleTxt] = []
@@ -80,6 +81,16 @@ describe "TreeView", ->
         treeView = atom.activatePackage("tree-view").mainModule.createView()
         expect(treeView.hasParent()).toBeTruthy()
         expect(treeView.root).toExist()
+
+    describe "when the project is a .git folder", ->
+      it "does not create the tree view", ->
+        dotGit = path.join(temp.mkdirSync('repo'), '.git')
+        fs.makeTree(dotGit)
+        project.setPath(dotGit)
+        atom.deactivatePackage("tree-view")
+        atom.packageStates = {}
+        {treeView} = atom.activatePackage("tree-view").mainModule
+        expect(treeView).toBeFalsy()
 
   describe "serialization", ->
     it "restores expanded directories and selected file when deserialized", ->

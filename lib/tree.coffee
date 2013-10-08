@@ -1,8 +1,10 @@
+path = require 'path'
+
 module.exports =
   treeView: null
 
   activate: (@state) ->
-    @state.attached ?= true unless rootView.getActivePaneItem()
+    @state.attached ?= true if @shouldAttach()
 
     @createView() if @state.attached
     rootView.command 'tree-view:toggle', => @createView().toggle()
@@ -23,3 +25,14 @@ module.exports =
       TreeView = require './tree-view'
       @treeView = new TreeView(@state)
     @treeView
+
+  shouldAttach: ->
+    if rootView.getActivePaneItem()
+      false
+    else if path.basename(project.getPath()) is '.git'
+      # Only attach when the project path matches the path to open signifying
+      # the .git folder was opened explicitly and not by using Atom as the Git
+      # editor.
+      project.getPath() is atom.getLoadSettings().pathToOpen
+    else
+      true
