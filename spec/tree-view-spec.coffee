@@ -954,7 +954,7 @@ describe "TreeView", ->
 
         expect(treeView.find('.file:contains(ignored.txt)').length).toBe 1
 
-    describe "when the project's path is the repository's working directory", ->
+    describe "when the project's path is a subfolder of the repository's working directory", ->
       [ignoreFile] = []
 
       beforeEach ->
