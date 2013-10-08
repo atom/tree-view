@@ -926,27 +926,47 @@ describe "TreeView", ->
         waitsFor "directory view contens to refresh", ->
           treeView.root.entries.find('.entry').length == entriesCountBefore
 
-  describe "tree-view.hideVcsIgnoredFiles", ->
-    [ignoreFile] = []
+  describe "the hideVcsIgnoredFiles config option", ->
+    describe "when the project's path is the repository's working directory", ->
+      [dotGit, ignoredFile, projectPath] = []
 
-    beforeEach ->
-      ignoreFile = path.join(project.getPath(), '.gitignore')
-      fs.writeSync(ignoreFile, 'tree-view.js')
-      config.set "tree-view.hideVcsIgnoredFiles", false
+      beforeEach ->
+        projectPath = path.resolve(project.getPath(), '..', 'git', 'working-dir')
+        dotGit = path.join(projectPath, '.git')
+        fs.move(path.join(projectPath, 'git.git'), dotGit)
+        ignoredFile = path.join(projectPath, 'ignored.txt')
+        fs.writeSync(ignoredFile, 'ignored text')
+        project.setPath(projectPath)
+        config.set "tree-view.hideVcsIgnoredFiles", false
 
-    afterEach ->
-      fs.remove(ignoreFile) if fs.exists(ignoreFile)
+      afterEach ->
+        fs.move(dotGit, path.join(projectPath, 'git.git'))
+        fs.remove(ignoredFile)
 
-    it "hides git-ignored files if the option is set, but otherwise shows them", ->
-      expect(treeView.find('.file:contains(tree-view.js)').length).toBe 1
+      it "hides git-ignored files if the option is set, but otherwise shows them", ->
+        expect(treeView.find('.file:contains(ignored.txt)').length).toBe 1
 
-      config.set("tree-view.hideVcsIgnoredFiles", true)
+        config.set("tree-view.hideVcsIgnoredFiles", true)
 
-      expect(treeView.find('.file:contains(tree-view.js)').length).toBe 0
+        expect(treeView.find('.file:contains(ignored.txt)').length).toBe 0
 
-      config.set("tree-view.hideVcsIgnoredFiles", false)
+        config.set("tree-view.hideVcsIgnoredFiles", false)
 
-      expect(treeView.find('.file:contains(tree-view.js)').length).toBe 1
+        expect(treeView.find('.file:contains(ignored.txt)').length).toBe 1
+
+    describe "when the project's path is the repository's working directory", ->
+      [ignoreFile] = []
+
+      beforeEach ->
+        ignoreFile = path.join(project.getPath(), '.gitignore')
+        fs.writeSync(ignoreFile, 'tree-view.js')
+        config.set("tree-view.hideVcsIgnoredFiles", true)
+
+      afterEach ->
+        fs.remove(ignoreFile)
+
+      it "does not hide git ignored files", ->
+        expect(treeView.find('.file:contains(tree-view.js)').length).toBe 1
 
   describe "Git status decorations", ->
     [ignoreFile, newFile, modifiedFile, originalFileContent] = []
