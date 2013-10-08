@@ -1,3 +1,15 @@
+'menu': [
+  {
+    'label': 'View'
+    'submenu': [
+      {
+        'label': 'Toggle Treeview'
+        'command': 'tree-view:toggle'
+      }
+    ]
+  }
+]
+
 'context-menu':
   '.tree-view':
     'Add File': 'tree-view:add'
