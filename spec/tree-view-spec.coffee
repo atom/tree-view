@@ -928,12 +928,14 @@ describe "TreeView", ->
 
   describe "the hideVcsIgnoredFiles config option", ->
     describe "when the project's path is the repository's working directory", ->
-      [dotGit, ignoredFile, projectPath] = []
+      [dotGit, ignoreFile, ignoredFile, projectPath] = []
 
       beforeEach ->
         projectPath = path.resolve(project.getPath(), '..', 'git', 'working-dir')
         dotGit = path.join(projectPath, '.git')
         fs.move(path.join(projectPath, 'git.git'), dotGit)
+        ignoreFile = path.join(projectPath, '.gitignore')
+        fs.writeSync(ignoreFile, 'ignored.txt')
         ignoredFile = path.join(projectPath, 'ignored.txt')
         fs.writeSync(ignoredFile, 'ignored text')
         project.setPath(projectPath)
@@ -941,6 +943,7 @@ describe "TreeView", ->
 
       afterEach ->
         fs.move(dotGit, path.join(projectPath, 'git.git'))
+        fs.remove(ignoreFile)
         fs.remove(ignoredFile)
 
       it "hides git-ignored files if the option is set, but otherwise shows them", ->
@@ -967,7 +970,7 @@ describe "TreeView", ->
         expect(treeView.find('.file:contains(tree-view.js)').length).toBe 1
 
   describe "Git status decorations", ->
-    [ignoredFile, newDir, newFile, modifiedFile, originalFileContent, projectPath] = []
+    [ignoreFile, ignoredFile, newDir, newFile, modifiedFile, originalFileContent, projectPath] = []
 
     beforeEach ->
       config.set "core.hideGitIgnoredFiles", false
@@ -980,6 +983,8 @@ describe "TreeView", ->
       fs.writeSync(newFile, '')
       project.getRepo().getPathStatus(newFile)
 
+      ignoreFile = path.join(project.getPath(), '.gitignore')
+      fs.writeSync(ignoreFile, 'ignored.txt')
       ignoredFile = path.join(project.getPath(), 'ignored.txt')
       fs.writeSync(ignoredFile, '')
 
@@ -992,8 +997,9 @@ describe "TreeView", ->
       treeView.root.entries.find('.directory:contains(dir)').view().expand()
 
     afterEach ->
-      fs.remove(ignoredFile) if fs.exists(ignoredFile)
-      fs.remove(newDir) if fs.exists(newDir)
+      fs.remove(ignoreFile)
+      fs.remove(ignoredFile)
+      fs.remove(newDir)
       fs.writeSync modifiedFile, originalFileContent
       fs.move(path.join(projectPath, '.git'), path.join(projectPath, 'git.git'))
 
