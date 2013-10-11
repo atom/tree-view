@@ -947,11 +947,9 @@ describe "TreeView", ->
         expect(treeView.find('.file:contains(ignored.txt)').length).toBe 1
 
         config.set("tree-view.hideVcsIgnoredFiles", true)
-
         expect(treeView.find('.file:contains(ignored.txt)').length).toBe 0
 
         config.set("tree-view.hideVcsIgnoredFiles", false)
-
         expect(treeView.find('.file:contains(ignored.txt)').length).toBe 1
 
     describe "when the project's path is a subfolder of the repository's working directory", ->
@@ -969,43 +967,49 @@ describe "TreeView", ->
         expect(treeView.find('.file:contains(tree-view.js)').length).toBe 1
 
   describe "Git status decorations", ->
-    [ignoreFile, newFile, modifiedFile, originalFileContent] = []
+    [ignoredFile, newDir, newFile, modifiedFile, originalFileContent, projectPath] = []
 
     beforeEach ->
       config.set "core.hideGitIgnoredFiles", false
-      ignoreFile = path.join(project.getPath(), '.gitignore')
-      fs.writeSync(ignoreFile, 'tree-view.js')
-      project.getRepo().getPathStatus(ignoreFile)
+      projectPath = project.resolve('../git/working-dir')
+      fs.move(path.join(projectPath, 'git.git'), path.join(projectPath, '.git'))
+      project.setPath(projectPath)
 
-      newFile = path.join(project.resolve('dir2'), 'new2')
+      newDir = path.join(project.getPath(), 'dir2')
+      newFile = path.join(newDir, 'new2')
       fs.writeSync(newFile, '')
       project.getRepo().getPathStatus(newFile)
 
-      modifiedFile = path.join(project.resolve('dir1'), 'file1')
+      ignoredFile = path.join(project.getPath(), 'ignored.txt')
+      fs.writeSync(ignoredFile, '')
+
+      modifiedFile = path.join(project.resolve('dir'), 'b.txt')
       originalFileContent = fs.read(modifiedFile)
       fs.writeSync modifiedFile, 'ch ch changes'
       project.getRepo().getPathStatus(modifiedFile)
 
       treeView.updateRoot()
-      treeView.root.entries.find('.directory:contains(dir2)').view().expand()
+      treeView.root.entries.find('.directory:contains(dir)').view().expand()
 
     afterEach ->
-      fs.remove(ignoreFile) if fs.exists(ignoreFile)
-      fs.remove(newFile) if fs.exists(newFile)
+      fs.remove(ignoredFile) if fs.exists(ignoredFile)
+      fs.remove(newDir) if fs.exists(newDir)
       fs.writeSync modifiedFile, originalFileContent
+      fs.move(path.join(projectPath, '.git'), path.join(projectPath, 'git.git'))
 
     describe "when a file is modified", ->
       it "adds a custom style", ->
-        treeView.root.entries.find('.directory:contains(dir1)').view().expand()
-        expect(treeView.find('.file:contains(file1)')).toHaveClass 'status-modified'
+        treeView.root.entries.find('.directory:contains(dir)').view().expand()
+        expect(treeView.find('.file:contains(b.txt)')).toHaveClass 'status-modified'
 
     describe "when a directory if modified", ->
       it "adds a custom style", ->
-        expect(treeView.find('.directory:contains(dir1)')).toHaveClass 'status-modified'
+        expect(treeView.find('.directory:contains(dir)')).toHaveClass 'status-modified'
 
     describe "when a file is new", ->
       it "adds a custom style", ->
-        expect(treeView.find('.file:contains(.gitignore)')).toHaveClass 'status-added'
+        treeView.root.entries.find('.directory:contains(dir2)').view().expand()
+        expect(treeView.find('.file:contains(new2)')).toHaveClass 'status-added'
 
     describe "when a directory is new", ->
       it "adds a custom style", ->
@@ -1013,4 +1017,4 @@ describe "TreeView", ->
 
     describe "when a file is ignored", ->
       it "adds a custom style", ->
-        expect(treeView.find('.file:contains(tree-view.js)')).toHaveClass 'status-ignored'
+        expect(treeView.find('.file:contains(ignored.txt)')).toHaveClass 'status-ignored'
