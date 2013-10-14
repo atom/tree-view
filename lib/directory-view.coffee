@@ -17,7 +17,7 @@ class DirectoryView extends View
     @expand() if isExpanded
 
     if @directory.symlink
-      iconClass = 'icon-file-symlink-file'
+      iconClass = 'icon-file-symlink-directory'
     else
       iconClass = 'icon-file-directory'
 
