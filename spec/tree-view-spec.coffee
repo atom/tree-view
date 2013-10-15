@@ -3,6 +3,15 @@ TreeView = require '../lib/tree-view'
 path = require 'path'
 temp = require 'temp'
 
+waitsForFileToOpen = (fn) ->
+  openHandler = jasmine.createSpy()
+  runs ->
+    rootView.one "uri-opened", openHandler
+    fn()
+
+  waitsFor ->
+    openHandler.callCount == 1
+
 describe "TreeView", ->
   [treeView, sampleJs, sampleTxt] = []
 
@@ -61,7 +70,7 @@ describe "TreeView", ->
 
       describe "when the project is assigned a path because a new buffer is saved", ->
         it "creates a root directory view but does not attach to the root view", ->
-          rootView.open()
+          rootView.openSync()
           rootView.getActivePaneItem().saveAs("/tmp/test.txt")
           expect(treeView.hasParent()).toBeFalsy()
           expect(treeView.root.getPath()).toBe '/tmp'
@@ -71,7 +80,7 @@ describe "TreeView", ->
       it "does not attach to the root view but does create a root node when initialized", ->
         atom.deactivatePackage("tree-view")
         atom.packageStates = {}
-        rootView.open('tree-view.js')
+        rootView.openSync('tree-view.js')
         treeView = atom.activatePackage("tree-view").mainModule.createView()
         expect(treeView.hasParent()).toBeFalsy()
         expect(treeView.root).toExist()
@@ -95,15 +104,18 @@ describe "TreeView", ->
   describe "serialization", ->
     it "restores expanded directories and selected file when deserialized", ->
       treeView.root.find('.directory:contains(dir1)').view().click()
-      sampleJs.click()
 
-      atom.deactivatePackage("tree-view")
-      atom.activatePackage("tree-view")
-      treeView = rootView.find(".tree-view").view()
+      waitsForFileToOpen ->
+        sampleJs.click()
 
-      expect(treeView).toExist()
-      expect(treeView.selectedEntry()).toMatchSelector(".file:contains(tree-view.js)")
-      expect(treeView.find(".directory:contains(dir1)")).toHaveClass("expanded")
+      runs ->
+        atom.deactivatePackage("tree-view")
+        atom.activatePackage("tree-view")
+        treeView = rootView.find(".tree-view").view()
+
+        expect(treeView).toExist()
+        expect(treeView.selectedEntry()).toMatchSelector(".file:contains(tree-view.js)")
+        expect(treeView.find(".directory:contains(dir1)")).toHaveClass("expanded")
 
     it "restores the focus state of the tree view", ->
       rootView.attachToDom()
@@ -145,7 +157,7 @@ describe "TreeView", ->
 
       describe "when the tree view is not focused", ->
         it "shifts focus to the tree view", ->
-          rootView.open() # When we call focus below, we want an editor to become focused
+          rootView.openSync() # When we call focus below, we want an editor to become focused
           rootView.focus()
           rootView.trigger 'tree-view:toggle'
           expect(treeView).toBeVisible()
@@ -165,7 +177,7 @@ describe "TreeView", ->
 
     describe "if the current file has a path", ->
       it "shows and focuses the tree view and selects the file", ->
-        rootView.open('dir1/file1')
+        rootView.openSync('dir1/file1')
         rootView.trigger 'tree-view:reveal-active-file'
         expect(treeView.hasParent()).toBeTruthy()
         expect(treeView.focus).toHaveBeenCalled()
@@ -173,7 +185,7 @@ describe "TreeView", ->
 
     describe "if the current file has no path", ->
       it "shows and focuses the tree view, but does not attempt to select a specific file", ->
-        rootView.open()
+        rootView.openSync()
         expect(rootView.getActivePaneItem().getPath()).toBeUndefined()
         rootView.trigger 'tree-view:reveal-active-file'
         expect(treeView.hasParent()).toBeTruthy()
@@ -188,7 +200,7 @@ describe "TreeView", ->
 
   describe "when tool-panel:unfocus is triggered on the tree view", ->
     it "surrenders focus to the root view but remains open", ->
-      rootView.open() # When we trigger 'tool-panel:unfocus' below, we want an editor to become focused
+      rootView.openSync() # When we trigger 'tool-panel:unfocus' below, we want an editor to become focused
       rootView.attachToDom()
       treeView.focus()
       expect(treeView.list).toMatchSelector(':focus')
@@ -275,26 +287,35 @@ describe "TreeView", ->
     it "selects the files and opens it in the active editor, without changing focus", ->
       expect(rootView.getActiveView()).toBeUndefined()
 
-      sampleJs.trigger clickEvent(originalEvent: { detail: 1 })
-      expect(sampleJs).toHaveClass 'selected'
-      expect(rootView.getActiveView().getPath()).toBe project.resolve('tree-view.js')
-      expect(rootView.getActiveView().isFocused).toBeFalsy()
+      waitsForFileToOpen ->
+        sampleJs.trigger clickEvent(originalEvent: { detail: 1 })
 
-      sampleTxt.trigger clickEvent(originalEvent: { detail: 1 })
-      expect(sampleTxt).toHaveClass 'selected'
-      expect(treeView.find('.selected').length).toBe 1
-      expect(rootView.getActiveView().getPath()).toBe project.resolve('tree-view.txt')
-      expect(rootView.getActiveView().isFocused).toBeFalsy()
+      runs ->
+        expect(sampleJs).toHaveClass 'selected'
+        expect(rootView.getActiveView().getPath()).toBe project.resolve('tree-view.js')
+        expect(rootView.getActiveView().isFocused).toBeFalsy()
+
+      waitsForFileToOpen ->
+        sampleTxt.trigger clickEvent(originalEvent: { detail: 1 })
+
+      runs ->
+        expect(sampleTxt).toHaveClass 'selected'
+        expect(treeView.find('.selected').length).toBe 1
+        expect(rootView.getActiveView().getPath()).toBe project.resolve('tree-view.txt')
+        expect(rootView.getActiveView().isFocused).toBeFalsy()
 
   describe "when a file is double-clicked", ->
     it "selects the file and opens it in the active editor on the first click, then changes focus to the active editor on the second", ->
-      sampleJs.trigger clickEvent(originalEvent: { detail: 1 })
-      expect(sampleJs).toHaveClass 'selected'
-      expect(rootView.getActiveView().getPath()).toBe project.resolve('tree-view.js')
-      expect(rootView.getActiveView().isFocused).toBeFalsy()
+      waitsForFileToOpen ->
+        sampleJs.trigger clickEvent(originalEvent: { detail: 1 })
 
-      sampleJs.trigger clickEvent(originalEvent: { detail: 2 })
-      expect(rootView.getActiveView().isFocused).toBeTruthy()
+      runs ->
+        expect(sampleJs).toHaveClass 'selected'
+        expect(rootView.getActiveView().getPath()).toBe project.resolve('tree-view.js')
+        expect(rootView.getActiveView().isFocused).toBeFalsy()
+
+        sampleJs.trigger clickEvent(originalEvent: { detail: 2 })
+        expect(rootView.getActiveView().isFocused).toBeTruthy()
 
   describe "when a directory is single-clicked", ->
     it "is selected", ->
@@ -304,46 +325,64 @@ describe "TreeView", ->
 
   describe "when a directory is double-clicked", ->
     it "toggles the directory expansion state and does not change the focus to the editor", ->
-      sampleJs.trigger clickEvent(originalEvent: { detail: 1 })
-      subdir = treeView.root.find('.directory:first').view()
-      subdir.trigger clickEvent(originalEvent: { detail: 1 })
-      expect(subdir).toHaveClass 'selected'
-      expect(subdir).toHaveClass 'expanded'
-      subdir.trigger clickEvent(originalEvent: { detail: 2 })
-      expect(subdir).toHaveClass 'selected'
-      expect(subdir).not.toHaveClass 'expanded'
-      expect(rootView.getActiveView().isFocused).toBeFalsy()
+      subdir = null
+      waitsForFileToOpen ->
+        sampleJs.trigger clickEvent(originalEvent: { detail: 1 })
+
+      runs ->
+        subdir = treeView.root.find('.directory:first').view()
+        subdir.trigger clickEvent(originalEvent: { detail: 1 })
+        expect(subdir).toHaveClass 'selected'
+        expect(subdir).toHaveClass 'expanded'
+        subdir.trigger clickEvent(originalEvent: { detail: 2 })
+        expect(subdir).toHaveClass 'selected'
+        expect(subdir).not.toHaveClass 'expanded'
+        expect(rootView.getActiveView().isFocused).toBeFalsy()
 
   describe "when the active item changes on the active pane", ->
     describe "when the item has a path", ->
       it "selects the entry with that path in the tree view if it is visible", ->
-        sampleJs.click()
-        rootView.open(project.resolve('tree-view.txt'))
+        waitsForFileToOpen ->
+          sampleJs.click()
 
-        expect(sampleTxt).toHaveClass 'selected'
-        expect(treeView.find('.selected').length).toBe 1
+        runs ->
+          rootView.openSync(project.resolve('tree-view.txt'))
+          expect(sampleTxt).toHaveClass 'selected'
+          expect(treeView.find('.selected').length).toBe 1
 
       it "selects the path's parent dir if its entry is not visible", ->
-        rootView.open('dir1/sub-dir1/sub-file1')
+        rootView.openSync('dir1/sub-dir1/sub-file1')
         dirView = treeView.root.find('.directory:contains(dir1)').view()
         expect(dirView).toHaveClass 'selected'
 
     describe "when the item has no path", ->
       it "deselects the previously selected entry", ->
-        sampleJs.click()
-        rootView.getActivePane().showItem($$ -> @div('hello'))
-        expect(rootView.find('.selected')).not.toExist()
+        waitsForFileToOpen ->
+          sampleJs.click()
+
+        runs ->
+          rootView.getActivePane().showItem($$ -> @div('hello'))
+          expect(rootView.find('.selected')).not.toExist()
 
   describe "when a different editor becomes active", ->
     it "selects the file in that is open in that editor", ->
-      sampleJs.click()
-      leftEditor = rootView.getActiveView()
-      rightEditor = leftEditor.splitRight()
-      sampleTxt.click()
+      leftEditor = null
+      rightEditor = null
 
-      expect(sampleTxt).toHaveClass('selected')
-      leftEditor.focus()
-      expect(sampleJs).toHaveClass('selected')
+      waitsForFileToOpen ->
+        sampleJs.click()
+
+      runs ->
+        leftEditor = rootView.getActiveView()
+        rightEditor = leftEditor.splitRight()
+
+      waitsForFileToOpen ->
+        sampleTxt.click()
+
+      runs ->
+        expect(sampleTxt).toHaveClass('selected')
+        leftEditor.focus()
+        expect(sampleJs).toHaveClass('selected')
 
   describe "keyboard navigation", ->
     afterEach ->
@@ -353,6 +392,7 @@ describe "TreeView", ->
       describe "when a collapsed directory is selected", ->
         it "skips to the next directory", ->
           treeView.root.find('.directory:eq(0)').click()
+
           treeView.trigger 'core:move-down'
           expect(treeView.root.find('.directory:eq(1)')).toHaveClass 'selected'
 
@@ -369,11 +409,12 @@ describe "TreeView", ->
         it "selects the entry after its parent directory", ->
           subdir1 = treeView.root.find('.directory:eq(1)').view()
           subdir1.expand()
-          subdir1.entries.find('.entry:last').click()
+          waitsForFileToOpen ->
+            subdir1.entries.find('.entry:last').click()
 
-          treeView.trigger 'core:move-down'
-
-          expect(treeView.root.find('.entries > .entry:eq(2)')).toHaveClass 'selected'
+          runs ->
+            treeView.trigger 'core:move-down'
+            expect(treeView.root.find('.entries > .entry:eq(2)')).toHaveClass 'selected'
 
       describe "when the last directory of another last directory is selected", ->
         [nested, nested2] = []
@@ -401,11 +442,12 @@ describe "TreeView", ->
       describe "when the last entry of the last directory is selected", ->
         it "does not change the selection", ->
           lastEntry = treeView.root.find('> .entries .entry:last')
-          lastEntry.click()
+          waitsForFileToOpen ->
+            lastEntry.click()
 
-          treeView.trigger 'core:move-down'
-
-          expect(lastEntry).toHaveClass 'selected'
+          runs ->
+            treeView.trigger 'core:move-down'
+            expect(lastEntry).toHaveClass 'selected'
 
     describe "core:move-up", ->
       describe "when there is an expanded directory before the currently selected entry", ->
@@ -413,19 +455,22 @@ describe "TreeView", ->
           lastDir = treeView.root.find('.directory:last').view()
           fileAfterDir = lastDir.next().view()
           lastDir.expand()
-          fileAfterDir.click()
+          waitsForFileToOpen ->
+            fileAfterDir.click()
 
-          treeView.trigger 'core:move-up'
-          expect(lastDir.find('.entry:last')).toHaveClass 'selected'
+          runs ->
+            treeView.trigger 'core:move-up'
+            expect(lastDir.find('.entry:last')).toHaveClass 'selected'
 
       describe "when there is an entry before the currently selected entry", ->
         it "selects the previous entry", ->
           lastEntry = treeView.root.find('.entry:last')
-          lastEntry.click()
+          waitsForFileToOpen ->
+            lastEntry.click()
 
-          treeView.trigger 'core:move-up'
-
-          expect(lastEntry.prev()).toHaveClass 'selected'
+          runs ->
+            treeView.trigger 'core:move-up'
+            expect(lastEntry.prev()).toHaveClass 'selected'
 
       describe "when there is no entry before the currently selected entry, but there is a parent directory", ->
         it "selects the parent directory", ->
@@ -541,8 +586,11 @@ describe "TreeView", ->
 
       describe "when a file entry is selected", ->
         it "does nothing", ->
-          treeView.root.find('.file').click()
-          treeView.trigger 'tree-view:expand-directory'
+          waitsForFileToOpen ->
+            treeView.root.find('.file').click()
+
+          runs ->
+            treeView.trigger 'tree-view:expand-directory'
 
     describe "tree-view:collapse-directory", ->
       subdir = null
@@ -579,20 +627,27 @@ describe "TreeView", ->
 
       describe "when a file is selected", ->
         it "collapses and selects the selected file's parent directory", ->
-          subdir.find('.file').click()
-          treeView.trigger 'tree-view:collapse-directory'
+          waitsForFileToOpen ->
+            subdir.find('.file').click()
 
-          expect(subdir).not.toHaveClass 'expanded'
-          expect(subdir).toHaveClass 'selected'
-          expect(treeView.root).toHaveClass 'expanded'
+          runs ->
+            treeView.trigger 'tree-view:collapse-directory'
+            expect(subdir).not.toHaveClass 'expanded'
+            expect(subdir).toHaveClass 'selected'
+            expect(treeView.root).toHaveClass 'expanded'
 
     describe "tree-view:open-selected-entry", ->
       describe "when a file is selected", ->
         it "opens the file in the editor and focuses it", ->
-          treeView.root.find('.file:contains(tree-view.js)').click()
-          treeView.root.trigger 'tree-view:open-selected-entry'
-          expect(rootView.getActiveView().getPath()).toBe project.resolve('tree-view.js')
-          expect(rootView.getActiveView().isFocused).toBeTruthy()
+          waitsForFileToOpen ->
+            treeView.root.find('.file:contains(tree-view.js)').click()
+
+          waitsForFileToOpen ->
+            treeView.root.trigger 'tree-view:open-selected-entry'
+
+          runs ->
+            expect(rootView.getActiveView().getPath()).toBe project.resolve('tree-view.js')
+            expect(rootView.getActiveView().isFocused).toBeTruthy()
 
       describe "when a directory is selected", ->
         it "expands or collapses the directory", ->
@@ -641,9 +696,12 @@ describe "TreeView", ->
       addDialog = null
 
       beforeEach ->
-        fileView.click()
-        treeView.trigger "tree-view:add"
-        addDialog = rootView.find(".tree-view-dialog").view()
+        waitsForFileToOpen ->
+          fileView.click()
+
+        runs ->
+          treeView.trigger "tree-view:add"
+          addDialog = rootView.find(".tree-view-dialog").view()
 
       describe "when a file is selected", ->
         it "opens an add dialog with the file's current directory path populated", ->
@@ -668,11 +726,15 @@ describe "TreeView", ->
             it "add a file, closes the dialog and selects the file in the tree-view", ->
               newPath = path.join(dirPath, "new-test-file.txt")
               addDialog.miniEditor.insertText(path.basename(newPath))
-              addDialog.trigger 'core:confirm'
-              expect(fs.exists(newPath)).toBeTruthy()
-              expect(fs.isFileSync(newPath)).toBeTruthy()
-              expect(addDialog.parent()).not.toExist()
-              expect(rootView.getActiveView().getPath()).toBe newPath
+
+              waitsForFileToOpen ->
+                addDialog.trigger 'core:confirm'
+
+              runs ->
+                expect(fs.exists(newPath)).toBeTruthy()
+                expect(fs.isFileSync(newPath)).toBeTruthy()
+                expect(addDialog.parent()).not.toExist()
+                expect(rootView.getActiveView().getPath()).toBe newPath
 
               waitsFor "tree view to be updated", ->
                 dirView.entries.find("> .file").length > 1
@@ -785,9 +847,12 @@ describe "TreeView", ->
         moveDialog = null
 
         beforeEach ->
-          fileView.click()
-          treeView.trigger "tree-view:move"
-          moveDialog = rootView.find(".tree-view-dialog").view()
+          waitsForFileToOpen ->
+            fileView.click()
+
+          runs ->
+            treeView.trigger "tree-view:move"
+            moveDialog = rootView.find(".tree-view-dialog").view()
 
         afterEach ->
           waits 50 # The move specs cause too many false positives because of their async nature, so wait a little bit before we cleanup
@@ -872,9 +937,13 @@ describe "TreeView", ->
           dirView.collapse()
           dirView.expand()
           dotFileView = treeView.find('.file:contains(.dotfile)').view()
-          dotFileView.click()
-          treeView.trigger "tree-view:move"
-          moveDialog = rootView.find(".tree-view-dialog").view()
+
+          waitsForFileToOpen ->
+            dotFileView.click()
+
+          runs ->
+            treeView.trigger "tree-view:move"
+            moveDialog = rootView.find(".tree-view-dialog").view()
 
         it "selects the entire file name", ->
           expect(moveDialog).toExist()
@@ -889,10 +958,12 @@ describe "TreeView", ->
 
     describe "tree-view:remove", ->
       it "shows the native alert dialog", ->
-        fileView.click()
         spyOn(atom, 'confirm')
-        treeView.trigger 'tree-view:remove'
-        expect(atom.confirm).toHaveBeenCalled()
+        waitsForFileToOpen ->
+          fileView.click()
+        runs ->
+          treeView.trigger 'tree-view:remove'
+          expect(atom.confirm).toHaveBeenCalled()
 
   describe "file system events", ->
     temporaryFilePath = null
