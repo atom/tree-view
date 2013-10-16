@@ -420,7 +420,7 @@ describe "TreeView", ->
 
           runs ->
             treeView.trigger 'core:move-down'
-            expect(treeView.root.find('.entries > .entry:eq(2)')).toHaveClass 'selected'
+            expect(treeView.root.find('.directory:eq(2)')).toHaveClass 'selected'
 
       describe "when the last directory of another last directory is selected", ->
         [nested, nested2] = []
