@@ -26,7 +26,7 @@ describe "TreeView", ->
     sampleJs = treeView.find('.file:contains(tree-view.js)')
     sampleTxt = treeView.find('.file:contains(tree-view.txt)')
 
-    expect(treeView.root.directory.subscriptionCount()).toBeGreaterThan 0
+    expect(treeView.root.directory.getSubscriptionCount()).toBeGreaterThan 0
 
   describe ".initialize(project)", ->
     it "renders the root of the project and its contents alphabetically with subdirectories first in a collapsed state", ->
@@ -262,15 +262,15 @@ describe "TreeView", ->
       grandchild = child.entries.find('li:contains(sub-dir1)').view()
       grandchild.click()
 
-      expect(treeView.root.directory.subscriptionCount()).toBe 1
-      expect(child.directory.subscriptionCount()).toBe 1
-      expect(grandchild.directory.subscriptionCount()).toBe 1
+      expect(treeView.root.directory.getSubscriptionCount('contents-changed')).toBe 1
+      expect(child.directory.getSubscriptionCount('contents-changed')).toBe 1
+      expect(grandchild.directory.getSubscriptionCount('contents-changed')).toBe 1
 
       treeView.root.click()
 
-      expect(treeView.root.directory.subscriptionCount()).toBe 0
-      expect(child.directory.subscriptionCount()).toBe 0
-      expect(grandchild.directory.subscriptionCount()).toBe 0
+      expect(treeView.root.directory.getSubscriptionCount('contents-changed')).toBe 0
+      expect(child.directory.getSubscriptionCount('contents-changed')).toBe 0
+      expect(grandchild.directory.getSubscriptionCount('contents-changed')).toBe 0
 
   describe "when mouse down fires on a file or directory", ->
     it "selects then entry", ->
