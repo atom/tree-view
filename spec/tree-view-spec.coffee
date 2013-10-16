@@ -305,6 +305,9 @@ describe "TreeView", ->
         expect(rootView.getActiveView().isFocused).toBeFalsy()
 
   describe "when a file is double-clicked", ->
+    beforeEach ->
+      rootView.attachToDom()
+
     it "selects the file and opens it in the active editor on the first click, then changes focus to the active editor on the second", ->
       waitsForFileToOpen ->
         sampleJs.trigger clickEvent(originalEvent: { detail: 1 })
@@ -365,6 +368,9 @@ describe "TreeView", ->
           expect(rootView.find('.selected')).not.toExist()
 
   describe "when a different editor becomes active", ->
+    beforeEach ->
+      rootView.attachToDom()
+
     it "selects the file in that is open in that editor", ->
       leftEditor = null
       rightEditor = null
@@ -638,6 +644,9 @@ describe "TreeView", ->
 
     describe "tree-view:open-selected-entry", ->
       describe "when a file is selected", ->
+        beforeEach ->
+          rootView.attachToDom()
+
         it "opens the file in the editor and focuses it", ->
           waitsForFileToOpen ->
             treeView.root.find('.file:contains(tree-view.js)').click()
@@ -696,6 +705,8 @@ describe "TreeView", ->
       addDialog = null
 
       beforeEach ->
+        rootView.attachToDom()
+
         waitsForFileToOpen ->
           fileView.click()
 
@@ -847,6 +858,8 @@ describe "TreeView", ->
         moveDialog = null
 
         beforeEach ->
+          rootView.attachToDom()
+
           waitsForFileToOpen ->
             fileView.click()
 
