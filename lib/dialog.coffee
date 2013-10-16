@@ -11,10 +11,9 @@ class Dialog extends View
 
   initialize: ({initialPath, @onConfirm, select, iconClass} = {}) ->
     @promptText.addClass(iconClass) if iconClass
-    @miniEditor.focus()
     @on 'core:confirm', => @onConfirm(@miniEditor.getText())
     @on 'core:cancel', => @cancel()
-    @miniEditor.on 'focusout', => @remove()
+    @miniEditor.hiddenInput.on 'focusout', => @remove()
 
     @miniEditor.setText(initialPath)
 
@@ -27,6 +26,10 @@ class Dialog extends View
         selectionEnd = initialPath.length - extension.length
       range = [[0, initialPath.length - baseName.length], [0, selectionEnd]]
       @miniEditor.setSelectedBufferRange(range)
+
+  attach: ->
+    rootView.append(this)
+    @miniEditor.focus()
 
   close: ->
     @remove()

@@ -246,7 +246,7 @@ class TreeView extends ScrollView
         catch e
           dialog.showError("Error: #{e.message} Try a different path.")
 
-    rootView.append(dialog)
+    dialog.attach()
 
   removeSelectedEntry: ->
     entry = @selectedEntry()
@@ -299,7 +299,7 @@ class TreeView extends ScrollView
       else
         dialog.promptText.removeClass('icon-file-directory-create').addClass('icon-file-add')
 
-    rootView.append(dialog)
+    dialog.attach()
 
   selectedEntry: ->
     @list.find('.selected')?.view()
