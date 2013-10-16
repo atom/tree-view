@@ -253,7 +253,7 @@ describe "TreeView", ->
       expect(treeView.root.find('> .entries > li:contains(dir1) > .entries > li:contains(sub-dir1) > .entries').length).toBe 1
 
       # collapsed descendants remain collapsed
-      expect(treeView.root.find('> .entries > li.contains(dir2) > .entries')).not.toExist()
+      expect(treeView.root.find('> .entries > li:contains(dir2) > .entries')).not.toExist()
 
     it "when collapsing a directory, removes change subscriptions from the collapsed directory and its descendants", ->
       child = treeView.root.entries.find('li:contains(dir1)').view()
