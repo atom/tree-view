@@ -2,10 +2,18 @@
   {
     'label': 'View'
     'submenu': [
-      {
-        'label': 'Toggle Treeview'
-        'command': 'tree-view:toggle'
-      }
+      'label': 'Toggle Treeview'
+      'command': 'tree-view:toggle'
+    ]
+  }
+  {
+    'label': 'Packages'
+    'submenu': [
+      'label': 'Tree View'
+      'submenu': [
+        { 'label': 'Toggle', 'command': 'tree-view:toggle' }
+        { 'label': 'Reveal Active File', 'command': 'tree-view:reveal-active-file' }
+      ]
     ]
   }
 ]
