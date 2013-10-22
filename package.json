@@ -13,9 +13,7 @@
   "engines": {
     "atom": "*"
   },
-  "publishConfig": {
-    "registry": "https://atom.cloudant.com/registry/_design/app/_rewrite"
-  },
+  "private": true,
   "dependencies": {
     "temp": "~0.6.0"
   }
