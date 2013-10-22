@@ -21,5 +21,6 @@
 'context-menu':
   '.tree-view':
     'Add File': 'tree-view:add'
+    'Add Folder': 'tree-view:add'
     'Rename': 'tree-view:move'
     'Delete': 'tree-view:remove'
