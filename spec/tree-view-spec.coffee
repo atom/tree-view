@@ -79,7 +79,7 @@ describe "TreeView", ->
     describe "when the root view is opened to a file path", ->
       it "does not attach to the root view but does create a root node when initialized", ->
         atom.deactivatePackage("tree-view")
-        atom.packageStates = {}
+        atom.packages.packageStates = {}
         rootView.openSync('tree-view.js')
         treeView = atom.activatePackage("tree-view").mainModule.createView()
         expect(treeView.hasParent()).toBeFalsy()
@@ -97,7 +97,7 @@ describe "TreeView", ->
         fs.makeTree(dotGit)
         project.setPath(dotGit)
         atom.deactivatePackage("tree-view")
-        atom.packageStates = {}
+        atom.packages.packageStates = {}
         {treeView} = atom.activatePackage("tree-view").mainModule
         expect(treeView).toBeFalsy()
 
