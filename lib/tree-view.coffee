@@ -152,8 +152,9 @@ class TreeView extends ScrollView
       if entry.hasClass('directory')
         entry.expand()
       else
+        centeringOffset = (@scrollBottom() - @scrollTop()) / 2
         @selectEntry(entry)
-        @scrollToEntry(entry)
+        @scrollToEntry(entry, centeringOffset)
 
   entryForPath: (path) ->
     fn = (bestMatchEntry, element) ->
@@ -326,15 +327,14 @@ class TreeView extends ScrollView
     else
       @scroller.scrollBottom()
 
-  scrollToEntry: (entry) ->
+  scrollToEntry: (entry, offset = 0) ->
     displayElement = if entry instanceof DirectoryView then entry.header else entry
     top = displayElement.position().top
     bottom = top + displayElement.outerHeight()
-    centeringOffset = (@scrollBottom() - @scrollTop()) / 2
     if bottom > @scrollBottom()
-      @scrollBottom(bottom + centeringOffset)
+      @scrollBottom(bottom + offset)
     if top < @scrollTop()
-      @scrollTop(top + centeringOffset)
+      @scrollTop(top + offset)
 
   scrollToBottom: ->
     @selectEntry(@root.find('.entry:last')) if @root
