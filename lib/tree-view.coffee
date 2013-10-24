@@ -330,10 +330,11 @@ class TreeView extends ScrollView
     displayElement = if entry instanceof DirectoryView then entry.header else entry
     top = displayElement.position().top
     bottom = top + displayElement.outerHeight()
+    centeringOffset = (@scrollBottom() - @scrollTop()) / 2
     if bottom > @scrollBottom()
-      @scrollBottom(bottom)
+      @scrollBottom(bottom + centeringOffset)
     if top < @scrollTop()
-      @scrollTop(top)
+      @scrollTop(top + centeringOffset)
 
   scrollToBottom: ->
     @selectEntry(@root.find('.entry:last')) if @root
