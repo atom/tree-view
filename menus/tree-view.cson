@@ -2,10 +2,18 @@
   {
     'label': 'View'
     'submenu': [
-      {
-        'label': 'Toggle Treeview'
-        'command': 'tree-view:toggle'
-      }
+      'label': 'Toggle Treeview'
+      'command': 'tree-view:toggle'
+    ]
+  }
+  {
+    'label': 'Packages'
+    'submenu': [
+      'label': 'Tree View'
+      'submenu': [
+        { 'label': 'Toggle', 'command': 'tree-view:toggle' }
+        { 'label': 'Reveal Active File', 'command': 'tree-view:reveal-active-file' }
+      ]
     ]
   }
 ]
@@ -13,5 +21,6 @@
 'context-menu':
   '.tree-view':
     'Add File': 'tree-view:add'
+    'Add Folder': 'tree-view:add'
     'Rename': 'tree-view:move'
     'Delete': 'tree-view:remove'
