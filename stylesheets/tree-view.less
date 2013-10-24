@@ -32,6 +32,24 @@
   min-height: 100%;
   padding: 0 @component-icon-padding;
   position: relative;
+
+  // override default nested list styles to use padding over margin
+  // to make click box larger
+  &.list-tree.has-collapsable-children .list-nested-item > .list-tree {
+    margin-left: 0;
+
+    .directory {
+      padding-left: 17px;
+    }
+
+    .file {
+      padding-left: 34px;
+    }
+  }
+
+  &.list-tree.has-collapsable-children li.list-item {
+    margin-left: 0;
+  }
 }
 
 .tree-view-dialog.tool-panel {
