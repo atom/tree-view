@@ -1,5 +1,6 @@
 'body':
   'meta-\\': 'tree-view:toggle'
+  'meta-k meta-b': 'tree-view:toggle'
   'meta-|': 'tree-view:reveal-active-file'
 
 '.tree-view':
