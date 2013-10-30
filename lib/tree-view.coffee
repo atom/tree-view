@@ -243,6 +243,9 @@ class TreeView extends ScrollView
         try
           fs.makeTree(directoryPath) unless fs.exists(directoryPath)
           fs.move(oldPath, newPath)
+          if repo = project.getRepo()
+            repo.getPathStatus(oldPath)
+            repo.getPathStatus(newPath)
           dialog.close()
         catch e
           dialog.showError("Error: #{e.message} Try a different path.")
@@ -289,6 +292,7 @@ class TreeView extends ScrollView
             @selectEntryForPath(pathToCreate)
           else
             fs.writeSync(pathToCreate, "")
+            project.getRepo()?.getPathStatus(pathToCreate)
             rootView.open(pathToCreate)
             dialog.close()
         catch e
