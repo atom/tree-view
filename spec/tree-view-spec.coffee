@@ -1087,6 +1087,10 @@ describe "TreeView", ->
       fs.writeSync modifiedFile, originalFileContent
       fs.move(path.join(projectPath, '.git'), path.join(projectPath, 'git.git'))
 
+    describe "when the project is the repository root", ->
+      it "adds a custom style", ->
+        expect(treeView.find('.icon-repo').length).toBe 1
+
     describe "when a file is modified", ->
       it "adds a custom style", ->
         treeView.root.entries.find('.directory:contains(dir)').view().expand()

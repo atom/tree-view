@@ -23,9 +23,8 @@ class DirectoryView extends View
 
     repo = project.getRepo()
     if repo?
-      path = @directory.getPath()
       if parent
-        if repo.isSubmodule(path)
+        if repo.isSubmodule(@getPath())
           iconClass = 'icon-file-submodule'
         else
           @subscribe repo, 'status-changed', (path, status) =>
@@ -34,7 +33,7 @@ class DirectoryView extends View
             @updateStatus()
           @updateStatus()
       else
-        iconClass = 'icon-repo' if @isRepositoryRoot()
+        iconClass = 'icon-repo' if project.getRepo()?.isProjectAtRoot()
 
     @directoryName.addClass(iconClass)
 
@@ -53,13 +52,6 @@ class DirectoryView extends View
 
   getPath: ->
     @directory.path
-
-  isRepositoryRoot: ->
-    try
-      repo = project.getRepo()
-      repo? and repo.getWorkingDirectory() is fs.realpathSync(@getPath())
-    catch e
-      false
 
   isPathIgnored: (path) ->
     return false unless config.get('tree-view.hideVcsIgnoredFiles')
