@@ -10,6 +10,7 @@ module.exports =
     @state.attached ?= true if @shouldAttach()
 
     @createView() if @state.attached
+    rootView.command 'tree-view:show', => @createView().show()
     rootView.command 'tree-view:toggle', => @createView().toggle()
     rootView.command 'tree-view:reveal-active-file', => @createView().revealActiveFile()
 

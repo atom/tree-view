@@ -1,6 +1,8 @@
 'body':
   'meta-\\': 'tree-view:toggle'
+  'meta-k meta-b': 'tree-view:toggle'
   'meta-|': 'tree-view:reveal-active-file'
+  'ctrl-0': 'tree-view:show'
 
 '.tree-view':
   'right': 'tree-view:expand-directory'

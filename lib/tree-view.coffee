@@ -77,8 +77,11 @@ class TreeView extends ScrollView
     if @hasFocus()
       @detach()
     else
-      @attach() unless @hasParent()
-      @focus()
+      @show()
+
+  show: ->
+    @attach() unless @hasParent()
+    @focus()
 
   attach: ->
     return unless project.getPath()
