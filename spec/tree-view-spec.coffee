@@ -205,7 +205,7 @@ describe "TreeView", ->
       treeView.focus()
       expect(treeView.list).toMatchSelector(':focus')
       treeView.trigger 'tool-panel:unfocus'
-      expect(treeView).toBeVisible()
+      expect(treeView).not.toBeVisible()
       expect(treeView.list).not.toMatchSelector(':focus')
       expect(rootView.getActiveView().isFocused).toBeTruthy()
 
