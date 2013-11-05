@@ -8,9 +8,9 @@ shell = require 'shell'
 module.exports =
 class TreeView extends ScrollView
   @content: (rootView) ->
-    @div class: 'tree-view-resizer', =>
+    @div class: 'tree-view-resizer tool-panel panel-left', =>
       @div class: 'tree-view-scroller', outlet: 'scroller', =>
-        @ol class: 'tree-view tool-panel panel-left list-tree has-collapsable-children focusable-panel', tabindex: -1, outlet: 'list'
+        @ol class: 'tree-view list-tree has-collapsable-children focusable-panel', tabindex: -1, outlet: 'list'
       @div class: 'tree-view-resize-handle', outlet: 'resizeHandle'
 
   root: null
