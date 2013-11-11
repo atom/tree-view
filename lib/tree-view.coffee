@@ -147,10 +147,10 @@ class TreeView extends ScrollView
 
     return unless activeFilePath = @getActivePath()
 
-    activePathComponents = project.relativize(activeFilePath).split('/')
-    currentPath = project.getPath().replace(/\/$/, '')
+    activePathComponents = project.relativize(activeFilePath).split(path.sep)
+    currentPath = project.getPath().replace(new RegExp("#{_.escapeRegExp(path.sep)}$"), '')
     for pathComponent in activePathComponents
-      currentPath += '/' + pathComponent
+      currentPath += path.sep + pathComponent
       entry = @entryForPath(currentPath)
       if entry.hasClass('directory')
         entry.expand()

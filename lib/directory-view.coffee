@@ -1,3 +1,5 @@
+path = require 'path'
+
 {$, $$, Directory, fs, View} = require 'atom'
 FileView = require './file-view'
 
@@ -27,8 +29,8 @@ class DirectoryView extends View
         if repo.isSubmodule(@getPath())
           iconClass = 'icon-file-submodule'
         else
-          @subscribe repo, 'status-changed', (path, status) =>
-            @updateStatus() if path.indexOf("#{@getPath()}/") is 0
+          @subscribe repo, 'status-changed', (p, status) =>
+            @updateStatus() if p.indexOf("#{@getPath()}#{path.sep}") is 0
           @subscribe repo, 'statuses-changed', =>
             @updateStatus()
           @updateStatus()
@@ -39,12 +41,12 @@ class DirectoryView extends View
 
   updateStatus: ->
     @removeClass('status-ignored status-modified status-added')
-    path = @directory.getPath()
+    dirPath = @directory.getPath()
     repo = project.getRepo()
-    if repo.isPathIgnored(path)
+    if repo.isPathIgnored(dirPath)
       @addClass('status-ignored')
     else
-      status = repo.getDirectoryStatus(path)
+      status = repo.getDirectoryStatus(dirPath)
       if repo.isStatusModified(status)
         @addClass('status-modified')
       else if repo.isStatusNew(status)
@@ -53,10 +55,10 @@ class DirectoryView extends View
   getPath: ->
     @directory.path
 
-  isPathIgnored: (path) ->
+  isPathIgnored: (filePath) ->
     return false unless config.get('tree-view.hideVcsIgnoredFiles')
     repo = project.getRepo()
-    repo? and repo.isProjectAtRoot() and repo.isPathIgnored(path)
+    repo? and repo.isProjectAtRoot() and repo.isPathIgnored(filePath)
 
   buildEntries: ->
     @unwatchDescendantEntries()

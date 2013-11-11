@@ -2,6 +2,7 @@
 TreeView = require '../lib/tree-view'
 path = require 'path'
 temp = require 'temp'
+os = require 'os'
 
 waitsForFileToOpen = (fn) ->
   openHandler = jasmine.createSpy()
@@ -71,9 +72,9 @@ describe "TreeView", ->
       describe "when the project is assigned a path because a new buffer is saved", ->
         it "creates a root directory view but does not attach to the root view", ->
           rootView.openSync()
-          rootView.getActivePaneItem().saveAs("/tmp/test.txt")
+          rootView.getActivePaneItem().saveAs(path.join(os.tmpdir(), 'test.txt'))
           expect(treeView.hasParent()).toBeFalsy()
-          expect(treeView.root.getPath()).toBe '/tmp'
+          expect(treeView.root.getPath()).toBe os.tmpdir().substring(0, os.tmpdir().length - 1)
           expect(treeView.root.parent()).toMatchSelector(".tree-view")
 
     describe "when the root view is opened to a file path", ->
@@ -94,7 +95,7 @@ describe "TreeView", ->
     describe "when the project is a .git folder", ->
       it "does not create the tree view", ->
         dotGit = path.join(temp.mkdirSync('repo'), '.git')
-        fs.makeTree(dotGit)
+        fs.makeTreeSync(dotGit)
         project.setPath(dotGit)
         atom.deactivatePackage("tree-view")
         atom.packages.packageStates = {}
@@ -135,10 +136,12 @@ describe "TreeView", ->
       treeView.scrollTop(10)
       expect(treeView.scrollTop()).toBe(10)
 
-      rootView.trigger 'tree-view:toggle'
-      expect(treeView).toBeHidden()
-      rootView.trigger 'tree-view:toggle'
-      expect(treeView).toBeVisible()
+      runs -> rootView.trigger 'tree-view:toggle'
+      waitsFor -> treeView.is(':hidden')
+
+      runs -> rootView.trigger 'tree-view:toggle'
+      waitsFor -> treeView.is(':visible')
+
       expect(treeView.scrollTop()).toBe(10)
 
   describe "when tree-view:toggle is triggered on the root view", ->
@@ -177,11 +180,11 @@ describe "TreeView", ->
 
     describe "if the current file has a path", ->
       it "shows and focuses the tree view and selects the file", ->
-        rootView.openSync('dir1/file1')
+        rootView.openSync(path.join('dir1', 'file1'))
         rootView.trigger 'tree-view:reveal-active-file'
         expect(treeView.hasParent()).toBeTruthy()
         expect(treeView.focus).toHaveBeenCalled()
-        expect(treeView.selectedEntry().getPath()).toMatch /dir1\/file1$/
+        expect(treeView.selectedEntry().getPath()).toMatch new RegExp("dir1#{_.escapeRegExp(path.sep)}file1$")
 
     describe "if the current file has no path", ->
       it "shows and focuses the tree view, but does not attempt to select a specific file", ->
@@ -680,13 +683,12 @@ describe "TreeView", ->
     beforeEach ->
       atom.deactivatePackage('tree-view')
 
-      rootDirPath = path.join(fs.absolute("/tmp"), "atom-tests")
-      fs.remove(rootDirPath) if fs.exists(rootDirPath)
+      rootDirPath = path.join(os.tmpdir(), "atom-tests")
 
       dirPath = path.join(rootDirPath, "test-dir")
       filePath = path.join(dirPath, "test-file.txt")
-      fs.makeTree(rootDirPath)
-      fs.makeTree(dirPath)
+
+      fs.makeTreeSync(dirPath)
       fs.writeSync(filePath, "doesn't matter")
 
       project.setPath(rootDirPath)
@@ -699,7 +701,27 @@ describe "TreeView", ->
       fileView = treeView.find('.file:contains(test-file.txt)').view()
 
     afterEach ->
-      fs.remove(rootDirPath) if fs.exists(rootDirPath)
+      # On Windows, you can not remove a watched directory/file, therefore we
+      # have to close the project before attempting to delete. Unfortunately,
+      # Pathwatcher's close function is also not synchronous. Once
+      # atom/node-pathwatcher#4 is implemented this should be alot cleaner.
+      treeView.root.unwatchEntries()
+      activePane = rootView.getActivePane()
+      for item in (activePane?.getItems() or [])
+        spyOn(item, 'shouldPromptToSave').andReturn(false)
+        activePane.destroyItem(item)
+
+      success = false
+      runs ->
+        retry = setInterval ->
+          try
+            fs.removeSync(rootDirPath)
+            success = true
+            clearInterval(retry)
+          catch e
+            success = false
+        , 50
+      waitsFor -> success
 
     describe "tree-view:add", ->
       addDialog = null
@@ -796,7 +818,7 @@ describe "TreeView", ->
           describe "when a file or directory already exists at the given path", ->
             it "shows an error message and does not close the dialog", ->
               newPath = path.join(dirPath, "new-dir")
-              fs.makeTree(newPath)
+              fs.makeTreeSync(newPath)
               addDialog.miniEditor.insertText("new-dir/")
               addDialog.trigger 'core:confirm'
 
@@ -1059,10 +1081,12 @@ describe "TreeView", ->
     beforeEach ->
       config.set "core.hideGitIgnoredFiles", false
       projectPath = project.resolve('../git/working-dir')
-      fs.move(path.join(projectPath, 'git.git'), path.join(projectPath, '.git'))
+      fs.copySync(path.join(projectPath, 'git.git'), path.join(projectPath, '.git'))
       project.setPath(projectPath)
 
       newDir = path.join(project.getPath(), 'dir2')
+      fs.mkdirSync(newDir)
+
       newFile = path.join(newDir, 'new2')
       fs.writeSync(newFile, '')
       project.getRepo().getPathStatus(newFile)
@@ -1081,11 +1105,17 @@ describe "TreeView", ->
       treeView.root.entries.find('.directory:contains(dir)').view().expand()
 
     afterEach ->
-      fs.remove(ignoreFile)
-      fs.remove(ignoredFile)
-      fs.remove(newDir)
+      # On Windows, you can not remove a watched directory/file, therefore we
+      # have to close the project before attempting to delete. Unfortunately,
+      # Pathwatcher's close function is also not synchronous. Once
+      # atom/node-pathwatcher#4 is implemented this should be alot cleaner.
+      treeView.root.unwatchEntries()
+
+      fs.removeSync(ignoreFile)
+      fs.removeSync(ignoredFile)
+      fs.removeSync(newDir)
       fs.writeSync modifiedFile, originalFileContent
-      fs.move(path.join(projectPath, '.git'), path.join(projectPath, 'git.git'))
+      fs.removeSync(path.join(projectPath, '.git'))
 
     describe "when the project is the repository root", ->
       it "adds a custom style", ->
