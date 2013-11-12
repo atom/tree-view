@@ -683,7 +683,7 @@ describe "TreeView", ->
     beforeEach ->
       atom.deactivatePackage('tree-view')
 
-      rootDirPath = path.join(os.tmpdir(), "atom-tests")
+      rootDirPath = path.join(fs.absolute(os.tmpdir()), 'atom-tests')
 
       dirPath = path.join(rootDirPath, "test-dir")
       filePath = path.join(dirPath, "test-file.txt")
