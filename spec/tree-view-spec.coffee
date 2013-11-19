@@ -750,7 +750,7 @@ describe "TreeView", ->
             directoryChangeHandler = jasmine.createSpy("directory-change")
             dirView.on "tree-view:directory-modified", directoryChangeHandler
 
-            dirView.directory.trigger 'contents-changed'
+            dirView.directory.emit 'contents-changed'
             expect(directoryChangeHandler).toHaveBeenCalled()
             expect(treeView.find('.selected').text()).toBe path.basename(filePath)
 
