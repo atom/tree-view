@@ -28,7 +28,7 @@ class FileView extends View
       else
         @fileName.addClass('icon-file-text')
 
-    repo = project.getRepo()
+    repo = @project.getRepo()
     if repo?
       @subscribe repo, 'status-changed', (changedPath, status) =>
         @updateStatus() if changedPath is @getPath()
@@ -39,7 +39,7 @@ class FileView extends View
 
   updateStatus: ->
     @removeClass('status-ignored status-modified status-added')
-    repo = project.getRepo()
+    repo = @project.getRepo()
     return unless repo?
 
     filePath = @getPath()

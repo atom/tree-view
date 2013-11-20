@@ -7,7 +7,7 @@ shell = require 'shell'
 
 module.exports =
 class TreeView extends ScrollView
-  @content: (rootView) ->
+  @content: ->
     @div class: 'tree-view-resizer tool-panel panel-left', =>
       @div class: 'tree-view-scroller', outlet: 'scroller', =>
         @ol class: 'tree-view list-tree has-collapsable-children focusable-panel', tabindex: -1, outlet: 'list'
@@ -42,8 +42,8 @@ class TreeView extends ScrollView
       else
         @selectActiveFile()
 
-    rootView.on 'pane-container:active-pane-item-changed.tree-view', => @selectActiveFile()
-    project.on 'path-changed.tree-view', => @updateRoot()
+    @subscribe atom.rootView, 'pane-container:active-pane-item-changed', => @selectActiveFile()
+    @subscribe atom.project, 'path-changed', => @updateRoot()
     @observeConfig 'tree-view.hideVcsIgnoredFiles', => @updateRoot()
 
     if @root
@@ -69,8 +69,6 @@ class TreeView extends ScrollView
 
   deactivate: ->
     @root?.unwatchEntries()
-    rootView.off('.tree-view')
-    project.off('.tree-view')
     @remove()
 
   toggle: ->
@@ -84,13 +82,13 @@ class TreeView extends ScrollView
     @focus()
 
   attach: ->
-    return unless project.getPath()
-    rootView.horizontal.prepend(this)
+    return unless atom.project.getPath()
+    atom.rootView.horizontal.prepend(this)
 
   detach: ->
     @scrollTopAfterAttach = @scrollTop()
     super
-    rootView.focus()
+    atom.rootView.focus()
 
   focus: ->
     @list.focus()
@@ -107,7 +105,7 @@ class TreeView extends ScrollView
         entry.toggleExpansion() if entry instanceof DirectoryView
       when 2
         if entry.is('.selected.file')
-          rootView.getActiveView().focus()
+          atom.rootView.getActiveView().focus()
         else if entry.is('.selected.directory')
           entry.toggleExpansion()
 
@@ -128,12 +126,12 @@ class TreeView extends ScrollView
     @root?.remove()
 
     if rootDirectory = project.getRootDirectory()
-      @root = new DirectoryView(directory: rootDirectory, isExpanded: true, project: project)
+      @root = new DirectoryView(directory: rootDirectory, isExpanded: true, project: atom.project)
       @list.append(@root)
     else
       @root = null
 
-  getActivePath: -> rootView.getActivePaneItem()?.getPath?()
+  getActivePath: -> atom.rootView.getActivePaneItem()?.getPath?()
 
   selectActiveFile: ->
     if activeFilePath = @getActivePath()
@@ -216,7 +214,7 @@ class TreeView extends ScrollView
     if selectedEntry instanceof DirectoryView
       selectedEntry.view().toggleExpansion()
     else if selectedEntry instanceof FileView
-      rootView.open(selectedEntry.getPath(), { changeFocus })
+      atom.rootView.open(selectedEntry.getPath(), { changeFocus })
 
   moveSelectedEntry: ->
     entry = @selectedEntry()
@@ -296,7 +294,7 @@ class TreeView extends ScrollView
           else
             fs.writeSync(pathToCreate, "")
             project.getRepo()?.getPathStatus(pathToCreate)
-            rootView.open(pathToCreate)
+            atom.rootView.open(pathToCreate)
             dialog.close()
         catch e
           dialog.showError("Error: #{e.message} Try a different path.")

@@ -28,12 +28,12 @@ class Dialog extends View
       @miniEditor.setSelectedBufferRange(range)
 
   attach: ->
-    rootView.append(this)
+    atom.rootView.append(this)
     @miniEditor.focus()
 
   close: ->
     @remove()
-    rootView.focus()
+    atom.rootView.focus()
 
   cancel: ->
     @remove()

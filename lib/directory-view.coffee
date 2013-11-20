@@ -23,7 +23,7 @@ class DirectoryView extends View
     else
       iconClass = 'icon-file-directory'
 
-    repo = project.getRepo()
+    repo = @project.getRepo()
     if repo?
       if parent
         if repo.isSubmodule(@getPath())
@@ -35,14 +35,14 @@ class DirectoryView extends View
             @updateStatus()
           @updateStatus()
       else
-        iconClass = 'icon-repo' if project.getRepo()?.isProjectAtRoot()
+        iconClass = 'icon-repo' if @project.getRepo()?.isProjectAtRoot()
 
     @directoryName.addClass(iconClass)
 
   updateStatus: ->
     @removeClass('status-ignored status-modified status-added')
     dirPath = @directory.getPath()
-    repo = project.getRepo()
+    repo = @project.getRepo()
     if repo.isPathIgnored(dirPath)
       @addClass('status-ignored')
     else
@@ -56,8 +56,8 @@ class DirectoryView extends View
     @directory.path
 
   isPathIgnored: (filePath) ->
-    return false unless config.get('tree-view.hideVcsIgnoredFiles')
-    repo = project.getRepo()
+    return false unless atom.config.get('tree-view.hideVcsIgnoredFiles')
+    repo = @project.getRepo()
     repo? and repo.isProjectAtRoot() and repo.isPathIgnored(filePath)
 
   buildEntries: ->
