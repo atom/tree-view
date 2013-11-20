@@ -54,8 +54,8 @@ describe "TreeView", ->
     describe "when the project has no path", ->
       beforeEach ->
         atom.project.setPath(undefined)
-        atom.deactivatePackage("tree-view")
-        treeView = atom.activatePackage("tree-view").mainModule.createView()
+        atom.packages.deactivatePackage("tree-view")
+        treeView = atom.packages.activatePackage("tree-view").mainModule.createView()
 
       it "does not attach to the root view or create a root node when initialized", ->
         expect(treeView.hasParent()).toBeFalsy()
@@ -79,16 +79,16 @@ describe "TreeView", ->
 
     describe "when the root view is opened to a file path", ->
       it "does not attach to the root view but does create a root node when initialized", ->
-        atom.deactivatePackage("tree-view")
+        atom.packages.deactivatePackage("tree-view")
         atom.packages.packageStates = {}
         atom.rootView.openSync('tree-view.js')
-        treeView = atom.activatePackage("tree-view").mainModule.createView()
+        treeView = atom.packages.activatePackage("tree-view").mainModule.createView()
         expect(treeView.hasParent()).toBeFalsy()
         expect(treeView.root).toExist()
 
     describe "when the root view is opened to a directory", ->
       it "attaches to the root view", ->
-        treeView = atom.activatePackage("tree-view").mainModule.createView()
+        treeView = atom.packages.activatePackage("tree-view").mainModule.createView()
         expect(treeView.hasParent()).toBeTruthy()
         expect(treeView.root).toExist()
 
@@ -97,9 +97,9 @@ describe "TreeView", ->
         dotGit = path.join(temp.mkdirSync('repo'), '.git')
         fs.makeTreeSync(dotGit)
         atom.project.setPath(dotGit)
-        atom.deactivatePackage("tree-view")
+        atom.packages.deactivatePackage("tree-view")
         atom.packages.packageStates = {}
-        {treeView} = atom.activatePackage("tree-view").mainModule
+        {treeView} = atom.packages.activatePackage("tree-view").mainModule
         expect(treeView).toBeFalsy()
 
   describe "serialization", ->
