@@ -1,7 +1,13 @@
-'body':
-  'meta-\\': 'tree-view:toggle'
-  'meta-k meta-b': 'tree-view:toggle'
-  'meta-|': 'tree-view:reveal-active-file'
+'.platform-darwin':
+  'cmd-\\': 'tree-view:toggle'
+  'cmd-k cmd-b': 'tree-view:toggle'
+  'cmd-|': 'tree-view:reveal-active-file'
+  'ctrl-0': 'tree-view:show'
+
+'.platform-win32':
+  'ctrl-\\': 'tree-view:toggle'
+  'ctrl-k ctrl-b': 'tree-view:toggle'
+  'ctrl-|': 'tree-view:reveal-active-file'
   'ctrl-0': 'tree-view:show'
 
 '.tree-view':
