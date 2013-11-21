@@ -1006,11 +1006,11 @@ describe "TreeView", ->
     beforeEach ->
       temporaryFilePath = path.join(atom.project.getPath(), 'temporary')
       if fs.existsSync(temporaryFilePath)
-        fs.remove(temporaryFilePath)
+        fs.removeSync(temporaryFilePath)
         waits(20)
 
     afterEach ->
-      fs.remove(temporaryFilePath) if fs.existsSync(temporaryFilePath)
+      fs.removeSync(temporaryFilePath)
 
     describe "when a file is added or removed in an expanded directory", ->
       it "updates the directory view to display the directory's new contents", ->
