@@ -125,7 +125,7 @@ class TreeView extends ScrollView
   updateRoot: ->
     @root?.remove()
 
-    if rootDirectory = project.getRootDirectory()
+    if rootDirectory = atom.project.getRootDirectory()
       @root = new DirectoryView(directory: rootDirectory, isExpanded: true, project: atom.project)
       @list.append(@root)
     else
@@ -145,8 +145,8 @@ class TreeView extends ScrollView
 
     return unless activeFilePath = @getActivePath()
 
-    activePathComponents = project.relativize(activeFilePath).split(path.sep)
-    currentPath = project.getPath().replace(new RegExp("#{_.escapeRegExp(path.sep)}$"), '')
+    activePathComponents = atom.project.relativize(activeFilePath).split(path.sep)
+    currentPath = atom.project.getPath().replace(new RegExp("#{_.escapeRegExp(path.sep)}$"), '')
     for pathComponent in activePathComponents
       currentPath += path.sep + pathComponent
       entry = @entryForPath(currentPath)
@@ -227,11 +227,11 @@ class TreeView extends ScrollView
 
     dialog = new Dialog
       prompt: prompt
-      initialPath: project.relativize(oldPath)
+      initialPath: atom.project.relativize(oldPath)
       select: true
       iconClass: 'icon-arrow-right'
       onConfirm: (newPath) =>
-        newPath = project.resolve(newPath)
+        newPath = atom.project.resolve(newPath)
         if oldPath is newPath
           dialog.close()
           return
@@ -244,7 +244,7 @@ class TreeView extends ScrollView
         try
           fs.makeTree(directoryPath) unless fs.exists(directoryPath)
           fs.move(oldPath, newPath)
-          if repo = project.getRepo()
+          if repo = atom.project.getRepo()
             repo.getPathStatus(oldPath)
             repo.getPathStatus(newPath)
           dialog.close()
@@ -270,7 +270,7 @@ class TreeView extends ScrollView
     selectedEntry = @selectedEntry() or @root
     selectedPath = selectedEntry.getPath()
     directoryPath = if fs.isFileSync(selectedPath) then path.dirname(selectedPath) else selectedPath
-    relativeDirectoryPath = project.relativize(directoryPath)
+    relativeDirectoryPath = atom.project.relativize(directoryPath)
     relativeDirectoryPath += '/' if relativeDirectoryPath.length > 0
 
     dialog = new Dialog
@@ -281,7 +281,7 @@ class TreeView extends ScrollView
 
       onConfirm: (relativePath) =>
         endsWithDirectorySeparator = /\/$/.test(relativePath)
-        pathToCreate = project.resolve(relativePath)
+        pathToCreate = atom.project.resolve(relativePath)
         try
           if fs.exists(pathToCreate)
             pathType = if fs.isFileSync(pathToCreate) then "file" else "directory"
@@ -293,7 +293,7 @@ class TreeView extends ScrollView
             @selectEntryForPath(pathToCreate)
           else
             fs.writeSync(pathToCreate, "")
-            project.getRepo()?.getPathStatus(pathToCreate)
+            atom.project.getRepo()?.getPathStatus(pathToCreate)
             atom.rootView.open(pathToCreate)
             dialog.close()
         catch e

@@ -317,7 +317,7 @@ describe "TreeView", ->
 
       runs ->
         expect(sampleJs).toHaveClass 'selected'
-        expect(atom.rootView.getActiveView().getPath()).toBe project.resolve('tree-view.js')
+        expect(atom.rootView.getActiveView().getPath()).toBe atom.project.resolve('tree-view.js')
         expect(atom.rootView.getActiveView().isFocused).toBeFalsy()
 
         sampleJs.trigger clickEvent(originalEvent: { detail: 2 })
