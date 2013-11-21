@@ -689,7 +689,7 @@ describe "TreeView", ->
       filePath = path.join(dirPath, "test-file.txt")
 
       fs.makeTreeSync(dirPath)
-      fs.writeSync(filePath, "doesn't matter")
+      fs.writeFileSync(filePath, "doesn't matter")
 
       atom.project.setPath(rootDirPath)
 
@@ -764,7 +764,7 @@ describe "TreeView", ->
                 addDialog.trigger 'core:confirm'
 
               runs ->
-                expect(fs.exists(newPath)).toBeTruthy()
+                expect(fs.existsSync(newPath)).toBeTruthy()
                 expect(fs.isFileSync(newPath)).toBeTruthy()
                 expect(addDialog.parent()).not.toExist()
                 expect(atom.rootView.getActiveView().getPath()).toBe newPath
@@ -778,7 +778,7 @@ describe "TreeView", ->
           describe "when a file already exists at that location", ->
             it "shows an error message and does not close the dialog", ->
               newPath = path.join(dirPath, "new-test-file.txt")
-              fs.writeSync(newPath, '')
+              fs.writeFileSync(newPath, '')
               addDialog.miniEditor.insertText(path.basename(newPath))
               addDialog.trigger 'core:confirm'
 
@@ -794,7 +794,7 @@ describe "TreeView", ->
               newPath = path.join(dirPath, "new/dir")
               addDialog.miniEditor.insertText("new/dir/")
               addDialog.trigger 'core:confirm'
-              expect(fs.exists(newPath)).toBeTruthy()
+              expect(fs.existsSync(newPath)).toBeTruthy()
               expect(fs.isDirectorySync(newPath)).toBeTruthy()
               expect(addDialog.parent()).not.toExist()
               expect(atom.rootView.getActiveView().getPath()).not.toBe newPath
@@ -807,7 +807,7 @@ describe "TreeView", ->
               newPath = path.join(dirPath, "new2/")
               addDialog.miniEditor.insertText("new2/")
               addDialog.trigger 'core:confirm'
-              expect(fs.exists(newPath)).toBeTruthy()
+              expect(fs.existsSync(newPath)).toBeTruthy()
               expect(fs.isDirectorySync(newPath)).toBeTruthy()
               expect(addDialog.parent()).not.toExist()
               expect(atom.rootView.getActiveView().getPath()).not.toBe newPath
@@ -909,8 +909,8 @@ describe "TreeView", ->
 
               moveDialog.trigger 'core:confirm'
 
-              expect(fs.exists(newPath)).toBeTruthy()
-              expect(fs.exists(filePath)).toBeFalsy()
+              expect(fs.existsSync(newPath)).toBeTruthy()
+              expect(fs.existsSync(filePath)).toBeFalsy()
               expect(moveDialog.parent()).not.toExist()
 
               waitsFor "tree view to update", ->
@@ -932,13 +932,13 @@ describe "TreeView", ->
                 treeView.root.find('> .entries > .directory:contains(new)').length > 0
 
               runs ->
-                expect(fs.exists(newPath)).toBeTruthy()
-                expect(fs.exists(filePath)).toBeFalsy()
+                expect(fs.existsSync(newPath)).toBeTruthy()
+                expect(fs.existsSync(filePath)).toBeFalsy()
 
           describe "when a file or directory already exists at the target path", ->
             it "shows an error message and does not close the dialog", ->
               runs ->
-                fs.writeSync(path.join(rootDirPath, 'target.txt'), '')
+                fs.writeFileSync(path.join(rootDirPath, 'target.txt'), '')
                 newPath = path.join(rootDirPath, 'target.txt')
                 moveDialog.miniEditor.setText(newPath)
 
@@ -968,7 +968,7 @@ describe "TreeView", ->
 
         beforeEach ->
           dotFilePath = path.join(dirPath, ".dotfile")
-          fs.writeSync(dotFilePath, "dot")
+          fs.writeFileSync(dotFilePath, "dot")
           dirView.collapse()
           dirView.expand()
           dotFileView = treeView.find('.file:contains(.dotfile)').view()
@@ -1005,21 +1005,21 @@ describe "TreeView", ->
 
     beforeEach ->
       temporaryFilePath = path.join(atom.project.getPath(), 'temporary')
-      if fs.exists(temporaryFilePath)
+      if fs.existsSync(temporaryFilePath)
         fs.remove(temporaryFilePath)
         waits(20)
 
     afterEach ->
-      fs.remove(temporaryFilePath) if fs.exists(temporaryFilePath)
+      fs.remove(temporaryFilePath) if fs.existsSync(temporaryFilePath)
 
     describe "when a file is added or removed in an expanded directory", ->
       it "updates the directory view to display the directory's new contents", ->
         entriesCountBefore = null
 
         runs ->
-          expect(fs.exists(temporaryFilePath)).toBeFalsy()
+          expect(fs.existsSync(temporaryFilePath)).toBeFalsy()
           entriesCountBefore = treeView.root.entries.find('.entry').length
-          fs.writeSync temporaryFilePath, 'hi'
+          fs.writeFileSync temporaryFilePath, 'hi'
 
         waitsFor "directory view contens to refresh", ->
           treeView.root.entries.find('.entry').length == entriesCountBefore + 1
@@ -1027,7 +1027,7 @@ describe "TreeView", ->
         runs ->
           expect(treeView.root.entries.find('.entry').length).toBe entriesCountBefore + 1
           expect(treeView.root.entries.find('.file:contains(temporary)')).toExist()
-          fs.remove(temporaryFilePath)
+          fs.removeSync(temporaryFilePath)
 
         waitsFor "directory view contens to refresh", ->
           treeView.root.entries.find('.entry').length == entriesCountBefore
@@ -1039,18 +1039,18 @@ describe "TreeView", ->
       beforeEach ->
         projectPath = path.resolve(atom.project.getPath(), '..', 'git', 'working-dir')
         dotGit = path.join(projectPath, '.git')
-        fs.move(path.join(projectPath, 'git.git'), dotGit)
+        fs.moveSync(path.join(projectPath, 'git.git'), dotGit)
         ignoreFile = path.join(projectPath, '.gitignore')
-        fs.writeSync(ignoreFile, 'ignored.txt')
+        fs.writeFileSync(ignoreFile, 'ignored.txt')
         ignoredFile = path.join(projectPath, 'ignored.txt')
-        fs.writeSync(ignoredFile, 'ignored text')
+        fs.writeFileSync(ignoredFile, 'ignored text')
         atom.project.setPath(projectPath)
         atom.config.set "tree-view.hideVcsIgnoredFiles", false
 
       afterEach ->
-        fs.move(dotGit, path.join(projectPath, 'git.git'))
-        fs.remove(ignoreFile)
-        fs.remove(ignoredFile)
+        fs.moveSync(dotGit, path.join(projectPath, 'git.git'))
+        fs.removeSync(ignoreFile)
+        fs.removeSync(ignoredFile)
 
       it "hides git-ignored files if the option is set, but otherwise shows them", ->
         expect(treeView.find('.file:contains(ignored.txt)').length).toBe 1
@@ -1066,11 +1066,11 @@ describe "TreeView", ->
 
       beforeEach ->
         ignoreFile = path.join(atom.project.getPath(), '.gitignore')
-        fs.writeSync(ignoreFile, 'tree-view.js')
+        fs.writeFileSync(ignoreFile, 'tree-view.js')
         atom.config.set("tree-view.hideVcsIgnoredFiles", true)
 
       afterEach ->
-        fs.remove(ignoreFile)
+        fs.removeSync(ignoreFile)
 
       it "does not hide git ignored files", ->
         expect(treeView.find('.file:contains(tree-view.js)').length).toBe 1
@@ -1088,17 +1088,17 @@ describe "TreeView", ->
       fs.mkdirSync(newDir)
 
       newFile = path.join(newDir, 'new2')
-      fs.writeSync(newFile, '')
+      fs.writeFileSync(newFile, '')
       atom.project.getRepo().getPathStatus(newFile)
 
       ignoreFile = path.join(atom.project.getPath(), '.gitignore')
-      fs.writeSync(ignoreFile, 'ignored.txt')
+      fs.writeFileSync(ignoreFile, 'ignored.txt')
       ignoredFile = path.join(atom.project.getPath(), 'ignored.txt')
-      fs.writeSync(ignoredFile, '')
+      fs.writeFileSync(ignoredFile, '')
 
       modifiedFile = path.join(atom.project.resolve('dir'), 'b.txt')
-      originalFileContent = fs.read(modifiedFile)
-      fs.writeSync modifiedFile, 'ch ch changes'
+      originalFileContent = fs.readFileSync(modifiedFile, 'utf8')
+      fs.writeFileSync modifiedFile, 'ch ch changes'
       atom.project.getRepo().getPathStatus(modifiedFile)
 
       treeView.updateRoot()
@@ -1114,7 +1114,7 @@ describe "TreeView", ->
       fs.removeSync(ignoreFile)
       fs.removeSync(ignoredFile)
       fs.removeSync(newDir)
-      fs.writeSync modifiedFile, originalFileContent
+      fs.writeFileSync modifiedFile, originalFileContent
       fs.removeSync(path.join(projectPath, '.git'))
 
     describe "when the project is the repository root", ->

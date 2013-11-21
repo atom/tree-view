@@ -236,14 +236,14 @@ class TreeView extends ScrollView
           dialog.close()
           return
 
-        if fs.exists(newPath)
+        if fs.existsSync(newPath)
           dialog.showError("Error: #{newPath} already exists. Try a different path.")
           return
 
         directoryPath = path.dirname(newPath)
         try
-          fs.makeTree(directoryPath) unless fs.exists(directoryPath)
-          fs.move(oldPath, newPath)
+          fs.makeTreeSync(directoryPath) unless fs.existsSync(directoryPath)
+          fs.moveSync(oldPath, newPath)
           if repo = atom.project.getRepo()
             repo.getPathStatus(oldPath)
             repo.getPathStatus(newPath)
@@ -263,7 +263,7 @@ class TreeView extends ScrollView
       "You are deleting #{entry.getPath()}",
       "Move to Trash", (=> shell.moveItemToTrash(entry.getPath())),
       "Cancel", null
-      "Delete", (=> fs.remove(entry.getPath()))
+      "Delete", (=> fs.removeSync(entry.getPath()))
     )
 
   add: ->
@@ -283,16 +283,16 @@ class TreeView extends ScrollView
         endsWithDirectorySeparator = /\/$/.test(relativePath)
         pathToCreate = atom.project.resolve(relativePath)
         try
-          if fs.exists(pathToCreate)
+          if fs.existsSync(pathToCreate)
             pathType = if fs.isFileSync(pathToCreate) then "file" else "directory"
             dialog.showError("Error: A #{pathType} already exists at path '#{pathToCreate}'. Try a different path.")
           else if endsWithDirectorySeparator
-            fs.makeTree(pathToCreate)
+            fs.makeTreeSync(pathToCreate)
             dialog.cancel()
             @entryForPath(pathToCreate).buildEntries()
             @selectEntryForPath(pathToCreate)
           else
-            fs.writeSync(pathToCreate, "")
+            fs.writeFileSync(pathToCreate, "")
             atom.project.getRepo()?.getPathStatus(pathToCreate)
             atom.rootView.open(pathToCreate)
             dialog.close()
