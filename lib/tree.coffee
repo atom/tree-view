@@ -10,9 +10,9 @@ module.exports =
     @state.attached ?= true if @shouldAttach()
 
     @createView() if @state.attached
-    atom.rootView.command 'tree-view:show', => @createView().show()
-    atom.rootView.command 'tree-view:toggle', => @createView().toggle()
-    atom.rootView.command 'tree-view:reveal-active-file', => @createView().revealActiveFile()
+    atom.workspaceView.command 'tree-view:show', => @createView().show()
+    atom.workspaceView.command 'tree-view:toggle', => @createView().toggle()
+    atom.workspaceView.command 'tree-view:reveal-active-file', => @createView().revealActiveFile()
 
   deactivate: ->
     @treeView?.deactivate()
@@ -31,7 +31,7 @@ module.exports =
     @treeView
 
   shouldAttach: ->
-    if atom.rootView.getActivePaneItem()
+    if atom.workspaceView.getActivePaneItem()
       false
     else if path.basename(atom.project.getPath()) is '.git'
       # Only attach when the project path matches the path to open signifying

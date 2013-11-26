@@ -42,7 +42,7 @@ class TreeView extends ScrollView
       else
         @selectActiveFile()
 
-    @subscribe atom.rootView, 'pane-container:active-pane-item-changed', => @selectActiveFile()
+    @subscribe atom.workspaceView, 'pane-container:active-pane-item-changed', => @selectActiveFile()
     @subscribe atom.project, 'path-changed', => @updateRoot()
     @observeConfig 'tree-view.hideVcsIgnoredFiles', => @updateRoot()
 
@@ -83,12 +83,12 @@ class TreeView extends ScrollView
 
   attach: ->
     return unless atom.project.getPath()
-    atom.rootView.horizontal.prepend(this)
+    atom.workspaceView.horizontal.prepend(this)
 
   detach: ->
     @scrollTopAfterAttach = @scrollTop()
     super
-    atom.rootView.focus()
+    atom.workspaceView.focus()
 
   focus: ->
     @list.focus()
@@ -105,7 +105,7 @@ class TreeView extends ScrollView
         entry.toggleExpansion() if entry instanceof DirectoryView
       when 2
         if entry.is('.selected.file')
-          atom.rootView.getActiveView().focus()
+          atom.workspaceView.getActiveView().focus()
         else if entry.is('.selected.directory')
           entry.toggleExpansion()
 
@@ -131,7 +131,7 @@ class TreeView extends ScrollView
     else
       @root = null
 
-  getActivePath: -> atom.rootView.getActivePaneItem()?.getPath?()
+  getActivePath: -> atom.workspaceView.getActivePaneItem()?.getPath?()
 
   selectActiveFile: ->
     if activeFilePath = @getActivePath()
@@ -214,7 +214,7 @@ class TreeView extends ScrollView
     if selectedEntry instanceof DirectoryView
       selectedEntry.view().toggleExpansion()
     else if selectedEntry instanceof FileView
-      atom.rootView.open(selectedEntry.getPath(), { changeFocus })
+      atom.workspaceView.open(selectedEntry.getPath(), { changeFocus })
 
   moveSelectedEntry: ->
     entry = @selectedEntry()
@@ -294,7 +294,7 @@ class TreeView extends ScrollView
           else
             fs.writeFileSync(pathToCreate, "")
             atom.project.getRepo()?.getPathStatus(pathToCreate)
-            atom.rootView.open(pathToCreate)
+            atom.workspaceView.open(pathToCreate)
             dialog.close()
         catch e
           dialog.showError("Error: #{e.message} Try a different path.")
