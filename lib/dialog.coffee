@@ -1,4 +1,4 @@
-{$, Editor, View} = require 'atom'
+{$, EditorView, View} = require 'atom'
 path = require 'path'
 
 module.exports =
@@ -7,7 +7,7 @@ class Dialog extends View
     @div class: 'tree-view-dialog tool-panel panel-bottom', =>
       @div class: 'block', =>
         @label prompt, class: 'icon', outlet: 'promptText'
-        @subview 'miniEditor', new Editor(mini: true)
+        @subview 'miniEditor', new EditorView(mini: true)
 
   initialize: ({initialPath, @onConfirm, select, iconClass} = {}) ->
     @promptText.addClass(iconClass) if iconClass
