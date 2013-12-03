@@ -1034,23 +1034,18 @@ describe "TreeView", ->
 
   describe "the hideVcsIgnoredFiles config option", ->
     describe "when the project's path is the repository's working directory", ->
-      [dotGit, ignoreFile, ignoredFile, projectPath] = []
-
       beforeEach ->
-        projectPath = path.resolve(atom.project.getPath(), '..', 'git', 'working-dir')
+        dotGitFixture = path.join(__dirname, 'fixtures', 'git', 'working-dir', 'git.git')
+        projectPath = temp.mkdirSync('tree-view-project')
         dotGit = path.join(projectPath, '.git')
-        fs.moveSync(path.join(projectPath, 'git.git'), dotGit)
+        fs.copySync(dotGitFixture, dotGit)
         ignoreFile = path.join(projectPath, '.gitignore')
         fs.writeFileSync(ignoreFile, 'ignored.txt')
         ignoredFile = path.join(projectPath, 'ignored.txt')
         fs.writeFileSync(ignoredFile, 'ignored text')
+
         atom.project.setPath(projectPath)
         atom.config.set "tree-view.hideVcsIgnoredFiles", false
-
-      afterEach ->
-        fs.moveSync(dotGit, path.join(projectPath, 'git.git'))
-        fs.removeSync(ignoreFile)
-        fs.removeSync(ignoredFile)
 
       it "hides git-ignored files if the option is set, but otherwise shows them", ->
         expect(treeView.find('.file:contains(ignored.txt)').length).toBe 1
@@ -1062,41 +1057,41 @@ describe "TreeView", ->
         expect(treeView.find('.file:contains(ignored.txt)').length).toBe 1
 
     describe "when the project's path is a subfolder of the repository's working directory", ->
-      [ignoreFile] = []
-
       beforeEach ->
-        ignoreFile = path.join(atom.project.getPath(), '.gitignore')
+        fixturePath = path.join(__dirname, 'fixtures', 'tree-view')
+        projectPath = temp.mkdirSync('tree-view-project')
+        fs.copySync(fixturePath, projectPath)
+        ignoreFile = path.join(projectPath, '.gitignore')
         fs.writeFileSync(ignoreFile, 'tree-view.js')
-        atom.config.set("tree-view.hideVcsIgnoredFiles", true)
 
-      afterEach ->
-        fs.removeSync(ignoreFile)
+        atom.project.setPath(projectPath)
+        atom.config.set("tree-view.hideVcsIgnoredFiles", true)
 
       it "does not hide git ignored files", ->
         expect(treeView.find('.file:contains(tree-view.js)').length).toBe 1
 
   describe "Git status decorations", ->
-    [ignoreFile, ignoredFile, newDir, newFile, modifiedFile, originalFileContent, projectPath] = []
-
     beforeEach ->
       atom.config.set "core.hideGitIgnoredFiles", false
-      projectPath = atom.project.resolve('../git/working-dir')
-      fs.copySync(path.join(projectPath, 'git.git'), path.join(projectPath, '.git'))
+      projectPath = temp.mkdirSync('tree-view-project')
+      workingDirFixture = path.join(__dirname, 'fixtures', 'git', 'working-dir')
+      fs.copySync(workingDirFixture, projectPath)
+      fs.moveSync(path.join(projectPath, 'git.git'), path.join(projectPath, '.git'))
       atom.project.setPath(projectPath)
 
-      newDir = path.join(atom.project.getPath(), 'dir2')
+      newDir = path.join(projectPath, 'dir2')
       fs.mkdirSync(newDir)
 
       newFile = path.join(newDir, 'new2')
       fs.writeFileSync(newFile, '')
       atom.project.getRepo().getPathStatus(newFile)
 
-      ignoreFile = path.join(atom.project.getPath(), '.gitignore')
+      ignoreFile = path.join(projectPath, '.gitignore')
       fs.writeFileSync(ignoreFile, 'ignored.txt')
-      ignoredFile = path.join(atom.project.getPath(), 'ignored.txt')
+      ignoredFile = path.join(projectPath, 'ignored.txt')
       fs.writeFileSync(ignoredFile, '')
 
-      modifiedFile = path.join(atom.project.resolve('dir'), 'b.txt')
+      modifiedFile = path.join(projectPath, 'dir', 'b.txt')
       originalFileContent = fs.readFileSync(modifiedFile, 'utf8')
       fs.writeFileSync modifiedFile, 'ch ch changes'
       atom.project.getRepo().getPathStatus(modifiedFile)
@@ -1110,12 +1105,6 @@ describe "TreeView", ->
       # Pathwatcher's close function is also not synchronous. Once
       # atom/node-pathwatcher#4 is implemented this should be alot cleaner.
       treeView.root.unwatchEntries()
-
-      fs.removeSync(ignoreFile)
-      fs.removeSync(ignoredFile)
-      fs.removeSync(newDir)
-      fs.writeFileSync modifiedFile, originalFileContent
-      fs.removeSync(path.join(projectPath, '.git'))
 
     describe "when the project is the repository root", ->
       it "adds a custom style", ->
