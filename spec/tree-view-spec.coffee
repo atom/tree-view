@@ -276,7 +276,7 @@ describe "TreeView", ->
       expect(grandchild.directory.getSubscriptionCount('contents-changed')).toBe 0
 
   describe "when mouse down fires on a file or directory", ->
-    it "selects then entry", ->
+    it "selects the entry", ->
       dir = treeView.root.entries.find('li:contains(dir1)').view()
       expect(dir).not.toHaveClass 'selected'
       dir.mousedown()
