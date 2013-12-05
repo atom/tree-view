@@ -69,6 +69,12 @@ describe "TreeView", ->
       it "serializes without throwing an exception", ->
         expect(-> treeView.serialize()).not.toThrow()
 
+      it "does not throw an exception when files are opened", ->
+        filePath = path.join(os.tmpdir(), 'non-project-file.txt')
+        fs.writeFileSync(filePath, 'test')
+
+        expect(-> atom.workspaceView.openSync(filePath)).not.toThrow()
+
       describe "when the project is assigned a path because a new buffer is saved", ->
         it "creates a root directory view but does not attach to the root view", ->
           atom.workspaceView.openSync()

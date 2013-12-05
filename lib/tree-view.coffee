@@ -311,7 +311,7 @@ class TreeView extends ScrollView
     @list.find('.selected')?.view()
 
   selectEntry: (entry) ->
-    return false unless entry.get(0)
+    return false unless entry?.get(0)
     entry = entry.view() unless entry instanceof View
     @selectedPath = entry.getPath()
     @deselect()
