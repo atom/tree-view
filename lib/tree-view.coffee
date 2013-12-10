@@ -60,7 +60,7 @@ class TreeView extends ScrollView
     @selectEntryForPath(state.selectedPath) if state.selectedPath
     @focusAfterAttach = state.hasFocus
     @scrollTopAfterAttach = state.scrollTop if state.scrollTop
-    @width(state.width) if state.width and state.width > 0
+    @width(state.width) if state.width > 0
     @attach() if state.attached
 
   afterAttach: (onDom) ->
