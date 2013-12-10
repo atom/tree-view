@@ -1,6 +1,6 @@
 path = require 'path'
 
-{$, $$, Directory, fs, View} = require 'atom'
+{_, $, $$, Directory, fs, View} = require 'atom'
 FileView = require './file-view'
 
 module.exports =
@@ -56,9 +56,15 @@ class DirectoryView extends View
     @directory.path
 
   isPathIgnored: (filePath) ->
-    return false unless atom.config.get('tree-view.hideVcsIgnoredFiles')
-    repo = @project.getRepo()
-    repo? and repo.isProjectAtRoot() and repo.isPathIgnored(filePath)
+    if atom.config.get('tree-view.hideVcsIgnoredFiles')
+      repo = @project.getRepo()
+      return true if repo? and repo.isProjectAtRoot() and repo.isPathIgnored(filePath)
+
+    if atom.config.get('tree-view.hideIgnoredNames')
+      ignoredNames = atom.config.get('core.ignoredNames') ? []
+      return true if _.contains(ignoredNames, path.basename(filePath))
+
+    false
 
   buildEntries: ->
     @unwatchDescendantEntries()

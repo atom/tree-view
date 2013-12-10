@@ -1077,6 +1077,24 @@ describe "TreeView", ->
       it "does not hide git ignored files", ->
         expect(treeView.find('.file:contains(tree-view.js)').length).toBe 1
 
+  fdescribe "the hideIgnoredNames config option", ->
+    beforeEach ->
+      dotGitFixture = path.join(__dirname, 'fixtures', 'git', 'working-dir', 'git.git')
+      projectPath = temp.mkdirSync('tree-view-project')
+      dotGit = path.join(projectPath, '.git')
+      fs.copySync(dotGitFixture, dotGit)
+      atom.project.setPath(projectPath)
+      atom.config.set "tree-view.hideIgnoredNames", false
+
+    it "hides ignored files if the option is set, but otherwise shows them", ->
+      expect(treeView.find('.directory .name:contains(.git)').length).toBe 1
+
+      atom.config.set("tree-view.hideIgnoredNames", true)
+      expect(treeView.find('.directory .name:contains(.git)').length).toBe 0
+
+      atom.config.set("core.ignoredNames", [])
+      expect(treeView.find('.directory .name:contains(.git)').length).toBe 1
+
   describe "Git status decorations", ->
     beforeEach ->
       projectPath = temp.mkdirSync('tree-view-project')
