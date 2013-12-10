@@ -127,8 +127,8 @@ class TreeView extends ScrollView
     $(document.body).off('mousemove', @resizeTreeView)
     $(document.body).off('mouseup', @resizeStopped)
 
-  resizeTreeView: (e) =>
-    @css(width: e.pageX)
+  resizeTreeView: ({pageX}) =>
+    @width(pageX)
 
   updateRoot: ->
     @root?.remove()
