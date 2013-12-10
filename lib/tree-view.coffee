@@ -119,11 +119,11 @@ class TreeView extends ScrollView
 
     false
 
-  resizeStarted: (e) =>
+  resizeStarted: =>
     $(document.body).on('mousemove', @resizeTreeView)
     $(document.body).on('mouseup', @resizeStopped)
 
-  resizeStopped: (e) =>
+  resizeStopped: =>
     $(document.body).off('mousemove', @resizeTreeView)
     $(document.body).off('mouseup', @resizeStopped)
 
