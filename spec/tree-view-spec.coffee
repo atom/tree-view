@@ -78,9 +78,10 @@ describe "TreeView", ->
       describe "when the project is assigned a path because a new buffer is saved", ->
         it "creates a root directory view but does not attach to the root view", ->
           atom.workspaceView.openSync()
-          atom.workspaceView.getActivePaneItem().saveAs(path.join(os.tmpdir(), 'test.txt'))
+          projectPath = temp.mkdirSync('atom-project')
+          atom.workspaceView.getActivePaneItem().saveAs(path.join(projectPath, 'test.txt'))
           expect(treeView.hasParent()).toBeFalsy()
-          expect(treeView.root.getPath()).toBe os.tmpdir().substring(0, os.tmpdir().length - 1)
+          expect(fs.absolute(treeView.root.getPath())).toBe fs.absolute(projectPath)
           expect(treeView.root.parent()).toMatchSelector(".tree-view")
 
     describe "when the root view is opened to a file path", ->
