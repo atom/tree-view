@@ -1079,7 +1079,6 @@ describe "TreeView", ->
 
   describe "Git status decorations", ->
     beforeEach ->
-      atom.config.set "core.hideGitIgnoredFiles", false
       projectPath = temp.mkdirSync('tree-view-project')
       workingDirFixture = path.join(__dirname, 'fixtures', 'git', 'working-dir')
       fs.copySync(workingDirFixture, projectPath)
