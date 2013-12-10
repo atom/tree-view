@@ -1077,7 +1077,7 @@ describe "TreeView", ->
       it "does not hide git ignored files", ->
         expect(treeView.find('.file:contains(tree-view.js)').length).toBe 1
 
-  fdescribe "the hideIgnoredNames config option", ->
+  describe "the hideIgnoredNames config option", ->
     beforeEach ->
       dotGitFixture = path.join(__dirname, 'fixtures', 'git', 'working-dir', 'git.git')
       projectPath = temp.mkdirSync('tree-view-project')
