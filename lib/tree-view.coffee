@@ -245,7 +245,7 @@ class TreeView extends ScrollView
           return
 
         if fs.existsSync(newPath)
-          dialog.showError("Error: #{newPath} already exists. Try a different path.")
+          dialog.showError("'#{newPath}' already exists. Try a different path.")
           return
 
         directoryPath = path.dirname(newPath)
@@ -256,8 +256,8 @@ class TreeView extends ScrollView
             repo.getPathStatus(oldPath)
             repo.getPathStatus(newPath)
           dialog.close()
-        catch e
-          dialog.showError("Error: #{e.message} Try a different path.")
+        catch error
+          dialog.showError("#{error.message} Try a different path.")
 
     dialog.attach()
 
@@ -293,7 +293,7 @@ class TreeView extends ScrollView
         try
           if fs.existsSync(pathToCreate)
             pathType = if fs.isFileSync(pathToCreate) then "file" else "directory"
-            dialog.showError("Error: A #{pathType} already exists at path '#{pathToCreate}'. Try a different path.")
+            dialog.showError("'#{pathToCreate}' already exists. Try a different path.")
           else if endsWithDirectorySeparator
             fs.makeTreeSync(pathToCreate)
             dialog.cancel()
@@ -304,8 +304,8 @@ class TreeView extends ScrollView
             atom.project.getRepo()?.getPathStatus(pathToCreate)
             atom.workspaceView.open(pathToCreate)
             dialog.close()
-        catch e
-          dialog.showError("Error: #{e.message} Try a different path.")
+        catch error
+          dialog.showError("#{error.message} Try a different path.")
 
     dialog.miniEditor.getBuffer().on 'changed', =>
       if /\/$/.test(dialog.miniEditor.getText())

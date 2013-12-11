@@ -4,16 +4,17 @@ path = require 'path'
 module.exports =
 class Dialog extends View
   @content: ({prompt} = {}) ->
-    @div class: 'tree-view-dialog tool-panel panel-bottom', =>
-      @div class: 'block', =>
-        @label prompt, class: 'icon', outlet: 'promptText'
-        @subview 'miniEditor', new EditorView(mini: true)
+    @div class: 'tree-view-dialog overlay from-top', =>
+      @label prompt, class: 'icon', outlet: 'promptText'
+      @subview 'miniEditor', new EditorView(mini: true)
+      @div class: 'error-message', outlet: 'errorMessage'
 
   initialize: ({initialPath, @onConfirm, select, iconClass} = {}) ->
     @promptText.addClass(iconClass) if iconClass
     @on 'core:confirm', => @onConfirm(@miniEditor.getText())
     @on 'core:cancel', => @cancel()
     @miniEditor.hiddenInput.on 'focusout', => @remove()
+    @miniEditor.getBuffer().on 'changed', => @showError()
 
     @miniEditor.setText(initialPath)
 
@@ -39,6 +40,6 @@ class Dialog extends View
     @remove()
     $('.tree-view').focus()
 
-  showError: (message) ->
-    @promptText.text(message)
-    @flashError()
+  showError: (message='') ->
+    @errorMessage.text(message)
+    @flashError() if message

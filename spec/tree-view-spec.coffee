@@ -789,8 +789,7 @@ describe "TreeView", ->
               addDialog.miniEditor.insertText(path.basename(newPath))
               addDialog.trigger 'core:confirm'
 
-              expect(addDialog.promptText.text()).toContain 'Error'
-              expect(addDialog.promptText.text()).toContain 'already exists'
+              expect(addDialog.errorMessage.text()).toContain 'already exists'
               expect(addDialog).toHaveClass('error')
               expect(addDialog.hasParent()).toBeTruthy()
 
@@ -829,8 +828,7 @@ describe "TreeView", ->
               addDialog.miniEditor.insertText("new-dir/")
               addDialog.trigger 'core:confirm'
 
-              expect(addDialog.promptText.text()).toContain 'Error'
-              expect(addDialog.promptText.text()).toContain 'already exists'
+              expect(addDialog.errorMessage.text()).toContain 'already exists'
               expect(addDialog).toHaveClass('error')
               expect(addDialog.hasParent()).toBeTruthy()
 
@@ -951,8 +949,7 @@ describe "TreeView", ->
 
                 moveDialog.trigger 'core:confirm'
 
-                expect(moveDialog.promptText.text()).toContain 'Error'
-                expect(moveDialog.promptText.text()).toContain 'already exists'
+                expect(moveDialog.errorMessage.text()).toContain 'already exists'
                 expect(moveDialog).toHaveClass('error')
                 expect(moveDialog.hasParent()).toBeTruthy()
 
