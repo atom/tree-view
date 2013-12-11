@@ -60,7 +60,7 @@ class TreeView extends ScrollView
     @selectEntryForPath(state.selectedPath) if state.selectedPath
     @focusAfterAttach = state.hasFocus
     @scrollTopAfterAttach = state.scrollTop if state.scrollTop
-    @width(state.width) if state.width and state.width > 0
+    @width(state.width) if state.width > 0
     @attach() if state.attached
 
   afterAttach: (onDom) ->
@@ -119,16 +119,16 @@ class TreeView extends ScrollView
 
     false
 
-  resizeStarted: (e) =>
+  resizeStarted: =>
     $(document.body).on('mousemove', @resizeTreeView)
     $(document.body).on('mouseup', @resizeStopped)
 
-  resizeStopped: (e) =>
+  resizeStopped: =>
     $(document.body).off('mousemove', @resizeTreeView)
     $(document.body).off('mouseup', @resizeStopped)
 
-  resizeTreeView: (e) =>
-    @css(width: e.pageX)
+  resizeTreeView: ({pageX}) =>
+    @width(pageX)
 
   updateRoot: ->
     @root?.remove()
