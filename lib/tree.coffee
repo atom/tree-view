@@ -3,6 +3,7 @@ path = require 'path'
 module.exports =
   configDefaults:
     hideVcsIgnoredFiles: false
+    hideIgnoredNames: false
 
   treeView: null
 

@@ -42,13 +42,21 @@ class TreeView extends ScrollView
       else
         @selectActiveFile()
 
-    @subscribe atom.workspaceView, 'pane-container:active-pane-item-changed', => @selectActiveFile()
+    @subscribe atom.workspaceView, 'pane-container:active-pane-item-changed', =>
+      @selectActiveFile()
     @subscribe atom.project, 'path-changed', => @updateRoot()
-    @observeConfig 'tree-view.hideVcsIgnoredFiles', => @updateRoot()
+    @observeConfig 'tree-view.hideVcsIgnoredFiles', callNow: false, =>
+      @updateRoot()
+    @observeConfig 'tree-view.hideIgnoredNames', callNow: false, =>
+      @updateRoot()
+    @observeConfig 'core.ignoredNames', callNow: false, =>
+      @updateRoot() if atom.config.get('tree-view.hideIgnoredNames')
 
-    if @root
+    @updateRoot()
+    if @root?
       @selectEntry(@root)
       @root.deserializeEntryExpansionStates(state.directoryExpansionStates)
+
     @selectEntryForPath(state.selectedPath) if state.selectedPath
     @focusAfterAttach = state.hasFocus
     @scrollTopAfterAttach = state.scrollTop if state.scrollTop
