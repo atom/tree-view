@@ -4,7 +4,7 @@ path = require 'path'
 module.exports =
 class Dialog extends View
   @content: ({prompt} = {}) ->
-    @div class: 'tree-view-dialog tool-panel panel-bottom', =>
+    @div class: 'tree-view-dialog overlay from-top', =>
       @div class: 'block', =>
         @label prompt, class: 'icon', outlet: 'promptText'
         @subview 'miniEditor', new EditorView(mini: true)
