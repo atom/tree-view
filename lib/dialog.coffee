@@ -15,6 +15,7 @@ class Dialog extends View
     @on 'core:confirm', => @onConfirm(@miniEditor.getText())
     @on 'core:cancel', => @cancel()
     @miniEditor.hiddenInput.on 'focusout', => @remove()
+    @miniEditor.getBuffer().on 'changed', => @showError()
 
     @miniEditor.setText(initialPath)
 
@@ -40,6 +41,6 @@ class Dialog extends View
     @remove()
     $('.tree-view').focus()
 
-  showError: (message) ->
+  showError: (message='') ->
     @errorMessage.text(message)
-    @flashError()
+    @flashError() if message
