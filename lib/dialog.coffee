@@ -8,6 +8,7 @@ class Dialog extends View
       @div class: 'block', =>
         @label prompt, class: 'icon', outlet: 'promptText'
         @subview 'miniEditor', new EditorView(mini: true)
+        @div class: 'error-message', outlet: 'errorMessage'
 
   initialize: ({initialPath, @onConfirm, select, iconClass} = {}) ->
     @promptText.addClass(iconClass) if iconClass
@@ -40,5 +41,5 @@ class Dialog extends View
     $('.tree-view').focus()
 
   showError: (message) ->
-    @promptText.text(message)
+    @errorMessage.text(message)
     @flashError()
