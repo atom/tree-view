@@ -245,7 +245,7 @@ class TreeView extends ScrollView
           return
 
         if fs.existsSync(newPath)
-          dialog.showError("#{newPath} already exists. Try a different path.")
+          dialog.showError("'#{newPath}' already exists. Try a different path.")
           return
 
         directoryPath = path.dirname(newPath)
@@ -293,7 +293,7 @@ class TreeView extends ScrollView
         try
           if fs.existsSync(pathToCreate)
             pathType = if fs.isFileSync(pathToCreate) then "file" else "directory"
-            dialog.showError("A #{pathType} already exists at path '#{pathToCreate}'. Try a different path.")
+            dialog.showError("'#{pathToCreate}' already exists. Try a different path.")
           else if endsWithDirectorySeparator
             fs.makeTreeSync(pathToCreate)
             dialog.cancel()
