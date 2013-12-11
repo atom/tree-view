@@ -5,10 +5,9 @@ module.exports =
 class Dialog extends View
   @content: ({prompt} = {}) ->
     @div class: 'tree-view-dialog overlay from-top', =>
-      @div class: 'block', =>
-        @label prompt, class: 'icon', outlet: 'promptText'
-        @subview 'miniEditor', new EditorView(mini: true)
-        @div class: 'error-message', outlet: 'errorMessage'
+      @label prompt, class: 'icon', outlet: 'promptText'
+      @subview 'miniEditor', new EditorView(mini: true)
+      @div class: 'error-message', outlet: 'errorMessage'
 
   initialize: ({initialPath, @onConfirm, select, iconClass} = {}) ->
     @promptText.addClass(iconClass) if iconClass
