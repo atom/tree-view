@@ -267,15 +267,15 @@ describe "TreeView", ->
       grandchild = child.entries.find('li:contains(sub-dir1)').view()
       grandchild.click()
 
-      expect(treeView.root.directory.getSubscriptionCount('contents-changed')).toBe 1
-      expect(child.directory.getSubscriptionCount('contents-changed')).toBe 1
-      expect(grandchild.directory.getSubscriptionCount('contents-changed')).toBe 1
+      expect(treeView.root.directory.directory.getSubscriptionCount('contents-changed')).toBe 1
+      expect(child.directory.directory.getSubscriptionCount('contents-changed')).toBe 1
+      expect(grandchild.directory.directory.getSubscriptionCount('contents-changed')).toBe 1
 
       treeView.root.click()
 
-      expect(treeView.root.directory.getSubscriptionCount('contents-changed')).toBe 0
-      expect(child.directory.getSubscriptionCount('contents-changed')).toBe 0
-      expect(grandchild.directory.getSubscriptionCount('contents-changed')).toBe 0
+      expect(treeView.root.directory.directory.getSubscriptionCount('contents-changed')).toBe 0
+      expect(child.directory.directory.getSubscriptionCount('contents-changed')).toBe 0
+      expect(grandchild.directory.directory.getSubscriptionCount('contents-changed')).toBe 0
 
   describe "when mouse down fires on a file or directory", ->
     it "selects the entry", ->
