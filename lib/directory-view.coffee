@@ -30,7 +30,7 @@ class DirectoryView extends View
         @addClass("status-#{status}") if status?
 
     @subscribe @directory, 'entry-removed', ({name}) =>
-      @entries.find("> .entry:contains('#{name}')").remove()
+      @entries.children(".entry:contains('#{name}')").remove()
 
     @subscribe @directory, 'entry-added', (entry, index) =>
       view = @createViewForEntry(entry)
