@@ -55,6 +55,9 @@ class Directory extends Model
 
     false
 
+  contains: (pathToCheck) ->
+    @directory.contains(pathToCheck)
+
   unwatch: ->
     if @watchSubscription?
       @watchSubscription.off()

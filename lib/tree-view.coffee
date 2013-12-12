@@ -173,8 +173,9 @@ class TreeView extends ScrollView
   entryForPath: (entryPath) ->
     fn = (bestMatchEntry, element) ->
       entry = $(element).view()
-      regex = new RegExp("^" + _.escapeRegExp(entry.getPath()))
-      if regex.test(entryPath) and entry.getPath().length > bestMatchEntry.getPath().length
+      if entry.getPath() is entryPath
+        entry
+      else if entry.getPath().length > bestMatchEntry.getPath().length and entry.directory?.contains(entryPath)
         entry
       else
         bestMatchEntry
