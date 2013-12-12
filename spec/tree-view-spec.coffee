@@ -715,7 +715,6 @@ describe "TreeView", ->
       treeView.root.unwatchEntries()
       activePane = atom.workspaceView.getActivePane()
       for item in (activePane?.getItems() or [])
-        spyOn(item, 'shouldPromptToSave').andReturn(false)
         activePane.destroyItem(item)
 
       success = false
