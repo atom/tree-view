@@ -76,8 +76,7 @@ class DirectoryView extends View
       if entry instanceof Directory
         @entries.append(new DirectoryView(directory: entry, isExpanded: false, project: @project, parent: @directory))
       else
-        file = File.createAsRoot(file: entry)
-        @entries.append(new FileView(file))
+        @entries.append(new FileView(File.createAsRoot(file: entry)))
     @append(@entries)
 
   toggleExpansion: ->
