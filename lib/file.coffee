@@ -39,7 +39,7 @@ class File extends Model
     repo = atom.project.getRepo()
     if repo?
       @subscribe repo, 'status-changed', (changedPath, status) =>
-        @updateStatus(repo) if changedPath is @getPath()
+        @updateStatus(repo) if changedPath is @path
       @subscribe repo, 'statuses-changed', =>
         @updateStatus(repo)
 
