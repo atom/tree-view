@@ -73,8 +73,9 @@ class Directory extends Model
     index = 0
     for entry in @directory.getEntries() when not @isPathIgnored(entry.path)
       name = entry.getBaseName()
-      newEntries.push([entry, index++]) if not @entries.hasOwnProperty(name)
+      newEntries.push([entry, index]) if not @entries.hasOwnProperty(name)
       delete removedEntries[name]
+      index++
 
     for name, entry of removedEntries
       @entries[name]?.destroy()
