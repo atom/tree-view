@@ -91,10 +91,7 @@ class Directory extends Model
 
   # Public: Perform a synchronous reload of the directory.
   reload: ->
-    unless @entries?
-      @getEntries()
-      return
-
+    @entries ?= {}
     newEntries = []
     removedEntries = _.clone(@entries)
     index = 0

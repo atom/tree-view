@@ -13,8 +13,6 @@ class DirectoryView extends View
       @ol class: 'entries list-tree', outlet: 'entries'
 
   initialize: ({@directory, isExpanded, isRoot} = {}) ->
-    if isExpanded then @expand() else @collapse()
-
     if @directory.symlink
       iconClass = 'icon-file-symlink-directory'
     else
@@ -33,7 +31,6 @@ class DirectoryView extends View
 
     @subscribe @directory, 'entry-removed', ({name}) =>
       @entries.find("> .entry:contains('#{name}')").remove()
-      @trigger 'tree-view:directory-modified'
 
     @subscribe @directory, 'entry-added', (entry, index) =>
       view = @createViewForEntry(entry)
@@ -42,6 +39,9 @@ class DirectoryView extends View
       else
         @entries.append(view)
 
+    if isExpanded then @expand() else @collapse()
+
+    @subscribe @directory, 'entry-removed entry-removed', =>
       @trigger 'tree-view:directory-modified'
 
   beforeRemove: ->
@@ -59,18 +59,13 @@ class DirectoryView extends View
   reload: ->
     @directory.reload() if @isExpanded
 
-  buildEntries: ->
-    @entries.empty()
-    for entry in @directory.getEntries()
-      @entries.append(@createViewForEntry(entry))
-
   toggleExpansion: ->
     if @isExpanded then @collapse() else @expand()
 
   expand: ->
     return if @isExpanded
     @addClass('expanded').removeClass('collapsed')
-    @buildEntries()
+    @directory.reload()
     @directory.watch()
     @deserializeEntryExpansionStates(@entryStates) if @entryStates?
     @isExpanded = true
