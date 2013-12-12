@@ -68,6 +68,10 @@ class Directory extends Model
       @subscribe(@watchSubscription)
 
   reload: ->
+    unless @entries?
+      @getEntries()
+      return
+
     newEntries = []
     removedEntries = _.clone(@entries) ? {}
     index = 0
