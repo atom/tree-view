@@ -980,13 +980,8 @@ describe "TreeView", ->
     temporaryFilePath = null
 
     beforeEach ->
+      atom.project.setPath(fs.absolute(temp.mkdirSync('tree-view')))
       temporaryFilePath = path.join(atom.project.getPath(), 'temporary')
-      if fs.existsSync(temporaryFilePath)
-        fs.removeSync(temporaryFilePath)
-        waits(20)
-
-    afterEach ->
-      fs.removeSync(temporaryFilePath)
 
     describe "when a file is added or removed in an expanded directory", ->
       it "updates the directory view to display the directory's new contents", ->
