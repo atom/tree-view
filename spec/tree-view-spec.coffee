@@ -685,7 +685,7 @@ describe "TreeView", ->
     beforeEach ->
       atom.packages.deactivatePackage('tree-view')
 
-      rootDirPath = path.join(fs.absolute(os.tmpdir()), 'atom-tests')
+      rootDirPath = fs.absolute(temp.mkdirSync('tree-view'))
 
       dirPath = path.join(rootDirPath, "test-dir")
       filePath = path.join(dirPath, "test-file.txt")
@@ -701,28 +701,6 @@ describe "TreeView", ->
       dirView = treeView.root.entries.find('.directory:contains(test-dir)').view()
       dirView.expand()
       fileView = treeView.find('.file:contains(test-file.txt)').view()
-
-    afterEach ->
-      # On Windows, you can not remove a watched directory/file, therefore we
-      # have to close the project before attempting to delete. Unfortunately,
-      # Pathwatcher's close function is also not synchronous. Once
-      # atom/node-pathwatcher#4 is implemented this should be alot cleaner.
-      treeView.root.unwatchEntries()
-      activePane = atom.workspaceView.getActivePane()
-      for item in (activePane?.getItems() or [])
-        activePane.destroyItem(item)
-
-      success = false
-      runs ->
-        retry = setInterval ->
-          try
-            fs.removeSync(rootDirPath)
-            success = true
-            clearInterval(retry)
-          catch e
-            success = false
-        , 50
-      waitsFor -> success
 
     describe "tree-view:add", ->
       addDialog = null
