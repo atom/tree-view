@@ -83,7 +83,7 @@ class Directory extends Model
 
     for [entry, index] in newEntries
       newEntry = @createEntry(entry)
-      @entries[name] = newEntry
+      @entries[newEntry.name] = newEntry
       @emit 'entry-added', newEntry, index
 
   createEntry: (entry) ->
