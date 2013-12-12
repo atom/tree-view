@@ -55,7 +55,11 @@ class DirectoryView extends View
     else
       new FileView(entry)
 
+  reload: ->
+    @directory.reload()
+
   buildEntries: ->
+    @entries.empty()
     for entry in @directory.getEntries()
       @entries.append(@createViewForEntry(entry))
 

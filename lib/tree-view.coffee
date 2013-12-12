@@ -302,7 +302,7 @@ class TreeView extends ScrollView
           else if endsWithDirectorySeparator
             fs.makeTreeSync(pathToCreate)
             dialog.cancel()
-            @entryForPath(pathToCreate).buildEntries()
+            @entryForPath(pathToCreate).reload()
             @selectEntryForPath(pathToCreate)
           else
             fs.writeFileSync(pathToCreate, "")

@@ -64,11 +64,10 @@ class Directory extends Model
 
   watch: ->
     unless @watchSubscription?
-      @watchSubscription = @directory.on 'contents-changed', =>
-        @updateEntries()
+      @watchSubscription = @directory.on 'contents-changed', => @reload()
       @subscribe(@watchSubscription)
 
-  updateEntries: ->
+  reload: ->
     newEntries = []
     removedEntries = _.clone(@entries) ? {}
     for entry, index in @directory.getEntries()
