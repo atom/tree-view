@@ -56,7 +56,7 @@ class DirectoryView extends View
       new FileView(entry)
 
   reload: ->
-    @directory.reload()
+    @directory.reload() if @isExpanded
 
   buildEntries: ->
     @entries.empty()
