@@ -20,11 +20,9 @@ class FileView extends View
         when 'binary'     then @fileName.addClass('icon-file-binary')
         when 'text'       then @fileName.addClass('icon-file-text')
 
-    @subscribe @file.$status.onValue (status) => @updateStatus(status)
-
-  updateStatus: (status) ->
-    @removeClass('status-ignored status-modified status-added')
-    @addClass("status-#{status}") if status?
+    @subscribe @file.$status.onValue (status) =>
+      @removeClass('status-ignored status-modified status-added')
+      @addClass("status-#{status}") if status?
 
   getPath: ->
     @file.getPath()
