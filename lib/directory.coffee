@@ -93,11 +93,10 @@ class Directory extends Model
       File.createAsRoot(file: entry)
 
   getEntries: ->
-    return _.values(@entries) if @entries?
-
-    @entries = {}
-    for entry in @directory.getEntries() when not @isPathIgnored(entry.path)
-      entry = @createEntry(entry)
-      @entries[entry.name] = entry
+    unless @entries?
+      @entries = {}
+      for entry in @directory.getEntries() when not @isPathIgnored(entry.path)
+        entry = @createEntry(entry)
+        @entries[entry.name] = entry
 
     _.values(@entries)
