@@ -38,12 +38,10 @@ describe "TreeView", ->
       subdir0 = rootEntries.find('> li:eq(0)')
       expect(subdir0).not.toHaveClass('expanded')
       expect(subdir0.find('.name')).toHaveText('dir1')
-      expect(subdir0.find('.entries')).toBeHidden()
 
       subdir2 = rootEntries.find('> li:eq(1)')
       expect(subdir2).not.toHaveClass('expanded')
       expect(subdir2.find('.name')).toHaveText('dir2')
-      expect(subdir2.find('.entries')).toBeHidden()
 
       expect(rootEntries.find('> .file:contains(tree-view.js)')).toExist()
       expect(rootEntries.find('> .file:contains(tree-view.txt)')).toExist()
@@ -237,16 +235,13 @@ describe "TreeView", ->
       subdir = treeView.root.find('.entries > li:contains(dir1)').view()
 
       expect(subdir).not.toHaveClass('expanded')
-      expect(subdir.find('.entries')).not.toExist()
 
       subdir.click()
 
       expect(subdir).toHaveClass('expanded')
-      expect(subdir.find('.entries')).toExist()
 
       subdir.click()
       expect(subdir).not.toHaveClass('expanded')
-      expect(subdir.find('.entries')).not.toExist()
 
     it "restores the expansion state of descendant directories", ->
       child = treeView.root.find('.entries > li:contains(dir1)').view()
@@ -256,14 +251,14 @@ describe "TreeView", ->
       grandchild.click()
 
       treeView.root.click()
-      expect(treeView.root.find('.entries')).not.toExist()
+      expect(treeView.root).not.toHaveClass('expanded')
       treeView.root.click()
 
       # previously expanded descendants remain expanded
       expect(treeView.root.find('> .entries > li:contains(dir1) > .entries > li:contains(sub-dir1) > .entries').length).toBe 1
 
       # collapsed descendants remain collapsed
-      expect(treeView.root.find('> .entries > li:contains(dir2) > .entries')).not.toExist()
+      expect(treeView.root.find('> .entries > li:contains(dir2) > .entries')).not.toHaveClass('expanded')
 
     it "when collapsing a directory, removes change subscriptions from the collapsed directory and its descendants", ->
       child = treeView.root.entries.find('li:contains(dir1)').view()
