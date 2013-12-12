@@ -37,10 +37,10 @@ class DirectoryView extends View
 
     @subscribe @directory, 'entry-added', (entry, index) =>
       view = @createViewForEntry(entry)
-      if index is 0
-        @entries.prepend(view)
-      else
+      if index < @entries.children().length
         @entries.children().eq(index).before(view)
+      else
+        @entries.append(view)
 
       @trigger 'tree-view:directory-modified'
 
