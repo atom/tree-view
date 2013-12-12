@@ -80,7 +80,6 @@ class TreeView extends ScrollView
     width: @width()
 
   deactivate: ->
-    @root?.unwatchEntries()
     @remove()
 
   toggle: ->

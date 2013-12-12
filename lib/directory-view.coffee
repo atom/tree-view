@@ -70,7 +70,7 @@ class DirectoryView extends View
     return if @isExpanded
     @addClass('expanded').removeClass('collapsed')
     @buildEntries()
-    @watchEntries()
+    @directory.watch()
     @deserializeEntryExpansionStates(@entryStates) if @entryStates?
     @isExpanded = true
     false
@@ -78,15 +78,9 @@ class DirectoryView extends View
   collapse: ->
     @entryStates = @serializeEntryExpansionStates()
     @removeClass('expanded').addClass('collapsed')
-    @unwatchEntries()
+    @directory.unwatch()
     @entries.empty()
     @isExpanded = false
-
-  watchEntries: ->
-    @directory.watch()
-
-  unwatchEntries: ->
-    @directory.unwatch()
 
   serializeEntryExpansionStates: ->
     entryStates = {}

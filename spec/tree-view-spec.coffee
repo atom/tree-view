@@ -1087,13 +1087,6 @@ describe "TreeView", ->
       treeView.updateRoot()
       treeView.root.entries.find('.directory:contains(dir)').view().expand()
 
-    afterEach ->
-      # On Windows, you can not remove a watched directory/file, therefore we
-      # have to close the project before attempting to delete. Unfortunately,
-      # Pathwatcher's close function is also not synchronous. Once
-      # atom/node-pathwatcher#4 is implemented this should be alot cleaner.
-      treeView.root.unwatchEntries()
-
     describe "when the project is the repository root", ->
       it "adds a custom style", ->
         expect(treeView.find('.icon-repo').length).toBe 1
