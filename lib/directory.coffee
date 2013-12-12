@@ -9,10 +9,10 @@ class Directory extends Model
   @properties
     status: null # Either null, 'added', 'ignored', or 'modified'
 
-  @::accessor 'name',      get: -> @directory.getBaseName()
-  @::accessor 'path',      get: -> @directory.getPath()
-  @::accessor 'submodule', get: -> atom.project.getRepo()?.isSubmodule(@path)
-  @::accessor 'symlink',   get: -> @directory.symlink
+  @::accessor 'name', -> @directory.getBaseName()
+  @::accessor 'path', -> @directory.getPath()
+  @::accessor 'submodule', -> atom.project.getRepo()?.isSubmodule(@path)
+  @::accessor 'symlink', -> @directory.symlink
 
   # Private: Called by telepath.
   created: ->

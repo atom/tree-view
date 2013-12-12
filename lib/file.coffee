@@ -7,11 +7,10 @@ class File extends Model
   @properties
     status: null # Either null, 'added', 'ignored', or 'modified'
 
-  @::accessor 'name',    get: -> @file.getBaseName()
-  @::accessor 'path',    get: -> @file.getPath()
-  @::accessor 'symlink', get: -> @file.symlink
-
-  @::accessor 'type', get: ->
+  @::accessor 'name', -> @file.getBaseName()
+  @::accessor 'path', -> @file.getPath()
+  @::accessor 'symlink', -> @file.symlink
+  @::accessor 'type', ->
     extension = path.extname(@path)
     if fs.isReadmePath(@path)
       'readme'
