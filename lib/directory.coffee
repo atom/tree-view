@@ -96,7 +96,7 @@ class Directory extends Model
       return
 
     newEntries = []
-    removedEntries = _.clone(@entries) ? {}
+    removedEntries = _.clone(@entries)
     index = 0
     for entry in @directory.getEntries() when not @isPathIgnored(entry.path)
       name = entry.getBaseName()
