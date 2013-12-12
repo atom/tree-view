@@ -15,22 +15,27 @@ class Directory extends Model
   @::accessor 'submodule',
     get: -> atom.project.getRepo()?.isSubmodule(@path)
 
+  # Private: Called by telepath.
   created: ->
     repo = atom.project.getRepo()
     if repo?
       @subscribeToRepo(repo)
       @updateStatus(repo)
 
+  # Private: Called by telepath.
   destroyed: ->
     @unwatch()
     @unsubscribe()
 
+  # Private: Subscribe to the given repo for changes to the Git status of this
+  # directory.
   subscribeToRepo: (repo) ->
     @subscribe repo, 'status-changed', (changedPath, status) =>
       @updateStatus(repo) if changedPath.indexOf("#{@path}#{path.sep}") is 0
     @subscribe repo, 'statuses-changed', =>
       @updateStatus(repo)
 
+  # Private: Update the status property of this directory using the repo.
   updateStatus: (repo) ->
     newStatus = null
     if repo.isPathIgnored(@path)
@@ -55,21 +60,35 @@ class Directory extends Model
 
     false
 
+  # Private: Create a new model for the given atom.File or atom.Directory entry.
+  createEntry: (entry) ->
+    if entry.getEntries?
+      Directory.createAsRoot(directory: entry)
+    else
+      File.createAsRoot(file: entry)
+
+  # Public: Does this directory contain the given path?
+  #
+  # See atom.Directory::contains for more details.
   contains: (pathToCheck) ->
     @directory.contains(pathToCheck)
 
+  # Public: Stop watching this directory for changes.
   unwatch: ->
     if @watchSubscription?
       @watchSubscription.off()
       @watchSubscription = null
-      entry.unwatch?() for name, entry of @entries ? {}
       @entries = null
 
+  # Public: Watch this directory for changes.
+  #
+  # The changes will be emitted as 'entry-added' and 'entry-removed' events.
   watch: ->
     unless @watchSubscription?
       @watchSubscription = @directory.on 'contents-changed', => @reload()
       @subscribe(@watchSubscription)
 
+  # Public: Perform a synchronous reload of the directory.
   reload: ->
     unless @entries?
       @getEntries()
@@ -94,12 +113,9 @@ class Directory extends Model
       @entries[newEntry.name] = newEntry
       @emit 'entry-added', newEntry, index
 
-  createEntry: (entry) ->
-    if entry.getEntries?
-      Directory.createAsRoot(directory: entry)
-    else
-      File.createAsRoot(file: entry)
-
+  # Public: Get all the file and directory entries in this directory.
+  #
+  # Returns a non-null array of File and Directory objects.
   getEntries: ->
     unless @entries?
       @entries = {}
