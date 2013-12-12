@@ -7,12 +7,12 @@ class FileView extends View
       @span class: 'name icon', outlet: 'fileName'
 
   initialize: (@file) ->
-    @fileName.text(@file.getName())
+    @fileName.text(@file.name)
 
-    if @file.isSymlink()
+    if @file.symlink
       @fileName.addClass('icon-file-symlink-file')
     else
-      switch @file.getType()
+      switch @file.type
         when 'readme'     then @fileName.addClass('icon-book')
         when 'compressed' then @fileName.addClass('icon-file-zip')
         when 'image'      then @fileName.addClass('icon-file-media')
@@ -24,5 +24,4 @@ class FileView extends View
       @removeClass('status-ignored status-modified status-added')
       @addClass("status-#{status}") if status?
 
-  getPath: ->
-    @file.getPath()
+  getPath: -> @file.path
