@@ -5,7 +5,7 @@ path = require 'path'
 module.exports =
 class File extends Model
   @properties
-    status: null
+    status: null # Either null, 'added', 'ignored', or 'modified'
 
   @::accessor 'name', get: -> @file.getBaseName()
   @::accessor 'path', get: -> @file.getPath()
