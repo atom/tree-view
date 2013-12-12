@@ -32,6 +32,9 @@ class File extends Model
       @subscribeToRepo(repo)
       @updateStatus(repo)
 
+  destroyed: ->
+    @unsubscribe()
+
   subscribeToRepo: ->
     repo = atom.project.getRepo()
     if repo?
@@ -52,6 +55,3 @@ class File extends Model
         newStatus = 'added'
 
     @status = newStatus if newStatus isnt @status
-
-  destroyed: ->
-    @unsubscribe()
