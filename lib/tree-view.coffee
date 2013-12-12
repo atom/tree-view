@@ -170,19 +170,19 @@ class TreeView extends ScrollView
         @selectEntry(entry)
         @scrollToEntry(entry, centeringOffset)
 
-  entryForPath: (path) ->
+  entryForPath: (entryPath) ->
     fn = (bestMatchEntry, element) ->
       entry = $(element).view()
       regex = new RegExp("^" + _.escapeRegExp(entry.getPath()))
-      if regex.test(path) and entry.getPath().length > bestMatchEntry.getPath().length
+      if regex.test(entryPath) and entry.getPath().length > bestMatchEntry.getPath().length
         entry
       else
         bestMatchEntry
 
     @list.find(".entry").toArray().reduce(fn, @root)
 
-  selectEntryForPath: (path) ->
-    @selectEntry(@entryForPath(path))
+  selectEntryForPath: (entryPath) ->
+    @selectEntry(@entryForPath(entryPath))
 
   moveDown: ->
     selectedEntry = @selectedEntry()
