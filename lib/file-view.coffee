@@ -13,11 +13,11 @@ class FileView extends View
       @fileName.addClass('icon-file-symlink-file')
     else
       switch @file.type
-        when 'readme'     then @fileName.addClass('icon-book')
+        when 'binary'     then @fileName.addClass('icon-file-binary')
         when 'compressed' then @fileName.addClass('icon-file-zip')
         when 'image'      then @fileName.addClass('icon-file-media')
         when 'pdf'        then @fileName.addClass('icon-file-pdf')
-        when 'binary'     then @fileName.addClass('icon-file-binary')
+        when 'readme'     then @fileName.addClass('icon-book')
         when 'text'       then @fileName.addClass('icon-file-text')
 
     @subscribe @file.$status.onValue (status) =>
