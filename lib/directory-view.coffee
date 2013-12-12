@@ -11,7 +11,7 @@ class DirectoryView extends View
       @div outlet: 'header', class: 'header list-item', =>
         @span class: 'name icon', outlet: 'directoryName'
 
-  initialize: ({@directory, isExpanded, parent} = {}) ->
+  initialize: ({@directory, isExpanded, isRoot} = {}) ->
     @entries = null
 
     if isExpanded then @expand() else @collapse()
@@ -20,14 +20,14 @@ class DirectoryView extends View
       iconClass = 'icon-file-symlink-directory'
     else
       iconClass = 'icon-file-directory'
-      if parent?
-        iconClass = 'icon-file-submodule' if @directory.submodule
-      else
+      if isRoot?
         iconClass = 'icon-repo' if atom.project.getRepo()?.isProjectAtRoot()
+      else
+        iconClass = 'icon-file-submodule' if @directory.submodule
     @directoryName.addClass(iconClass)
     @directoryName.text(@directory.name)
 
-    if parent?
+    unless isRoot?
       @subscribe @directory.$status.onValue (status) =>
         @removeClass('status-ignored status-modified status-added')
         @addClass("status-#{status}") if status?
@@ -43,7 +43,7 @@ class DirectoryView extends View
     @entries = $$ -> @ol class: 'entries list-tree'
     for entry in @directory.getEntries()
       if entry instanceof Directory
-        @entries.append(new DirectoryView(directory: entry, isExpanded: false, parent: @directory))
+        @entries.append(new DirectoryView(directory: entry, isExpanded: false))
       else
         @entries.append(new FileView(entry))
     @append(@entries)

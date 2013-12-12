@@ -138,7 +138,7 @@ class TreeView extends ScrollView
 
     if rootDirectory = atom.project.getRootDirectory()
       directory = Directory.createAsRoot(directory: rootDirectory)
-      @root = new DirectoryView({directory, isExpanded: true})
+      @root = new DirectoryView({directory, isExpanded: true, isRoot: true})
       @list.append(@root)
     else
       @root = null
