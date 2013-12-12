@@ -49,6 +49,7 @@ class Directory extends Model
 
     @status = newStatus if newStatus isnt @status
 
+  # Private: Is the given path ignored?
   isPathIgnored: (filePath) ->
     if atom.config.get('tree-view.hideVcsIgnoredFiles')
       repo = atom.project.getRepo()
