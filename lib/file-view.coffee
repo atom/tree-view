@@ -24,6 +24,8 @@ class FileView extends View
       @removeClass('status-ignored status-modified status-added')
       @addClass("status-#{status}") if status?
 
-  getPath: -> @file.path
+  getPath: ->
+    @file.path
 
-  beforeRemove: -> @file.destroy()
+  beforeRemove: ->
+    @file.destroy()

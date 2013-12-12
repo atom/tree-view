@@ -44,7 +44,8 @@ class DirectoryView extends View
 
       @trigger 'tree-view:directory-modified'
 
-  beforeRemove: -> @directory.destroy()
+  beforeRemove: ->
+    @directory.destroy()
 
   getPath: ->
     @directory.path
