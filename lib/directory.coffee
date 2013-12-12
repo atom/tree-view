@@ -70,10 +70,10 @@ class Directory extends Model
   reload: ->
     newEntries = []
     removedEntries = _.clone(@entries) ? {}
-    for entry, index in @directory.getEntries()
+    index = 0
+    for entry in @directory.getEntries() when not @isPathIgnored(entry.path)
       name = entry.getBaseName()
-      if not @entries.hasOwnProperty(name) and not @isPathIgnored(entry.path)
-        newEntries.push([entry, index])
+      newEntries.push([entry, index++]) if not @entries.hasOwnProperty(name)
       delete removedEntries[name]
 
     for name, entry of removedEntries
