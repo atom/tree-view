@@ -38,12 +38,12 @@ describe "TreeView", ->
       subdir0 = rootEntries.find('> li:eq(0)')
       expect(subdir0).not.toHaveClass('expanded')
       expect(subdir0.find('.name')).toHaveText('dir1')
-      expect(subdir0.find('.entries')).not.toExist()
+      expect(subdir0.find('.entries')).toBeHidden()
 
       subdir2 = rootEntries.find('> li:eq(1)')
       expect(subdir2).not.toHaveClass('expanded')
       expect(subdir2.find('.name')).toHaveText('dir2')
-      expect(subdir2.find('.entries')).not.toExist()
+      expect(subdir2.find('.entries')).toBeHidden()
 
       expect(rootEntries.find('> .file:contains(tree-view.js)')).toExist()
       expect(rootEntries.find('> .file:contains(tree-view.txt)')).toExist()
