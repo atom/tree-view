@@ -780,7 +780,14 @@ describe "TreeView", ->
               expect(atom.workspaceView.getActiveView().isFocused).toBeFalsy()
               expect(dirView.find('.directory.selected:contains(new)').length).toBe(1)
 
-            it "selects the created directory", ->
+            it "selects the created directory and does not change the expansion state of existing directories", ->
+              expandedPath = path.join(dirPath, 'expanded-dir')
+              fs.makeTreeSync(expandedPath)
+              treeView.entryForPath(dirPath).expand()
+              treeView.entryForPath(dirPath).reload()
+              expandedView = treeView.entryForPath(expandedPath)
+              expandedView.expand()
+
               treeView.attachToDom()
               newPath = path.join(dirPath, "new2/")
               addDialog.miniEditor.insertText("new2/")
@@ -792,6 +799,7 @@ describe "TreeView", ->
               expect(treeView.find(".tree-view")).toMatchSelector(':focus')
               expect(atom.workspaceView.getActiveView().isFocused).toBeFalsy()
               expect(dirView.find('.directory.selected:contains(new2)').length).toBe(1)
+              expect(treeView.entryForPath(expandedPath).isExpanded).toBeTruthy()
 
           describe "when a file or directory already exists at the given path", ->
             it "shows an error message and does not close the dialog", ->
