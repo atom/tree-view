@@ -9,7 +9,6 @@
   },
   "private": true,
   "dependencies": {
-    "temp": "~0.6.0",
-    "emissary": "~0.28.0"
+    "temp": "~0.6.0"
   }
 }

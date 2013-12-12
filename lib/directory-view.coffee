@@ -2,6 +2,7 @@ path = require 'path'
 
 {_, $, $$, Directory, fs, View} = require 'atom'
 FileView = require './file-view'
+File = require './file'
 
 module.exports =
 class DirectoryView extends View
@@ -75,7 +76,8 @@ class DirectoryView extends View
       if entry instanceof Directory
         @entries.append(new DirectoryView(directory: entry, isExpanded: false, project: @project, parent: @directory))
       else
-        @entries.append(new FileView(file: entry, project: @project))
+        file = File.createAsRoot(file: entry)
+        @entries.append(new FileView(file))
     @append(@entries)
 
   toggleExpansion: ->
