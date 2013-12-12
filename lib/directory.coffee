@@ -1,6 +1,6 @@
 path = require 'path'
 
-{Model} = require 'atom'
+{_, Model} = require 'atom'
 
 File = require './file'
 
@@ -22,6 +22,7 @@ class Directory extends Model
       @updateStatus(repo)
 
   destroyed: ->
+    @unwatch()
     @unsubscribe()
 
   subscribeToRepo: (repo) ->
@@ -54,12 +55,50 @@ class Directory extends Model
 
     false
 
-  getEntries: ->
-    entries = []
-    for entry in @directory.getEntries() when not @isPathIgnored(entry.path)
-      if entry.getEntries?
-        entries.push(Directory.createAsRoot(directory: entry))
-      else
-        entries.push(File.createAsRoot(file: entry))
+  unwatch: ->
+    if @watchSubscription?
+      @watchSubscription.off()
+      @watchSubscription = null
+      entry.unwatch?() for name, entry of @entries ? {}
+      @entries = null
 
-    entries
+  watch: ->
+    unless @watchSubscription?
+      @watchSubscription = @directory.on 'contents-changed', =>
+        @updateEntries()
+      @subscribe(@watchSubscription)
+
+  updateEntries: ->
+    newEntries = []
+    removedEntries = _.clone(@entries) ? {}
+    for entry, index in @directory.getEntries()
+      name = entry.getBaseName()
+      if not @entries.hasOwnProperty(name) and not @isPathIgnored(entry.path)
+        newEntries.push([entry, index])
+      delete removedEntries[name]
+
+    for name, entry of removedEntries
+      @entries[name]?.destroy()
+      delete @entries[name]
+      @emit 'entry-removed', entry
+
+    for [entry, index] in newEntries
+      newEntry = @createEntry(entry)
+      @entries[name] = newEntry
+      @emit 'entry-added', newEntry, index
+
+  createEntry: (entry) ->
+    if entry.getEntries?
+      Directory.createAsRoot(directory: entry)
+    else
+      File.createAsRoot(file: entry)
+
+  getEntries: ->
+    return _.values(@entries) if @entries?
+
+    @entries = {}
+    for entry in @directory.getEntries() when not @isPathIgnored(entry.path)
+      entry = @createEntry(entry)
+      @entries[entry.name] = entry
+
+    _.values(@entries)

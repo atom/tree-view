@@ -10,10 +10,9 @@ class DirectoryView extends View
     @li class: 'directory entry list-nested-item', =>
       @div outlet: 'header', class: 'header list-item', =>
         @span class: 'name icon', outlet: 'directoryName'
+      @ol class: 'entries list-tree', outlet: 'entries'
 
   initialize: ({@directory, isExpanded, isRoot} = {}) ->
-    @entries = null
-
     if isExpanded then @expand() else @collapse()
 
     if @directory.symlink
@@ -32,21 +31,33 @@ class DirectoryView extends View
         @removeClass('status-ignored status-modified status-added')
         @addClass("status-#{status}") if status?
 
+    @subscribe @directory, 'entry-removed', ({name}) =>
+      @entries.find("> .entry:contains('#{name}')").remove()
+      @trigger 'tree-view:directory-modified'
+
+    @subscribe @directory, 'entry-added', (entry, index) =>
+      view = @createViewForEntry(entry)
+      if index is 0
+        @entries.prepend(view)
+      else
+        @entries.children().eq(index).before(view)
+
+      @trigger 'tree-view:directory-modified'
+
   beforeRemove: -> @directory.destroy()
 
   getPath: ->
     @directory.path
 
+  createViewForEntry: (entry) ->
+    if entry instanceof Directory
+      new DirectoryView(directory: entry)
+    else
+      new FileView(entry)
+
   buildEntries: ->
-    @unwatchDescendantEntries()
-    @entries?.remove()
-    @entries = $$ -> @ol class: 'entries list-tree'
     for entry in @directory.getEntries()
-      if entry instanceof Directory
-        @entries.append(new DirectoryView(directory: entry, isExpanded: false))
-      else
-        @entries.append(new FileView(entry))
-    @append(@entries)
+      @entries.append(@createViewForEntry(entry))
 
   toggleExpansion: ->
     if @isExpanded then @collapse() else @expand()
@@ -64,28 +75,20 @@ class DirectoryView extends View
     @entryStates = @serializeEntryExpansionStates()
     @removeClass('expanded').addClass('collapsed')
     @unwatchEntries()
-    @entries?.remove()
-    @entries = null
+    @entries.empty()
     @isExpanded = false
 
   watchEntries: ->
-    @directory.on "contents-changed.tree-view", =>
-      @buildEntries()
-      @trigger "tree-view:directory-modified"
+    @directory.watch()
 
   unwatchEntries: ->
-    @unwatchDescendantEntries()
-    @directory.off ".tree-view"
-
-  unwatchDescendantEntries: ->
-    @find('.expanded.directory').each ->
-      $(this).view().unwatchEntries()
+    @directory.unwatch()
 
   serializeEntryExpansionStates: ->
     entryStates = {}
     @entries?.find('> .directory.expanded').each ->
       view = $(this).view()
-      entryStates[view.directory.getBaseName()] = view.serializeEntryExpansionStates()
+      entryStates[view.directory.name] = view.serializeEntryExpansionStates()
     entryStates
 
   deserializeEntryExpansionStates: (entryStates) ->
