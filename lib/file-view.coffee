@@ -25,3 +25,5 @@ class FileView extends View
       @addClass("status-#{status}") if status?
 
   getPath: -> @file.path
+
+  beforeRemove: -> @file.destroy()

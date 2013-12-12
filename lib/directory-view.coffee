@@ -1,82 +1,51 @@
-path = require 'path'
+{$, $$, View} = require 'atom'
 
-{_, $, $$, Directory, fs, View} = require 'atom'
+Directory = require './directory'
 FileView = require './file-view'
 File = require './file'
 
 module.exports =
 class DirectoryView extends View
-  @content: ({directory, isExpanded} = {}) ->
-    @li class: "directory entry list-nested-item #{if isExpanded then '' else 'collapsed'}", =>
+  @content: ->
+    @li class: 'directory entry list-nested-item', =>
       @div outlet: 'header', class: 'header list-item', =>
-        @span directory.getBaseName(), class: 'name icon', outlet: 'directoryName'
+        @span class: 'name icon', outlet: 'directoryName'
 
-  directory: null
-  entries: null
-  header: null
-  project: null
+  initialize: ({@directory, isExpanded, parent} = {}) ->
+    @entries = null
 
-  initialize: ({@directory, isExpanded, @project, parent} = {}) ->
-    @expand() if isExpanded
+    if isExpanded then @expand() else @collapse()
 
     if @directory.symlink
       iconClass = 'icon-file-symlink-directory'
     else
       iconClass = 'icon-file-directory'
-
-    repo = @project.getRepo()
-    if repo?
-      if parent
-        if repo.isSubmodule(@getPath())
-          iconClass = 'icon-file-submodule'
-        else
-          @subscribe repo, 'status-changed', (p, status) =>
-            @updateStatus() if p.indexOf("#{@getPath()}#{path.sep}") is 0
-          @subscribe repo, 'statuses-changed', =>
-            @updateStatus()
-          @updateStatus()
+      if parent?
+        iconClass = 'icon-file-submodule' if @directory.submodule
       else
-        iconClass = 'icon-repo' if @project.getRepo()?.isProjectAtRoot()
-
+        iconClass = 'icon-repo' if atom.project.getRepo()?.isProjectAtRoot()
     @directoryName.addClass(iconClass)
+    @directoryName.text(@directory.name)
 
-  updateStatus: ->
-    @removeClass('status-ignored status-modified status-added')
-    dirPath = @directory.getPath()
-    repo = @project.getRepo()
-    if repo.isPathIgnored(dirPath)
-      @addClass('status-ignored')
-    else
-      status = repo.getDirectoryStatus(dirPath)
-      if repo.isStatusModified(status)
-        @addClass('status-modified')
-      else if repo.isStatusNew(status)
-        @addClass('status-added')
+    if parent?
+      @subscribe @directory.$status.onValue (status) =>
+        @removeClass('status-ignored status-modified status-added')
+        @addClass("status-#{status}") if status?
+
+  beforeRemove: -> @directory.destroy()
 
   getPath: ->
     @directory.path
-
-  isPathIgnored: (filePath) ->
-    if atom.config.get('tree-view.hideVcsIgnoredFiles')
-      repo = @project.getRepo()
-      return true if repo? and repo.isProjectAtRoot() and repo.isPathIgnored(filePath)
-
-    if atom.config.get('tree-view.hideIgnoredNames')
-      ignoredNames = atom.config.get('core.ignoredNames') ? []
-      return true if _.contains(ignoredNames, path.basename(filePath))
-
-    false
 
   buildEntries: ->
     @unwatchDescendantEntries()
     @entries?.remove()
     @entries = $$ -> @ol class: 'entries list-tree'
     for entry in @directory.getEntries()
-      continue if @isPathIgnored(entry.path)
       if entry instanceof Directory
-        @entries.append(new DirectoryView(directory: entry, isExpanded: false, project: @project, parent: @directory))
+        @entries.append(new DirectoryView(directory: entry, isExpanded: false, parent: @directory))
       else
-        @entries.append(new FileView(File.createAsRoot(file: entry)))
+        @entries.append(new FileView(entry))
     @append(@entries)
 
   toggleExpansion: ->
@@ -95,7 +64,7 @@ class DirectoryView extends View
     @entryStates = @serializeEntryExpansionStates()
     @removeClass('expanded').addClass('collapsed')
     @unwatchEntries()
-    @entries.remove()
+    @entries?.remove()
     @entries = null
     @isExpanded = false
 
