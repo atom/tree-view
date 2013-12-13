@@ -164,12 +164,10 @@ describe "TreeView", ->
           expect(treeView).toBeHidden()
 
       describe "when the tree view is not focused", ->
-        it "shifts focus to the tree view", ->
-          atom.workspaceView.openSync() # When we call focus below, we want an editor to become focused
-          atom.workspaceView.focus()
+        it "hides the tree view", ->
+          treeView.focus()
           atom.workspaceView.trigger 'tree-view:toggle'
-          expect(treeView).toBeVisible()
-          expect(treeView.list).toMatchSelector(':focus')
+          expect(treeView).toBeHidden()
 
     describe "when the tree view is hidden", ->
       it "shows and focuses the tree view", ->
@@ -242,7 +240,7 @@ describe "TreeView", ->
       treeView.focus()
       expect(treeView.list).toMatchSelector(':focus')
       treeView.trigger 'tool-panel:unfocus'
-      expect(treeView).not.toBeVisible()
+      expect(treeView).toBeVisible()
       expect(treeView.list).not.toMatchSelector(':focus')
       expect(atom.workspaceView.getActiveView().isFocused).toBeTruthy()
 
