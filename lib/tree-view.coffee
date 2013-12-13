@@ -3,7 +3,9 @@ shell = require 'shell'
 
 {_, $, fs, ScrollView, View} = require 'atom'
 
-Dialog = require './dialog'
+AddDialog = null  # Defer requiring until actually needed
+MoveDialog = null # Defer requiring until actually needed
+
 Directory = require './directory'
 DirectoryView = require './directory-view'
 File = require './file'
@@ -249,37 +251,9 @@ class TreeView extends ScrollView
     entry = @selectedEntry()
     return unless entry and entry isnt @root
     oldPath = entry.getPath()
-    if entry instanceof FileView
-      prompt = "Enter the new path for the file."
-    else
-      prompt = "Enter the new path for the directory."
 
-    dialog = new Dialog
-      prompt: prompt
-      initialPath: atom.project.relativize(oldPath)
-      select: true
-      iconClass: 'icon-arrow-right'
-      onConfirm: (newPath) =>
-        newPath = atom.project.resolve(newPath)
-        if oldPath is newPath
-          dialog.close()
-          return
-
-        if fs.existsSync(newPath)
-          dialog.showError("'#{newPath}' already exists. Try a different path.")
-          return
-
-        directoryPath = path.dirname(newPath)
-        try
-          fs.makeTreeSync(directoryPath) unless fs.existsSync(directoryPath)
-          fs.moveSync(oldPath, newPath)
-          if repo = atom.project.getRepo()
-            repo.getPathStatus(oldPath)
-            repo.getPathStatus(newPath)
-          dialog.close()
-        catch error
-          dialog.showError("#{error.message} Try a different path.")
-
+    MoveDialog ?= require './move-dialog'
+    dialog = new MoveDialog(oldPath)
     dialog.attach()
 
   removeSelectedEntry: ->
@@ -298,41 +272,14 @@ class TreeView extends ScrollView
   add: ->
     selectedEntry = @selectedEntry() or @root
     selectedPath = selectedEntry.getPath()
-    directoryPath = if fs.isFileSync(selectedPath) then path.dirname(selectedPath) else selectedPath
-    relativeDirectoryPath = atom.project.relativize(directoryPath)
-    relativeDirectoryPath += '/' if relativeDirectoryPath.length > 0
 
-    dialog = new Dialog
-      prompt: "Enter the path for the new file/directory. Directories end with a '/'."
-      initialPath: relativeDirectoryPath
-      select: false
-      iconClass: 'icon-file-directory-create'
-
-      onConfirm: (relativePath) =>
-        endsWithDirectorySeparator = /\/$/.test(relativePath)
-        pathToCreate = atom.project.resolve(relativePath)
-        try
-          if fs.existsSync(pathToCreate)
-            pathType = if fs.isFileSync(pathToCreate) then "file" else "directory"
-            dialog.showError("'#{pathToCreate}' already exists. Try a different path.")
-          else if endsWithDirectorySeparator
-            fs.makeTreeSync(pathToCreate)
-            dialog.cancel()
-            @entryForPath(pathToCreate).reload()
-            @selectEntryForPath(pathToCreate)
-          else
-            fs.writeFileSync(pathToCreate, "")
-            atom.project.getRepo()?.getPathStatus(pathToCreate)
-            atom.workspaceView.open(pathToCreate)
-            dialog.close()
-        catch error
-          dialog.showError("#{error.message} Try a different path.")
-
-    dialog.miniEditor.getBuffer().on 'changed', =>
-      if /\/$/.test(dialog.miniEditor.getText())
-        dialog.promptText.removeClass('icon-file-add').addClass('icon-file-directory-create')
-      else
-        dialog.promptText.removeClass('icon-file-directory-create').addClass('icon-file-add')
+    AddDialog ?= require './add-dialog'
+    dialog = new AddDialog(selectedPath)
+    dialog.on 'directory-created', (event, createdPath) =>
+      @entryForPath(createdPath).reload()
+      @selectEntryForPath(createdPath)
+    dialog.on 'file-created', (event, createdPath) ->
+      atom.workspaceView.open(createdPath)
 
     dialog.attach()
 
