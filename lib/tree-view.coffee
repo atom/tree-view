@@ -1,7 +1,7 @@
 path = require 'path'
 shell = require 'shell'
 
-{_, $, fs, ScrollView, View} = require 'atom'
+{_, $, fs, ScrollView} = require 'atom'
 
 AddDialog = null  # Defer requiring until actually needed
 MoveDialog = null # Defer requiring until actually needed
@@ -288,8 +288,9 @@ class TreeView extends ScrollView
     @list.find('.selected')?.view()
 
   selectEntry: (entry) ->
-    return false unless entry?.get(0)
-    entry = entry.view() unless entry instanceof View
+    entry = entry?.view()
+    return false unless entry?
+
     @selectedPath = entry.getPath()
     @deselect()
     entry.addClass('selected')
