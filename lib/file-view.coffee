@@ -1,56 +1,31 @@
-{$, fs, View} = require 'atom'
-path = require 'path'
+{View} = require 'atom'
 
 module.exports =
 class FileView extends View
-
-  @content: ({file} = {}) ->
+  @content: ->
     @li class: 'file entry list-item', =>
-      @span file.getBaseName(), class: 'name icon', outlet: 'fileName'
+      @span class: 'name icon', outlet: 'fileName'
 
-  file: null
+  initialize: (@file) ->
+    @fileName.text(@file.name)
 
-  initialize: ({@file, @project} = {}) ->
     if @file.symlink
       @fileName.addClass('icon-file-symlink-file')
     else
-      extension = path.extname(@getPath())
-      if fs.isReadmePath(@getPath())
-        @fileName.addClass('icon-book')
-      else if fs.isCompressedExtension(extension)
-        @fileName.addClass('icon-file-zip')
-      else if fs.isImageExtension(extension)
-        @fileName.addClass('icon-file-media')
-      else if fs.isPdfExtension(extension)
-        @fileName.addClass('icon-file-pdf')
-      else if fs.isBinaryExtension(extension)
-        @fileName.addClass('icon-file-binary')
-      else
-        @fileName.addClass('icon-file-text')
+      switch @file.type
+        when 'binary'     then @fileName.addClass('icon-file-binary')
+        when 'compressed' then @fileName.addClass('icon-file-zip')
+        when 'image'      then @fileName.addClass('icon-file-media')
+        when 'pdf'        then @fileName.addClass('icon-file-pdf')
+        when 'readme'     then @fileName.addClass('icon-book')
+        when 'text'       then @fileName.addClass('icon-file-text')
 
-    repo = @project.getRepo()
-    if repo?
-      @subscribe repo, 'status-changed', (changedPath, status) =>
-        @updateStatus() if changedPath is @getPath()
-      @subscribe repo, 'statuses-changed', =>
-        @updateStatus()
-
-    @updateStatus()
-
-  updateStatus: ->
-    @removeClass('status-ignored status-modified status-added')
-    repo = @project.getRepo()
-    return unless repo?
-
-    filePath = @getPath()
-    if repo.isPathIgnored(filePath)
-      @addClass('status-ignored')
-    else
-      status = repo.statuses[filePath]
-      if repo.isStatusModified(status)
-        @addClass('status-modified')
-      else if repo.isStatusNew(status)
-        @addClass('status-added')
+    @subscribe @file.$status.onValue (status) =>
+      @removeClass('status-ignored status-modified status-added')
+      @addClass("status-#{status}") if status?
 
   getPath: ->
     @file.path
+
+  beforeRemove: ->
+    @file.destroy()

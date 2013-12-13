@@ -38,12 +38,10 @@ describe "TreeView", ->
       subdir0 = rootEntries.find('> li:eq(0)')
       expect(subdir0).not.toHaveClass('expanded')
       expect(subdir0.find('.name')).toHaveText('dir1')
-      expect(subdir0.find('.entries')).not.toExist()
 
       subdir2 = rootEntries.find('> li:eq(1)')
       expect(subdir2).not.toHaveClass('expanded')
       expect(subdir2.find('.name')).toHaveText('dir2')
-      expect(subdir2.find('.entries')).not.toExist()
 
       expect(rootEntries.find('> .file:contains(tree-view.js)')).toExist()
       expect(rootEntries.find('> .file:contains(tree-view.txt)')).toExist()
@@ -237,16 +235,13 @@ describe "TreeView", ->
       subdir = treeView.root.find('.entries > li:contains(dir1)').view()
 
       expect(subdir).not.toHaveClass('expanded')
-      expect(subdir.find('.entries')).not.toExist()
 
       subdir.click()
 
       expect(subdir).toHaveClass('expanded')
-      expect(subdir.find('.entries')).toExist()
 
       subdir.click()
       expect(subdir).not.toHaveClass('expanded')
-      expect(subdir.find('.entries')).not.toExist()
 
     it "restores the expansion state of descendant directories", ->
       child = treeView.root.find('.entries > li:contains(dir1)').view()
@@ -256,14 +251,14 @@ describe "TreeView", ->
       grandchild.click()
 
       treeView.root.click()
-      expect(treeView.root.find('.entries')).not.toExist()
+      expect(treeView.root).not.toHaveClass('expanded')
       treeView.root.click()
 
       # previously expanded descendants remain expanded
       expect(treeView.root.find('> .entries > li:contains(dir1) > .entries > li:contains(sub-dir1) > .entries').length).toBe 1
 
       # collapsed descendants remain collapsed
-      expect(treeView.root.find('> .entries > li:contains(dir2) > .entries')).not.toExist()
+      expect(treeView.root.find('> .entries > li:contains(dir2) > .entries')).not.toHaveClass('expanded')
 
     it "when collapsing a directory, removes change subscriptions from the collapsed directory and its descendants", ->
       child = treeView.root.entries.find('li:contains(dir1)').view()
@@ -272,15 +267,15 @@ describe "TreeView", ->
       grandchild = child.entries.find('li:contains(sub-dir1)').view()
       grandchild.click()
 
-      expect(treeView.root.directory.getSubscriptionCount('contents-changed')).toBe 1
-      expect(child.directory.getSubscriptionCount('contents-changed')).toBe 1
-      expect(grandchild.directory.getSubscriptionCount('contents-changed')).toBe 1
+      expect(treeView.root.directory.directory.getSubscriptionCount('contents-changed')).toBe 1
+      expect(child.directory.directory.getSubscriptionCount('contents-changed')).toBe 1
+      expect(grandchild.directory.directory.getSubscriptionCount('contents-changed')).toBe 1
 
       treeView.root.click()
 
-      expect(treeView.root.directory.getSubscriptionCount('contents-changed')).toBe 0
-      expect(child.directory.getSubscriptionCount('contents-changed')).toBe 0
-      expect(grandchild.directory.getSubscriptionCount('contents-changed')).toBe 0
+      expect(treeView.root.directory.directory.getSubscriptionCount('contents-changed')).toBe 0
+      expect(child.directory.directory.getSubscriptionCount('contents-changed')).toBe 0
+      expect(grandchild.directory.directory.getSubscriptionCount('contents-changed')).toBe 0
 
   describe "when mouse down fires on a file or directory", ->
     it "selects the entry", ->
@@ -690,7 +685,7 @@ describe "TreeView", ->
     beforeEach ->
       atom.packages.deactivatePackage('tree-view')
 
-      rootDirPath = path.join(fs.absolute(os.tmpdir()), 'atom-tests')
+      rootDirPath = fs.absolute(temp.mkdirSync('tree-view'))
 
       dirPath = path.join(rootDirPath, "test-dir")
       filePath = path.join(dirPath, "test-file.txt")
@@ -706,28 +701,6 @@ describe "TreeView", ->
       dirView = treeView.root.entries.find('.directory:contains(test-dir)').view()
       dirView.expand()
       fileView = treeView.find('.file:contains(test-file.txt)').view()
-
-    afterEach ->
-      # On Windows, you can not remove a watched directory/file, therefore we
-      # have to close the project before attempting to delete. Unfortunately,
-      # Pathwatcher's close function is also not synchronous. Once
-      # atom/node-pathwatcher#4 is implemented this should be alot cleaner.
-      treeView.root.unwatchEntries()
-      activePane = atom.workspaceView.getActivePane()
-      for item in (activePane?.getItems() or [])
-        activePane.destroyItem(item)
-
-      success = false
-      runs ->
-        retry = setInterval ->
-          try
-            fs.removeSync(rootDirPath)
-            success = true
-            clearInterval(retry)
-          catch e
-            success = false
-        , 50
-      waitsFor -> success
 
     describe "tree-view:add", ->
       addDialog = null
@@ -751,13 +724,13 @@ describe "TreeView", ->
           expect(addDialog.miniEditor.getCursorBufferPosition().column).toBe addDialog.miniEditor.getText().length
           expect(addDialog.miniEditor.isFocused).toBeTruthy()
 
-        describe "when parent directory of the selected file changes", ->
-          it "active file is still shown as selected in the tree view", ->
-            directoryChangeHandler = jasmine.createSpy("directory-change")
-            dirView.on "tree-view:directory-modified", directoryChangeHandler
+        describe "when the parent directory of the selected file changes", ->
+          it "the active file is still shown as selected in the tree view", ->
+            directoryModifiedHandler = jasmine.createSpy("directory-modified")
+            dirView.on "tree-view:directory-modified", directoryModifiedHandler
 
-            dirView.directory.emit 'contents-changed'
-            expect(directoryChangeHandler).toHaveBeenCalled()
+            dirView.directory.emit 'entry-removed', {name: 'deleted.txt'}
+            expect(directoryModifiedHandler).toHaveBeenCalled()
             expect(treeView.find('.selected').text()).toBe path.basename(filePath)
 
         describe "when the path without a trailing '/' is changed and confirmed", ->
@@ -807,7 +780,14 @@ describe "TreeView", ->
               expect(atom.workspaceView.getActiveView().isFocused).toBeFalsy()
               expect(dirView.find('.directory.selected:contains(new)').length).toBe(1)
 
-            it "selects the created directory", ->
+            it "selects the created directory and does not change the expansion state of existing directories", ->
+              expandedPath = path.join(dirPath, 'expanded-dir')
+              fs.makeTreeSync(expandedPath)
+              treeView.entryForPath(dirPath).expand()
+              treeView.entryForPath(dirPath).reload()
+              expandedView = treeView.entryForPath(expandedPath)
+              expandedView.expand()
+
               treeView.attachToDom()
               newPath = path.join(dirPath, "new2/")
               addDialog.miniEditor.insertText("new2/")
@@ -819,6 +799,7 @@ describe "TreeView", ->
               expect(treeView.find(".tree-view")).toMatchSelector(':focus')
               expect(atom.workspaceView.getActiveView().isFocused).toBeFalsy()
               expect(dirView.find('.directory.selected:contains(new2)').length).toBe(1)
+              expect(treeView.entryForPath(expandedPath).isExpanded).toBeTruthy()
 
           describe "when a file or directory already exists at the given path", ->
             it "shows an error message and does not close the dialog", ->
@@ -1007,13 +988,8 @@ describe "TreeView", ->
     temporaryFilePath = null
 
     beforeEach ->
+      atom.project.setPath(fs.absolute(temp.mkdirSync('tree-view')))
       temporaryFilePath = path.join(atom.project.getPath(), 'temporary')
-      if fs.existsSync(temporaryFilePath)
-        fs.removeSync(temporaryFilePath)
-        waits(20)
-
-    afterEach ->
-      fs.removeSync(temporaryFilePath)
 
     describe "when a file is added or removed in an expanded directory", ->
       it "updates the directory view to display the directory's new contents", ->
@@ -1118,13 +1094,6 @@ describe "TreeView", ->
 
       treeView.updateRoot()
       treeView.root.entries.find('.directory:contains(dir)').view().expand()
-
-    afterEach ->
-      # On Windows, you can not remove a watched directory/file, therefore we
-      # have to close the project before attempting to delete. Unfortunately,
-      # Pathwatcher's close function is also not synchronous. Once
-      # atom/node-pathwatcher#4 is implemented this should be alot cleaner.
-      treeView.root.unwatchEntries()
 
     describe "when the project is the repository root", ->
       it "adds a custom style", ->

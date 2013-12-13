@@ -1,9 +1,13 @@
-{_, $, $$, fs, ScrollView, View} = require 'atom'
-DirectoryView = require './directory-view'
-FileView = require './file-view'
-Dialog = require './dialog'
 path = require 'path'
 shell = require 'shell'
+
+{_, $, fs, ScrollView, View} = require 'atom'
+
+Dialog = require './dialog'
+Directory = require './directory'
+DirectoryView = require './directory-view'
+File = require './file'
+FileView = require './file-view'
 
 module.exports =
 class TreeView extends ScrollView
@@ -36,7 +40,8 @@ class TreeView extends ScrollView
     @command 'tree-view:add', => @add()
     @command 'tree-view:remove', => @removeSelectedEntry()
     @command 'tool-panel:unfocus', => @detach()
-    @command 'tree-view:directory-modified', =>
+
+    @on 'tree-view:directory-modified', =>
       if @hasFocus()
         @selectEntryForPath(@selectedPath) if @selectedPath
       else
@@ -76,7 +81,6 @@ class TreeView extends ScrollView
     width: @width()
 
   deactivate: ->
-    @root?.unwatchEntries()
     @remove()
 
   toggle: ->
@@ -134,7 +138,9 @@ class TreeView extends ScrollView
     @root?.remove()
 
     if rootDirectory = atom.project.getRootDirectory()
-      @root = new DirectoryView(directory: rootDirectory, isExpanded: true, project: atom.project)
+      directory = Directory.createAsRoot(directory: rootDirectory)
+      directory.state.registerModelClass(File)
+      @root = new DirectoryView({directory, isExpanded: true, isRoot: true})
       @list.append(@root)
     else
       @root = null
@@ -165,19 +171,20 @@ class TreeView extends ScrollView
         @selectEntry(entry)
         @scrollToEntry(entry, centeringOffset)
 
-  entryForPath: (path) ->
+  entryForPath: (entryPath) ->
     fn = (bestMatchEntry, element) ->
       entry = $(element).view()
-      regex = new RegExp("^" + _.escapeRegExp(entry.getPath()))
-      if regex.test(path) and entry.getPath().length > bestMatchEntry.getPath().length
+      if entry.getPath() is entryPath
+        entry
+      else if entry.getPath().length > bestMatchEntry.getPath().length and entry.directory?.contains(entryPath)
         entry
       else
         bestMatchEntry
 
     @list.find(".entry").toArray().reduce(fn, @root)
 
-  selectEntryForPath: (path) ->
-    @selectEntry(@entryForPath(path))
+  selectEntryForPath: (entryPath) ->
+    @selectEntry(@entryForPath(entryPath))
 
   moveDown: ->
     selectedEntry = @selectedEntry()
@@ -297,7 +304,7 @@ class TreeView extends ScrollView
           else if endsWithDirectorySeparator
             fs.makeTreeSync(pathToCreate)
             dialog.cancel()
-            @entryForPath(pathToCreate).buildEntries()
+            @entryForPath(pathToCreate).reload()
             @selectEntryForPath(pathToCreate)
           else
             fs.writeFileSync(pathToCreate, "")
