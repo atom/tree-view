@@ -278,8 +278,10 @@ class TreeView extends ScrollView
     dialog.on 'directory-created', (event, createdPath) =>
       @entryForPath(createdPath).reload()
       @selectEntryForPath(createdPath)
+      false
     dialog.on 'file-created', (event, createdPath) ->
       atom.workspaceView.open(createdPath)
+      false
 
     dialog.attach()
 
