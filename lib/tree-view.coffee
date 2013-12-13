@@ -17,13 +17,15 @@ class TreeView extends ScrollView
         @ol class: 'tree-view list-tree has-collapsable-children focusable-panel', tabindex: -1, outlet: 'list'
       @div class: 'tree-view-resize-handle', outlet: 'resizeHandle'
 
-  root: null
-  focusAfterAttach: false
-  scrollTopAfterAttach: -1
-  selectedPath: null
-
   initialize: (state) ->
     super
+
+    focusAfterAttach = false
+    root = null
+    scrollLeftAfterAttach = -1
+    scrollTopAfterAttach = -1
+    selectedPath = null
+
     @on 'click', '.entry', (e) => @entryClicked(e)
     @on 'mousedown', '.entry', (e) =>
       e.stopPropagation()
@@ -65,11 +67,13 @@ class TreeView extends ScrollView
     @selectEntryForPath(state.selectedPath) if state.selectedPath
     @focusAfterAttach = state.hasFocus
     @scrollTopAfterAttach = state.scrollTop if state.scrollTop
+    @scrollLeftAfterAttach = state.scrollLeft if state.scrollLeft
     @width(state.width) if state.width > 0
     @attach() if state.attached
 
   afterAttach: (onDom) ->
     @focus() if @focusAfterAttach
+    @scroller.scrollLeft(@scrollLeftAfterAttach) if @scrollLeftAfterAttach > 0
     @scrollTop(@scrollTopAfterAttach) if @scrollTopAfterAttach > 0
 
   serialize: ->
@@ -77,6 +81,7 @@ class TreeView extends ScrollView
     selectedPath: @selectedEntry()?.getPath()
     hasFocus: @hasFocus()
     attached: @hasParent()
+    scrollLeft: @scroller.scrollLeft()
     scrollTop: @scrollTop()
     width: @width()
 
@@ -98,6 +103,7 @@ class TreeView extends ScrollView
     atom.workspaceView.horizontal.prepend(this)
 
   detach: ->
+    @scrollLeftAfterAttach = @scroller.scrollLeft()
     @scrollTopAfterAttach = @scrollTop()
     super
     atom.workspaceView.focus()

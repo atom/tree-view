@@ -149,6 +149,23 @@ describe "TreeView", ->
 
       runs -> expect(treeView.scrollTop()).toBe(10)
 
+    it "restores the scroll left when toggled", ->
+      atom.workspaceView.width(5)
+      atom.workspaceView.attachToDom()
+      expect(treeView).toBeVisible()
+      treeView.focus()
+
+      treeView.scroller.scrollLeft(5)
+      expect(treeView.scroller.scrollLeft()).toBe(5)
+
+      runs -> atom.workspaceView.trigger 'tree-view:toggle'
+      waitsFor -> treeView.is(':hidden')
+
+      runs -> atom.workspaceView.trigger 'tree-view:toggle'
+      waitsFor -> treeView.is(':visible')
+
+      runs -> expect(treeView.scroller.scrollLeft()).toBe(5)
+
   describe "when tree-view:toggle is triggered on the root view", ->
     beforeEach ->
       atom.workspaceView.attachToDom()
