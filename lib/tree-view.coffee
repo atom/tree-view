@@ -104,8 +104,17 @@ class TreeView extends ScrollView
   focus: ->
     @list.focus()
 
+  unfocus: ->
+    atom.workspaceView.focus()
+
   hasFocus: ->
     @list.is(':focus')
+
+  toggleFocus: ->
+    if @hasFocus()
+      @unfocus()
+    else
+      @show()
 
   entryClicked: (e) ->
     entry = $(e.currentTarget).view()
