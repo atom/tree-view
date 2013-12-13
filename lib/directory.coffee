@@ -8,6 +8,7 @@ module.exports =
 class Directory extends Model
   @properties
     status: null # Either null, 'added', 'ignored', or 'modified'
+    entries: -> {}
 
   @::accessor 'name', -> @directory.getBaseName()
   @::accessor 'path', -> @directory.getPath()
@@ -61,11 +62,13 @@ class Directory extends Model
     false
 
   # Private: Create a new model for the given atom.File or atom.Directory entry.
-  createEntry: (entry) ->
+  createEntry: (entry, index) ->
     if entry.getEntries?
-      Directory.createAsRoot(directory: entry)
+      entry = new Directory(directory: entry)
     else
-      File.createAsRoot(file: entry)
+      entry = new File(file: entry)
+    entry.indexInParentDirectory = index
+    entry
 
   # Public: Does this directory contain the given path?
   #
@@ -78,7 +81,7 @@ class Directory extends Model
     if @watchSubscription?
       @watchSubscription.off()
       @watchSubscription = null
-      @entries = null
+      @entries.remove(key) for key in @entries.getKeys() if @isAlive()
 
   # Public: Watch this directory for changes.
   #
@@ -90,34 +93,25 @@ class Directory extends Model
 
   # Public: Perform a synchronous reload of the directory.
   reload: ->
-    @entries ?= {}
     newEntries = []
-    removedEntries = _.clone(@entries)
+    removedEntries = @entries.toObject()
     index = 0
-    for entry in @directory.getEntries() when not @isPathIgnored(entry.path)
+
+    for entry in @directory.getEntries()
       name = entry.getBaseName()
-      newEntries.push([entry, index]) unless @entries.hasOwnProperty(name)
-      delete removedEntries[name]
-      index++
+      if @entries.has(name)
+        delete removedEntries[name]
+        index++
+      else if not @isPathIgnored(entry.path)
+        newEntries.push([entry, index])
+        index++
 
     for name, entry of removedEntries
-      @entries[name]?.destroy()
-      delete @entries[name]
-      @emit 'entry-removed', entry
+      @emit 'entry-removed', @entries.remove(name)
 
     for [entry, index] in newEntries
-      newEntry = @createEntry(entry)
-      @entries[newEntry.name] = newEntry
-      @emit 'entry-added', newEntry, index
-
-  # Public: Get all the file and directory entries in this directory.
-  #
-  # Returns a non-null array of File and Directory objects.
-  getEntries: ->
-    unless @entries?
-      @entries = {}
-      for entry in @directory.getEntries() when not @isPathIgnored(entry.path)
-        entry = @createEntry(entry)
-        @entries[entry.name] = entry
-
-    _.values(@entries)
+      entry = @createEntry(entry, index)
+      values = {}
+      values[entry.name] = entry
+      @entries.set(values)
+      @emit 'entry-added', entry

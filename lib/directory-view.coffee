@@ -29,13 +29,11 @@ class DirectoryView extends View
         @removeClass('status-ignored status-modified status-added')
         @addClass("status-#{status}") if status?
 
-    @subscribe @directory, 'entry-removed', ({name}) =>
-      @entries.children(".entry:contains('#{name}')").remove()
-
-    @subscribe @directory, 'entry-added', (entry, index) =>
+    @subscribe @directory, 'entry-added', (entry) =>
       view = @createViewForEntry(entry)
-      if index < @entries.children().length
-        @entries.children().eq(index).before(view)
+      insertionIndex = entry.indexInParentDirectory
+      if insertionIndex < @entries.children().length
+        @entries.children().eq(insertionIndex).before(view)
       else
         @entries.append(view)
 
@@ -52,9 +50,16 @@ class DirectoryView extends View
 
   createViewForEntry: (entry) ->
     if entry instanceof Directory
-      new DirectoryView(directory: entry)
+      view = new DirectoryView(directory: entry)
     else
-      new FileView(entry)
+      view = new FileView(entry)
+
+    subscription = @subscribe @directory, 'entry-removed', (removedEntry) ->
+      if entry is removedEntry
+        view.remove()
+        subscription.off()
+
+    view
 
   reload: ->
     @directory.reload() if @isExpanded

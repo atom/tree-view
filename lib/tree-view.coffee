@@ -3,10 +3,11 @@ shell = require 'shell'
 
 {_, $, $$, fs, ScrollView, View} = require 'atom'
 
+Dialog = require './dialog'
 Directory = require './directory'
 DirectoryView = require './directory-view'
+File = require './file'
 FileView = require './file-view'
-Dialog = require './dialog'
 
 module.exports =
 class TreeView extends ScrollView
@@ -138,6 +139,7 @@ class TreeView extends ScrollView
 
     if rootDirectory = atom.project.getRootDirectory()
       directory = Directory.createAsRoot(directory: rootDirectory)
+      directory.state.registerModelClass(File)
       @root = new DirectoryView({directory, isExpanded: true, isRoot: true})
       @list.append(@root)
     else
