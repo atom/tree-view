@@ -147,7 +147,7 @@ describe "TreeView", ->
       runs -> atom.workspaceView.trigger 'tree-view:toggle'
       waitsFor -> treeView.is(':visible')
 
-      expect(treeView.scrollTop()).toBe(10)
+      runs -> expect(treeView.scrollTop()).toBe(10)
 
   describe "when tree-view:toggle is triggered on the root view", ->
     beforeEach ->
