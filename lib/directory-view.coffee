@@ -7,7 +7,7 @@ File = require './file'
 module.exports =
 class DirectoryView extends View
   @content: ->
-    @li class: 'directory entry list-nested-item', =>
+    @li class: 'directory entry list-nested-item collapsed', =>
       @div outlet: 'header', class: 'header list-item', =>
         @span class: 'name icon', outlet: 'directoryName'
       @ol class: 'entries list-tree', outlet: 'entries'
