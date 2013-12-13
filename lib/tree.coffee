@@ -13,6 +13,7 @@ module.exports =
     @createView() if @state.attached
     atom.workspaceView.command 'tree-view:show', => @createView().show()
     atom.workspaceView.command 'tree-view:toggle', => @createView().toggle()
+    atom.workspaceView.command 'tree-view:toggle-focus', => @createView().toggleFocus()
     atom.workspaceView.command 'tree-view:reveal-active-file', => @createView().revealActiveFile()
 
   deactivate: ->

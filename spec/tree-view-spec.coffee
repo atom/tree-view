@@ -181,12 +181,10 @@ describe "TreeView", ->
           expect(treeView).toBeHidden()
 
       describe "when the tree view is not focused", ->
-        it "shifts focus to the tree view", ->
-          atom.workspaceView.openSync() # When we call focus below, we want an editor to become focused
-          atom.workspaceView.focus()
+        it "hides the tree view", ->
+          treeView.focus()
           atom.workspaceView.trigger 'tree-view:toggle'
-          expect(treeView).toBeVisible()
-          expect(treeView.list).toMatchSelector(':focus')
+          expect(treeView).toBeHidden()
 
     describe "when the tree view is hidden", ->
       it "shows and focuses the tree view", ->
@@ -194,6 +192,35 @@ describe "TreeView", ->
         atom.workspaceView.trigger 'tree-view:toggle'
         expect(treeView.hasParent()).toBeTruthy()
         expect(treeView.list).toMatchSelector(':focus')
+
+  describe "when tree-view:toggle-focus is triggered on the root view", ->
+    beforeEach ->
+      atom.workspaceView.attachToDom()
+
+    describe "when the tree view is hidden", ->
+      it "shows and focuses the tree view", ->
+        treeView.detach()
+        atom.workspaceView.trigger 'tree-view:toggle-focus'
+        expect(treeView.hasParent()).toBeTruthy()
+        expect(treeView.list).toMatchSelector(':focus')
+
+    describe "when the tree view is shown", ->
+      it "focuses the tree view", ->
+        atom.workspaceView.openSync() # When we call focus below, we want an editor to become focused
+        atom.workspaceView.focus()
+        expect(treeView).toBeVisible()
+        atom.workspaceView.trigger 'tree-view:toggle-focus'
+        expect(treeView).toBeVisible()
+        expect(treeView.list).toMatchSelector(':focus')
+
+      describe "when the tree view is focused", ->
+        it "unfocuses the tree view", ->
+          atom.workspaceView.openSync() # When we call focus below, we want an editor to become focused
+          treeView.focus()
+          expect(treeView).toBeVisible()
+          atom.workspaceView.trigger 'tree-view:toggle-focus'
+          expect(treeView).toBeVisible()
+          expect(treeView.list).not.toMatchSelector(':focus')
 
   describe "when tree-view:reveal-current-file is triggered on the root view", ->
     beforeEach ->
@@ -230,22 +257,10 @@ describe "TreeView", ->
       treeView.focus()
       expect(treeView.list).toMatchSelector(':focus')
       treeView.trigger 'tool-panel:unfocus'
-      expect(treeView).not.toBeVisible()
+      expect(treeView).toBeVisible()
       expect(treeView.list).not.toMatchSelector(':focus')
       expect(atom.workspaceView.getActiveView().isFocused).toBeTruthy()
 
-  describe "when core:close is triggered on the tree view", ->
-    it "detaches the TreeView, focuses the WorkspaceView and does not bubble the core:close event", ->
-      treeView.attach()
-      treeView.focus()
-      workspaceViewCloseHandler = jasmine.createSpy('workspaceViewCloseHandler')
-      atom.workspaceView.on 'core:close', workspaceViewCloseHandler
-      spyOn(atom.workspaceView, 'focus')
-
-      treeView.trigger('core:close')
-      expect(atom.workspaceView.focus).toHaveBeenCalled()
-      expect(workspaceViewCloseHandler).not.toHaveBeenCalled()
-      expect(treeView.hasParent()).toBeFalsy()
 
   describe "when a directory's disclosure arrow is clicked", ->
     it "expands / collapses the associated directory", ->

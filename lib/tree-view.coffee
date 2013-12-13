@@ -34,14 +34,13 @@ class TreeView extends ScrollView
     @on 'mousedown', '.tree-view-resize-handle', (e) => @resizeStarted(e)
     @command 'core:move-up', => @moveUp()
     @command 'core:move-down', => @moveDown()
-    @command 'core:close', => @detach(); false
     @command 'tree-view:expand-directory', => @expandDirectory()
     @command 'tree-view:collapse-directory', => @collapseDirectory()
     @command 'tree-view:open-selected-entry', => @openSelectedEntry(true)
     @command 'tree-view:move', => @moveSelectedEntry()
     @command 'tree-view:add', => @add()
     @command 'tree-view:remove', => @removeSelectedEntry()
-    @command 'tool-panel:unfocus', => @detach()
+    @command 'tool-panel:unfocus', => @unfocus()
 
     @on 'tree-view:directory-modified', =>
       if @hasFocus()
@@ -89,7 +88,7 @@ class TreeView extends ScrollView
     @remove()
 
   toggle: ->
-    if @hasFocus()
+    if @isVisible()
       @detach()
     else
       @show()
@@ -111,8 +110,17 @@ class TreeView extends ScrollView
   focus: ->
     @list.focus()
 
+  unfocus: ->
+    atom.workspaceView.focus()
+
   hasFocus: ->
     @list.is(':focus')
+
+  toggleFocus: ->
+    if @hasFocus()
+      @unfocus()
+    else
+      @show()
 
   entryClicked: (e) ->
     entry = $(e.currentTarget).view()
