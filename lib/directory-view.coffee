@@ -40,7 +40,7 @@ class DirectoryView extends View
     if isExpanded then @expand() else @collapse()
 
     @subscribe @directory, 'entry-added entry-removed', =>
-      @trigger 'tree-view:directory-modified'
+      @trigger 'tree-view:directory-modified' if @isExpanded
 
   beforeRemove: ->
     @directory.destroy()
