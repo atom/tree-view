@@ -29,7 +29,7 @@ class DirectoryView extends View
         @removeClass('status-ignored status-modified status-added')
         @addClass("status-#{status}") if status?
 
-    if isExpanded then @expand() else @collapse()
+    @expand() if isExpanded
 
   beforeRemove: ->
     @directory.destroy()
