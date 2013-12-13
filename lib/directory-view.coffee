@@ -1,4 +1,4 @@
-{$, $$, View} = require 'atom'
+{$, View} = require 'atom'
 
 Directory = require './directory'
 FileView = require './file-view'
