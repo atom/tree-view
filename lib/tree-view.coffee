@@ -84,7 +84,7 @@ class TreeView extends ScrollView
     @remove()
 
   toggle: ->
-    if @hasFocus()
+    if @isVisible()
       @detach()
     else
       @show()
