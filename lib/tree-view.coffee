@@ -38,7 +38,7 @@ class TreeView extends ScrollView
     @command 'tree-view:move', => @moveSelectedEntry()
     @command 'tree-view:add', => @add()
     @command 'tree-view:remove', => @removeSelectedEntry()
-    @command 'tool-panel:unfocus', => @detach()
+    @command 'tool-panel:unfocus', => @unfocus()
 
     @on 'tree-view:directory-modified', =>
       if @hasFocus()
