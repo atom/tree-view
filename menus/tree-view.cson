@@ -11,6 +11,7 @@
     'submenu': [
       'label': 'Tree View'
       'submenu': [
+        { 'label': 'Focus', 'command': 'tree-view:toggle-focus' }
         { 'label': 'Toggle', 'command': 'tree-view:toggle' }
         { 'label': 'Reveal Active File', 'command': 'tree-view:reveal-active-file' }
       ]
