@@ -282,7 +282,6 @@ class TreeView extends ScrollView
     dialog.on 'file-created', (event, createdPath) ->
       atom.workspaceView.open(createdPath)
       false
-
     dialog.attach()
 
   selectedEntry: ->
