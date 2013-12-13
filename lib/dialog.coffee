@@ -9,7 +9,7 @@ class Dialog extends View
       @subview 'miniEditor', new EditorView(mini: true)
       @div class: 'error-message', outlet: 'errorMessage'
 
-  initialize: ({initialPath, @onConfirm, select, iconClass} = {}) ->
+  initialize: ({initialPath, select, iconClass} = {}) ->
     @promptText.addClass(iconClass) if iconClass
     @on 'core:confirm', => @onConfirm(@miniEditor.getText())
     @on 'core:cancel', => @cancel()
