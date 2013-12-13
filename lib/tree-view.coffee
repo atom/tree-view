@@ -1,7 +1,7 @@
 path = require 'path'
 shell = require 'shell'
 
-{_, $, $$, fs, ScrollView, View} = require 'atom'
+{_, $, fs, ScrollView, View} = require 'atom'
 
 Dialog = require './dialog'
 Directory = require './directory'
