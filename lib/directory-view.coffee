@@ -29,6 +29,12 @@ class DirectoryView extends View
         @removeClass('status-ignored status-modified status-added')
         @addClass("status-#{status}") if status?
 
+    if isExpanded then @expand() else @collapse()
+
+  beforeRemove: ->
+    @directory.destroy()
+
+  subscribeToDirectory: ->
     @subscribe @directory, 'entry-added', (entry) =>
       view = @createViewForEntry(entry)
       insertionIndex = entry.indexInParentDirectory
@@ -37,13 +43,8 @@ class DirectoryView extends View
       else
         @entries.append(view)
 
-    if isExpanded then @expand() else @collapse()
-
     @subscribe @directory, 'entry-added entry-removed', =>
       @trigger 'tree-view:directory-modified' if @isExpanded
-
-  beforeRemove: ->
-    @directory.destroy()
 
   getPath: ->
     @directory.path
@@ -70,6 +71,7 @@ class DirectoryView extends View
   expand: ->
     return if @isExpanded
     @addClass('expanded').removeClass('collapsed')
+    @subscribeToDirectory()
     @directory.reload()
     @directory.watch()
     @deserializeEntryExpansionStates(@entryStates) if @entryStates?
@@ -80,6 +82,7 @@ class DirectoryView extends View
     @entryStates = @serializeEntryExpansionStates()
     @removeClass('expanded').addClass('collapsed')
     @directory.unwatch()
+    @unsubscribe(@directory)
     @entries.empty()
     @isExpanded = false
 
