@@ -244,18 +244,6 @@ describe "TreeView", ->
       expect(treeView.list).not.toMatchSelector(':focus')
       expect(atom.workspaceView.getActiveView().isFocused).toBeTruthy()
 
-  describe "when core:close is triggered on the tree view", ->
-    it "detaches the TreeView, focuses the WorkspaceView and does not bubble the core:close event", ->
-      treeView.attach()
-      treeView.focus()
-      workspaceViewCloseHandler = jasmine.createSpy('workspaceViewCloseHandler')
-      atom.workspaceView.on 'core:close', workspaceViewCloseHandler
-      spyOn(atom.workspaceView, 'focus')
-
-      treeView.trigger('core:close')
-      expect(atom.workspaceView.focus).toHaveBeenCalled()
-      expect(workspaceViewCloseHandler).not.toHaveBeenCalled()
-      expect(treeView.hasParent()).toBeFalsy()
 
   describe "when a directory's disclosure arrow is clicked", ->
     it "expands / collapses the associated directory", ->
