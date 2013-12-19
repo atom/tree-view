@@ -2,7 +2,7 @@
   {
     'label': 'View'
     'submenu': [
-      'label': 'Toggle Treeview'
+      'label': 'Toggle Tree View'
       'command': 'tree-view:toggle'
     ]
   }
