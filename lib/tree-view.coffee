@@ -101,7 +101,7 @@ class TreeView extends ScrollView
 
   attach: ->
     return unless atom.project.getPath()
-    atom.workspaceView.horizontal.prepend(this)
+    atom.workspaceView.appendToLeft(this)
 
   detach: ->
     @scrollLeftAfterAttach = @scroller.scrollLeft()
