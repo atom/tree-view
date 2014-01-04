@@ -1,6 +1,6 @@
 path = require 'path'
 
-{Model} = require 'reactionary'
+{Model} = require 'atomic-model'
 {_} = require 'atom'
 
 File = require './file'
@@ -24,7 +24,7 @@ class Directory extends Model
       @subscribeToRepo(repo)
       @updateStatus(repo)
 
-  # Private: Called by reactionary.
+  # Private: Called by atomic-model.
   destroyed: ->
     @unwatch()
     @unsubscribe()
