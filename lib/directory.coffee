@@ -1,12 +1,14 @@
 path = require 'path'
 
-{_, Model} = require 'atom'
+{Model} = require 'reactionary'
+{_} = require 'atom'
 
 File = require './file'
 
 module.exports =
 class Directory extends Model
   @properties
+    directory: null
     status: null # Either null, 'added', 'ignored', or 'modified'
     entries: -> {}
 
@@ -15,14 +17,14 @@ class Directory extends Model
   @::accessor 'submodule', -> atom.project.getRepo()?.isSubmodule(@path)
   @::accessor 'symlink', -> @directory.symlink
 
-  # Private: Called by telepath.
-  created: ->
+  constructor: ->
+    super
     repo = atom.project.getRepo()
     if repo?
       @subscribeToRepo(repo)
       @updateStatus(repo)
 
-  # Private: Called by telepath.
+  # Private: Called by reactionary.
   destroyed: ->
     @unwatch()
     @unsubscribe()
@@ -81,7 +83,10 @@ class Directory extends Model
     if @watchSubscription?
       @watchSubscription.off()
       @watchSubscription = null
-      @entries.remove(key) for key in @entries.getKeys() if @isAlive()
+      if @isAlive()
+        for key, entry of @entries
+          entry.destroy()
+          delete @entries[key]
 
   # Public: Watch this directory for changes.
   #
@@ -94,12 +99,12 @@ class Directory extends Model
   # Public: Perform a synchronous reload of the directory.
   reload: ->
     newEntries = []
-    removedEntries = @entries.toObject()
+    removedEntries = _.clone(@entries)
     index = 0
 
     for entry in @directory.getEntries()
       name = entry.getBaseName()
-      if @entries.has(name)
+      if @entries.hasOwnProperty(name)
         delete removedEntries[name]
         index++
       else if not @isPathIgnored(entry.path)
@@ -107,11 +112,11 @@ class Directory extends Model
         index++
 
     for name, entry of removedEntries
-      @emit 'entry-removed', @entries.remove(name)
+      entry.destroy()
+      delete @entries[name]
+      @emit 'entry-removed', entry
 
     for [entry, index] in newEntries
       entry = @createEntry(entry, index)
-      values = {}
-      values[entry.name] = entry
-      @entries.set(values)
+      @entries[entry.name] = entry
       @emit 'entry-added', entry

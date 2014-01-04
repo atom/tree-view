@@ -9,6 +9,7 @@
   },
   "private": true,
   "dependencies": {
-    "temp": "~0.6.0"
+    "temp": "~0.6.0",
+    "reactionary": "~0.4.0"
   }
 }
