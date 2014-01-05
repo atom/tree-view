@@ -1,6 +1,6 @@
 {
   "name": "tree-view",
-  "version": "0.53.0",
+  "version": "0.56.0",
   "main": "./lib/tree",
   "description": "Display, add, move, and delete the files and folders in the current project.",
   "repository": "https://github.com/atom/tree-view",
@@ -9,6 +9,7 @@
   },
   "private": true,
   "dependencies": {
-    "temp": "~0.6.0"
+    "temp": "~0.6.0",
+    "theorist": "~0.7.0"
   }
 }

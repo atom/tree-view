@@ -1,10 +1,12 @@
 path = require 'path'
 
-{fs, Model} = require 'atom'
+{Model} = require 'theorist'
+{fs} = require 'atom'
 
 module.exports =
 class File extends Model
   @properties
+    file: null
     status: null # Either null, 'added', 'ignored', or 'modified'
 
   @::accessor 'name', -> @file.getBaseName()
@@ -25,14 +27,14 @@ class File extends Model
     else
       'text'
 
-  # Private: Called by telepath.
-  created: ->
+  constructor: ->
+    super
     repo = atom.project.getRepo()
     if repo?
       @subscribeToRepo(repo)
       @updateStatus(repo)
 
-  # Private: Called by telepath.
+  # Private: Called by theorist.
   destroyed: ->
     @unsubscribe()
 
