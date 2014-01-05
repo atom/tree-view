@@ -10,6 +10,6 @@
   "private": true,
   "dependencies": {
     "temp": "~0.6.0",
-    "atomic-model": "~0.6.0"
+    "theorist": "~0.7.0"
   }
 }
