@@ -119,6 +119,7 @@ class Directory extends Model
     for name, entry of removedEntries
       entry.destroy()
       delete @entries[name]
+      delete @expandedEntries[name]
       @emit 'entry-removed', entry
 
     for [entry, index] in newEntries
