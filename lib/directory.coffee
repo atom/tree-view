@@ -9,6 +9,7 @@ module.exports =
 class Directory extends Model
   @properties
     directory: null
+    isRoot: false
     expanded: false
     expandedEntries: -> {}
     status: null # Either null, 'added', 'ignored', or 'modified'
