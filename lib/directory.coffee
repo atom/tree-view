@@ -138,6 +138,6 @@ class Directory extends Model
 
   serializeExpansionStates: ->
     expandedEntries = {}
-    for name, entry of  @entries when entry.isExpanded
+    for name, entry of @entries when entry.isExpanded
       expandedEntries[name] = entry.serializeExpansionStates()
     expandedEntries
