@@ -9,8 +9,11 @@ module.exports =
 class Directory extends Model
   @properties
     directory: null
+    isRoot: false
+    isExpanded: false
     status: null # Either null, 'added', 'ignored', or 'modified'
     entries: -> {}
+    expandedEntries: -> {}
 
   @::accessor 'name', -> @directory.getBaseName()
   @::accessor 'path', -> @directory.getPath()
@@ -66,7 +69,9 @@ class Directory extends Model
   # Private: Create a new model for the given atom.File or atom.Directory entry.
   createEntry: (entry, index) ->
     if entry.getEntries?
-      entry = new Directory(directory: entry)
+      expandedEntries = @expandedEntries[entry.getBaseName()]
+      isExpanded = expandedEntries?
+      entry = new Directory({directory: entry, isExpanded, expandedEntries})
     else
       entry = new File(file: entry)
     entry.indexInParentDirectory = index
@@ -114,9 +119,29 @@ class Directory extends Model
     for name, entry of removedEntries
       entry.destroy()
       delete @entries[name]
+      delete @expandedEntries[name]
       @emit 'entry-removed', entry
 
     for [entry, index] in newEntries
       entry = @createEntry(entry, index)
       @entries[entry.name] = entry
       @emit 'entry-added', entry
+
+  # Public: Collapse this directory and stop watching it.
+  collapse: ->
+    @isExpanded = false
+    @expandedEntries = @serializeExpansionStates()
+    @unwatch()
+
+  # Public: Expand this directory, load its children, and start watching it for
+  # changes.
+  expand: ->
+    @isExpanded = true
+    @reload()
+    @watch()
+
+  serializeExpansionStates: ->
+    expandedEntries = {}
+    for name, entry of @entries when entry.isExpanded
+      expandedEntries[name] = entry.serializeExpansionStates()
+    expandedEntries

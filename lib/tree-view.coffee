@@ -60,10 +60,8 @@ class TreeView extends ScrollView
     @observeConfig 'core.ignoredNames', callNow: false, =>
       @updateRoot() if atom.config.get('tree-view.hideIgnoredNames')
 
-    @updateRoot()
-    if @root?
-      @selectEntry(@root)
-      @root.deserializeEntryExpansionStates(state.directoryExpansionStates)
+    @updateRoot(state.directoryExpansionStates)
+    @selectEntry(@root) if @root?
 
     @selectEntryForPath(state.selectedPath) if state.selectedPath
     @focusAfterAttach = state.hasFocus
@@ -78,7 +76,7 @@ class TreeView extends ScrollView
     @scrollTop(@scrollTopAfterAttach) if @scrollTopAfterAttach > 0
 
   serialize: ->
-    directoryExpansionStates: @root?.serializeEntryExpansionStates()
+    directoryExpansionStates: @root?.directory.serializeExpansionStates()
     selectedPath: @selectedEntry()?.getPath()
     hasFocus: @hasFocus()
     attached: @hasParent()
@@ -150,12 +148,12 @@ class TreeView extends ScrollView
   resizeTreeView: ({pageX}) =>
     @width(pageX)
 
-  updateRoot: ->
+  updateRoot: (expandedEntries={}) ->
     @root?.remove()
 
     if rootDirectory = atom.project.getRootDirectory()
-      directory = new Directory(directory: rootDirectory)
-      @root = new DirectoryView({directory, isExpanded: true, isRoot: true})
+      directory = new Directory({directory: rootDirectory, isExpanded: true, expandedEntries, isRoot: true})
+      @root = new DirectoryView(directory)
       @list.append(@root)
     else
       @root = null
