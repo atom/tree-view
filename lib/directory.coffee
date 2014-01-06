@@ -126,11 +126,14 @@ class Directory extends Model
       @entries[entry.name] = entry
       @emit 'entry-added', entry
 
+  # Public: Collapse this directory and stop watching it.
   collapse: ->
     @isExpanded = false
     @expandedEntries = @serializeExpansionStates()
     @unwatch()
 
+  # Public: Expand this directory, load its children, and start watching for
+  # changes.
   expand: ->
     @isExpanded = true
     @reload()
