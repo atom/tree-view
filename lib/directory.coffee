@@ -10,7 +10,7 @@ class Directory extends Model
   @properties
     directory: null
     isRoot: false
-    expanded: false
+    isExpanded: false
     expandedEntries: -> {}
     status: null # Either null, 'added', 'ignored', or 'modified'
     entries: -> {}
@@ -70,8 +70,8 @@ class Directory extends Model
   createEntry: (entry, index) ->
     if entry.getEntries?
       expandedEntries = @expandedEntries[entry.getBaseName()]
-      expanded = expandedEntries?
-      entry = new Directory({directory: entry, expanded, expandedEntries})
+      isExpanded = expandedEntries?
+      entry = new Directory({directory: entry, isExpanded, expandedEntries})
     else
       entry = new File(file: entry)
     entry.indexInParentDirectory = index
@@ -127,17 +127,17 @@ class Directory extends Model
       @emit 'entry-added', entry
 
   collapse: ->
-    @expanded = false
+    @isExpanded = false
     @expandedEntries = @serializeExpansionStates()
     @unwatch()
 
   expand: ->
-    @expanded = true
+    @isExpanded = true
     @reload()
     @watch()
 
   serializeExpansionStates: ->
     expandedEntries = {}
-    for name, entry of  @entries when entry.expanded
+    for name, entry of  @entries when entry.isExpanded
       expandedEntries[name] = entry.serializeExpansionStates()
     expandedEntries
