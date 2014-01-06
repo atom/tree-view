@@ -11,9 +11,9 @@ class Directory extends Model
     directory: null
     isRoot: false
     isExpanded: false
-    expandedEntries: -> {}
     status: null # Either null, 'added', 'ignored', or 'modified'
     entries: -> {}
+    expandedEntries: -> {}
 
   @::accessor 'name', -> @directory.getBaseName()
   @::accessor 'path', -> @directory.getPath()
