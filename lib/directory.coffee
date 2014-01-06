@@ -9,6 +9,8 @@ module.exports =
 class Directory extends Model
   @properties
     directory: null
+    expanded: false
+    expandedEntries: -> {}
     status: null # Either null, 'added', 'ignored', or 'modified'
     entries: -> {}
 
@@ -66,7 +68,9 @@ class Directory extends Model
   # Private: Create a new model for the given atom.File or atom.Directory entry.
   createEntry: (entry, index) ->
     if entry.getEntries?
-      entry = new Directory(directory: entry)
+      expandedEntries = @expandedEntries[entry.getBaseName()]
+      expanded = expandedEntries?
+      entry = new Directory({directory: entry, expanded, expandedEntries})
     else
       entry = new File(file: entry)
     entry.indexInParentDirectory = index
@@ -120,3 +124,19 @@ class Directory extends Model
       entry = @createEntry(entry, index)
       @entries[entry.name] = entry
       @emit 'entry-added', entry
+
+  collapse: ->
+    @expanded = false
+    @expandedEntries = @serializeExpansionStates()
+    @unwatch()
+
+  expand: ->
+    @expanded = true
+    @reload()
+    @watch()
+
+  serializeExpansionStates: ->
+    expandedEntries = {}
+    for name, entry of  @entries when entry.expanded
+      expandedEntries[name] = entry.serializeExpansionStates()
+    expandedEntries

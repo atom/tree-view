@@ -12,7 +12,7 @@ class DirectoryView extends View
         @span class: 'name icon', outlet: 'directoryName'
       @ol class: 'entries list-tree', outlet: 'entries'
 
-  initialize: ({@directory, isExpanded, isRoot} = {}) ->
+  initialize: ({@directory, isRoot} = {}) ->
     if @directory.symlink
       iconClass = 'icon-file-symlink-directory'
     else
@@ -29,7 +29,7 @@ class DirectoryView extends View
         @removeClass('status-ignored status-modified status-added')
         @addClass("status-#{status}") if status?
 
-    @expand() if isExpanded
+    @expand() if @directory.expanded
 
   beforeRemove: ->
     @directory.destroy()
@@ -72,30 +72,13 @@ class DirectoryView extends View
     return if @isExpanded
     @addClass('expanded').removeClass('collapsed')
     @subscribeToDirectory()
-    @directory.reload()
-    @directory.watch()
-    @deserializeEntryExpansionStates(@entryStates) if @entryStates?
+    @directory.expand()
     @isExpanded = true
     false
 
   collapse: ->
-    @entryStates = @serializeEntryExpansionStates()
     @removeClass('expanded').addClass('collapsed')
-    @directory.unwatch()
+    @directory.collapse()
     @unsubscribe(@directory)
     @entries.empty()
     @isExpanded = false
-
-  serializeEntryExpansionStates: ->
-    entryStates = {}
-    @entries?.find('> .directory.expanded').each ->
-      view = $(this).view()
-      entryStates[view.directory.name] = view.serializeEntryExpansionStates()
-    entryStates
-
-  deserializeEntryExpansionStates: (entryStates) ->
-    for directoryName, childEntryStates of entryStates
-      @entries.find("> .directory:contains('#{directoryName}')").each ->
-        view = $(this).view()
-        view.entryStates = childEntryStates
-        view.expand()
