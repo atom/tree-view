@@ -133,7 +133,7 @@ class Directory extends Model
     @expandedEntries = @serializeExpansionStates()
     @unwatch()
 
-  # Public: Expand this directory, load its children, and start watching for
+  # Public: Expand this directory, load its children, and start watching it for
   # changes.
   expand: ->
     @isExpanded = true
