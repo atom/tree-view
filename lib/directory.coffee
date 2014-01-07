@@ -68,7 +68,7 @@ class Directory extends Model
 
   # Private: Create a new model for the given atom.File or atom.Directory entry.
   createEntry: (entry, index) ->
-    if entry.getEntries?
+    if entry.getEntriesSync?
       expandedEntries = @expandedEntries[entry.getBaseName()]
       isExpanded = expandedEntries?
       entry = new Directory({directory: entry, isExpanded, expandedEntries})
@@ -107,7 +107,7 @@ class Directory extends Model
     removedEntries = _.clone(@entries)
     index = 0
 
-    for entry in @directory.getEntries()
+    for entry in @directory.getEntriesSync()
       name = entry.getBaseName()
       if @entries.hasOwnProperty(name)
         delete removedEntries[name]
