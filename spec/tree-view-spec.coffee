@@ -73,6 +73,15 @@ describe "TreeView", ->
 
         expect(-> atom.workspaceView.openSync(filePath)).not.toThrow()
 
+      it "does not reveal the active file", ->
+        filePath = path.join(os.tmpdir(), 'non-project-file.txt')
+        fs.writeFileSync(filePath, 'test')
+        atom.workspaceView.openSync(filePath)
+
+        atom.workspaceView.trigger 'tree-view:reveal-active-file'
+        expect(treeView.hasParent()).toBeFalsy()
+        expect(treeView.root).not.toExist()
+
       describe "when the project is assigned a path because a new buffer is saved", ->
         it "creates a root directory view but does not attach to the root view", ->
           atom.workspaceView.openSync()
@@ -81,6 +90,7 @@ describe "TreeView", ->
           expect(treeView.hasParent()).toBeFalsy()
           expect(fs.absolute(treeView.root.getPath())).toBe fs.absolute(projectPath)
           expect(treeView.root.parent()).toMatchSelector(".tree-view")
+
 
     describe "when the root view is opened to a file path", ->
       it "does not attach to the root view but does create a root node when initialized", ->

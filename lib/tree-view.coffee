@@ -167,6 +167,8 @@ class TreeView extends ScrollView
       @deselect()
 
   revealActiveFile: ->
+    return unless atom.project.getPath()
+
     @attach()
     @focus()
 
