@@ -14,7 +14,7 @@ class Dialog extends View
     @on 'core:confirm', => @onConfirm(@miniEditor.getText())
     @on 'core:cancel', => @cancel()
     @miniEditor.hiddenInput.on 'focusout', => @remove()
-    @miniEditor.getBuffer().on 'changed', => @showError()
+    @miniEditor.getEditor().getBuffer().on 'changed', => @showError()
 
     @miniEditor.setText(initialPath)
 
@@ -26,7 +26,7 @@ class Dialog extends View
       else
         selectionEnd = initialPath.length - extension.length
       range = [[0, initialPath.length - baseName.length], [0, selectionEnd]]
-      @miniEditor.setSelectedBufferRange(range)
+      @miniEditor.getEditor().setSelectedBufferRange(range)
 
   attach: ->
     atom.workspaceView.append(this)

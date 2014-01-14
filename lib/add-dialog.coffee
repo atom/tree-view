@@ -20,7 +20,7 @@ class AddDialog extends Dialog
       select: false
       iconClass: 'icon-file-directory-create'
 
-    @miniEditor.getBuffer().on 'changed', =>
+    @miniEditor.getEditor().getBuffer().on 'changed', =>
       if /\/$/.test(@miniEditor.getText())
         @promptText.removeClass('icon-file-add').addClass('icon-file-directory-create')
       else

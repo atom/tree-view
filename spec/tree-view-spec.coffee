@@ -339,7 +339,7 @@ describe "TreeView", ->
 
       runs ->
         expect(sampleJs).toHaveClass 'selected'
-        expect(atom.workspaceView.getActiveView().getPath()).toBe atom.project.resolve('tree-view.js')
+        expect(atom.workspaceView.getActivePaneItem().getPath()).toBe atom.project.resolve('tree-view.js')
         expect(atom.workspaceView.getActiveView().isFocused).toBeFalsy()
 
       waitsForFileToOpen ->
@@ -348,7 +348,7 @@ describe "TreeView", ->
       runs ->
         expect(sampleTxt).toHaveClass 'selected'
         expect(treeView.find('.selected').length).toBe 1
-        expect(atom.workspaceView.getActiveView().getPath()).toBe atom.project.resolve('tree-view.txt')
+        expect(atom.workspaceView.getActivePaneItem().getPath()).toBe atom.project.resolve('tree-view.txt')
         expect(atom.workspaceView.getActiveView().isFocused).toBeFalsy()
 
   describe "when a file is double-clicked", ->
@@ -361,7 +361,7 @@ describe "TreeView", ->
 
       runs ->
         expect(sampleJs).toHaveClass 'selected'
-        expect(atom.workspaceView.getActiveView().getPath()).toBe atom.project.resolve('tree-view.js')
+        expect(atom.workspaceView.getActivePaneItem().getPath()).toBe atom.project.resolve('tree-view.js')
         expect(atom.workspaceView.getActiveView().isFocused).toBeFalsy()
 
         sampleJs.trigger clickEvent(originalEvent: { detail: 2 })
@@ -419,22 +419,22 @@ describe "TreeView", ->
       atom.workspaceView.attachToDom()
 
     it "selects the file in that is open in that editor", ->
-      leftEditor = null
-      rightEditor = null
+      leftEditorView = null
+      rightEditorView = null
 
       waitsForFileToOpen ->
         sampleJs.click()
 
       runs ->
-        leftEditor = atom.workspaceView.getActiveView()
-        rightEditor = leftEditor.splitRight()
+        leftEditorView = atom.workspaceView.getActiveView()
+        rightEditorView = leftEditorView.splitRight()
 
       waitsForFileToOpen ->
         sampleTxt.click()
 
       runs ->
         expect(sampleTxt).toHaveClass('selected')
-        leftEditor.focus()
+        leftEditorView.focus()
         expect(sampleJs).toHaveClass('selected')
 
   describe "keyboard navigation", ->
@@ -702,7 +702,7 @@ describe "TreeView", ->
             treeView.root.trigger 'tree-view:open-selected-entry'
 
           runs ->
-            expect(atom.workspaceView.getActiveView().getPath()).toBe atom.project.resolve('tree-view.js')
+            expect(atom.workspaceView.getActivePaneItem().getPath()).toBe atom.project.resolve('tree-view.js')
             expect(atom.workspaceView.getActiveView().isFocused).toBeTruthy()
 
       describe "when a directory is selected", ->
@@ -763,7 +763,7 @@ describe "TreeView", ->
           expect(addDialog.promptText.text()).toBeTruthy()
           expect(atom.project.relativize(dirPath)).toMatch(/[^\/]$/)
           expect(addDialog.miniEditor.getText()).toBe(atom.project.relativize(dirPath) + "/")
-          expect(addDialog.miniEditor.getCursorBufferPosition().column).toBe addDialog.miniEditor.getText().length
+          expect(addDialog.miniEditor.getEditor().getCursorBufferPosition().column).toBe addDialog.miniEditor.getText().length
           expect(addDialog.miniEditor.isFocused).toBeTruthy()
 
         describe "when the parent directory of the selected file changes", ->
@@ -788,7 +788,7 @@ describe "TreeView", ->
                 expect(fs.existsSync(newPath)).toBeTruthy()
                 expect(fs.isFileSync(newPath)).toBeTruthy()
                 expect(addDialog.parent()).not.toExist()
-                expect(atom.workspaceView.getActiveView().getPath()).toBe newPath
+                expect(atom.workspaceView.getActivePaneItem().getPath()).toBe newPath
 
               waitsFor "tree view to be updated", ->
                 dirView.entries.find("> .file").length > 1
@@ -817,7 +817,7 @@ describe "TreeView", ->
               expect(fs.existsSync(newPath)).toBeTruthy()
               expect(fs.isDirectorySync(newPath)).toBeTruthy()
               expect(addDialog.parent()).not.toExist()
-              expect(atom.workspaceView.getActiveView().getPath()).not.toBe newPath
+              expect(atom.workspaceView.getActivePaneItem().getPath()).not.toBe newPath
               expect(treeView.find(".tree-view")).toMatchSelector(':focus')
               expect(atom.workspaceView.getActiveView().isFocused).toBeFalsy()
               expect(dirView.find('.directory.selected:contains(new)').length).toBe(1)
@@ -837,7 +837,7 @@ describe "TreeView", ->
               expect(fs.existsSync(newPath)).toBeTruthy()
               expect(fs.isDirectorySync(newPath)).toBeTruthy()
               expect(addDialog.parent()).not.toExist()
-              expect(atom.workspaceView.getActiveView().getPath()).not.toBe newPath
+              expect(atom.workspaceView.getActivePaneItem().getPath()).not.toBe newPath
               expect(treeView.find(".tree-view")).toMatchSelector(':focus')
               expect(atom.workspaceView.getActiveView().isFocused).toBeFalsy()
               expect(dirView.find('.directory.selected:contains(new2)').length).toBe(1)
@@ -879,7 +879,7 @@ describe "TreeView", ->
           expect(addDialog.promptText.text()).toBeTruthy()
           expect(atom.project.relativize(dirPath)).toMatch(/[^\/]$/)
           expect(addDialog.miniEditor.getText()).toBe(atom.project.relativize(dirPath) + "/")
-          expect(addDialog.miniEditor.getCursorBufferPosition().column).toBe addDialog.miniEditor.getText().length
+          expect(addDialog.miniEditor.getEditor().getCursorBufferPosition().column).toBe addDialog.miniEditor.getText().length
           expect(addDialog.miniEditor.isFocused).toBeTruthy()
 
       describe "when the root directory is selected", ->
@@ -925,7 +925,7 @@ describe "TreeView", ->
           expect(moveDialog).toExist()
           expect(moveDialog.promptText.text()).toBe "Enter the new path for the file."
           expect(moveDialog.miniEditor.getText()).toBe(atom.project.relativize(filePath))
-          expect(moveDialog.miniEditor.getSelectedText()).toBe path.basename(fileNameWithoutExtension)
+          expect(moveDialog.miniEditor.getEditor().getSelectedText()).toBe path.basename(fileNameWithoutExtension)
           expect(moveDialog.miniEditor.isFocused).toBeTruthy()
 
         describe "when the path is changed and confirmed", ->
@@ -1009,7 +1009,7 @@ describe "TreeView", ->
         it "selects the entire file name", ->
           expect(moveDialog).toExist()
           expect(moveDialog.miniEditor.getText()).toBe(atom.project.relativize(dotFilePath))
-          expect(moveDialog.miniEditor.getSelectedText()).toBe '.dotfile'
+          expect(moveDialog.miniEditor.getEditor().getSelectedText()).toBe '.dotfile'
 
       describe "when the project is selected", ->
         it "doesn't display the move dialog", ->
