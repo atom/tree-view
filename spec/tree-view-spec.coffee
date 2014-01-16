@@ -356,6 +356,8 @@ describe "TreeView", ->
       atom.workspaceView.attachToDom()
 
     it "selects the file and opens it in the active editor on the first click, then changes focus to the active editor on the second", ->
+      runs -> treeView.focus()
+
       waitsForFileToOpen ->
         sampleJs.trigger clickEvent(originalEvent: { detail: 1 })
 
