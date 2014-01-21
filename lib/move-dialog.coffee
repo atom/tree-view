@@ -25,7 +25,7 @@ class MoveDialog extends Dialog
       return
 
     unless @isNewPathValid(newPath)
-      @showError("'#{newPath}' already exists. Try a different path.")
+      @showError("'#{newPath}' already exists.")
       return
 
     directoryPath = path.dirname(newPath)
@@ -37,7 +37,7 @@ class MoveDialog extends Dialog
         repo.getPathStatus(newPath)
       @close()
     catch error
-      @showError("#{error.message} Try a different path.")
+      @showError("#{error.message}.")
 
   isNewPathValid: (newPath) ->
     try

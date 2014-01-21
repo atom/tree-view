@@ -31,7 +31,7 @@ class AddDialog extends Dialog
     pathToCreate = atom.project.resolve(relativePath)
     try
       if fs.existsSync(pathToCreate)
-        @showError("'#{pathToCreate}' already exists. Try a different path.")
+        @showError("'#{pathToCreate}' already exists.")
       else if endsWithDirectorySeparator
         fs.makeTreeSync(pathToCreate)
         @trigger 'directory-created', [pathToCreate]
@@ -42,4 +42,4 @@ class AddDialog extends Dialog
         @trigger 'file-created', [pathToCreate]
         @close()
     catch error
-      @showError("#{error.message} Try a different path.")
+      @showError("#{error.message}.")
