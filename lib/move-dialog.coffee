@@ -20,6 +20,8 @@ class MoveDialog extends Dialog
 
   onConfirm: (newPath) ->
     newPath = atom.project.resolve(newPath)
+    return unless newPath
+
     if @initialPath is newPath
       @close()
       return

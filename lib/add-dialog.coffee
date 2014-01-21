@@ -29,6 +29,8 @@ class AddDialog extends Dialog
   onConfirm: (relativePath) ->
     endsWithDirectorySeparator = /\/$/.test(relativePath)
     pathToCreate = atom.project.resolve(relativePath)
+    return unless pathToCreate
+
     try
       if fs.existsSync(pathToCreate)
         @showError("'#{pathToCreate}' already exists.")
