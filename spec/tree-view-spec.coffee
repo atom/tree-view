@@ -271,6 +271,42 @@ describe "TreeView", ->
       expect(treeView.list).not.toMatchSelector(':focus')
       expect(atom.workspaceView.getActiveView().isFocused).toBeTruthy()
 
+  describe "copy path commands", ->
+    [pathToSelect, relativizedPath] = []
+
+    beforeEach ->
+      pathToSelect = path.join(treeView.root.directory.path, 'dir1', 'file1')
+      relativizedPath = atom.project.relativize(pathToSelect)
+      spyOn(atom.pasteboard, 'write')
+
+    describe "when tree-view:copy-full-path is triggered on the tree view", ->
+      it "copies the selected path to the clipboard", ->
+        treeView.selectedPath = pathToSelect
+        treeView.trigger 'tree-view:copy-full-path'
+        expect(atom.pasteboard.write).toHaveBeenCalledWith(pathToSelect)
+
+      describe "when there is no selected path", ->
+        beforeEach ->
+          treeView.selectedPath = null
+
+        it "does nothing", ->
+          treeView.trigger 'tree-view:copy-full-path'
+          expect(atom.pasteboard.write).not.toHaveBeenCalled()
+
+    describe "when tree-view:copy-project-path is triggered on the tree view", ->
+      it "copies the relativized selected path to the clipboard", ->
+        treeView.selectedPath = pathToSelect
+        treeView.trigger 'tree-view:copy-project-path'
+        expect(atom.pasteboard.write).toHaveBeenCalledWith(relativizedPath)
+
+      describe "when there is no selected path", ->
+        beforeEach ->
+          treeView.selectedPath = null
+
+        it "does nothing", ->
+          treeView.trigger 'tree-view:copy-project-path'
+          expect(atom.pasteboard.write).not.toHaveBeenCalled()
+
 
   describe "when a directory's disclosure arrow is clicked", ->
     it "expands / collapses the associated directory", ->
