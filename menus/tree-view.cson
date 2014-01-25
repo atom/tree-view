@@ -25,3 +25,5 @@
     'Add Folder': 'tree-view:add'
     'Rename': 'tree-view:move'
     'Delete': 'tree-view:remove'
+    'Copy Full Path': 'tree-view:copy-full-path'
+    'Copy Project Path': 'tree-view:copy-project-path'

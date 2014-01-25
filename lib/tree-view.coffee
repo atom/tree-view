@@ -42,6 +42,8 @@ class TreeView extends ScrollView
     @command 'tree-view:move', => @moveSelectedEntry()
     @command 'tree-view:add', => @add()
     @command 'tree-view:remove', => @removeSelectedEntry()
+    @command 'tree-view:copy-full-path', => @copySelectedEntryPath(false)
+    @command 'tree-view:copy-project-path', => @copySelectedEntryPath(true)
     @command 'tool-panel:unfocus', => @unfocus()
 
     @on 'tree-view:directory-modified', =>
@@ -185,6 +187,11 @@ class TreeView extends ScrollView
         centeringOffset = (@scrollBottom() - @scrollTop()) / 2
         @selectEntry(entry)
         @scrollToEntry(entry, centeringOffset)
+
+  copySelectedEntryPath: (relativePath = false) ->
+    if pathToCopy = @selectedPath
+      pathToCopy = atom.project.relativize(pathToCopy) if relativePath
+      atom.pasteboard.write(pathToCopy)
 
   entryForPath: (entryPath) ->
     fn = (bestMatchEntry, element) ->
