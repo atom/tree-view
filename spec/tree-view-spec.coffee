@@ -277,13 +277,13 @@ describe "TreeView", ->
     beforeEach ->
       pathToSelect = path.join(treeView.root.directory.path, 'dir1', 'file1')
       relativizedPath = atom.project.relativize(pathToSelect)
-      spyOn(atom.pasteboard, 'write')
+      spyOn(atom.clipboard, 'write')
 
     describe "when tree-view:copy-full-path is triggered on the tree view", ->
       it "copies the selected path to the clipboard", ->
         treeView.selectedPath = pathToSelect
         treeView.trigger 'tree-view:copy-full-path'
-        expect(atom.pasteboard.write).toHaveBeenCalledWith(pathToSelect)
+        expect(atom.clipboard.write).toHaveBeenCalledWith(pathToSelect)
 
       describe "when there is no selected path", ->
         beforeEach ->
@@ -291,13 +291,13 @@ describe "TreeView", ->
 
         it "does nothing", ->
           treeView.trigger 'tree-view:copy-full-path'
-          expect(atom.pasteboard.write).not.toHaveBeenCalled()
+          expect(atom.clipboard.write).not.toHaveBeenCalled()
 
     describe "when tree-view:copy-project-path is triggered on the tree view", ->
       it "copies the relativized selected path to the clipboard", ->
         treeView.selectedPath = pathToSelect
         treeView.trigger 'tree-view:copy-project-path'
-        expect(atom.pasteboard.write).toHaveBeenCalledWith(relativizedPath)
+        expect(atom.clipboard.write).toHaveBeenCalledWith(relativizedPath)
 
       describe "when there is no selected path", ->
         beforeEach ->
@@ -305,7 +305,7 @@ describe "TreeView", ->
 
         it "does nothing", ->
           treeView.trigger 'tree-view:copy-project-path'
-          expect(atom.pasteboard.write).not.toHaveBeenCalled()
+          expect(atom.clipboard.write).not.toHaveBeenCalled()
 
 
   describe "when a directory's disclosure arrow is clicked", ->

@@ -191,7 +191,7 @@ class TreeView extends ScrollView
   copySelectedEntryPath: (relativePath = false) ->
     if pathToCopy = @selectedPath
       pathToCopy = atom.project.relativize(pathToCopy) if relativePath
-      atom.pasteboard.write(pathToCopy)
+      atom.clipboard.write(pathToCopy)
 
   entryForPath: (entryPath) ->
     fn = (bestMatchEntry, element) ->
