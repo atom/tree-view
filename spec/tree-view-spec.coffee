@@ -20,14 +20,17 @@ describe "TreeView", ->
     atom.project.setPath(atom.project.resolve('tree-view'))
     atom.workspaceView = new WorkspaceView
 
-    atom.packages.activatePackage("tree-view")
-    atom.workspaceView.trigger 'tree-view:toggle'
-    treeView = atom.workspaceView.find(".tree-view").view()
-    treeView.root = treeView.find('ol > li:first').view()
-    sampleJs = treeView.find('.file:contains(tree-view.js)')
-    sampleTxt = treeView.find('.file:contains(tree-view.txt)')
+    waitsForPromise ->
+      atom.packages.activatePackage("tree-view")
 
-    expect(treeView.root.directory.getSubscriptionCount()).toBeGreaterThan 0
+    runs ->
+      atom.workspaceView.trigger 'tree-view:toggle'
+      treeView = atom.workspaceView.find(".tree-view").view()
+      treeView.root = treeView.find('ol > li:first').view()
+      sampleJs = treeView.find('.file:contains(tree-view.js)')
+      sampleTxt = treeView.find('.file:contains(tree-view.txt)')
+
+      expect(treeView.root.directory.getSubscriptionCount()).toBeGreaterThan 0
 
   describe ".initialize(project)", ->
     it "renders the root of the project and its contents alphabetically with subdirectories first in a collapsed state", ->
@@ -53,7 +56,12 @@ describe "TreeView", ->
       beforeEach ->
         atom.project.setPath(undefined)
         atom.packages.deactivatePackage("tree-view")
-        treeView = atom.packages.activatePackage("tree-view").mainModule.createView()
+
+        waitsForPromise ->
+          atom.packages.activatePackage("tree-view")
+
+        runs ->
+          treeView = atom.packages.getActivePackage("tree-view").mainModule.createView()
 
       it "does not attach to the root view or create a root node when initialized", ->
         expect(treeView.hasParent()).toBeFalsy()
@@ -91,21 +99,29 @@ describe "TreeView", ->
           expect(fs.absolute(treeView.root.getPath())).toBe fs.absolute(projectPath)
           expect(treeView.root.parent()).toMatchSelector(".tree-view")
 
-
     describe "when the root view is opened to a file path", ->
       it "does not attach to the root view but does create a root node when initialized", ->
         atom.packages.deactivatePackage("tree-view")
         atom.packages.packageStates = {}
         atom.workspaceView.openSync('tree-view.js')
-        treeView = atom.packages.activatePackage("tree-view").mainModule.createView()
-        expect(treeView.hasParent()).toBeFalsy()
-        expect(treeView.root).toExist()
+
+        waitsForPromise ->
+          atom.packages.activatePackage('tree-view')
+
+        runs ->
+          treeView = atom.packages.getActivePackage("tree-view").mainModule.createView()
+          expect(treeView.hasParent()).toBeFalsy()
+          expect(treeView.root).toExist()
 
     describe "when the root view is opened to a directory", ->
       it "attaches to the root view", ->
-        treeView = atom.packages.activatePackage("tree-view").mainModule.createView()
-        expect(treeView.hasParent()).toBeTruthy()
-        expect(treeView.root).toExist()
+        waitsForPromise ->
+          atom.packages.activatePackage('tree-view')
+
+        runs ->
+          treeView = atom.packages.getActivePackage("tree-view").mainModule.createView()
+          expect(treeView.hasParent()).toBeTruthy()
+          expect(treeView.root).toExist()
 
     describe "when the project is a .git folder", ->
       it "does not create the tree view", ->
@@ -114,8 +130,13 @@ describe "TreeView", ->
         atom.project.setPath(dotGit)
         atom.packages.deactivatePackage("tree-view")
         atom.packages.packageStates = {}
-        {treeView} = atom.packages.activatePackage("tree-view").mainModule
-        expect(treeView).toBeFalsy()
+
+        waitsForPromise ->
+          atom.packages.activatePackage('tree-view')
+
+        runs ->
+          {treeView} = atom.packages.getActivePackage("tree-view").mainModule
+          expect(treeView).toBeFalsy()
 
   describe "serialization", ->
     it "restores expanded directories and selected file when deserialized", ->
@@ -126,21 +147,28 @@ describe "TreeView", ->
 
       runs ->
         atom.packages.deactivatePackage("tree-view")
-        atom.packages.activatePackage("tree-view")
-        treeView = atom.workspaceView.find(".tree-view").view()
 
-        expect(treeView).toExist()
-        expect(treeView.selectedEntry()).toMatchSelector(".file:contains(tree-view.js)")
-        expect(treeView.find(".directory:contains(dir1)")).toHaveClass("expanded")
+      waitsForPromise ->
+          atom.packages.activatePackage("tree-view")
+
+      runs ->
+          treeView = atom.workspaceView.find(".tree-view").view()
+          expect(treeView).toExist()
+          expect(treeView.selectedEntry()).toMatchSelector(".file:contains(tree-view.js)")
+          expect(treeView.find(".directory:contains(dir1)")).toHaveClass("expanded")
 
     it "restores the focus state of the tree view", ->
       atom.workspaceView.attachToDom()
       treeView.focus()
       expect(treeView.list).toMatchSelector ':focus'
       atom.packages.deactivatePackage("tree-view")
-      atom.packages.activatePackage("tree-view")
-      treeView = atom.workspaceView.find(".tree-view").view()
-      expect(treeView.list).toMatchSelector ':focus'
+
+      waitsForPromise ->
+        atom.packages.activatePackage("tree-view")
+
+      runs ->
+        treeView = atom.workspaceView.find(".tree-view").view()
+        expect(treeView.list).toMatchSelector ':focus'
 
     it "restores the scroll top when toggled", ->
       atom.workspaceView.height(5)
@@ -775,12 +803,15 @@ describe "TreeView", ->
 
       atom.project.setPath(rootDirPath)
 
-      atom.packages.activatePackage('tree-view')
-      atom.workspaceView.trigger 'tree-view:toggle'
-      treeView = atom.workspaceView.find(".tree-view").view()
-      dirView = treeView.root.entries.find('.directory:contains(test-dir)').view()
-      dirView.expand()
-      fileView = treeView.find('.file:contains(test-file.txt)').view()
+      waitsForPromise ->
+        atom.packages.activatePackage('tree-view')
+
+      runs ->
+        atom.workspaceView.trigger 'tree-view:toggle'
+        treeView = atom.workspaceView.find(".tree-view").view()
+        dirView = treeView.root.entries.find('.directory:contains(test-dir)').view()
+        dirView.expand()
+        fileView = treeView.find('.file:contains(test-file.txt)').view()
 
     describe "tree-view:add", ->
       addDialog = null
