@@ -11,6 +11,7 @@
   "private": true,
   "dependencies": {
     "temp": "~0.6.0",
-    "theorist": "1.x"
+    "theorist": "1.x",
+    "underscore-plus": "1.x"
   }
 }

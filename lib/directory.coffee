@@ -1,7 +1,7 @@
 path = require 'path'
 
 {Model} = require 'theorist'
-{_} = require 'atom'
+_ = require 'underscore-plus'
 
 File = require './file'
 
