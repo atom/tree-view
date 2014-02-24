@@ -1,7 +1,5 @@
 path = require 'path'
-
-{fs} = require 'atom'
-
+fs = require 'fs-plus'
 Dialog = require './dialog'
 
 module.exports =

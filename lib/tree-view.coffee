@@ -2,7 +2,8 @@ path = require 'path'
 shell = require 'shell'
 
 _ = require 'underscore-plus'
-{$, fs, ScrollView} = require 'atom'
+{$, ScrollView} = require 'atom'
+fs = require 'fs-plus'
 
 AddDialog = null  # Defer requiring until actually needed
 MoveDialog = null # Defer requiring until actually needed

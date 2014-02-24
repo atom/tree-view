@@ -1,7 +1,6 @@
 path = require 'path'
-
+fs = require 'fs-plus'
 {Model} = require 'theorist'
-{fs} = require 'atom'
 
 module.exports =
 class File extends Model

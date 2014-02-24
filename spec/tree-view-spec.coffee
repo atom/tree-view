@@ -1,5 +1,6 @@
 _ = require 'underscore-plus'
-{$, $$, fs, WorkspaceView} = require 'atom'
+{$, $$, WorkspaceView} = require 'atom'
+fs = require 'fs-plus'
 TreeView = require '../lib/tree-view'
 path = require 'path'
 temp = require 'temp'
