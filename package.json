@@ -2,7 +2,7 @@
   "name": "tree-view",
   "version": "0.69.0",
   "main": "./lib/tree",
-  "description": "Display, add, move, and delete the files and folders in the current project.",
+  "description": "Explore and open files in the current project.",
   "repository": "https://github.com/atom/tree-view",
   "license": "MIT",
   "engines": {
