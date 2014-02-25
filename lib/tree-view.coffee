@@ -135,7 +135,7 @@ class TreeView extends ScrollView
         entry.toggleExpansion() if entry instanceof DirectoryView
       when 2
         if entry.is('.selected.file')
-          atom.workspaceView.getActiveView().focus()
+          atom.workspaceView.getActiveView()?.focus()
         else if entry.is('.selected.directory')
           entry.toggleExpansion()
 
