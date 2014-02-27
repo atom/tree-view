@@ -274,7 +274,7 @@ class TreeView extends ScrollView
       platform = process.platform
       isWindows = /^win/.test(platform)
       isOSX = /^darwin/.test(platform)
-      showInExplorer("/select,#{entry.getPath()}", "explorer")) if isWindows
+      showInExplorer("/select,#{entry.getPath()}", "explorer") if isWindows
       showInFinder(entry.getPath(), { R: true }) if isOSX
     catch error
       atom.confirm
