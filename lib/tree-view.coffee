@@ -1,5 +1,6 @@
 path = require 'path'
 shell = require 'shell'
+shellOpen = require 'open'
 
 _ = require 'underscore-plus'
 {$, ScrollView} = require 'atom'
@@ -45,6 +46,7 @@ class TreeView extends ScrollView
     @command 'tree-view:add', => @add()
     @command 'tree-view:remove', => @removeSelectedEntry()
     @command 'tree-view:copy-full-path', => @copySelectedEntryPath(false)
+    @command 'tree-view:open-in-finder', => @openSelectedEntryInFinder()
     @command 'tree-view:copy-project-path', => @copySelectedEntryPath(true)
     @command 'tool-panel:unfocus', => @unfocus()
 
@@ -262,6 +264,20 @@ class TreeView extends ScrollView
     MoveDialog ?= require './move-dialog'
     dialog = new MoveDialog(oldPath)
     dialog.attach()
+
+  openSelectedEntryInFinder: ->
+    entry = @selectedEntry()
+    return unless entry
+    entryType = if entry instanceof DirectoryView then 'directory' else 'file'
+    try
+      shellOpen(entry.getPath())
+    catch error
+      atom.confirm
+        message: "Error opening #{entryType}"
+        detailedMessage: "Atom could not open the requested #{entryType} due an error.\n#{error}"
+        buttons:
+          'OK': null
+
 
   removeSelectedEntry: ->
     entry = @selectedEntry()
