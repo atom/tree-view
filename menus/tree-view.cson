@@ -27,4 +27,4 @@
     'Delete': 'tree-view:remove'
     'Copy Full Path': 'tree-view:copy-full-path'
     'Copy Project Path': 'tree-view:copy-project-path'
-    'Show in Finder': 'tree-view:show-in-finder'
+    'Show in Finder': 'tree-view:show-in-file-manager'

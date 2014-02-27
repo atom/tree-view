@@ -1,6 +1,7 @@
 path = require 'path'
 shell = require 'shell'
 showInFinder = require 'mac-open'
+showInExplorer = require 'open'
 
 _ = require 'underscore-plus'
 {$, ScrollView} = require 'atom'
@@ -24,7 +25,6 @@ class TreeView extends ScrollView
 
   initialize: (state) ->
     super
-
     focusAfterAttach = false
     root = null
     scrollLeftAfterAttach = -1
@@ -46,7 +46,7 @@ class TreeView extends ScrollView
     @command 'tree-view:add', => @add()
     @command 'tree-view:remove', => @removeSelectedEntry()
     @command 'tree-view:copy-full-path', => @copySelectedEntryPath(false)
-    @command 'tree-view:show-in-finder', => @showSelectedEntryInFinder()
+    @command 'tree-view:show-in-file-manager', => @showSelectedEntryInFileManager()
     @command 'tree-view:copy-project-path', => @copySelectedEntryPath(true)
     @command 'tool-panel:unfocus', => @unfocus()
 
@@ -75,6 +75,7 @@ class TreeView extends ScrollView
     @scrollLeftAfterAttach = state.scrollLeft if state.scrollLeft
     @width(state.width) if state.width > 0
     @attach() if state.attached
+    @updateContextMenu()
 
   afterAttach: (onDom) ->
     @focus() if @focusAfterAttach
@@ -265,12 +266,16 @@ class TreeView extends ScrollView
     dialog = new MoveDialog(oldPath)
     dialog.attach()
 
-  showSelectedEntryInFinder: ->
+  showSelectedEntryInFileManager: ->
     entry = @selectedEntry()
     return unless entry
     entryType = if entry instanceof DirectoryView then 'directory' else 'file'
     try
-      showInFinder(entry.getPath(), { R: true })
+      platform = process.platform
+      isWindows = /^win/.test(platform)
+      isOSX = /^darwin/.test(platform)
+      showInExplorer("/select,#{entry.getPath()}", "explorer")) if isWindows
+      showInFinder(entry.getPath(), { R: true }) if isOSX
     catch error
       atom.confirm
         message: "Error showing #{entryType}"
@@ -349,3 +354,15 @@ class TreeView extends ScrollView
   scrollToTop: ->
     @selectEntry(@root) if @root
     @scrollTop(0)
+
+  updateContextMenu: ->
+    elementClass = '.tree-view'
+    if /^win/.test(process.platform)
+      elementDefinitions = atom.contextMenu.definitionsForElement($(elementClass).get(0))
+      targetContextMenuItem = elementDefinitions.filter((item) ->
+          item.command is 'tree-view:show-in-file-manager'
+      )[0]
+      return unless targetContextMenuItem
+      targetContextMenuItemIndex = elementDefinitions.indexOf(targetContextMenuItem)
+      targetContextMenuItem.label = 'Show in Windows Explorer'
+      atom.contextMenu.definitions[elementClass][targetContextMenuItemIndex] = targetContextMenuItem
