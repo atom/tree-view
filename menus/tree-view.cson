@@ -27,4 +27,5 @@
     'Rename': 'tree-view:move'
     'Delete': 'tree-view:remove'
     'Copy Full Path': 'tree-view:copy-full-path'
-    'Copy Project Path': 'tree-view:copy-project-path'
+    'Copy Project Path': 'tree-view:copy-project-path',
+    'Open in Finder': 'tree-view:open-in-finder'
