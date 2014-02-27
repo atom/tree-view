@@ -2,8 +2,8 @@
   {
     'label': 'View'
     'submenu': [
-      'label': 'Toggle Tree View'
-      'command': 'tree-view:toggle'
+      { 'label': 'Toggle Tree View', 'command': 'tree-view:toggle' },
+      { 'label': 'Toggle Tree Side', 'command': 'tree-view:toggle-side' }
     ]
   }
   {
@@ -13,7 +13,8 @@
       'submenu': [
         { 'label': 'Focus', 'command': 'tree-view:toggle-focus' }
         { 'label': 'Toggle', 'command': 'tree-view:toggle' }
-        { 'label': 'Reveal Active File', 'command': 'tree-view:reveal-active-file' }
+        { 'label': 'Reveal Active File', 'command': 'tree-view:reveal-active-file' },
+        { 'label': 'Toggle Tree Side', 'command': 'tree-view:toggle-side' }
       ]
     ]
   }
@@ -26,4 +27,5 @@
     'Rename': 'tree-view:move'
     'Delete': 'tree-view:remove'
     'Copy Full Path': 'tree-view:copy-full-path'
-    'Copy Project Path': 'tree-view:copy-project-path'
+    'Copy Project Path': 'tree-view:copy-project-path',
+    'Open in Finder': 'tree-view:open-in-finder'
