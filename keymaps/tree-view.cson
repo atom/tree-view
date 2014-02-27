@@ -2,21 +2,21 @@
   'cmd-\\': 'tree-view:toggle'
   'cmd-k cmd-b': 'tree-view:toggle'
   'cmd-|': 'tree-view:reveal-active-file'
-  'ctrl-0': 'tree-view:toggle-focus'
+  'cmd-c': 'tree-view:copy-full-path'
 
 '.platform-win32':
   'ctrl-\\': 'tree-view:toggle'
   'ctrl-k ctrl-b': 'tree-view:toggle'
   'ctrl-|': 'tree-view:reveal-active-file'
-  'ctrl-0': 'tree-view:toggle-focus'
+  'ctrl-c': 'tree-view:copy-full-path'
 
 '.tree-view':
+  'ctrl-0': 'tree-view:toggle-focus'
   'right': 'tree-view:expand-directory'
   'ctrl-]': 'tree-view:expand-directory'
   'left': 'tree-view:collapse-directory'
   'ctrl-[': 'tree-view:collapse-directory'
   'enter': 'tree-view:open-selected-entry'
-  'ctrl-C': 'tree-view:copy-full-path'
   'm': 'tree-view:move'
   'a': 'tree-view:add'
   'delete': 'tree-view:remove'
