@@ -14,6 +14,7 @@
     "temp": "~0.6.0",
     "theorist": "1.x",
     "underscore-plus": "1.x",
-    "open": "0.0.4"
+    "grunt": "~0.4.2",
+    "mac-open": "~0.1.2"
   }
 }
