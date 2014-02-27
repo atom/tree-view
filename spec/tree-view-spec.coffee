@@ -811,7 +811,7 @@ describe "TreeView", ->
           expect(atom.workspaceView.getActiveView()).toBeUndefined()
 
   describe "file modification", ->
-    [dirView, fileView, rootDirPath, dirPath, filePath] = []
+    [dirView, fileView, dirView2, fileView2, fileView3, rootDirPath, dirPath, filePath, dirPath2, filePath2, filePath3] = []
 
     beforeEach ->
       atom.packages.deactivatePackage('tree-view')
@@ -821,8 +821,16 @@ describe "TreeView", ->
       dirPath = path.join(rootDirPath, "test-dir")
       filePath = path.join(dirPath, "test-file.txt")
 
+      dirPath2 = path.join(rootDirPath, "test-dir2")
+      filePath2 = path.join(dirPath2, "test-file2.txt")
+      filePath3 = path.join(dirPath2, "test-file3.txt")
+
       fs.makeTreeSync(dirPath)
       fs.writeFileSync(filePath, "doesn't matter")
+
+      fs.makeTreeSync(dirPath2)
+      fs.writeFileSync(filePath2, "doesn't matter")
+      fs.writeFileSync(filePath3, "doesn't matter")
 
       atom.project.setPath(rootDirPath)
 
@@ -835,8 +843,262 @@ describe "TreeView", ->
         dirView = treeView.root.entries.find('.directory:contains(test-dir)').view()
         dirView.expand()
         fileView = treeView.find('.file:contains(test-file.txt)').view()
+        dirView2 = treeView.root.entries.find('.directory:contains(test-dir2)').view()
+        dirView2.expand()
+        fileView2 = treeView.find('.file:contains(test-file2.txt)').view()
+        fileView3 = treeView.find('.file:contains(test-file3.txt)').view()
 
-    describe "tree-view:add-file", ->
+
+    describe "tree-view:copy", ->
+      LocalStorage = window.localStorage
+      beforeEach ->
+        atom.workspaceView.attachToDom()
+        LocalStorage.clear()
+
+        waitsForFileToOpen ->
+          fileView2.click()
+
+        runs ->
+          treeView.trigger "tree-view:copy"
+
+      describe "when a file is selected", ->
+        it "saves the selected file/directory path to localStorage['tree-view:copyPath']", ->
+          expect(LocalStorage['tree-view:copyPath']).toBeTruthy()
+
+        it "Clears the localStorage['tree-view:cutPath']", ->
+          LocalStorage.clear()
+          LocalStorage['tree-view:cutPath'] = "I live!"
+          treeView.trigger "tree-view:copy"
+          expect(LocalStorage['tree-view:cutPath']).toBeFalsy
+
+      describe 'when multiple files are selected', ->
+        it 'saves the selected item paths in localStorage', ->
+          fileView3.addClass('selected')
+          treeView.trigger "tree-view:copy"
+          storedPaths = JSON.parse(LocalStorage['tree-view:copyPath'])
+
+          expect(storedPaths.length).toBe 2
+          expect(storedPaths[0]).toBe fileView2.getPath()
+          expect(storedPaths[1]).toBe fileView3.getPath()
+
+    describe "tree-view:cut", ->
+      LocalStorage = window.localStorage
+      beforeEach ->
+        atom.workspaceView.attachToDom()
+        LocalStorage.clear()
+
+        waitsForFileToOpen ->
+          fileView2.click()
+
+        runs ->
+          treeView.trigger "tree-view:cut"
+
+      describe "when a file is selected", ->
+        it "saves the selected file/directory path to localStorage['tree-view:cutPath']", ->
+          expect(LocalStorage['tree-view:cutPath']).toBeTruthy()
+
+        it "Clears the localStorage['tree-view:copyPath']", ->
+          LocalStorage.clear()
+          LocalStorage['tree-view:copyPath'] = "I live to CUT!"
+          treeView.trigger "tree-view:cut"
+          expect(LocalStorage['tree-view:copyPath']).toBeFalsy()
+
+      describe 'when multiple files are selected', ->
+        it 'saves the selected item paths in localStorage', ->
+          LocalStorage.clear()
+          fileView3.addClass('selected')
+          treeView.trigger "tree-view:cut"
+          storedPaths = JSON.parse(LocalStorage['tree-view:cutPath'])
+
+          expect(storedPaths.length).toBe 2
+          expect(storedPaths[0]).toBe fileView2.getPath()
+          expect(storedPaths[1]).toBe fileView3.getPath()
+
+    describe "tree-view:paste", ->
+      LocalStorage = window.localStorage
+      beforeEach ->
+        atom.workspaceView.attachToDom()
+        LocalStorage.clear()
+
+      describe "when attempting to paste a directory into itself", ->
+        describe "when copied", ->
+          it "makes a copy inside itself", ->
+            LocalStorage['tree-view:copyPath'] = JSON.stringify([dirPath])
+            dirView.click()
+
+            newPath = path.join(dirPath, path.basename(dirPath))
+            expect( -> treeView.trigger("tree-view:paste") ).not.toThrow(new Error)
+            expect(fs.existsSync(newPath)).toBeTruthy()
+
+          it 'does not keep copying recursively', ->
+            LocalStorage['tree-view:copyPath'] = JSON.stringify([dirPath])
+            dirView.click()
+
+            newPath = path.join(dirPath, path.basename(dirPath))
+            expect( -> treeView.trigger("tree-view:paste") ).not.toThrow(new Error)
+            expect(fs.existsSync(newPath)).toBeTruthy()
+            expect(fs.existsSync(path.join(newPath, path.basename(dirPath)))).toBeFalsy()
+
+        describe "when cut", ->
+          it "does nothing", ->
+            LocalStorage['tree-view:cutPath'] = JSON.stringify([dirPath])
+            dirView.click()
+
+            expect(fs.existsSync(dirPath)).toBeTruthy()
+            expect(fs.existsSync(path.join(dirPath, path.basename(dirPath)))).toBeFalsy()
+
+      describe "when a file has been copied", ->
+        describe "when a file is selected", ->
+          it "creates a copy of the original file in the selected file's parent directory", ->
+            LocalStorage['tree-view:copyPath'] = JSON.stringify([filePath])
+
+            fileView2.click()
+            treeView.trigger "tree-view:paste"
+
+            expect(fs.existsSync("#{dirPath2}/#{filePath.split('/').pop()}")).toBeTruthy()
+            expect(fs.existsSync(filePath)).toBeTruthy()
+
+          describe 'when target already exists', ->
+            it 'appends a number to the destination name', ->
+              LocalStorage['tree-view:copyPath'] = JSON.stringify([filePath])
+
+              fileView.click()
+              treeView.trigger "tree-view:paste"
+              treeView.trigger "tree-view:paste"
+
+              fileArr = filePath.split('/').pop().split('.')
+              numberedFileName0 = "#{dirPath}/#{fileArr[0]}0.#{fileArr[1]}"
+              numberedFileName1 = "#{dirPath}/#{fileArr[0]}1.#{fileArr[1]}"
+              expect(fs.existsSync(numberedFileName0)).toBeTruthy()
+              expect(fs.existsSync(numberedFileName1)).toBeTruthy()
+              expect(fs.existsSync(filePath)).toBeTruthy()
+
+        describe "when a directory is selected", ->
+          it "creates a copy of the original file in the selected directory", ->
+            LocalStorage['tree-view:copyPath'] = JSON.stringify([filePath])
+
+            dirView2.click()
+            treeView.trigger "tree-view:paste"
+
+            expect(fs.existsSync("#{dirPath2}/#{filePath.split('/').pop()}")).toBeTruthy()
+            expect(fs.existsSync(filePath)).toBeTruthy()
+
+          describe 'when target already exists', ->
+            it 'appends a number to the destination directory name', ->
+              LocalStorage['tree-view:copyPath'] = JSON.stringify([filePath])
+
+              dirView.click()
+              treeView.trigger "tree-view:paste"
+              treeView.trigger "tree-view:paste"
+
+              fileArr = filePath.split('/').pop().split('.')
+              numberedFileName0 = "#{dirPath}/#{fileArr[0]}0.#{fileArr[1]}"
+              numberedFileName1 = "#{dirPath}/#{fileArr[0]}1.#{fileArr[1]}"
+              expect(fs.existsSync(numberedFileName0)).toBeTruthy()
+              expect(fs.existsSync(numberedFileName1)).toBeTruthy()
+              expect(fs.existsSync(filePath)).toBeTruthy()
+
+      describe "when multiple files have been copied", ->
+        describe "when a file is selected", ->
+          it "copies the selected files to the parent directory of the selected file", ->
+            LocalStorage['tree-view:copyPath'] = JSON.stringify([filePath2, filePath3])
+
+            fileView.click()
+            treeView.trigger "tree-view:paste"
+
+            expect(fs.existsSync("#{dirPath}/#{filePath2.split('/').pop()}")).toBeTruthy()
+            expect(fs.existsSync("#{dirPath}/#{filePath3.split('/').pop()}")).toBeTruthy()
+            expect(fs.existsSync(filePath2)).toBeTruthy()
+            expect(fs.existsSync(filePath3)).toBeTruthy()
+
+          describe 'when the target destination file exists', ->
+            it 'appends a number to the duplicate destination target names', ->
+              LocalStorage['tree-view:copyPath'] = JSON.stringify([filePath2, filePath3])
+
+              filePath4 = path.join(dirPath, "test-file2.txt")
+              filePath5 = path.join(dirPath, "test-file3.txt")
+              fs.writeFileSync(filePath4, "doesn't matter")
+              fs.writeFileSync(filePath5, "doesn't matter")
+
+              fileView.click()
+              treeView.trigger "tree-view:paste"
+
+              expect(fs.existsSync(path.join(dirPath, "test-file20.txt"))).toBeTruthy()
+              expect(fs.existsSync(path.join(dirPath, "test-file30.txt"))).toBeTruthy()
+
+      describe "when a file has been cut", ->
+        describe "when a file is selected", ->
+          it "creates a copy of the original file in the selected file's parent directory and removes the original", ->
+            LocalStorage['tree-view:cutPath'] = JSON.stringify([filePath])
+
+            fileView2.click()
+            treeView.trigger "tree-view:paste"
+
+            expect(fs.existsSync("#{dirPath2}/#{filePath.split('/').pop()}")).toBeTruthy()
+            expect(fs.existsSync(filePath)).toBeFalsy()
+
+          describe 'when the target destination file exists', ->
+            it 'does not move the cut file', ->
+              LocalStorage['tree-view:cutPath'] = JSON.stringify([filePath])
+
+              filePath3 = path.join(dirPath2, "test-file.txt")
+              fs.writeFileSync(filePath3, "doesn't matter")
+
+              fileView2.click()
+              treeView.trigger "tree-view:paste"
+
+              expect(fs.existsSync(filePath)).toBeTruthy()
+
+        describe "when a directory is selected", ->
+          it "creates a copy of the original file in the selected directory and removes the original", ->
+            LocalStorage['tree-view:cutPath'] = JSON.stringify([filePath])
+
+            dirView2.click()
+            treeView.trigger "tree-view:paste"
+
+            expect(fs.existsSync("#{dirPath2}/#{filePath.split('/').pop()}")).toBeTruthy()
+            expect(fs.existsSync(filePath)).toBeFalsy()
+
+      describe "when multiple files have been cut", ->
+        describe "when a file is selected", ->
+          it "moves the selected files to the parent directory of the selected file", ->
+            LocalStorage['tree-view:cutPath'] = JSON.stringify([filePath2, filePath3])
+
+            fileView.click()
+            treeView.trigger "tree-view:paste"
+
+            expect(fs.existsSync("#{dirPath}/#{filePath2.split('/').pop()}")).toBeTruthy()
+            expect(fs.existsSync("#{dirPath}/#{filePath3.split('/').pop()}")).toBeTruthy()
+            expect(fs.existsSync(filePath2)).toBeFalsy()
+            expect(fs.existsSync(filePath3)).toBeFalsy()
+
+          describe 'when the target destination file exists', ->
+            it 'does not move the cut file', ->
+              LocalStorage['tree-view:cutPath'] = JSON.stringify([filePath2, filePath3])
+
+              filePath4 = path.join(dirPath, "test-file2.txt")
+              filePath5 = path.join(dirPath, "test-file3.txt")
+              fs.writeFileSync(filePath4, "doesn't matter")
+              fs.writeFileSync(filePath5, "doesn't matter")
+
+              fileView.click()
+              treeView.trigger "tree-view:paste"
+
+              expect(fs.existsSync(filePath2)).toBeTruthy()
+              expect(fs.existsSync(filePath3)).toBeTruthy()
+
+        describe "when a directory is selected", ->
+          it "creates a copy of the original file in the selected directory and removes the original", ->
+            LocalStorage['tree-view:cutPath'] = JSON.stringify([filePath])
+
+            dirView2.click()
+            treeView.trigger "tree-view:paste"
+
+            expect(fs.existsSync("#{dirPath2}/#{filePath.split('/').pop()}")).toBeTruthy()
+            expect(fs.existsSync(filePath)).toBeFalsy()
+
+
+    describe "tree-view:add", ->
       addDialog = null
 
       beforeEach ->
@@ -1433,3 +1695,73 @@ describe "TreeView", ->
       expect(treeView.width()).toBe 10
       treeView.find('.tree-view-resize-handle').trigger 'dblclick'
       expect(treeView.width()).toBeGreaterThan 10
+
+  describe "selecting items", ->
+    [dirView, fileView1, fileView2, fileView3, rootDirPath, dirPath, filePath1, filePath2, filePath3] = []
+
+    beforeEach ->
+      atom.packages.deactivatePackage('tree-view')
+
+      rootDirPath = fs.absolute(temp.mkdirSync('tree-view'))
+
+      dirPath = path.join(rootDirPath, "test-dir")
+      filePath1 = path.join(dirPath, "test-file1.txt")
+      filePath2 = path.join(dirPath, "test-file2.txt")
+      filePath3 = path.join(dirPath, "test-file3.txt")
+
+      fs.makeTreeSync(dirPath)
+      fs.writeFileSync(filePath1, "doesn't matter")
+      fs.writeFileSync(filePath2, "doesn't matter")
+      fs.writeFileSync(filePath3, "doesn't matter")
+
+      atom.project.setPath(rootDirPath)
+
+      waitsForPromise ->
+        atom.packages.activatePackage('tree-view')
+
+      runs ->
+        atom.workspaceView.trigger 'tree-view:toggle'
+        treeView = atom.workspaceView.find(".tree-view").view()
+        dirView = treeView.root.entries.find('.directory:contains(test-dir)').view()
+        dirView.expand()
+        fileView1 = treeView.find('.file:contains(test-file1.txt)').view()
+        fileView2 = treeView.find('.file:contains(test-file2.txt)').view()
+        fileView3 = treeView.find('.file:contains(test-file3.txt)').view()
+
+    describe 'selecting multiple items', ->
+      it 'switches the contextual menu to muli-select mode', ->
+        fileView1.click()
+        fileView2.trigger($.Event('mousedown', {shiftKey: true}))
+        expect(treeView.find('.tree-view')).toHaveClass('multi-select')
+        fileView3.trigger($.Event('mousedown'))
+        expect(treeView.find('.tree-view')).toHaveClass('full-menu')
+
+    describe 'selecting multiple items', ->
+      it 'switches the contextual menu to muli-select mode', ->
+        fileView1.click()
+        fileView2.trigger($.Event('mousedown', {shiftKey: true}))
+        expect(treeView.find('.tree-view')).toHaveClass('multi-select')
+
+      describe 'using the shift key', ->
+        it 'selects the items between the already selected item and the shift clicked item', ->
+          fileView1.click()
+          fileView3.trigger($.Event('mousedown', {shiftKey: true}))
+          expect(fileView1).toHaveClass('selected')
+          expect(fileView2).toHaveClass('selected')
+          expect(fileView3).toHaveClass('selected')
+
+      describe 'using the metakey(cmd) key', ->
+        it 'selects the cmd clicked item in addition to the original selected item', ->
+          fileView1.click()
+          fileView3.trigger($.Event('mousedown', {metaKey: true}))
+          expect(fileView1).toHaveClass('selected')
+          expect(fileView3).toHaveClass('selected')
+          expect(fileView2).not.toHaveClass('selected')
+
+      describe 'using the ctrl key', ->
+        it 'selects the cmd clicked item in addition to the original selected item', ->
+          fileView1.click()
+          fileView3.trigger($.Event('mousedown', {ctrlKey: true}))
+          expect(fileView1).toHaveClass('selected')
+          expect(fileView3).toHaveClass('selected')
+          expect(fileView2).not.toHaveClass('selected')
