@@ -233,6 +233,24 @@ describe "TreeView", ->
         expect(treeView.hasParent()).toBeTruthy()
         expect(treeView.list).toMatchSelector(':focus')
 
+    describe "when tree-view:toggle-side is triggered on the root view", ->
+      beforeEach ->
+        atom.workspaceView.attachToDom()
+
+      describe "when the tree view is on the left", ->
+        it "should be moved to the right", ->
+          expect(treeView).toBeVisible()
+          atom.workspaceView.trigger 'tree-view:toggle-side'
+          expect(treeView).toMatchSelector('[data-toggle-side="true"]')
+      describe "when the tree view is on the right", ->
+        beforeEach ->
+          atom.workspaceView.trigger 'tree-view:toggle-side'
+
+        it "should be moved to the left", ->
+          expect(treeView).toBeVisible()
+          atom.workspaceView.trigger 'tree-view:toggle-side'
+          expect(treeView).toMatchSelector('[data-toggle-side="false"]')
+
   describe "when tree-view:toggle-focus is triggered on the root view", ->
     beforeEach ->
       atom.workspaceView.attachToDom()

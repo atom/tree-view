@@ -15,6 +15,7 @@ module.exports =
     atom.workspaceView.command 'tree-view:toggle', => @createView().toggle()
     atom.workspaceView.command 'tree-view:toggle-focus', => @createView().toggleFocus()
     atom.workspaceView.command 'tree-view:reveal-active-file', => @createView().revealActiveFile()
+    atom.workspaceView.command 'tree-view:toggle-side', => @createView().toggleSide()
 
   deactivate: ->
     @treeView?.deactivate()
