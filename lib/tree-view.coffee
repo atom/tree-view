@@ -15,8 +15,8 @@ FileView = require './file-view'
 
 module.exports =
 class TreeView extends ScrollView
-  @content: ->
-    @div class: 'tree-view-resizer tool-panel panel-left', =>
+  @content = ->
+    @div class: 'tree-view-resizer tool-panel', 'data-toggle-side': atom.config.get('tree.toggleSide'), =>
       @div class: 'tree-view-scroller', outlet: 'scroller', =>
         @ol class: 'tree-view list-tree has-collapsable-children focusable-panel', tabindex: -1, outlet: 'list'
       @div class: 'tree-view-resize-handle', outlet: 'resizeHandle'
@@ -47,6 +47,7 @@ class TreeView extends ScrollView
     @command 'tree-view:copy-full-path', => @copySelectedEntryPath(false)
     @command 'tree-view:copy-project-path', => @copySelectedEntryPath(true)
     @command 'tool-panel:unfocus', => @unfocus()
+    @command 'tree-view:toggle-side', => @toggleSide()
 
     @on 'tree-view:directory-modified', =>
       if @hasFocus()
@@ -103,7 +104,10 @@ class TreeView extends ScrollView
 
   attach: ->
     return unless atom.project.getPath()
-    atom.workspaceView.appendToLeft(this)
+    if atom.config.get('tree.toggleSide')
+      atom.workspaceView.appendToRight(this)
+    else
+      atom.workspaceView.appendToLeft(this)
 
   detach: ->
     @scrollLeftAfterAttach = @scroller.scrollLeft()
@@ -150,7 +154,9 @@ class TreeView extends ScrollView
     $(document.body).off('mouseup', @resizeStopped)
 
   resizeTreeView: ({pageX}) =>
-    @width(pageX)
+    w = pageX;
+    w = $('body').width() - w if atom.config.get('tree.toggleSide')
+    @width(w)
 
   updateRoot: (expandedEntries={}) ->
     @root?.remove()
@@ -333,3 +339,10 @@ class TreeView extends ScrollView
   scrollToTop: ->
     @selectEntry(@root) if @root
     @scrollTop(0)
+
+  toggleSide: ->
+    newValue = !atom.config.get('tree.toggleSide')
+    atom.config.set('tree.toggleSide', newValue)
+    @detach()
+    @attach()
+    $(this).attr('data-toggle-side', newValue);
