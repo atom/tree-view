@@ -255,11 +255,10 @@ class TreeView extends ScrollView
     if selectedEntry instanceof DirectoryView
       selectedEntry.view().toggleExpansion()
     else if selectedEntry instanceof FileView
-      previewingItem = atom.workspace.activePane.previewingItem;
-      if previewingItem.isPreview
-        previewingItem.isPreview = false
-        atom.workspace.activePane.emit('item-moved', previewingItem, 99)
-        previewingItem = true
+      if atom.workspace.activePane.previewingItem? and atom.workspace.activePane.previewingItem.isPreview
+        atom.workspace.activePane.previewingItem.isPreview = false
+        atom.workspace.activePane.emit('item-moved', atom.workspace.activePane.previewingItem, 99)
+        atom.workspace.activePane.previewingItem = null
       atom.workspaceView.open(selectedEntry.getPath(), { changeFocus })
 
   previewSelectedEntry: (changeFocus) ->
@@ -296,7 +295,7 @@ class TreeView extends ScrollView
 
       else
         pane.activeItem = item
-        if pane.activeItem?
+        if pane.previewingItem?
           pane.removeItem(pane.previewingItem);
           pane.previewingItem = null
 
