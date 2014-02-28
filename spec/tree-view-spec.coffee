@@ -644,6 +644,10 @@ describe "TreeView", ->
         treeView.trigger 'core:move-to-bottom'
         expect(treeView.scrollBottom()).toBe treeView.root.outerHeight()
 
+        treeView.root.collapse()
+        treeView.trigger 'core:move-to-bottom'
+        expect(treeView.scrollTop()).toBe 0
+
       it "selects the last entry", ->
         expect(treeView.root).toHaveClass 'selected'
         treeView.trigger 'core:move-to-bottom'
