@@ -294,6 +294,7 @@ class TreeView extends ScrollView
           console.error if error.stack? then error.stack else error
 
       else
+        return if item is pane.previewingItem
         pane.activeItem = item
         if pane.previewingItem?
           pane.removeItem(pane.previewingItem);
