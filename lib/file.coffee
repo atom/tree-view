@@ -33,12 +33,11 @@ class File extends Model
       @subscribeToRepo(repo)
       @updateStatus(repo)
 
-  # Private: Called by theorist.
+  # Called by theorist.
   destroyed: ->
     @unsubscribe()
 
-  # Private: Subscribe to the given repo for changes to the Git status of this
-  # directory.
+  # Subscribe to the given repo for changes to the Git status of this directory.
   subscribeToRepo: ->
     repo = atom.project.getRepo()
     if repo?
@@ -47,7 +46,7 @@ class File extends Model
       @subscribe repo, 'statuses-changed', =>
         @updateStatus(repo)
 
-  # Private: Update the status property of this directory using the repo.
+  # Update the status property of this directory using the repo.
   updateStatus: (repo) ->
     newStatus = null
     if repo.isPathIgnored(@path)

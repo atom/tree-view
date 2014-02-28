@@ -27,20 +27,19 @@ class Directory extends Model
       @subscribeToRepo(repo)
       @updateStatus(repo)
 
-  # Private: Called by theorist.
+  # Called by theorist.
   destroyed: ->
     @unwatch()
     @unsubscribe()
 
-  # Private: Subscribe to the given repo for changes to the Git status of this
-  # directory.
+  # Subscribe to the given repo for changes to the Git status of this directory.
   subscribeToRepo: (repo) ->
     @subscribe repo, 'status-changed', (changedPath, status) =>
       @updateStatus(repo) if changedPath.indexOf("#{@path}#{path.sep}") is 0
     @subscribe repo, 'statuses-changed', =>
       @updateStatus(repo)
 
-  # Private: Update the status property of this directory using the repo.
+  # Update the status property of this directory using the repo.
   updateStatus: (repo) ->
     newStatus = null
     if repo.isPathIgnored(@path)
@@ -54,7 +53,7 @@ class Directory extends Model
 
     @status = newStatus if newStatus isnt @status
 
-  # Private: Is the given path ignored?
+  # Is the given path ignored?
   isPathIgnored: (filePath) ->
     if atom.config.get('tree-view.hideVcsIgnoredFiles')
       repo = atom.project.getRepo()
@@ -66,7 +65,7 @@ class Directory extends Model
 
     false
 
-  # Private: Create a new model for the given atom.File or atom.Directory entry.
+  # Create a new model for the given atom.File or atom.Directory entry.
   createEntry: (entry, index) ->
     if entry.getEntriesSync?
       expandedEntries = @expandedEntries[entry.getBaseName()]
