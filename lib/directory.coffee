@@ -2,6 +2,7 @@ path = require 'path'
 
 {Model} = require 'theorist'
 _ = require 'underscore-plus'
+minimatch = require 'minimatch'
 
 File = require './file'
 
@@ -61,7 +62,9 @@ class Directory extends Model
 
     if atom.config.get('tree-view.hideIgnoredNames')
       ignoredNames = atom.config.get('core.ignoredNames') ? []
-      return true if _.contains(ignoredNames, path.basename(filePath))
+      ignoredNames = [ignoredNames] if typeof ignoredNames is 'string'
+      for ignoredName in ignoredNames
+        return true if minimatch(path.basename(filePath), ignoredName, dot: true)
 
     false
 
