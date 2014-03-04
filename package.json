@@ -13,7 +13,6 @@
     "fs-plus": "2.x",
     "temp": "~0.6.0",
     "theorist": "1.x",
-    "underscore-plus": "1.x",
-    "minimatch": "^0.2.14"
+    "underscore-plus": "1.x"
   }
 }
