@@ -30,6 +30,8 @@ class TreeView extends ScrollView
     scrollTopAfterAttach = -1
     selectedPath = null
 
+    atom.workspaceView.treeView = this
+
     @on 'click', '.entry', (e) => @entryClicked(e)
     @on 'mousedown', '.entry', (e) =>
       e.stopPropagation()
