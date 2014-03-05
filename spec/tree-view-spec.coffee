@@ -1193,6 +1193,28 @@ describe "TreeView", ->
       expect(treeView.find('.directory .name:contains(test.js)').length).toBe 1
       expect(treeView.find('.directory .name:contains(test.txt)').length).toBe 1
 
+  describe "the hideHiddenFiles config option", ->
+    beforeEach ->
+      atom.config.set('core.ignoredNames', ['.git', '*.js'])
+      dotGitFixture = path.join(__dirname, 'fixtures', 'git', 'working-dir', 'git.git')
+      projectPath = temp.mkdirSync('tree-view-project')
+      dotGit = path.join(projectPath, '.git')
+      fs.copySync(dotGitFixture, dotGit)
+      fs.writeFileSync(path.join(projectPath, '.hidden.txt'), '')
+      fs.writeFileSync(path.join(projectPath, 'test.txt'), '')
+      atom.project.setPath(projectPath)
+      atom.config.set "tree-view.hideHiddenFiles", false
+
+    it "hides hidden files and directories if the option is set, but otherwise shows them", ->
+      expect(treeView.find('.directory .name:contains(.git)').length).toBe 1
+      expect(treeView.find('.directory .name:contains(.hidden.txt)').length).toBe 1
+      expect(treeView.find('.directory .name:contains(test.txt)').length).toBe 1
+
+      atom.config.set("tree-view.hideHiddenFiles", true)
+      expect(treeView.find('.directory .name:contains(.git)').length).toBe 0
+      expect(treeView.find('.directory .name:contains(.hidden.txt)').length).toBe 0
+      expect(treeView.find('.directory .name:contains(test.txt)').length).toBe 1
+
   describe "Git status decorations", ->
     beforeEach ->
       projectPath = temp.mkdirSync('tree-view-project')
