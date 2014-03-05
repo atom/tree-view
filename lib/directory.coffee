@@ -67,6 +67,10 @@ class Directory extends Model
       extension = path.extname(filePath)
       return true if extension and _.contains(ignoredNames, "*#{extension}")
 
+    if atom.config.get('tree-view.hideHiddenFiles')
+      name = path.basename(filePath)
+      return true if /^\.[^\.]/.test name
+
     false
 
   # Create a new model for the given atom.File or atom.Directory entry.
