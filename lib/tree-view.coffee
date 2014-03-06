@@ -104,7 +104,7 @@ class TreeView extends ScrollView
 
   attach: ->
     return unless atom.project.getPath()
-    if atom.config.get('tree.toggleSide')
+    if atom.config.get('tree-view.showOnRightSide')
       atom.workspaceView.appendToRight(this)
     else
       atom.workspaceView.appendToLeft(this)
@@ -341,8 +341,8 @@ class TreeView extends ScrollView
     @scrollTop(0)
 
   toggleSide: ->
-    newValue = !atom.config.get('tree.toggleSide')
-    atom.config.set('tree.toggleSide', newValue)
+    newValue = !atom.config.get('tree-view.showOnRightSide')
+    atom.config.set('tree-view.showOnRightSide', newValue)
     @detach()
     @attach()
-    $(this).attr('data-toggle-side', newValue)
+    $(this).attr('data-toggle-showOnRightSide', newValue)

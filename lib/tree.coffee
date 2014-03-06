@@ -4,6 +4,7 @@ module.exports =
   configDefaults:
     hideVcsIgnoredFiles: false
     hideIgnoredNames: false
+    showOnRightSide: false
 
   treeView: null
 
