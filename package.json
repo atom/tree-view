@@ -15,7 +15,6 @@
     "theorist": "1.x",
     "underscore-plus": "1.x",
     "grunt": "~0.4.2",
-    "mac-open": "~0.1.2",
-    "open": "0.0.4"
+    "mac-open": "~0.1.2"
   }
 }

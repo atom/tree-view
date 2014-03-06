@@ -1,7 +1,6 @@
 path = require 'path'
 shell = require 'shell'
 showInFinder = require 'mac-open'
-showInExplorer = require 'open'
 
 _ = require 'underscore-plus'
 {$, ScrollView} = require 'atom'
@@ -75,7 +74,6 @@ class TreeView extends ScrollView
     @scrollLeftAfterAttach = state.scrollLeft if state.scrollLeft
     @width(state.width) if state.width > 0
     @attach() if state.attached
-    @updateContextMenu()
 
   afterAttach: (onDom) ->
     @focus() if @focusAfterAttach
@@ -271,11 +269,7 @@ class TreeView extends ScrollView
     return unless entry
     entryType = if entry instanceof DirectoryView then 'directory' else 'file'
     try
-      platform = process.platform
-      isWindows = /^win/.test(platform)
-      isOSX = /^darwin/.test(platform)
-      showInExplorer("/select,#{entry.getPath()}", "explorer") if isWindows
-      showInFinder(entry.getPath(), { R: true }) if isOSX
+      showInFinder(entry.getPath(), { R: true })
     catch error
       atom.confirm
         message: "Error showing #{entryType}"
@@ -354,15 +348,3 @@ class TreeView extends ScrollView
   scrollToTop: ->
     @selectEntry(@root) if @root
     @scrollTop(0)
-
-  updateContextMenu: ->
-    elementClass = '.tree-view'
-    if /^win/.test(process.platform)
-      elementDefinitions = atom.contextMenu.definitionsForElement($(elementClass).get(0))
-      targetContextMenuItem = elementDefinitions.filter((item) ->
-          item.command is 'tree-view:show-in-file-manager'
-      )[0]
-      return unless targetContextMenuItem
-      targetContextMenuItemIndex = elementDefinitions.indexOf(targetContextMenuItem)
-      targetContextMenuItem.label = 'Show in Windows Explorer'
-      atom.contextMenu.definitions[elementClass][targetContextMenuItemIndex] = targetContextMenuItem
