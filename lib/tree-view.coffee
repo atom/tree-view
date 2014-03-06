@@ -64,6 +64,8 @@ class TreeView extends ScrollView
       @updateRoot()
     @subscribe atom.config.observe 'core.ignoredNames', callNow: false, =>
       @updateRoot() if atom.config.get('tree-view.hideIgnoredNames')
+    @subscribe atom.config.observe 'tree-view.showOnRightSide', callNow: false, =>
+      @onSideToggled()
 
     @updateRoot(state.directoryExpansionStates)
     @selectEntry(@root) if @root?
@@ -343,6 +345,8 @@ class TreeView extends ScrollView
   toggleSide: ->
     newValue = !atom.config.get('tree-view.showOnRightSide')
     atom.config.set('tree-view.showOnRightSide', newValue)
+
+  onSideToggled: (newValue) ->
     @detach()
     @attach()
     $(this).attr('data-toggle-showOnRightSide', newValue)
