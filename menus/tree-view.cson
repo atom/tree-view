@@ -28,3 +28,6 @@
     'Copy Full Path': 'tree-view:copy-full-path'
     'Copy Project Path': 'tree-view:copy-project-path'
     'Show in Finder': 'tree-view:show-in-file-manager'
+
+  '.pane .item-views':
+    'Reveal in Tree View': 'tree-view:reveal-active-file'
