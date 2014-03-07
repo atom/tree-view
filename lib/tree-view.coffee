@@ -24,6 +24,7 @@ class TreeView extends ScrollView
 
   initialize: (state) ->
     super
+
     focusAfterAttach = false
     root = null
     scrollLeftAfterAttach = -1
@@ -276,7 +277,6 @@ class TreeView extends ScrollView
         detailedMessage: "Atom could not show the requested #{entryType} due an error.\n#{error}"
         buttons:
           'OK': null
-
 
   removeSelectedEntry: ->
     entry = @selectedEntry()
