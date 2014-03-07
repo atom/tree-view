@@ -274,8 +274,7 @@ class TreeView extends ScrollView
         atom.confirm
           message: "Opening #{entryType} in Finder failed"
           detailedMessage: error.message
-          buttons:
-            'OK': null
+          buttons: ['OK']
 
   removeSelectedEntry: ->
     entry = @selectedEntry()
