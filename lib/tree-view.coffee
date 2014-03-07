@@ -106,9 +106,12 @@ class TreeView extends ScrollView
 
   attach: ->
     return unless atom.project.getPath()
+    @removeClass('panel-right, panel-left')
     if atom.config.get('tree-view.showOnRightSide')
+      @addClass('panel-right')
       atom.workspaceView.appendToRight(this)
     else
+      @addClass('panel-left')
       atom.workspaceView.appendToLeft(this)
 
   detach: ->
@@ -146,6 +149,10 @@ class TreeView extends ScrollView
           entry.toggleExpansion()
 
     false
+
+  resizeToContentWidth: =>
+    listTreeWidth = @find('.tree-view.list-tree').outerWidth() + 15
+    @width(listTreeWidth) if listTreeWidth > @width()
 
   resizeStarted: =>
     $(document.body).on('mousemove', @resizeTreeView)
