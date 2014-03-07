@@ -1,10 +1,10 @@
 path = require 'path'
 shell = require 'shell'
-showInFinder = require 'mac-open'
 
 _ = require 'underscore-plus'
 {$, ScrollView} = require 'atom'
 fs = require 'fs-plus'
+showInFinder = require 'mac-open'
 
 AddDialog = null  # Defer requiring until actually needed
 MoveDialog = null # Defer requiring until actually needed
@@ -269,7 +269,7 @@ class TreeView extends ScrollView
     entry = @selectedEntry()
     return unless entry
     entryType = if entry instanceof DirectoryView then 'directory' else 'file'
-    showInFinder entry.getPath(), { R: true }, (error) ->
+    showInFinder entry.getPath(), {R: true}, (error) ->
       if error?
         atom.confirm
           message: "Opening #{entryType} in Finder failed"
