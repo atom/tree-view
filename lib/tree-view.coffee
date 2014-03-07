@@ -269,14 +269,13 @@ class TreeView extends ScrollView
     entry = @selectedEntry()
     return unless entry
     entryType = if entry instanceof DirectoryView then 'directory' else 'file'
-    try
-      showInFinder(entry.getPath(), { R: true })
-    catch error
-      atom.confirm
-        message: "Error showing #{entryType}"
-        detailedMessage: "Atom could not show the requested #{entryType} due an error.\n#{error}"
-        buttons:
-          'OK': null
+    showInFinder entry.getPath(), { R: true }, (error) ->
+      if error?
+        atom.confirm
+          message: "Opening #{entryType} in Finder failed"
+          detailedMessage: error.message
+          buttons:
+            'OK': null
 
   removeSelectedEntry: ->
     entry = @selectedEntry()
