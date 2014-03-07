@@ -16,7 +16,7 @@ FileView = require './file-view'
 module.exports =
 class TreeView extends ScrollView
   @content: ->
-    @div class: 'tree-view-resizer tool-panel', 'data-showOnRightSide': atom.config.get('tree-view.showOnRightSide'), =>
+    @div class: 'tree-view-resizer tool-panel', 'data-show-on-right-side': atom.config.get('tree-view.showOnRightSide'), =>
       @div class: 'tree-view-scroller', outlet: 'scroller', =>
         @ol class: 'tree-view list-tree has-collapsable-children focusable-panel', tabindex: -1, outlet: 'list'
       @div class: 'tree-view-resize-handle', outlet: 'resizeHandle'
@@ -348,4 +348,4 @@ class TreeView extends ScrollView
   onSideToggled: (newValue) ->
     @detach()
     @attach()
-    @attr('data-showOnRightSide', newValue)
+    @attr('data-show-on-right-side', newValue)
