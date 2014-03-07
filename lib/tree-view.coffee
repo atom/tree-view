@@ -1,5 +1,6 @@
 path = require 'path'
 shell = require 'shell'
+showInFinder = require 'mac-open'
 
 _ = require 'underscore-plus'
 {$, ScrollView} = require 'atom'
@@ -45,6 +46,7 @@ class TreeView extends ScrollView
     @command 'tree-view:add', => @add()
     @command 'tree-view:remove', => @removeSelectedEntry()
     @command 'tree-view:copy-full-path', => @copySelectedEntryPath(false)
+    @command 'tree-view:show-in-file-manager', => @showSelectedEntryInFileManager()
     @command 'tree-view:copy-project-path', => @copySelectedEntryPath(true)
     @command 'tool-panel:unfocus', => @unfocus()
 
@@ -262,6 +264,18 @@ class TreeView extends ScrollView
     MoveDialog ?= require './move-dialog'
     dialog = new MoveDialog(oldPath)
     dialog.attach()
+
+  showSelectedEntryInFileManager: ->
+    entry = @selectedEntry()
+    return unless entry
+    entryType = if entry instanceof DirectoryView then 'directory' else 'file'
+    showInFinder entry.getPath(), { R: true }, (error) ->
+      if error?
+        atom.confirm
+          message: "Opening #{entryType} in Finder failed"
+          detailedMessage: error.message
+          buttons:
+            'OK': null
 
   removeSelectedEntry: ->
     entry = @selectedEntry()
