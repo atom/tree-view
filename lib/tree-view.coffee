@@ -106,7 +106,7 @@ class TreeView extends ScrollView
 
   attach: ->
     return unless atom.project.getPath()
-    @removeClass('panel-right, panel-left')
+    @removeClass('panel-right panel-left')
     if atom.config.get('tree-view.showOnRightSide')
       @addClass('panel-right')
       atom.workspaceView.appendToRight(this)
