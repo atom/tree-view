@@ -11,9 +11,9 @@
   "private": true,
   "dependencies": {
     "fs-plus": "2.x",
+    "mac-open": "~0.1.2",
     "temp": "~0.6.0",
     "theorist": "1.x",
-    "underscore-plus": "1.x",
-    "mac-open": "~0.1.2"
+    "underscore-plus": "1.x"
   }
 }
