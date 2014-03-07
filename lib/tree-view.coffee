@@ -343,8 +343,7 @@ class TreeView extends ScrollView
     @scrollTop(0)
 
   toggleSide: ->
-    newValue = !atom.config.get('tree-view.showOnRightSide')
-    atom.config.set('tree-view.showOnRightSide', newValue)
+    atom.config.toggle('tree-view.showOnRightSide')
 
   onSideToggled: (newValue) ->
     @detach()
