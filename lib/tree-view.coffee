@@ -31,6 +31,7 @@ class TreeView extends ScrollView
     selectedPath = null
 
     @on 'click', '.entry', (e) => @entryClicked(e)
+    @on 'dblclick', '.tree-view-resize-handle', => @resizeToFitContent()
     @on 'mousedown', '.entry', (e) =>
       e.stopPropagation()
       @selectEntry($(e.currentTarget).view())
@@ -152,6 +153,10 @@ class TreeView extends ScrollView
 
   resizeTreeView: ({pageX}) =>
     @width(pageX)
+
+  resizeToFitContent: =>
+    treeViewWidth = @find('.tree-view.list-tree').outerWidth() + 15
+    @width(treeViewWidth) if treeViewWidth > @width()
 
   updateRoot: (expandedEntries={}) ->
     @root?.remove()
