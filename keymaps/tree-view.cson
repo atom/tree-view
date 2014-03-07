@@ -20,6 +20,7 @@
   'm': 'tree-view:move'
   'a': 'tree-view:add-file'
   'shift-a': 'tree-view:add-folder'
+  'd': 'tree-view:duplicate'
   'delete': 'tree-view:remove'
   'backspace': 'tree-view:remove'
   'k': 'core:move-up'
