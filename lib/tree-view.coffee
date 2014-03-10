@@ -306,7 +306,18 @@ class TreeView extends ScrollView
       buttons:
         "Move to Trash": -> shell.moveItemToTrash(entry.getPath())
         "Cancel": null
-        "Delete": -> fs.removeSync(entry.getPath())
+        "Delete": => @removeSync(entry.getPath())
+
+  removeSync: (pathToRemove) ->
+    try
+      fs.removeSync(pathToRemove)
+    catch error
+      if error.code is 'EACCES' and process.platform is 'darwin'
+        runas = require 'runas'
+        rc = runas('/bin/rm', ['-r', '-f', pathToRemove], admin: true)
+        throw error unless rc is 0
+      else
+        throw error
 
   add: ->
     selectedEntry = @selectedEntry() or @root

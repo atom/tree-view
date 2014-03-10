@@ -11,6 +11,7 @@
   "private": true,
   "dependencies": {
     "fs-plus": "2.x",
+    "runas": "~0.5.4",
     "temp": "~0.6.0",
     "theorist": "1.x",
     "underscore-plus": "1.x"
