@@ -32,3 +32,6 @@
 
   '.pane .item-views':
     'Reveal in Tree View': 'tree-view:reveal-active-file'
+
+  '.pane .tab':
+    'Reveal in Tree View': 'tree-view:reveal-active-file'
