@@ -337,7 +337,6 @@ describe "TreeView", ->
           treeView.trigger 'tree-view:copy-project-path'
           expect(atom.clipboard.write).not.toHaveBeenCalled()
 
-
   describe "when a directory's disclosure arrow is clicked", ->
     it "expands / collapses the associated directory", ->
       subdir = treeView.root.find('.entries > li:contains(dir1)').view()
@@ -1246,3 +1245,10 @@ describe "TreeView", ->
     describe "when a file is ignored", ->
       it "adds a custom style", ->
         expect(treeView.find('.file:contains(ignored.txt)')).toHaveClass 'status-ignored'
+
+  describe "when the resize handle is double clicked", ->
+    beforeEach ->
+      $(treeView).width(10).find('.list-tree').width 100
+    it "changes its width", ->
+      $(treeView).find('.tree-view-resize-handle').trigger 'dblclick'
+      expect($(treeView).width()).not.toBe 10
