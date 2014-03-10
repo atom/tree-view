@@ -48,7 +48,6 @@ class TreeView extends ScrollView
     @command 'tree-view:show-in-file-manager', => @showSelectedEntryInFileManager()
     @command 'tree-view:copy-project-path', => @copySelectedEntryPath(true)
     @command 'tool-panel:unfocus', => @unfocus()
-    @command 'tree-view:toggle-side', => @toggleSide()
 
     @on 'tree-view:directory-modified', =>
       if @hasFocus()
