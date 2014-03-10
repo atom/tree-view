@@ -314,8 +314,8 @@ class TreeView extends ScrollView
     catch error
       if error.code is 'EACCES' and process.platform is 'darwin'
         runas = require 'runas'
-        rc = runas('/bin/rm', ['-r', '-f', pathToRemove], admin: true)
-        throw error unless rc is 0
+        removed = runas('/bin/rm', ['-r', '-f', pathToRemove], admin: true) is 0
+        throw error unless removed
       else
         throw error
 
