@@ -16,7 +16,7 @@ FileView = require './file-view'
 module.exports =
 class TreeView extends ScrollView
   @content: ->
-    @div class: 'tree-view-resizer tool-panel panel-left', =>
+    @div class: 'tree-view-resizer tool-panel', 'data-show-on-right-side': atom.config.get('tree-view.showOnRightSide'), =>
       @div class: 'tree-view-scroller', outlet: 'scroller', =>
         @ol class: 'tree-view list-tree has-collapsable-children focusable-panel', tabindex: -1, outlet: 'list'
       @div class: 'tree-view-resize-handle', outlet: 'resizeHandle'
@@ -48,6 +48,7 @@ class TreeView extends ScrollView
     @command 'tree-view:show-in-file-manager', => @showSelectedEntryInFileManager()
     @command 'tree-view:copy-project-path', => @copySelectedEntryPath(true)
     @command 'tool-panel:unfocus', => @unfocus()
+    @command 'tree-view:toggle-side', => @toggleSide()
 
     @on 'tree-view:directory-modified', =>
       if @hasFocus()
@@ -64,6 +65,8 @@ class TreeView extends ScrollView
       @updateRoot()
     @subscribe atom.config.observe 'core.ignoredNames', callNow: false, =>
       @updateRoot() if atom.config.get('tree-view.hideIgnoredNames')
+    @subscribe atom.config.observe 'tree-view.showOnRightSide', callNow: false, (newValue) =>
+      @onSideToggled(newValue)
 
     @updateRoot(state.directoryExpansionStates)
     @selectEntry(@root) if @root?
@@ -104,7 +107,13 @@ class TreeView extends ScrollView
 
   attach: ->
     return unless atom.project.getPath()
-    atom.workspaceView.appendToLeft(this)
+    @removeClass('panel-right panel-left')
+    if atom.config.get('tree-view.showOnRightSide')
+      @addClass('panel-right')
+      atom.workspaceView.appendToRight(this)
+    else
+      @addClass('panel-left')
+      atom.workspaceView.appendToLeft(this)
 
   detach: ->
     @scrollLeftAfterAttach = @scroller.scrollLeft()
@@ -151,7 +160,9 @@ class TreeView extends ScrollView
     $(document.body).off('mouseup', @resizeStopped)
 
   resizeTreeView: ({pageX}) =>
-    @width(pageX)
+    w = pageX
+    w = $('body').width() - w if atom.config.get('tree-view.showOnRightSide')
+    @width(w)
 
   updateRoot: (expandedEntries={}) ->
     @root?.remove()
@@ -353,3 +364,11 @@ class TreeView extends ScrollView
   scrollToTop: ->
     @selectEntry(@root) if @root?
     @scrollTop(0)
+
+  toggleSide: ->
+    atom.config.toggle('tree-view.showOnRightSide')
+
+  onSideToggled: (newValue) ->
+    @detach()
+    @attach()
+    @attr('data-show-on-right-side', newValue)
