@@ -4,7 +4,9 @@ Dialog = require './dialog'
 
 module.exports =
 class AddDialog extends Dialog
-  constructor: (initialPath) ->
+  constructor: (initialPath, isCreatingFile) ->
+    @isCreatingFile = isCreatingFile
+
     if fs.isFileSync(initialPath)
       directoryPath = path.dirname(initialPath)
     else
@@ -13,16 +15,10 @@ class AddDialog extends Dialog
     relativeDirectoryPath += '/' if relativeDirectoryPath.length > 0
 
     super
-      prompt: "Enter the path for the new file/directory. Directories end with a '/'."
+      prompt: "Enter the path for the new " + if isCreatingFile then "file." else "folder."
       initialPath: relativeDirectoryPath
       select: false
-      iconClass: 'icon-file-directory-create'
-
-    @miniEditor.getEditor().getBuffer().on 'changed', =>
-      if /\/$/.test(@miniEditor.getText())
-        @promptText.removeClass('icon-file-add').addClass('icon-file-directory-create')
-      else
-        @promptText.removeClass('icon-file-directory-create').addClass('icon-file-add')
+      iconClass: if isCreatingFile then 'icon-file-add' else 'icon-file-directory-create'
 
   onConfirm: (relativePath) ->
     endsWithDirectorySeparator = /\/$/.test(relativePath)
@@ -32,14 +28,17 @@ class AddDialog extends Dialog
     try
       if fs.existsSync(pathToCreate)
         @showError("'#{pathToCreate}' already exists.")
-      else if endsWithDirectorySeparator
+      else if @isCreatingFile
+        if endsWithDirectorySeparator
+          @showError("File names must not end with a '/' character.")
+        else
+          fs.writeFileSync(pathToCreate, '')
+          atom.project.getRepo()?.getPathStatus(pathToCreate)
+          @trigger 'file-created', [pathToCreate]
+          @close()
+      else
         fs.makeTreeSync(pathToCreate)
         @trigger 'directory-created', [pathToCreate]
         @cancel()
-      else
-        fs.writeFileSync(pathToCreate, '')
-        atom.project.getRepo()?.getPathStatus(pathToCreate)
-        @trigger 'file-created', [pathToCreate]
-        @close()
     catch error
       @showError("#{error.message}.")

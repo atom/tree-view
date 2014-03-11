@@ -837,7 +837,7 @@ describe "TreeView", ->
         dirView.expand()
         fileView = treeView.find('.file:contains(test-file.txt)').view()
 
-    describe "tree-view:add", ->
+    describe "tree-view:add-file", ->
       addDialog = null
 
       beforeEach ->
@@ -847,7 +847,7 @@ describe "TreeView", ->
           fileView.click()
 
         runs ->
-          treeView.trigger "tree-view:add"
+          treeView.trigger "tree-view:add-file"
           addDialog = atom.workspaceView.find(".tree-view-dialog").view()
 
       describe "when a file is selected", ->
@@ -901,7 +901,101 @@ describe "TreeView", ->
               expect(addDialog.hasParent()).toBeTruthy()
 
         describe "when the path with a trailing '/' is changed and confirmed", ->
-          describe "when no file or directory exists at the given path", ->
+          it "shows an error message and does not close the dialog", ->
+            addDialog.miniEditor.insertText("new-test-file/")
+            addDialog.trigger 'core:confirm'
+
+            expect(addDialog.errorMessage.text()).toContain 'names must not end with'
+            expect(addDialog).toHaveClass('error')
+            expect(addDialog.hasParent()).toBeTruthy()
+
+        describe "when 'core:cancel' is triggered on the add dialog", ->
+          it "removes the dialog and focuses the tree view", ->
+            treeView.attachToDom()
+            addDialog.trigger 'core:cancel'
+            expect(addDialog.parent()).not.toExist()
+            expect(treeView.find(".tree-view")).toMatchSelector(':focus')
+
+        describe "when the add dialog's editor loses focus", ->
+          it "removes the dialog and focuses root view", ->
+            atom.workspaceView.attachToDom()
+            atom.workspaceView.focus()
+            expect(addDialog.parent()).not.toExist()
+            expect(atom.workspaceView.getActiveView().isFocused).toBeTruthy()
+
+      describe "when a directory is selected", ->
+        it "opens an add dialog with the directory's path populated", ->
+          addDialog.cancel()
+          dirView.click()
+          treeView.trigger "tree-view:add-file"
+          addDialog = atom.workspaceView.find(".tree-view-dialog").view()
+
+          expect(addDialog).toExist()
+          expect(addDialog.promptText.text()).toBeTruthy()
+          expect(atom.project.relativize(dirPath)).toMatch(/[^\/]$/)
+          expect(addDialog.miniEditor.getText()).toBe(atom.project.relativize(dirPath) + "/")
+          expect(addDialog.miniEditor.getEditor().getCursorBufferPosition().column).toBe addDialog.miniEditor.getText().length
+          expect(addDialog.miniEditor.isFocused).toBeTruthy()
+
+      describe "when the root directory is selected", ->
+        it "opens an add dialog with no path populated", ->
+          addDialog.cancel()
+          treeView.root.click()
+          treeView.trigger "tree-view:add-file"
+          addDialog = atom.workspaceView.find(".tree-view-dialog").view()
+
+          expect(addDialog.miniEditor.getText().length).toBe 0
+
+      describe "when there is no entry selected", ->
+        it "opens an add dialog with no path populated", ->
+          addDialog.cancel()
+          treeView.root.click()
+          treeView.root.removeClass('selected')
+          expect(treeView.selectedEntry()).toBeUndefined()
+          treeView.trigger "tree-view:add-file"
+          addDialog = atom.workspaceView.find(".tree-view-dialog").view()
+
+          expect(addDialog.miniEditor.getText().length).toBe 0
+
+    describe "tree-view:add-folder", ->
+      addDialog = null
+
+      beforeEach ->
+        atom.workspaceView.attachToDom()
+
+        waitsForFileToOpen ->
+          fileView.click()
+
+        runs ->
+          treeView.trigger "tree-view:add-folder"
+          addDialog = atom.workspaceView.find(".tree-view-dialog").view()
+
+      describe "when a file is selected", ->
+        it "opens an add dialog with the file's current directory path populated", ->
+          expect(addDialog).toExist()
+          expect(addDialog.promptText.text()).toBeTruthy()
+          expect(atom.project.relativize(dirPath)).toMatch(/[^\/]$/)
+          expect(addDialog.miniEditor.getText()).toBe(atom.project.relativize(dirPath) + "/")
+          expect(addDialog.miniEditor.getEditor().getCursorBufferPosition().column).toBe addDialog.miniEditor.getText().length
+          expect(addDialog.miniEditor.isFocused).toBeTruthy()
+
+        describe "when the path without a trailing '/' is changed and confirmed", ->
+          describe "when no directory exists at the given path", ->
+            it "adds a directory and closes the dialog", ->
+              treeView.attachToDom()
+              newPath = path.join(dirPath, "new/dir")
+              addDialog.miniEditor.insertText("new/dir")
+              addDialog.trigger 'core:confirm'
+              expect(fs.existsSync(newPath)).toBeTruthy()
+              expect(fs.isDirectorySync(newPath)).toBeTruthy()
+              expect(addDialog.parent()).not.toExist()
+              expect(atom.workspaceView.getActivePaneItem().getPath()).not.toBe newPath
+              expect(treeView.find(".tree-view")).toMatchSelector(':focus')
+              expect(atom.workspaceView.getActiveView().isFocused).toBeFalsy()
+              expect(dirView.find('.directory.selected:contains(new)').length).toBe(1)
+
+        describe "when the path with a trailing '/' is changed and confirmed", ->
+          describe "when no directory exists at the given path", ->
             it "adds a directory and closes the dialog", ->
               treeView.attachToDom()
               newPath = path.join(dirPath, "new/dir")
@@ -936,7 +1030,7 @@ describe "TreeView", ->
               expect(dirView.find('.directory.selected:contains(new2)').length).toBe(1)
               expect(treeView.entryForPath(expandedPath).isExpanded).toBeTruthy()
 
-          describe "when a file or directory already exists at the given path", ->
+          describe "when a directory already exists at the given path", ->
             it "shows an error message and does not close the dialog", ->
               newPath = path.join(dirPath, "new-dir")
               fs.makeTreeSync(newPath)
@@ -946,54 +1040,6 @@ describe "TreeView", ->
               expect(addDialog.errorMessage.text()).toContain 'already exists'
               expect(addDialog).toHaveClass('error')
               expect(addDialog.hasParent()).toBeTruthy()
-
-        describe "when 'core:cancel' is triggered on the add dialog", ->
-          it "removes the dialog and focuses the tree view", ->
-            treeView.attachToDom()
-            addDialog.trigger 'core:cancel'
-            expect(addDialog.parent()).not.toExist()
-            expect(treeView.find(".tree-view")).toMatchSelector(':focus')
-
-        describe "when the add dialog's editor loses focus", ->
-          it "removes the dialog and focuses root view", ->
-            atom.workspaceView.attachToDom()
-            atom.workspaceView.focus()
-            expect(addDialog.parent()).not.toExist()
-            expect(atom.workspaceView.getActiveView().isFocused).toBeTruthy()
-
-      describe "when a directory is selected", ->
-        it "opens an add dialog with the directory's path populated", ->
-          addDialog.cancel()
-          dirView.click()
-          treeView.trigger "tree-view:add"
-          addDialog = atom.workspaceView.find(".tree-view-dialog").view()
-
-          expect(addDialog).toExist()
-          expect(addDialog.promptText.text()).toBeTruthy()
-          expect(atom.project.relativize(dirPath)).toMatch(/[^\/]$/)
-          expect(addDialog.miniEditor.getText()).toBe(atom.project.relativize(dirPath) + "/")
-          expect(addDialog.miniEditor.getEditor().getCursorBufferPosition().column).toBe addDialog.miniEditor.getText().length
-          expect(addDialog.miniEditor.isFocused).toBeTruthy()
-
-      describe "when the root directory is selected", ->
-        it "opens an add dialog with no path populated", ->
-          addDialog.cancel()
-          treeView.root.click()
-          treeView.trigger "tree-view:add"
-          addDialog = atom.workspaceView.find(".tree-view-dialog").view()
-
-          expect(addDialog.miniEditor.getText().length).toBe 0
-
-      describe "when there is no entry selected", ->
-        it "opens an add dialog with no path populated", ->
-          addDialog.cancel()
-          treeView.root.click()
-          treeView.root.removeClass('selected')
-          expect(treeView.selectedEntry()).toBeUndefined()
-          treeView.trigger "tree-view:add"
-          addDialog = atom.workspaceView.find(".tree-view-dialog").view()
-
-          expect(addDialog.miniEditor.getText().length).toBe 0
 
     describe "tree-view:move", ->
       describe "when a file is selected", ->

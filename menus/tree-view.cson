@@ -22,8 +22,8 @@
 
 'context-menu':
   '.tree-view':
-    'Add File': 'tree-view:add'
-    'Add Folder': 'tree-view:add'
+    'Add File': 'tree-view:add-file'
+    'Add Folder': 'tree-view:add-folder'
     'Rename': 'tree-view:move'
     'Delete': 'tree-view:remove'
     'Copy Full Path': 'tree-view:copy-full-path'
