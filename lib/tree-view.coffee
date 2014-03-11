@@ -168,9 +168,8 @@ class TreeView extends ScrollView
     @width(width)
 
   resizeToFitContent: ->
-    extraPadding = 15
     treeViewWidth = @list.outerWidth()
-    @width(treeViewWidth + extraPadding) if treeViewWidth > @width()
+    @width(treeViewWidth) if treeViewWidth > @width()
 
   updateRoot: (expandedEntries={}) ->
     @root?.remove()
