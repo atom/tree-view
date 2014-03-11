@@ -21,15 +21,24 @@
 ]
 
 'context-menu':
-  '.tree-view':
+  '.tree-view.full-menu':
     'Add File': 'tree-view:add-file'
     'Add Folder': 'tree-view:add-folder'
     'Rename': 'tree-view:move'
     'Duplicate': 'tree-view:duplicate'
     'Delete': 'tree-view:remove'
+    'Copy Selected': 'tree-view:copy'
+    'Cut Selected': 'tree-view:cut'
+    'Paste': 'tree-view:paste'
     'Copy Full Path': 'tree-view:copy-full-path'
     'Copy Project Path': 'tree-view:copy-project-path'
     'Show in Finder': 'tree-view:show-in-file-manager'
+
+  '.tree-view.multi-select':
+    'Delete': 'tree-view:remove'
+    'Copy Selected': 'tree-view:copy'
+    'Cut Selected': 'tree-view:cut'
+    'Paste': 'tree-view:paste'
 
   '.pane .item-views':
     'Reveal in Tree View': 'tree-view:reveal-active-file'

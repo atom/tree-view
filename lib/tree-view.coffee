@@ -13,13 +13,14 @@ Directory = require './directory'
 DirectoryView = require './directory-view'
 File = require './file'
 FileView = require './file-view'
+LocalStorage = window.localStorage
 
 module.exports =
 class TreeView extends ScrollView
   @content: ->
     @div class: 'tree-view-resizer tool-panel', 'data-show-on-right-side': atom.config.get('tree-view.showOnRightSide'), =>
       @div class: 'tree-view-scroller', outlet: 'scroller', =>
-        @ol class: 'tree-view list-tree has-collapsable-children focusable-panel', tabindex: -1, outlet: 'list'
+        @ol class: 'tree-view full-menu list-tree has-collapsable-children focusable-panel', tabindex: -1, outlet: 'list'
       @div class: 'tree-view-resize-handle', outlet: 'resizeHandle'
 
   initialize: (state) ->
@@ -31,11 +32,27 @@ class TreeView extends ScrollView
     scrollTopAfterAttach = -1
     selectedPath = null
 
-    @on 'click', '.entry', (e) => @entryClicked(e)
     @on 'dblclick', '.tree-view-resize-handle', => @resizeToFitContent()
+    @on 'click', '.entry', (e) =>
+      return if e.shiftKey || e.metaKey
+      @entryClicked(e)
     @on 'mousedown', '.entry', (e) =>
       e.stopPropagation()
-      @selectEntry($(e.currentTarget).view())
+      currentTarget = $(e.currentTarget)
+      # return early if we're opening a contextual menu (right click) during multi-select mode
+      return if @multiSelectEnabled() && e.button is 2 && currentTarget.hasClass('selected')
+
+      entryToSelect = currentTarget.view()
+
+      if e.shiftKey
+        @selectContinuousEntries(entryToSelect)
+        @showMultiSelectMenu()
+      else if e.metaKey || e.ctrlKey
+        @selectMultipleEntries(entryToSelect)
+        @showMultiSelectMenu()
+      else
+        @selectEntry(entryToSelect)
+        @showFullMenu()
 
     @on 'mousedown', '.tree-view-resize-handle', (e) => @resizeStarted(e)
     @command 'core:move-up', => @moveUp()
@@ -47,7 +64,10 @@ class TreeView extends ScrollView
     @command 'tree-view:add-file', => @add(true)
     @command 'tree-view:add-folder', => @add(false)
     @command 'tree-view:duplicate', => @copySelectedEntry()
-    @command 'tree-view:remove', => @removeSelectedEntry()
+    @command 'tree-view:remove', => @removeSelectedEntries()
+    @command 'tree-view:copy', => @copySelectedEntries()
+    @command 'tree-view:cut', => @cutSelectedEntries()
+    @command 'tree-view:paste', => @pasteEntries()
     @command 'tree-view:copy-full-path', => @copySelectedEntryPath(false)
     @command 'tree-view:show-in-file-manager', => @showSelectedEntryInFileManager()
     @command 'tree-view:copy-project-path', => @copySelectedEntryPath(true)
@@ -122,6 +142,11 @@ class TreeView extends ScrollView
   detach: ->
     @scrollLeftAfterAttach = @scroller.scrollLeft()
     @scrollTopAfterAttach = @scrollTop()
+
+    # Clean up copy and cut localStorage Variables
+    LocalStorage['tree-view:cutPath'] = null
+    LocalStorage['tree-view:copyPath'] = null
+
     super
     atom.workspaceView.focus()
 
@@ -312,18 +337,21 @@ class TreeView extends ScrollView
     dialog = new CopyDialog(oldPath)
     dialog.attach()
 
-  removeSelectedEntry: ->
-    entry = @selectedEntry()
-    return unless entry
+  removeSelectedEntries: ->
+    selectedPaths = @selectedPaths()
+    return unless selectedPaths
 
-    entryType = if entry instanceof DirectoryView then "directory" else "file"
     atom.confirm
-      message: "Are you sure you want to delete the selected #{entryType}?"
-      detailedMessage: "You are deleting #{entry.getPath()}"
+      message: "Are you sure you want to delete the selected #{if selectedPaths.length > 1 then 'items' else 'item'}?"
+      detailedMessage: "You are deleting:\n#{selectedPaths.join('\n')}"
       buttons:
-        "Move to Trash": -> shell.moveItemToTrash(entry.getPath())
+        "Move to Trash": ->
+          for selectedPath in selectedPaths
+            shell.moveItemToTrash(selectedPath)
         "Cancel": null
-        "Delete": => @removeSync(entry.getPath())
+        "Delete": =>
+          for selectedPath in selectedPaths
+            @removeSync(selectedPath)
 
   removeSync: (pathToRemove) ->
     try
@@ -335,6 +363,80 @@ class TreeView extends ScrollView
         throw error unless removed
       else
         throw error
+
+  # Public: Copy the path of the selected entry element.
+  #         Save the path in localStorage, so that copying from 2 different
+  #         instances of atom works as intended
+  #
+  #
+  # Returns `copyPath`.
+  copySelectedEntries: ->
+    selectedPaths = @selectedPaths()
+    return unless selectedPaths && selectedPaths.length > 0
+    # save to localStorage so we can paste across multiple open apps
+    LocalStorage.removeItem('tree-view:cutPath')
+    LocalStorage['tree-view:copyPath'] = JSON.stringify(selectedPaths)
+
+  # Public: Copy the path of the selected entry element.
+  #         Save the path in localStorage, so that cutting from 2 different
+  #         instances of atom works as intended
+  #
+  #
+  # Returns `cutPath`
+  cutSelectedEntries: ->
+    selectedPaths = @selectedPaths()
+    return unless selectedPaths && selectedPaths.length > 0
+    # save to localStorage so we can paste across multiple open apps
+    LocalStorage.removeItem('tree-view:copyPath')
+    LocalStorage['tree-view:cutPath'] = JSON.stringify(selectedPaths)
+
+  # Public: Paste a copied or cut item.
+  #         If a file is selected, the file's parent directory is used as the
+  #         paste destination.
+  #
+  #
+  # Returns `destination newPath`.
+  pasteEntries: ->
+    entry = @selectedEntry()
+    cutPaths = if LocalStorage['tree-view:cutPath'] then JSON.parse(LocalStorage['tree-view:cutPath']) else null
+    copiedPaths = if LocalStorage['tree-view:copyPath'] then JSON.parse(LocalStorage['tree-view:copyPath']) else null
+    initialPaths = copiedPaths || cutPaths
+
+    for initialPath in initialPaths
+      initialPathIsDirectory = fs.isDirectorySync(initialPath)
+      if entry && initialPath
+
+        basePath = atom.project.resolve(entry.getPath())
+        entryType = if entry instanceof DirectoryView then "directory" else "file"
+
+        if entryType is 'file'
+          basePath = path.dirname(basePath)
+
+        newPath = path.join(basePath, path.basename(initialPath))
+
+        if copiedPaths
+          # append a number to the file if an item with the same name exists
+          fileCounter = 0
+          originalNewPath = newPath
+          while fs.existsSync(newPath)
+            if initialPathIsDirectory
+              newPath = "#{originalNewPath}#{fileCounter.toString()}"
+            else
+              fileArr = originalNewPath.split('.')
+              newPath = "#{fileArr[0]}#{fileCounter.toString()}.#{fileArr[1]}"
+            fileCounter += 1
+
+          if fs.isDirectorySync(initialPath)
+            # use fs.copy to copy directories since read/write will fail for directories
+            fs.copySync(initialPath, newPath)
+          else
+            # read the old file and write a new one at target location
+            fs.writeFileSync(newPath, fs.readFileSync(initialPath))
+        else if cutPaths
+          # Only move the target if the cut target doesn't exists and if the newPath
+          # is not within the initial path
+          unless fs.existsSync(newPath) || !!newPath.match(new RegExp("^#{initialPath}"))
+            fs.moveSync(initialPath, newPath)
 
   add: (isCreatingFile) ->
     selectedEntry = @selectedEntry() or @root
@@ -402,3 +504,59 @@ class TreeView extends ScrollView
     @detach()
     @attach()
     @attr('data-show-on-right-side', newValue)
+
+  # Public: Return an array of paths from all selected items
+  #
+  # Example: @selectedPaths()
+  # => ['selected/path/one', 'selected/path/two', 'selected/path/three']
+  # Returns Array of selected item paths
+  selectedPaths: ->
+    $(item).view().getPath() for item in @list.find('.selected')
+
+  # Public: Selects items within a range defined by a currently selected entry and
+  #         a new given entry. This is shift+click functionality
+  #
+  # Returns array of selected elements
+  selectContinuousEntries: (entry)->
+    currentSelectedEntry = @selectedEntry()
+    parentContainer = entry.parent()
+    if $.contains(parentContainer[0], currentSelectedEntry[0])
+      entryIndex = parentContainer.indexOf(entry)
+      selectedIndex = parentContainer.indexOf(currentSelectedEntry)
+      elements = (parentContainer.children()[i] for i in [entryIndex..selectedIndex])
+
+      @deselect()
+      for element in elements
+        $(element).addClass('selected')
+
+    elements
+
+  # Public: Selects consecutive given entries without clearing previously selected
+  #         items. This is cmd+click functionality
+  #
+  # Returns given entry
+  selectMultipleEntries: (entry)->
+    entry = entry?.view()
+    return false unless entry?
+    entry.addClass('selected')
+    entry
+
+  # Public: Toggle full-menu class on the main list element to display the full context
+  #         menu.
+  #
+  # Returns noop
+  showFullMenu: ->
+    @list.removeClass('multi-select').addClass('full-menu')
+
+  # Public: Toggle multi-select class on the main list element to display the the
+  #         menu with only items that make sense for multi select functionality
+  #
+  # Returns noop
+  showMultiSelectMenu: ->
+    @list.removeClass('full-menu').addClass('multi-select')
+
+  # Public: Check for multi-select class on the main list
+  #
+  # Returns boolean
+  multiSelectEnabled: ->
+    @list.hasClass('multi-select')
