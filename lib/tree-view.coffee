@@ -43,7 +43,8 @@ class TreeView extends ScrollView
     @command 'tree-view:collapse-directory', => @collapseDirectory()
     @command 'tree-view:open-selected-entry', => @openSelectedEntry(true)
     @command 'tree-view:move', => @moveSelectedEntry()
-    @command 'tree-view:add', => @add()
+    @command 'tree-view:add-file', => @add(true)
+    @command 'tree-view:add-folder', => @add(false)
     @command 'tree-view:remove', => @removeSelectedEntry()
     @command 'tree-view:copy-full-path', => @copySelectedEntryPath(false)
     @command 'tree-view:show-in-file-manager', => @showSelectedEntryInFileManager()
@@ -324,12 +325,12 @@ class TreeView extends ScrollView
       else
         throw error
 
-  add: ->
+  add: (isCreatingFile) ->
     selectedEntry = @selectedEntry() or @root
     selectedPath = selectedEntry.getPath()
 
     AddDialog ?= require './add-dialog'
-    dialog = new AddDialog(selectedPath)
+    dialog = new AddDialog(selectedPath, isCreatingFile)
     dialog.on 'directory-created', (event, createdPath) =>
       @entryForPath(createdPath).reload()
       @selectEntryForPath(createdPath)
