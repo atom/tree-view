@@ -36,8 +36,8 @@
 
   '.tree-view.multi-select':
     'Delete': 'tree-view:remove'
-    'Copy Selected': 'tree-view:copy'
-    'Cut Selected': 'tree-view:cut'
+    'Copy': 'tree-view:copy'
+    'Cut': 'tree-view:cut'
     'Paste': 'tree-view:paste'
 
   '.pane .item-views':
