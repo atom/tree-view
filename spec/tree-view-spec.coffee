@@ -1266,7 +1266,9 @@ describe "TreeView", ->
 
   describe "when the resize handle is double clicked", ->
     beforeEach ->
-      $(treeView).width(10).find('.list-tree').width 100
+      treeView.width(10).find('.list-tree').width 100
+
     it "changes its width", ->
-      $(treeView).find('.tree-view-resize-handle').trigger 'dblclick'
-      expect($(treeView).width()).not.toBe 10
+      expect(treeView.width()).toBe 10
+      treeView.find('.tree-view-resize-handle').trigger 'dblclick'
+      expect(treeView.width()).toBeGreaterThan 10
