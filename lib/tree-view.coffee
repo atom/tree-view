@@ -36,6 +36,9 @@ class TreeView extends ScrollView
     @on 'mousedown', '.entry', (e) =>
       e.stopPropagation()
       @selectEntry($(e.currentTarget).view())
+    @on 'dragstart', (e) => @startDragging(e)
+    @on 'dragover', (e) => @expandDirectoryOnDragOver(e)
+    @on 'drop', (e) => @moveEntryToTarget(e)
 
     @on 'mousedown', '.tree-view-resize-handle', (e) => @resizeStarted(e)
     @command 'core:move-up', => @moveUp()
@@ -364,6 +367,32 @@ class TreeView extends ScrollView
 
   deselect: ->
     @list.find('.selected').removeClass('selected')
+
+  startDragging: (e) ->
+    entry = $(e.target).view()
+    return false if entry.directory?.isRoot
+
+    @draggedPath = entry.getPath()
+
+  expandDirectoryOnDragOver: (e) ->
+    e.preventDefault()
+    entry = $(e.target).view()
+
+    if entry instanceof DirectoryView && !entry.isExpanded
+      entry.toggleExpansion()
+
+  moveEntryToTarget: (e) ->
+    e.preventDefault()
+    entry = $(e.target).view();
+    targetPath = if entry instanceof DirectoryView
+      entry.getPath()
+    else if entry instanceof FileView
+      path.dirname(entry.getPath())
+
+    if targetPath?
+      fs.moveSync(@draggedPath, path.join(targetPath, path.basename(@draggedPath)))
+
+    @draggedPath = null
 
   scrollTop: (top) ->
     if top?

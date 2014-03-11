@@ -3,7 +3,7 @@
 module.exports =
 class FileView extends View
   @content: ->
-    @li class: 'file entry list-item', =>
+    @li class: 'file entry list-item', draggable: true, =>
       @span class: 'name icon', outlet: 'fileName'
 
   initialize: (@file) ->
