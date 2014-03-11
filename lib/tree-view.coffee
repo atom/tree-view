@@ -7,6 +7,7 @@ fs = require 'fs-plus'
 
 AddDialog = null  # Defer requiring until actually needed
 MoveDialog = null # Defer requiring until actually needed
+CopyDialog = null # Defer requiring until actually needed
 
 Directory = require './directory'
 DirectoryView = require './directory-view'
@@ -45,6 +46,7 @@ class TreeView extends ScrollView
     @command 'tree-view:move', => @moveSelectedEntry()
     @command 'tree-view:add-file', => @add(true)
     @command 'tree-view:add-folder', => @add(false)
+    @command 'tree-view:duplicate', => @copySelectedEntry()
     @command 'tree-view:remove', => @removeSelectedEntry()
     @command 'tree-view:copy-full-path', => @copySelectedEntryPath(false)
     @command 'tree-view:show-in-file-manager', => @showSelectedEntryInFileManager()
@@ -300,6 +302,15 @@ class TreeView extends ScrollView
           buttons: ['OK']
 
     new BufferedProcess({command, args, stderr, exit})
+
+  copySelectedEntry: ->
+    entry = @selectedEntry()
+    return unless entry and entry isnt @root
+    oldPath = entry.getPath()
+
+    CopyDialog ?= require './copy-dialog'
+    dialog = new CopyDialog(oldPath)
+    dialog.attach()
 
   removeSelectedEntry: ->
     entry = @selectedEntry()

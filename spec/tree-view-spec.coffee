@@ -1155,6 +1155,121 @@ describe "TreeView", ->
           treeView.trigger "tree-view:move"
           expect(atom.workspaceView.find(".tree-view-dialog").view()).not.toExist()
 
+    describe "tree-view:duplicate", ->
+      describe "when a file is selected", ->
+        copyDialog = null
+
+        beforeEach ->
+          atom.workspaceView.attachToDom()
+
+          waitsForFileToOpen ->
+            fileView.click()
+
+          runs ->
+            treeView.trigger "tree-view:duplicate"
+            copyDialog = atom.workspaceView.find(".tree-view-dialog").view()
+
+        afterEach ->
+          waits 50 # The copy specs cause too many false positives because of their async nature, so wait a little bit before we cleanup
+
+        it "opens a copy dialog to duplicate with the file's current path populated", ->
+          extension = path.extname(filePath)
+          fileNameWithoutExtension = path.basename(filePath, extension)
+          expect(copyDialog).toExist()
+          expect(copyDialog.promptText.text()).toBe "Enter the new path for the duplicate."
+          expect(copyDialog.miniEditor.getText()).toBe(atom.project.relativize(filePath))
+          expect(copyDialog.miniEditor.getEditor().getSelectedText()).toBe path.basename(fileNameWithoutExtension)
+          expect(copyDialog.miniEditor.isFocused).toBeTruthy()
+
+        describe "when the path is changed and confirmed", ->
+          describe "when all the directories along the new path exist", ->
+            it "duplicates the file, updates the tree view, and closes the dialog", ->
+              newPath = path.join(rootDirPath, 'duplicated-test-file.txt')
+              copyDialog.miniEditor.setText(newPath)
+
+              copyDialog.trigger 'core:confirm'
+
+              waitsFor "tree view to update", ->
+                treeView.root.find('> .entries > .file:contains(duplicated-test-file.txt)').length > 0
+
+              runs ->
+                treeView.trigger "tree-view:duplicate"
+                expect(fs.existsSync(newPath)).toBeTruthy()
+                expect(fs.existsSync(filePath)).toBeTruthy()
+                expect(copyDialog.parent()).not.toExist()
+                dirView = treeView.root.entries.find('.directory:contains(test-dir)').view()
+                dirView.expand()
+                expect(dirView.entries.children().length).toBe 1
+
+          describe "when the directories along the new path don't exist", ->
+            it "duplicates the tree", ->
+              newPath = path.join(rootDirPath, 'new/directory', 'duplicated-test-file.txt')
+              copyDialog.miniEditor.setText(newPath)
+
+              copyDialog.trigger 'core:confirm'
+
+              waitsFor "tree view to update", ->
+                treeView.root.find('> .entries > .directory:contains(new)').length > 0
+
+              runs ->
+                expect(fs.existsSync(newPath)).toBeTruthy()
+                expect(fs.existsSync(filePath)).toBeTruthy()
+
+          describe "when a file or directory already exists at the target path", ->
+            it "shows an error message and does not close the dialog", ->
+              runs ->
+                fs.writeFileSync(path.join(rootDirPath, 'target.txt'), '')
+                newPath = path.join(rootDirPath, 'target.txt')
+                copyDialog.miniEditor.setText(newPath)
+
+                copyDialog.trigger 'core:confirm'
+
+                expect(copyDialog.errorMessage.text()).toContain 'already exists'
+                expect(copyDialog).toHaveClass('error')
+                expect(copyDialog.hasParent()).toBeTruthy()
+
+        describe "when 'core:cancel' is triggered on the copy dialog", ->
+          it "removes the dialog and focuses the tree view", ->
+            treeView.attachToDom()
+            copyDialog.trigger 'core:cancel'
+            expect(copyDialog.parent()).not.toExist()
+            expect(treeView.find(".tree-view")).toMatchSelector(':focus')
+
+        describe "when the duplicate dialog's editor loses focus", ->
+          it "removes the dialog and focuses root view", ->
+            atom.workspaceView.attachToDom()
+            atom.workspaceView.focus()
+            expect(copyDialog.parent()).not.toExist()
+            expect(atom.workspaceView.getActiveView().isFocused).toBeTruthy()
+
+      describe "when a file is selected that's name starts with a '.'", ->
+        [dotFilePath, dotFileView, copyDialog] = []
+
+        beforeEach ->
+          dotFilePath = path.join(dirPath, ".dotfile")
+          fs.writeFileSync(dotFilePath, "dot")
+          dirView.collapse()
+          dirView.expand()
+          dotFileView = treeView.find('.file:contains(.dotfile)').view()
+
+          waitsForFileToOpen ->
+            dotFileView.click()
+
+          runs ->
+            treeView.trigger "tree-view:duplicate"
+            copyDialog = atom.workspaceView.find(".tree-view-dialog").view()
+
+        it "selects the entire file name", ->
+          expect(copyDialog).toExist()
+          expect(copyDialog.miniEditor.getText()).toBe(atom.project.relativize(dotFilePath))
+          expect(copyDialog.miniEditor.getEditor().getSelectedText()).toBe '.dotfile'
+
+      describe "when the project is selected", ->
+        it "doesn't display the copy dialog", ->
+          treeView.root.click()
+          treeView.trigger "tree-view:duplicate"
+          expect(atom.workspaceView.find(".tree-view-dialog").view()).not.toExist()
+
     describe "tree-view:remove", ->
       it "shows the native alert dialog", ->
         spyOn(atom, 'confirm')
