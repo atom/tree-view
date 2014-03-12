@@ -4,6 +4,7 @@ fs = require 'fs-plus'
 TreeView = require '../lib/tree-view'
 path = require 'path'
 temp = require 'temp'
+wrench = require 'wrench'
 os = require 'os'
 
 waitsForFileToOpen = (fn) ->
@@ -19,7 +20,11 @@ describe "TreeView", ->
   [treeView, sampleJs, sampleTxt] = []
 
   beforeEach ->
-    atom.project.setPath(atom.project.resolve('tree-view'))
+    tempPath = fs.realpathSync(temp.mkdirSync('atom'))
+    fixturesPath = atom.project.getPath()
+    wrench.copyDirSyncRecursive(fixturesPath, tempPath, forceDelete: true)
+    atom.project.setPath(path.join(tempPath, 'tree-view'))
+
     atom.workspaceView = new WorkspaceView
 
     waitsForPromise ->
