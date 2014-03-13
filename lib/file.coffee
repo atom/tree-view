@@ -9,7 +9,7 @@ class File extends Model
     status: null # Either null, 'added', 'ignored', or 'modified'
 
   @::accessor 'name', -> @file.getBaseName()
-  @::accessor 'path', -> @file.getPath()
+  @::accessor 'path', -> fs.realpathSync(@file.getPath())
   @::accessor 'symlink', -> @file.symlink
   @::accessor 'type', ->
     extension = path.extname(@path)
