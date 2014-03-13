@@ -25,6 +25,8 @@
   'ctrl-]': 'tree-view:expand-directory'
   'left': 'tree-view:collapse-directory'
   'ctrl-[': 'tree-view:collapse-directory'
+  'alt-ctrl-[': 'tree-view:collapse-directories'
+  'alt-left': 'tree-view:collapse-directories'
   'enter': 'tree-view:open-selected-entry'
   'ctrl-C': 'tree-view:copy-full-path'
   'm': 'tree-view:move'
