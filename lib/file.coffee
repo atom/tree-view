@@ -28,12 +28,11 @@ class File extends Model
   constructor: ->
     super
     repo = atom.project.getRepo()
-    filePath = @file.getPath()
 
-    @path = if fs.existsSync(filePath)
-      fs.realpathSync(filePath)
-    else
-      filePath
+    try
+      @path = fs.realpathSync(@file.getPath())
+    catch error
+      @path = @file.getPath()
 
     if repo?
       @subscribeToRepo(repo)
