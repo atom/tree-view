@@ -10,7 +10,7 @@
   },
   "private": true,
   "dependencies": {
-    "fs-plus": "2.x",
+    "fs-plus": "^2.0.4",
     "runas": "~0.5.4",
     "temp": "~0.6.0",
     "theorist": "1.x",
