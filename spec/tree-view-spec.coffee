@@ -1640,7 +1640,7 @@ describe "TreeView", ->
 
   describe "Git status decorations", ->
     beforeEach ->
-      projectPath = temp.mkdirSync('tree-view-project')
+      projectPath = fs.realpathSync(temp.mkdirSync('tree-view-project'))
       workingDirFixture = path.join(__dirname, 'fixtures', 'git', 'working-dir')
       fs.copySync(workingDirFixture, projectPath)
       fs.moveSync(path.join(projectPath, 'git.git'), path.join(projectPath, '.git'))
