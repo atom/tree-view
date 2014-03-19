@@ -9,7 +9,6 @@ class File extends Model
     status: null # Either null, 'added', 'ignored', or 'modified'
 
   @::accessor 'name', -> @file.getBaseName()
-  @::accessor 'path', -> fs.realpathSync(@file.getPath())
   @::accessor 'symlink', -> @file.symlink
   @::accessor 'type', ->
     extension = path.extname(@path)
@@ -29,6 +28,13 @@ class File extends Model
   constructor: ->
     super
     repo = atom.project.getRepo()
+    filePath = @file.getPath()
+
+    @path = if fs.existsSync(filePath)
+      fs.realpathSync(filePath)
+    else
+      filePath
+
     if repo?
       @subscribeToRepo(repo)
       @updateStatus(repo)
