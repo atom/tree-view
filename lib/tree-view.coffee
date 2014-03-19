@@ -53,8 +53,7 @@ class TreeView extends ScrollView
       else if e.metaKey || (e.ctrlKey && process.platform isnt 'darwin')
         @selectMultipleEntries(entryToSelect)
 
-        if @selectedPaths().length > 1
-          @showMultiSelectMenu()
+        @showMultiSelectMenu() if @selectedPaths().length > 1
       else
         @selectEntry(entryToSelect)
         @showFullMenu()
