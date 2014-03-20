@@ -407,7 +407,7 @@ class TreeView extends ScrollView
     copiedPaths = if LocalStorage['tree-view:copyPath'] then JSON.parse(LocalStorage['tree-view:copyPath']) else null
     initialPaths = copiedPaths || cutPaths
 
-    for initialPath in initialPaths
+    for initialPath in initialPaths ? []
       initialPathIsDirectory = fs.isDirectorySync(initialPath)
       if entry && initialPath
 

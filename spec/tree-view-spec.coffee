@@ -1003,6 +1003,10 @@ describe "TreeView", ->
               expect(fs.existsSync(numberedFileName1)).toBeTruthy()
               expect(fs.existsSync(filePath)).toBeTruthy()
 
+          describe "when nothing has been copied", ->
+            it "does not paste anything", ->
+              expect(-> treeView.trigger("tree-view:paste")).not.toThrow()
+
       describe "when multiple files have been copied", ->
         describe "when a file is selected", ->
           it "copies the selected files to the parent directory of the selected file", ->
