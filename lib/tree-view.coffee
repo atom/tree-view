@@ -40,9 +40,9 @@ class TreeView extends ScrollView
       e.stopPropagation()
       currentTarget = $(e.currentTarget)
       # return early if we're opening a contextual menu (right click) during multi-select mode
-      return if @multiSelectEnabled() && e.button is 2 && currentTarget.hasClass('selected') ||
-                # handle ctrl click as right click on darwin platforms
-                @multiSelectEnabled() && e.ctrlKey && currentTarget.hasClass('selected') && process.platform is 'darwin'
+      return if @multiSelectEnabled() && currentTarget.hasClass('selected') &&
+                # mouse right click  || # ctrl click as right click on darwin platforms
+                (e.button is 2 || e.ctrlKey && process.platform is 'darwin')
 
       entryToSelect = currentTarget.view()
 
@@ -53,6 +53,7 @@ class TreeView extends ScrollView
       else if e.metaKey || (e.ctrlKey && process.platform isnt 'darwin')
         @selectMultipleEntries(entryToSelect)
 
+        # only show the multi select menu if more then one file/directory is selected
         @showMultiSelectMenu() if @selectedPaths().length > 1
       else
         @selectEntry(entryToSelect)
