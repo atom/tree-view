@@ -41,7 +41,7 @@ class TreeView extends ScrollView
       currentTarget = $(e.currentTarget)
       # return early if we're opening a contextual menu (right click) during multi-select mode
       return if @multiSelectEnabled() && currentTarget.hasClass('selected') &&
-                # mouse right click  || # ctrl click as right click on darwin platforms
+                # mouse right click or ctrl click as right click on darwin platforms
                 (e.button is 2 || e.ctrlKey && process.platform is 'darwin')
 
       entryToSelect = currentTarget.view()
