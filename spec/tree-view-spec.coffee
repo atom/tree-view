@@ -1482,8 +1482,9 @@ describe "TreeView", ->
               waitsFor "tree view to update", ->
                 treeView.root.find('> .entries > .directory:contains(new)').length > 0
 
+              waitsFor "new path to exist", -> fs.existsSync(newPath)
+
               runs ->
-                expect(fs.existsSync(newPath)).toBeTruthy()
                 expect(fs.existsSync(filePath)).toBeTruthy()
 
           describe "when a file or directory already exists at the target path", ->
