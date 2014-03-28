@@ -57,7 +57,7 @@ class File extends Model
     if repo.isPathIgnored(@path)
       newStatus = 'ignored'
     else
-      status = repo.statuses[@path]
+      status = repo.getCachedPathStatus(@path)
       if repo.isStatusModified(status)
         newStatus = 'modified'
       else if repo.isStatusNew(status)
