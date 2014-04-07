@@ -3,7 +3,6 @@
     'label': 'View'
     'submenu': [
       { 'label': 'Toggle Tree View', 'command': 'tree-view:toggle' }
-      { 'label': 'Toggle Tree Side', 'command': 'tree-view:toggle-side' }
     ]
   }
   {
