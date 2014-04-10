@@ -66,8 +66,6 @@ class TreeView extends ScrollView
     @command 'tree-view:collapse-directory', => @collapseDirectory()
     @command 'tree-view:open-selected-entry', => @openSelectedEntry(true)
     @command 'tree-view:move', => @moveSelectedEntry()
-    @command 'tree-view:add-file', => @add(true)
-    @command 'tree-view:add-folder', => @add(false)
     @command 'tree-view:duplicate', => @copySelectedEntry()
     @command 'tree-view:remove', => @removeSelectedEntries()
     @command 'tree-view:copy', => @copySelectedEntries()
