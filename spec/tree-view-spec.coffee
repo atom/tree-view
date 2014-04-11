@@ -1701,10 +1701,14 @@ describe "TreeView", ->
     beforeEach ->
       treeView.width(10).find('.list-tree').width 100
 
-    it "changes its width", ->
+    it "sets the width of the tree to be the width of the list", ->
       expect(treeView.width()).toBe 10
       treeView.find('.tree-view-resize-handle').trigger 'dblclick'
       expect(treeView.width()).toBeGreaterThan 10
+
+      treeView.width(1000)
+      treeView.find('.tree-view-resize-handle').trigger 'dblclick'
+      expect(treeView.width()).toBeLessThan 1000
 
   describe "selecting items", ->
     [dirView, fileView1, fileView2, fileView3, treeView, rootDirPath, dirPath, filePath1, filePath2, filePath3] = []

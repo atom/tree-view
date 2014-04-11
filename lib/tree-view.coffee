@@ -199,8 +199,8 @@ class TreeView extends ScrollView
     @width(width)
 
   resizeToFitContent: ->
-    treeViewWidth = @list.outerWidth()
-    @width(treeViewWidth) if treeViewWidth > @width()
+    @width(1) # Shrink to measure the minimum width of list
+    @width(@list.outerWidth())
 
   updateRoot: (expandedEntries={}) ->
     @root?.remove()
