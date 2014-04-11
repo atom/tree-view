@@ -44,4 +44,10 @@
   padding-left: @component-icon-padding;
   padding-right: @component-padding;
   position: relative;
+
+  // This fixes #110, see that issue for more details
+  .entry:before {
+    content: '';
+    position: absolute;
+  }
 }

@@ -468,12 +468,7 @@ class TreeView extends ScrollView
     entry.addClass('selected')
 
   deselect: ->
-    selected = @list.find('.selected').removeClass('selected')
-
-    # The following forces a redraw, see #110 for more details
-    selected.hide()
-    selected.offset()
-    selected.show()
+    @list.find('.selected').removeClass('selected')
 
   scrollTop: (top) ->
     if top?
