@@ -308,12 +308,13 @@ class TreeView extends ScrollView
 
   openPreviousEntry: (changeFocus) ->
     @moveUp()
-    selectedEntry = @selectedEntry()
-    if selectedEntry instanceof FileView
-      atom.workspaceView.open(selectedEntry.getPath(), { changeFocus })
+    @openSelectedFile(changeFocus)
 
   openNextEntry: (changeFocus) ->
     @moveDown()
+    @openSelectedFile(changeFocus)
+
+  openSelectedFile: (changeFocus)->
     selectedEntry = @selectedEntry()
     if selectedEntry instanceof FileView
       atom.workspaceView.open(selectedEntry.getPath(), { changeFocus })
