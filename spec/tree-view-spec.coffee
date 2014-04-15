@@ -101,7 +101,7 @@ describe "TreeView", ->
         it "creates a root directory view but does not attach to the root view", ->
           atom.workspaceView.openSync()
           projectPath = temp.mkdirSync('atom-project')
-          atom.workspaceView.getActivePaneItem().saveAs(path.join(projectPath, 'test.txt'))
+          atom.workspace.getActivePaneItem().saveAs(path.join(projectPath, 'test.txt'))
           expect(treeView.hasParent()).toBeFalsy()
           expect(fs.absolute(treeView.root.getPath())).toBe fs.absolute(projectPath)
           expect(treeView.root.parent()).toMatchSelector(".tree-view")
@@ -301,14 +301,14 @@ describe "TreeView", ->
     describe "if the current file has no path", ->
       it "shows and focuses the tree view, but does not attempt to select a specific file", ->
         atom.workspaceView.openSync()
-        expect(atom.workspaceView.getActivePaneItem().getPath()).toBeUndefined()
+        expect(atom.workspace.getActivePaneItem().getPath()).toBeUndefined()
         atom.workspaceView.trigger 'tree-view:reveal-active-file'
         expect(treeView.hasParent()).toBeTruthy()
         expect(treeView.focus).toHaveBeenCalled()
 
     describe "if there is no editor open", ->
       it "shows and focuses the tree view, but does not attempt to select a specific file", ->
-        expect(atom.workspaceView.getActivePaneItem()).toBeUndefined()
+        expect(atom.workspace.getActivePaneItem()).toBeUndefined()
         atom.workspaceView.trigger 'tree-view:reveal-active-file'
         expect(treeView.hasParent()).toBeTruthy()
         expect(treeView.focus).toHaveBeenCalled()
@@ -427,7 +427,7 @@ describe "TreeView", ->
 
       runs ->
         expect(sampleJs).toHaveClass 'selected'
-        expect(atom.workspaceView.getActivePaneItem().getPath()).toBe atom.project.resolve('tree-view.js')
+        expect(atom.workspace.getActivePaneItem().getPath()).toBe atom.project.resolve('tree-view.js')
         expect(atom.workspaceView.getActiveView().isFocused).toBeFalsy()
 
       waitsForFileToOpen ->
@@ -436,7 +436,7 @@ describe "TreeView", ->
       runs ->
         expect(sampleTxt).toHaveClass 'selected'
         expect(treeView.find('.selected').length).toBe 1
-        expect(atom.workspaceView.getActivePaneItem().getPath()).toBe atom.project.resolve('tree-view.txt')
+        expect(atom.workspace.getActivePaneItem().getPath()).toBe atom.project.resolve('tree-view.txt')
         expect(atom.workspaceView.getActiveView().isFocused).toBeFalsy()
 
   describe "when a file is double-clicked", ->
@@ -451,7 +451,7 @@ describe "TreeView", ->
 
       runs ->
         expect(sampleJs).toHaveClass 'selected'
-        expect(atom.workspaceView.getActivePaneItem().getPath()).toBe atom.project.resolve('tree-view.js')
+        expect(atom.workspace.getActivePaneItem().getPath()).toBe atom.project.resolve('tree-view.js')
         expect(atom.workspaceView.getActiveView().isFocused).toBeFalsy()
 
         sampleJs.trigger clickEvent(originalEvent: { detail: 2 })
@@ -796,7 +796,7 @@ describe "TreeView", ->
             treeView.root.trigger 'tree-view:open-selected-entry'
 
           runs ->
-            expect(atom.workspaceView.getActivePaneItem().getPath()).toBe atom.project.resolve('tree-view.js')
+            expect(atom.workspace.getActivePaneItem().getPath()).toBe atom.project.resolve('tree-view.js')
             expect(atom.workspaceView.getActiveView().isFocused).toBeTruthy()
 
       describe "when a directory is selected", ->
@@ -1151,7 +1151,7 @@ describe "TreeView", ->
                 expect(fs.existsSync(newPath)).toBeTruthy()
                 expect(fs.isFileSync(newPath)).toBeTruthy()
                 expect(addDialog.parent()).not.toExist()
-                expect(atom.workspaceView.getActivePaneItem().getPath()).toBe newPath
+                expect(atom.workspace.getActivePaneItem().getPath()).toBe newPath
 
               waitsFor "tree view to be updated", ->
                 dirView.entries.find("> .file").length > 1
@@ -1259,7 +1259,7 @@ describe "TreeView", ->
               expect(fs.existsSync(newPath)).toBeTruthy()
               expect(fs.isDirectorySync(newPath)).toBeTruthy()
               expect(addDialog.parent()).not.toExist()
-              expect(atom.workspaceView.getActivePaneItem().getPath()).not.toBe newPath
+              expect(atom.workspace.getActivePaneItem().getPath()).not.toBe newPath
               expect(treeView.find(".tree-view")).toMatchSelector(':focus')
               expect(atom.workspaceView.getActiveView().isFocused).toBeFalsy()
               expect(dirView.find('.directory.selected:contains(new)').length).toBe(1)
@@ -1274,7 +1274,7 @@ describe "TreeView", ->
               expect(fs.existsSync(newPath)).toBeTruthy()
               expect(fs.isDirectorySync(newPath)).toBeTruthy()
               expect(addDialog.parent()).not.toExist()
-              expect(atom.workspaceView.getActivePaneItem().getPath()).not.toBe newPath
+              expect(atom.workspace.getActivePaneItem().getPath()).not.toBe newPath
               expect(treeView.find(".tree-view")).toMatchSelector(':focus')
               expect(atom.workspaceView.getActiveView().isFocused).toBeFalsy()
               expect(dirView.find('.directory.selected:contains(new)').length).toBe(1)
@@ -1294,7 +1294,7 @@ describe "TreeView", ->
               expect(fs.existsSync(newPath)).toBeTruthy()
               expect(fs.isDirectorySync(newPath)).toBeTruthy()
               expect(addDialog.parent()).not.toExist()
-              expect(atom.workspaceView.getActivePaneItem().getPath()).not.toBe newPath
+              expect(atom.workspace.getActivePaneItem().getPath()).not.toBe newPath
               expect(treeView.find(".tree-view")).toMatchSelector(':focus')
               expect(atom.workspaceView.getActiveView().isFocused).toBeFalsy()
               expect(dirView.find('.directory.selected:contains(new2)').length).toBe(1)

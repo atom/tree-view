@@ -212,7 +212,7 @@ class TreeView extends ScrollView
     else
       @root = null
 
-  getActivePath: -> atom.workspaceView.getActivePaneItem()?.getPath?()
+  getActivePath: -> atom.workspace.getActivePaneItem()?.getPath?()
 
   selectActiveFile: ->
     if activeFilePath = @getActivePath()
