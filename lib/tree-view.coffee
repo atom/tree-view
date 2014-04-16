@@ -65,6 +65,8 @@ class TreeView extends ScrollView
     @command 'tree-view:expand-directory', => @expandDirectory()
     @command 'tree-view:collapse-directory', => @collapseDirectory()
     @command 'tree-view:open-selected-entry', => @openSelectedEntry(true)
+    @command 'tree-view:open-previous-entry', => @openPreviousEntry(false)
+    @command 'tree-view:open-next-entry', => @openNextEntry(false)
     @command 'tree-view:move', => @moveSelectedEntry()
     @command 'tree-view:duplicate', => @copySelectedEntry()
     @command 'tree-view:remove', => @removeSelectedEntries()
@@ -302,6 +304,19 @@ class TreeView extends ScrollView
     if selectedEntry instanceof DirectoryView
       selectedEntry.view().toggleExpansion()
     else if selectedEntry instanceof FileView
+      atom.workspaceView.open(selectedEntry.getPath(), { changeFocus })
+
+  openPreviousEntry: (changeFocus) ->
+    @moveUp()
+    @openSelectedFile(changeFocus)
+
+  openNextEntry: (changeFocus) ->
+    @moveDown()
+    @openSelectedFile(changeFocus)
+
+  openSelectedFile: (changeFocus)->
+    selectedEntry = @selectedEntry()
+    if selectedEntry instanceof FileView
       atom.workspaceView.open(selectedEntry.getPath(), { changeFocus })
 
   moveSelectedEntry: ->
