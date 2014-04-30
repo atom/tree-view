@@ -1,4 +1,4 @@
-# Tree View package
+# Tree View package [![Build Status](https://travis-ci.org/atom/tree-view.svg?branch=master)](https://travis-ci.org/atom/tree-view)
 
 Explore and open files in the current project.
 
