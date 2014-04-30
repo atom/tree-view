@@ -20,6 +20,7 @@ module.exports =
     atom.workspaceView.command 'tree-view:add-file', => @createView().add(true)
     atom.workspaceView.command 'tree-view:add-folder', => @createView().add(false)
     atom.workspaceView.command 'tree-view:duplicate', => @createView().copySelectedEntry()
+    atom.workspaceView.command 'tree-view:remove', => @createView().removeSelectedEntries()
 
   deactivate: ->
     @treeView?.deactivate()

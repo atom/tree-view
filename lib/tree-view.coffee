@@ -66,7 +66,6 @@ class TreeView extends ScrollView
     @command 'tree-view:collapse-directory', => @collapseDirectory()
     @command 'tree-view:open-selected-entry', => @openSelectedEntry(true)
     @command 'tree-view:move', => @moveSelectedEntry()
-    @command 'tree-view:remove', => @removeSelectedEntries()
     @command 'tree-view:copy', => @copySelectedEntries()
     @command 'tree-view:cut', => @cutSelectedEntries()
     @command 'tree-view:paste', => @pasteEntries()
@@ -344,7 +343,11 @@ class TreeView extends ScrollView
     dialog.attach()
 
   removeSelectedEntries: ->
-    selectedPaths = @selectedPaths()
+    if @hasFocus()
+      selectedPaths = @selectedPaths()
+    else if activePath = @getActivePath()
+      selectedPaths = [activePath]
+
     return unless selectedPaths
 
     atom.confirm
