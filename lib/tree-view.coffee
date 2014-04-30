@@ -66,7 +66,6 @@ class TreeView extends ScrollView
     @command 'tree-view:collapse-directory', => @collapseDirectory()
     @command 'tree-view:open-selected-entry', => @openSelectedEntry(true)
     @command 'tree-view:move', => @moveSelectedEntry()
-    @command 'tree-view:duplicate', => @copySelectedEntry()
     @command 'tree-view:remove', => @removeSelectedEntries()
     @command 'tree-view:copy', => @copySelectedEntries()
     @command 'tree-view:cut', => @cutSelectedEntries()
@@ -332,9 +331,13 @@ class TreeView extends ScrollView
     new BufferedProcess({command, args, stderr, exit})
 
   copySelectedEntry: ->
-    entry = @selectedEntry()
-    return unless entry and entry isnt @root
-    oldPath = entry.getPath()
+    if @hasFocus()
+      entry = @selectedEntry()
+      return unless entry isnt root
+      oldPath = entry.getPath()
+    else
+      oldPath = @getActivePath()
+    return unless oldPath
 
     CopyDialog ?= require './copy-dialog'
     dialog = new CopyDialog(oldPath)
