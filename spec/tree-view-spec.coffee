@@ -1542,6 +1542,18 @@ describe "TreeView", ->
           treeView.trigger "tree-view:duplicate"
           expect(atom.workspaceView.find(".tree-view-dialog").view()).not.toExist()
 
+      describe "when the editor has focus", ->
+        copyDialog = null
+
+        beforeEach ->
+          atom.workspaceView.openSync('tree-view.js')
+          editorView = atom.workspaceView.getActiveView()
+          editorView.trigger "tree-view:duplicate"
+          copyDialog = atom.workspaceView.find(".tree-view-dialog").view()
+
+        it "duplicates the current file", ->
+          expect(copyDialog.miniEditor.getText()).toBe('tree-view.js')
+
     describe "tree-view:remove", ->
       it "shows the native alert dialog", ->
         spyOn(atom, 'confirm')
