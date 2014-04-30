@@ -158,7 +158,7 @@ class TreeView extends ScrollView
     atom.workspaceView.focus()
 
   hasFocus: ->
-    @list.is(':focus')
+    @list.is(':focus') or document.activeElement is @list[0]
 
   toggleFocus: ->
     if @hasFocus()
