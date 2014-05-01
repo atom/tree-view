@@ -64,6 +64,7 @@ class TreeView extends ScrollView
     @command 'core:move-down', => @moveDown()
     @command 'tree-view:expand-directory', => @expandDirectory()
     @command 'tree-view:collapse-directory', => @collapseDirectory()
+    @command 'tree-view:collapse-directories', => @collapseDirectories()
     @command 'tree-view:open-selected-entry', => @openSelectedEntry(true)
     @command 'tree-view:move', => @moveSelectedEntry()
     @command 'tree-view:copy', => @copySelectedEntries()
@@ -294,6 +295,14 @@ class TreeView extends ScrollView
     if directory = @selectedEntry()?.closest('.expanded.directory').view()
       directory.collapse()
       @selectEntry(directory)
+
+  collapseDirectories: ->
+    if parent = @selectedEntry()?.closest('.expanded.directory').view()
+      children = parent.find('.expanded.directory')
+      children.each (index, child) ->
+        $(child).view().collapse()
+      parent.collapse()
+      @selectEntry(parent)
 
   openSelectedEntry: (changeFocus) ->
     selectedEntry = @selectedEntry()
