@@ -1,3 +1,4 @@
+path = require 'path'
 {$, View} = require 'atom'
 
 Directory = require './directory'
@@ -23,6 +24,10 @@ class DirectoryView extends View
         iconClass = 'icon-file-submodule' if @directory.submodule
     @directoryName.addClass(iconClass)
     @directoryName.text(@directory.name)
+
+    relativeDirectoryPath = path.relative(atom.project.getPath(), @directory.path)
+    @directoryName.attr('data-name', @directory.name)
+    @directoryName.attr('data-path', relativeDirectoryPath)
 
     unless @directory.isRoot
       @subscribe @directory.$status.onValue (status) =>

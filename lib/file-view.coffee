@@ -1,3 +1,4 @@
+path = require 'path'
 {View} = require 'atom'
 
 module.exports =
@@ -8,6 +9,10 @@ class FileView extends View
 
   initialize: (@file) ->
     @fileName.text(@file.name)
+
+    relativeFilePath = path.relative(atom.project.getPath(), @file.path)
+    @fileName.attr('data-name', @file.name)
+    @fileName.attr('data-path', relativeFilePath)
 
     if @file.symlink
       @fileName.addClass('icon-file-symlink-file')
