@@ -25,7 +25,7 @@ class DirectoryView extends View
     @directoryName.addClass(iconClass)
     @directoryName.text(@directory.name)
 
-    relativeDirectoryPath = path.relative(atom.project.getPath(), @directory.path)
+    relativeDirectoryPath = atom.project.relativize(@directory.path)
     @directoryName.attr('data-name', @directory.name)
     @directoryName.attr('data-path', relativeDirectoryPath)
 

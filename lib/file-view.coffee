@@ -10,7 +10,7 @@ class FileView extends View
   initialize: (@file) ->
     @fileName.text(@file.name)
 
-    relativeFilePath = path.relative(atom.project.getPath(), @file.path)
+    relativeFilePath = atom.project.relativize(@file.path)
     @fileName.attr('data-name', @file.name)
     @fileName.attr('data-path', relativeFilePath)
 
