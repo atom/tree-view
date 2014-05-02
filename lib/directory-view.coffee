@@ -24,6 +24,10 @@ class DirectoryView extends View
     @directoryName.addClass(iconClass)
     @directoryName.text(@directory.name)
 
+    relativeDirectoryPath = atom.project.relativize(@directory.path)
+    @directoryName.attr('data-name', @directory.name)
+    @directoryName.attr('data-path', relativeDirectoryPath)
+
     unless @directory.isRoot
       @subscribe @directory.$status.onValue (status) =>
         @removeClass('status-ignored status-modified status-added')

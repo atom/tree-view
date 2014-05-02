@@ -53,8 +53,14 @@ describe "TreeView", ->
       expect(subdir2).not.toHaveClass('expanded')
       expect(subdir2.find('.name')).toHaveText('dir2')
 
+      expect(subdir0.find('[data-name="dir1"]')).toExist()
+      expect(subdir2.find('[data-name="dir2"]')).toExist()
+
       expect(rootEntries.find('> .file:contains(tree-view.js)')).toExist()
       expect(rootEntries.find('> .file:contains(tree-view.txt)')).toExist()
+
+      expect(rootEntries.find('> .file [data-name="tree-view.js"]')).toExist()
+      expect(rootEntries.find('> .file [data-name="tree-view.txt"]')).toExist()
 
     it "selects the rootview", ->
       expect(treeView.selectedEntry()).toEqual treeView.root
