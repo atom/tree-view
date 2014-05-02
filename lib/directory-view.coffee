@@ -1,4 +1,3 @@
-path = require 'path'
 {$, View} = require 'atom'
 
 Directory = require './directory'
