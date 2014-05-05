@@ -1,5 +1,6 @@
 path = require 'path'
 shell = require 'shell'
+Q = require 'q'
 
 _ = require 'underscore-plus'
 {$, BufferedProcess, ScrollView} = require 'atom'
@@ -171,13 +172,15 @@ class TreeView extends ScrollView
     switch e.originalEvent?.detail ? 1
       when 1
         @selectEntry(entry)
-        @openSelectedEntry(false) if entry instanceof FileView
+        @previewSelectedEntry(false) if entry instanceof FileView
         entry.toggleExpansion() if entry instanceof DirectoryView
       when 2
+        @openSelectedEntry(false) if entry instanceof FileView
         if entry.is('.selected.file')
           atom.workspaceView.getActiveView()?.focus()
         else if entry.is('.selected.directory')
           entry.toggleExpansion()
+      else entry.toggleExpansion() if entry instanceof DirectoryView
 
     false
 
@@ -300,7 +303,50 @@ class TreeView extends ScrollView
     if selectedEntry instanceof DirectoryView
       selectedEntry.view().toggleExpansion()
     else if selectedEntry instanceof FileView
+      if atom.workspace.activePane.previewingItem? and atom.workspace.activePane.previewingItem.isPreview
+        atom.workspace.activePane.previewingItem.isPreview = false
+        atom.workspace.activePane.emit('item-moved', atom.workspace.activePane.previewingItem, 99)
+        atom.workspace.activePane.previewingItem = null
       atom.workspaceView.open(selectedEntry.getPath(), { changeFocus })
+
+  previewSelectedEntry: (changeFocus) ->
+    selectedEntry = @selectedEntry()
+    if selectedEntry instanceof DirectoryView
+      selectedEntry.view().toggleExpansion()
+    else if selectedEntry instanceof FileView
+      pane = atom.workspace.activePane
+      uri = selectedEntry.getPath()
+      options = {changeFocus: changeFocus}
+      uri = atom.project.resolve(uri)
+      item = pane.itemForUri(uri)
+      if not item?
+        item = atom.project.open(uri, options)
+
+        Q(item).then (item) =>
+
+          atom.workspace.itemOpened item
+          item.isPreview = true
+          pane.addItem item,99
+          pane.activeItem = item
+          if pane.previewingItem?
+            pane.removeItem pane.previewingItem
+            pane.previewingItem.destroy()
+          pane.previewingItem = item
+
+          if changeFocus
+            pane.activate()
+
+          atom.workspace.emit("uri-opened")
+          item
+        .catch (error) ->
+          console.error if error.stack? then error.stack else error
+
+      else
+        return if item is pane.previewingItem
+        pane.activeItem = item
+        if pane.previewingItem?
+          pane.removeItem(pane.previewingItem);
+          pane.previewingItem = null
 
   moveSelectedEntry: ->
     entry = @selectedEntry()
