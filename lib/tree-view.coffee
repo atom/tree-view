@@ -692,4 +692,4 @@ class TreeView extends ScrollView
       fs.rename sourcePath, destinationPath, (err) =>
         throw err if err?
 
-        @updateRoot()
+        @updateRoot(@root?.directory.serializeExpansionStates())
