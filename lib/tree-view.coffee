@@ -576,44 +576,60 @@ class TreeView extends ScrollView
   #
   # Returns noop
   handleDragAndDrop: ->
-    @on 'mousedown', '.entry', @dragStarted
+    @on 'mousedown', '.entry', @onEntryMousedown
 
   # Private: Starts dragging an entry
   #
   # Returns noop
-  dragStarted: (e) =>
+  onEntryMousedown: (e) =>
+    @startPosition = { x: e.pageX, y: e.pageY }
     $(document.body).on('mousemove', @drag)
     $(document.body).on('mouseup', @dragStopped)
 
-    @on 'mouseover', '.directory', @highlightDirectory
-
     entry = $(e.currentTarget)
-    view = entry.data('view')
-
-    view.removeClass('selected')
-
-    @draggingView = view.clone()
-    @draggingView.addClass('dragging')
-    @list.append(@draggingView)
-
-    @updateDraggingViewPosition(e)
+    @draggedView = entry.data('view')
+    @draggedView.removeClass('selected')
 
   # Private: Stops dragging an entry
   #
   # Returns noop
   dragStopped: (e) =>
-    @draggingView.remove()
-    @draggingView = null
+    if @dragging
+      @dragging = false
+
+      @draggingView.remove()
+      @draggingView = null
+
+      @off 'mouseover', '.directory', @highlightDirectory
 
     $(document.body).off('mousemove', @drag)
     $(document.body).off('mouseup', @dragStopped)
-
-    @off 'mouseover', '.directory', @highlightDirectory
 
   # Private: Moves the current entry, highlights hovered entry
   #
   # Returns noop
   drag: (e) =>
+    currentPosition = { x: e.pageX, y: e.pageY }
+    distX = Math.abs(currentPosition.x - @startPosition.x)
+    distY = Math.abs(currentPosition.y - @startPosition.y)
+
+    # Calculate distance between current point and starting point, start
+    # the actual dragging when distance is large enough
+    if Math.sqrt(Math.pow(distY, 2) + Math.pow(distX, 2)) > 5 and
+      not @dragging
+        @startDragging(e)
+    else if @dragging
+      @updateDraggingViewPosition(e)
+
+  startDragging: (e) ->
+    @dragging = true
+
+    @draggingView = @draggedView.clone()
+    @draggingView.addClass('dragging')
+    @list.append(@draggingView)
+
+    @on 'mouseover', '.directory', @highlightDirectory
+
     @updateDraggingViewPosition(e)
 
   # Private: Updates the position of the currently dragged element
