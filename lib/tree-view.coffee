@@ -583,6 +583,8 @@ class TreeView extends ScrollView
   #
   # Returns noop
   onEntryMousedown: (e) =>
+    return unless e.which is 1
+
     @startPosition = { x: e.pageX, y: e.pageY }
     $(document.body).on('mousemove', @drag)
     $(document.body).on('mouseup', @dragStopped)
