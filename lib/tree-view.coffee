@@ -74,6 +74,8 @@ class TreeView extends ScrollView
     @command 'tree-view:copy-project-path', => @copySelectedEntryPath(true)
     @command 'tool-panel:unfocus', => @unfocus()
 
+    @handleDragAndDrop()
+
     @on 'tree-view:directory-modified', =>
       if @hasFocus()
         @selectEntryForPath(@selectedPath) if @selectedPath
@@ -569,3 +571,50 @@ class TreeView extends ScrollView
   # Returns boolean
   multiSelectEnabled: ->
     @list.hasClass('multi-select')
+
+  # Private: Listens to drag and drop events
+  #
+  # Returns noop
+  handleDragAndDrop: ->
+    @on 'mousedown', '.entry', @dragStarted
+
+  # Private: Starts dragging an entry
+  #
+  # Returns noop
+  dragStarted: (e) =>
+    $(document.body).on('mousemove', @drag)
+    $(document.body).on('mouseup', @dragStopped)
+
+    entry = $(e.currentTarget)
+    view = entry.data('view')
+
+    @draggedView = view.clone()
+    @draggedView.removeClass("selected")
+    @draggedView.addClass("dragged")
+    @list.append(@draggedView)
+
+    @updateDraggedViewPosition(e)
+
+  # Private: Stops dragging an entry
+  #
+  # Returns noop
+  dragStopped: (e) =>
+    @draggedView.remove()
+    @draggedView = null
+
+    $(document.body).off('mousemove', @drag)
+    $(document.body).off('mouseup', @dragStopped)
+
+  # Private: Moves the current entry, highlights hovered entry
+  #
+  # Returns noop
+  drag: (e) =>
+    @updateDraggedViewPosition(e)
+
+  # Private: Updates the position of the currently dragged element
+  #
+  # Returns: noop
+  updateDraggedViewPosition: (e) =>
+    @draggedView.css
+      left: e.pageX
+      top: e.pageY
