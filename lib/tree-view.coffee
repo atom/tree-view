@@ -585,24 +585,25 @@ class TreeView extends ScrollView
     $(document.body).on('mousemove', @drag)
     $(document.body).on('mouseup', @dragStopped)
 
-    @on "mouseover", ".directory", @highlightDirectory
+    @on 'mouseover', '.directory', @highlightDirectory
 
     entry = $(e.currentTarget)
     view = entry.data('view')
 
-    @draggedView = view.clone()
-    @draggedView.removeClass("selected")
-    @draggedView.addClass("dragged")
-    @list.append(@draggedView)
+    view.removeClass('selected')
 
-    @updateDraggedViewPosition(e)
+    @draggingView = view.clone()
+    @draggingView.addClass('dragging')
+    @list.append(@draggingView)
+
+    @updateDraggingViewPosition(e)
 
   # Private: Stops dragging an entry
   #
   # Returns noop
   dragStopped: (e) =>
-    @draggedView.remove()
-    @draggedView = null
+    @draggingView.remove()
+    @draggingView = null
 
     $(document.body).off('mousemove', @drag)
     $(document.body).off('mouseup', @dragStopped)
@@ -613,13 +614,13 @@ class TreeView extends ScrollView
   #
   # Returns noop
   drag: (e) =>
-    @updateDraggedViewPosition(e)
+    @updateDraggingViewPosition(e)
 
   # Private: Updates the position of the currently dragged element
   #
   # Returns noop
-  updateDraggedViewPosition: (e) =>
-    @draggedView.css
+  updateDraggingViewPosition: (e) =>
+    @draggingView.css
       left: e.pageX
       top: e.pageY
 
