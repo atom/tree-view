@@ -650,8 +650,8 @@ class TreeView extends ScrollView
   # Returns noop
   updateDraggingViewPosition: (e) =>
     @draggingView.css
-      left: e.pageX
-      top: e.pageY
+      left: e.pageX + @scroller.scrollLeft()
+      top: e.pageY + @scroller.scrollTop()
 
   # Private: Highlights the currently hovered directory
   #
