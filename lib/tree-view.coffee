@@ -1,4 +1,5 @@
 path = require 'path'
+fs = require 'fs'
 shell = require 'shell'
 
 _ = require 'underscore-plus'
@@ -602,6 +603,9 @@ class TreeView extends ScrollView
 
       @off 'mouseover', '.directory', @highlightDirectory
 
+      if @highlightedDirectory?
+        @performDragAndDrop()
+
     $(document.body).off('mousemove', @drag)
     $(document.body).off('mouseup', @dragStopped)
 
@@ -621,6 +625,11 @@ class TreeView extends ScrollView
     else if @dragging
       @updateDraggingViewPosition(e)
 
+  # Private: Actually starts the dragging process. Duplicates the view, listens
+  #          for mouseover events on directory entries and updates the dragged
+  #          view position
+  #
+  # Returns noop
   startDragging: (e) ->
     @dragging = true
 
@@ -651,3 +660,36 @@ class TreeView extends ScrollView
 
     @find('.directory').removeClass('selected')
     view.addClass('selected')
+
+    @highlightedDirectory = view.directory
+
+  # Private: Moves the currently dragged file / directory to the highlighted
+  #          directory
+  #
+  # Returns noop
+  performDragAndDrop: (callback) ->
+    destinationPath = @highlightedDirectory.path
+    if @draggedView instanceof DirectoryView
+      sourcePath = @draggedView.directory.path
+      entryType = "directory"
+    else if @draggedView instanceof FileView
+      sourcePath = @draggedView.file.path
+      entryType = "file"
+
+    # Build full destination path
+    baseName = path.basename(sourcePath)
+    destinationPath = path.resolve(destinationPath, baseName)
+
+    # Make sure that path does not exist already
+    fs.stat destinationPath, (err, stat) =>
+      if err? and err.code isnt "ENOENT"
+        throw err if err?
+
+      if stat?
+        return alert "Failed to move #{entryType}: File already exists."
+
+      # Move the file
+      fs.rename sourcePath, destinationPath, (err) =>
+        throw err if err?
+
+        @updateRoot()
