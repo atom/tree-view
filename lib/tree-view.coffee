@@ -657,10 +657,15 @@ class TreeView extends ScrollView
   #
   # Returns noop
   highlightDirectory: (e) =>
-    e.stopPropagation()
-
     directory = $(e.currentTarget)
     view = directory.data('view')
+
+    # Ignore hovering the original view
+    return if view is @draggedView
+    # This happens when we hover the original dragging view
+    return unless view?
+
+    e.stopPropagation()
 
     @find('.directory').removeClass('selected')
     view.addClass('selected')
