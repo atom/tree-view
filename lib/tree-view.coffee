@@ -691,6 +691,8 @@ class TreeView extends ScrollView
     baseName = path.basename(sourcePath)
     destinationPath = path.resolve(destinationPath, baseName)
 
+    return if destinationPath is sourcePath
+
     # Make sure that path does not exist already
     fs.stat destinationPath, (err, stat) =>
       if err? and err.code isnt "ENOENT"
