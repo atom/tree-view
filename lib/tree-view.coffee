@@ -606,6 +606,10 @@ class TreeView extends ScrollView
       if @highlightedDirectory?
         @performDragAndDrop()
 
+      if @expandTimer?
+        clearTimeout @expandTimer
+        @expandTimer = null
+
     $(document.body).off('mousemove', @drag)
     $(document.body).off('mouseup', @dragStopped)
 
@@ -662,6 +666,13 @@ class TreeView extends ScrollView
     view.addClass('selected')
 
     @highlightedDirectory = view.directory
+
+    if @expandTimer?
+      clearTimeout @expandTimer
+      @expandTimer = null
+    @expandTimer = setTimeout =>
+      @expandDirectory()
+    , 1000
 
   # Private: Moves the currently dragged file / directory to the highlighted
   #          directory
