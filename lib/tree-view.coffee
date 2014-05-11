@@ -311,13 +311,19 @@ class TreeView extends ScrollView
     dialog = new MoveDialog(oldPath)
     dialog.attach()
 
+  getFileManager: (platform) ->
+    return {
+      win32: ['cmd.exe', ['/c', 'start', 'explorer.exe']]
+      darwin: ['open', ['-R']]
+      linux: ['xdg-open', []]
+    }[platform]
+
   showSelectedEntryInFileManager: ->
     entry = @selectedEntry()
     return unless entry
     entryType = if entry instanceof DirectoryView then 'directory' else 'file'
-
-    command = 'open'
-    args = ['-R', entry.getPath()]
+    [command, args] = @getFileManager(process.platform)
+    args.push entry.getPath()
     errorLines = []
     stderr = (lines) -> errorLines.push(lines)
     exit = (code) ->
