@@ -31,7 +31,7 @@
     'Paste': 'tree-view:paste'
     'Copy Full Path': 'tree-view:copy-full-path'
     'Copy Project Path': 'tree-view:copy-project-path'
-    'Show in Finder': 'tree-view:show-in-file-manager'
+    'Show in file manager': 'tree-view:show-in-file-manager'
 
   '.tree-view.multi-select':
     'Delete': 'tree-view:remove'

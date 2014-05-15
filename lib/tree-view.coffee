@@ -1,4 +1,5 @@
 path = require 'path'
+os = require 'os'
 shell = require 'shell'
 
 _ = require 'underscore-plus'
@@ -316,8 +317,24 @@ class TreeView extends ScrollView
     return unless entry
     entryType = if entry instanceof DirectoryView then 'directory' else 'file'
 
-    command = 'open'
-    args = ['-R', entry.getPath()]
+    # Strip the filename from the path to make sure we pass a directory path.
+    basepath = if entry instanceof FileView
+        path.dirname(entry.getPath())
+      else
+        entry.getPath()
+    args = [basepath]
+
+    platform = os.platform()
+    command = switch platform
+      # Mac OS X.
+      when 'darwin' then 'open'
+      # Windows.
+      when 'win32', 'win64' then 'explorer'
+      # GNU/Linux, FreeBSD, etc.
+      # xdg-open uses the preferred file-browser for the current desktop
+      # environment if a path to a directory is passed.
+      else 'xdg-open'
+
     errorLines = []
     stderr = (lines) -> errorLines.push(lines)
     exit = (code) ->
