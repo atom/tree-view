@@ -1,5 +1,4 @@
 path = require 'path'
-os = require 'os'
 shell = require 'shell'
 
 _ = require 'underscore-plus'
@@ -324,8 +323,7 @@ class TreeView extends ScrollView
         entry.getPath()
     args = [basepath]
 
-    platform = os.platform()
-    command = switch platform
+    command = switch process.platform
       # Mac OS X.
       when 'darwin' then 'open'
       # Windows.
