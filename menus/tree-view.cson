@@ -31,7 +31,15 @@
     'Paste': 'tree-view:paste'
     'Copy Full Path': 'tree-view:copy-full-path'
     'Copy Project Path': 'tree-view:copy-project-path'
+
+  '.platform-darwin .tree-view.full-menu':
     'Show in Finder': 'tree-view:show-in-file-manager'
+
+  '.platform-win32 .tree-view.full-menu':
+    'Show in Explorer': 'tree-view:show-in-file-manager'
+
+  'body:not(.platform-darwin):not(.platform-win32) .tree-view.full-menu':
+    'Show in File Manager': 'tree-view:show-in-file-manager'
 
   '.tree-view.multi-select':
     'Delete': 'tree-view:remove'
