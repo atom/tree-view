@@ -313,34 +313,23 @@ class TreeView extends ScrollView
 
   # Get the outline of a system call to the current platform's file manager.
   #
-  # entryType - Either "file" or "directory" to indicate what the path points
-  #             to.
-  # fullPath  - File path to a file or directory.
+  # entryType   - Either "file" or "directory" to indicate what the path points
+  #               to.
+  # pathToOpen  - Path to a file or directory.
   #
   # Returns the name of the executable to call, and a list of arguments to pass.
-  getFileManagerCall: (entryType, fullPath) ->
+  getFileManagerCall: (entryType, pathToOpen) ->
     switch process.platform
       when 'darwin'
-        # Mac OS X.
-        return ['open', ['-R', path]]
-      when 'win32', 'win64'
-        # Windows.
-        return ['cmd.exe', ['/c', 'start', 'explorer.exe', path]]
+        return ['open', ['-R', pathToOpen]]
+      when 'win32'
+        return ['cmd.exe', ['/c', 'start', 'explorer.exe', pathToOpen]]
       else
-        # GNU/Linux, FreeBSD, etc.
-        # xdg-open uses the preferred file-browser for the current desktop
-        # environment if a path to a directory is passed.
-
         # Strip the filename from the path to make sure we pass a directory
         # path. If we pass xdg-open a file path, it will open that file in the
         # most suitable application instead, which is not what we want.
-        basePath =
-          if entryType == "file"
-            path.dirname(fullPath)
-          else
-            fullPath
-        return ['xdg-open', [basePath]]
-
+        pathToOpen =  path.dirname(pathToOpen) if entryType is 'file'
+        ['xdg-open', [pathToOpen]]
 
   showSelectedEntryInFileManager: ->
     entry = @selectedEntry()
