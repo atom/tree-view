@@ -38,7 +38,7 @@
   '.platform-win32 .tree-view.full-menu':
     'Show in Explorer': 'tree-view:show-in-file-manager'
 
-  '.tree-view.full-menu:not(.platform-darwin):not(.platform-win32)':
+  'body:not(.platform-darwin):not(.platform-win32) .tree-view.full-menu':
     'Show in File Manager': 'tree-view:show-in-file-manager'
 
   '.tree-view.multi-select':

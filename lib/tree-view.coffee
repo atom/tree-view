@@ -311,34 +311,50 @@ class TreeView extends ScrollView
     dialog = new MoveDialog(oldPath)
     dialog.attach()
 
+  # Internal: Get the outline of a system call to the current platform's file
+  # manager.
+  #
+  # entryType - Either "file" or "directory" to indicate what the path points
+  #             to.
+  # fullPath  - File path to a file or directory.
+  #
+  # Returns the name of the executable to call, and a list of arguments to pass.
+  getFileManagerCall: (entryType, fullPath) ->
+    switch process.platform
+      when 'darwin'
+        # Mac OS X.
+        return ['open', ['-R', path]]
+      when 'win32', 'win64'
+        # Windows.
+        return ['cmd.exe', ['/c', 'start', 'explorer.exe', path]]
+      else
+        # GNU/Linux, FreeBSD, etc.
+        # xdg-open uses the preferred file-browser for the current desktop
+        # environment if a path to a directory is passed.
+
+        # Strip the filename from the path to make sure we pass a directory
+        # path. If we pass xdg-open a file path, it will open that file in the
+        # most suitable application instead, which is not what we want.
+        basePath = if entryType == "file"
+            path.dirname(fullPath)
+          else
+            fullPath
+        return ['xdg-open', [basePath]]
+
+
   showSelectedEntryInFileManager: ->
     entry = @selectedEntry()
     return unless entry
     entryType = if entry instanceof DirectoryView then 'directory' else 'file'
 
-    # Strip the filename from the path to make sure we pass a directory path.
-    basepath = if entry instanceof FileView
-        path.dirname(entry.getPath())
-      else
-        entry.getPath()
-    args = [basepath]
-
-    command = switch process.platform
-      # Mac OS X.
-      when 'darwin' then 'open'
-      # Windows.
-      when 'win32', 'win64' then 'explorer'
-      # GNU/Linux, FreeBSD, etc.
-      # xdg-open uses the preferred file-browser for the current desktop
-      # environment if a path to a directory is passed.
-      else 'xdg-open'
+    [command, args] = @getFileManagerCall(entryType, entry.getPath())
 
     errorLines = []
     stderr = (lines) -> errorLines.push(lines)
     exit = (code) ->
       if code isnt 0
         atom.confirm
-          message: "Opening #{entryType} in Finder failed"
+          message: "Opening #{entryType} in #{command} failed"
           detailedMessage: errorLines.join('\n')
           buttons: ['OK']
 
