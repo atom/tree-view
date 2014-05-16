@@ -317,33 +317,41 @@ class TreeView extends ScrollView
   #               to.
   # pathToOpen  - Path to a file or directory.
   #
-  # Returns the name of the executable to call, and a list of arguments to pass.
-  getFileManagerCall: (entryType, pathToOpen) ->
+  # Returns an object containing a command, a human-readable label, and the
+  # arguments.
+  fileManagerCommandForPath: (entryType, pathToOpen) ->
     switch process.platform
       when 'darwin'
-        return ['open', ['-R', pathToOpen]]
+        command: 'open'
+        label: 'Finder'
+        args: ['-R', pathToOpen]
       when 'win32'
-        return ['cmd.exe', ['/c', 'start', 'explorer.exe', pathToOpen]]
+        command: 'cmd.exe'
+        label: 'Explorer'
+        args: ['/c', 'start', 'explorer.exe', pathToOpen]
       else
         # Strip the filename from the path to make sure we pass a directory
         # path. If we pass xdg-open a file path, it will open that file in the
         # most suitable application instead, which is not what we want.
         pathToOpen =  path.dirname(pathToOpen) if entryType is 'file'
-        ['xdg-open', [pathToOpen]]
+
+        command: 'xdg-open'
+        label: 'File Manager'
+        args: [pathToOpen]
 
   showSelectedEntryInFileManager: ->
     entry = @selectedEntry()
     return unless entry
     entryType = if entry instanceof DirectoryView then 'directory' else 'file'
 
-    [command, args] = @getFileManagerCall(entryType, entry.getPath())
+    {command, args, label} = @fileManagerCommandForPath(entryType, entry.getPath())
 
     errorLines = []
     stderr = (lines) -> errorLines.push(lines)
     exit = (code) ->
       if code isnt 0
         atom.confirm
-          message: "Opening #{entryType} in #{command} failed"
+          message: "Opening #{entryType} in #{label} failed"
           detailedMessage: errorLines.join('\n')
           buttons: ['OK']
 
