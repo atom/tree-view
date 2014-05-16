@@ -313,13 +313,12 @@ class TreeView extends ScrollView
 
   # Get the outline of a system call to the current platform's file manager.
   #
-  # entryType   - Either "file" or "directory" to indicate what the path points
-  #               to.
   # pathToOpen  - Path to a file or directory.
+  # isFile      - True if the path is a file, false otherwise.
   #
   # Returns an object containing a command, a human-readable label, and the
   # arguments.
-  fileManagerCommandForPath: (entryType, pathToOpen) ->
+  fileManagerCommandForPath: (pathToOpen, isFile) ->
     switch process.platform
       when 'darwin'
         command: 'open'
@@ -333,7 +332,7 @@ class TreeView extends ScrollView
         # Strip the filename from the path to make sure we pass a directory
         # path. If we pass xdg-open a file path, it will open that file in the
         # most suitable application instead, which is not what we want.
-        pathToOpen =  path.dirname(pathToOpen) if entryType is 'file'
+        pathToOpen =  path.dirname(pathToOpen) if isFile
 
         command: 'xdg-open'
         label: 'File Manager'
@@ -342,9 +341,8 @@ class TreeView extends ScrollView
   showSelectedEntryInFileManager: ->
     entry = @selectedEntry()
     return unless entry
-    entryType = if entry instanceof DirectoryView then 'directory' else 'file'
 
-    {command, args, label} = @fileManagerCommandForPath(entryType, entry.getPath())
+    {command, args, label} = @fileManagerCommandForPath(entry.getPath(), entry instanceof FileView)
 
     errorLines = []
     stderr = (lines) -> errorLines.push(lines)
