@@ -311,8 +311,7 @@ class TreeView extends ScrollView
     dialog = new MoveDialog(oldPath)
     dialog.attach()
 
-  # Internal: Get the outline of a system call to the current platform's file
-  # manager.
+  # Get the outline of a system call to the current platform's file manager.
   #
   # entryType - Either "file" or "directory" to indicate what the path points
   #             to.
