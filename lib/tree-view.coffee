@@ -335,7 +335,8 @@ class TreeView extends ScrollView
         # Strip the filename from the path to make sure we pass a directory
         # path. If we pass xdg-open a file path, it will open that file in the
         # most suitable application instead, which is not what we want.
-        basePath = if entryType == "file"
+        basePath =
+          if entryType == "file"
             path.dirname(fullPath)
           else
             fullPath
