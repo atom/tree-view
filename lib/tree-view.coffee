@@ -1,6 +1,7 @@
 path = require 'path'
-fs = require 'fs'
 shell = require 'shell'
+
+DragAndDropHandler = require "./dnd-handler"
 
 _ = require 'underscore-plus'
 {$, BufferedProcess, ScrollView} = require 'atom'
@@ -75,8 +76,6 @@ class TreeView extends ScrollView
     @command 'tree-view:copy-project-path', => @copySelectedEntryPath(true)
     @command 'tool-panel:unfocus', => @unfocus()
 
-    @handleDragAndDrop()
-
     @on 'tree-view:directory-modified', =>
       if @hasFocus()
         @selectEntryForPath(@selectedPath) if @selectedPath
@@ -104,6 +103,8 @@ class TreeView extends ScrollView
     @scrollLeftAfterAttach = state.scrollLeft if state.scrollLeft
     @width(state.width) if state.width > 0
     @attach() if state.attached
+
+    @dragAndDropHandler = new DragAndDropHandler(this)
 
   afterAttach: (onDom) ->
     @focus() if @focusAfterAttach
@@ -572,144 +573,3 @@ class TreeView extends ScrollView
   # Returns boolean
   multiSelectEnabled: ->
     @list.hasClass('multi-select')
-
-  # Private: Listens to drag and drop events
-  #
-  # Returns noop
-  handleDragAndDrop: ->
-    @on 'mousedown', '.entry', @onEntryMousedown
-
-  # Private: Starts dragging an entry
-  #
-  # Returns noop
-  onEntryMousedown: (e) =>
-    return unless e.which is 1
-
-    @startPosition = { x: e.pageX, y: e.pageY }
-    $(document.body).on('mousemove', @drag)
-    $(document.body).on('mouseup', @dragStopped)
-
-    entry = $(e.currentTarget)
-    @draggedView = entry.data('view')
-    @draggedView.removeClass('selected')
-
-  # Private: Stops dragging an entry
-  #
-  # Returns noop
-  dragStopped: (e) =>
-    if @dragging
-      @dragging = false
-
-      @draggingView.remove()
-      @draggingView = null
-
-      @off 'mouseover', '.directory', @highlightDirectory
-
-      if @highlightedDirectory?
-        @performDragAndDrop()
-
-      if @expandTimer?
-        clearTimeout @expandTimer
-        @expandTimer = null
-
-    $(document.body).off('mousemove', @drag)
-    $(document.body).off('mouseup', @dragStopped)
-
-  # Private: Moves the current entry, highlights hovered entry
-  #
-  # Returns noop
-  drag: (e) =>
-    currentPosition = { x: e.pageX, y: e.pageY }
-    distX = Math.abs(currentPosition.x - @startPosition.x)
-    distY = Math.abs(currentPosition.y - @startPosition.y)
-
-    # Calculate distance between current point and starting point, start
-    # the actual dragging when distance is large enough
-    if Math.sqrt(Math.pow(distY, 2) + Math.pow(distX, 2)) > 5 and
-      not @dragging
-        @startDragging(e)
-    else if @dragging
-      @updateDraggingViewPosition(e)
-
-  # Private: Actually starts the dragging process. Duplicates the view, listens
-  #          for mouseover events on directory entries and updates the dragged
-  #          view position
-  #
-  # Returns noop
-  startDragging: (e) ->
-    @dragging = true
-
-    @draggingView = @draggedView.clone()
-    @draggingView.addClass('dragging')
-    @list.append(@draggingView)
-
-    @on 'mouseover', '.directory', @highlightDirectory
-
-    @updateDraggingViewPosition(e)
-
-  # Private: Updates the position of the currently dragged element
-  #
-  # Returns noop
-  updateDraggingViewPosition: (e) =>
-    @draggingView.css
-      left: e.pageX + @scroller.scrollLeft()
-      top: e.pageY + @scroller.scrollTop()
-
-  # Private: Highlights the currently hovered directory
-  #
-  # Returns noop
-  highlightDirectory: (e) =>
-    directory = $(e.currentTarget)
-    view = directory.data('view')
-
-    # Ignore hovering the original view
-    return if view is @draggedView
-    # This happens when we hover the original dragging view
-    return unless view?
-
-    e.stopPropagation()
-
-    @find('.directory').removeClass('selected')
-    view.addClass('selected')
-
-    @highlightedDirectory = view.directory
-
-    if @expandTimer?
-      clearTimeout @expandTimer
-      @expandTimer = null
-    @expandTimer = setTimeout =>
-      @expandDirectory()
-    , 1000
-
-  # Private: Moves the currently dragged file / directory to the highlighted
-  #          directory
-  #
-  # Returns noop
-  performDragAndDrop: (callback) ->
-    destinationPath = @highlightedDirectory.path
-    if @draggedView instanceof DirectoryView
-      sourcePath = @draggedView.directory.path
-      entryType = "directory"
-    else if @draggedView instanceof FileView
-      sourcePath = @draggedView.file.path
-      entryType = "file"
-
-    # Build full destination path
-    baseName = path.basename(sourcePath)
-    destinationPath = path.resolve(destinationPath, baseName)
-
-    return if destinationPath is sourcePath
-
-    # Make sure that path does not exist already
-    fs.stat destinationPath, (err, stat) =>
-      if err? and err.code isnt "ENOENT"
-        throw err if err?
-
-      if stat?
-        return alert "Failed to move #{entryType}: File already exists."
-
-      # Move the file
-      fs.rename sourcePath, destinationPath, (err) =>
-        throw err if err?
-
-        @updateRoot(@root?.directory.serializeExpansionStates())
