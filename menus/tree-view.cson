@@ -52,3 +52,12 @@
 
   '.pane .tab.active':
     'Reveal in Tree View': 'tree-view:reveal-active-file'
+
+  '.platform-darwin .pane .item-views':
+    'Show in Finder': 'tree-view:show-active-in-file-manager'
+
+  '.platform-win32 .pane .item-views':
+    'Show in Explorer': 'tree-view:show-active-in-file-manager'
+
+  '.platform-linux .pane .item-views':
+    'Show in File Manager': 'tree-view:show-active-in-file-manager'
