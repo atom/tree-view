@@ -355,6 +355,10 @@ class TreeView extends ScrollView
 
     new BufferedProcess({command, args, stderr, exit})
 
+  showActiveInFileManager: ->
+    @revealActiveFile()
+    @showSelectedEntryInFileManager()
+
   copySelectedEntry: ->
     if @hasFocus()
       entry = @selectedEntry()
