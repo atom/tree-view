@@ -59,6 +59,10 @@ class TreeView extends ScrollView
         @selectEntry(entryToSelect)
         @showFullMenu()
 
+    # turn off default scrolling behavior from ScrollView
+    @off 'core:move-up'
+    @off 'core:move-down'
+
     @on 'mousedown', '.tree-view-resize-handle', (e) => @resizeStarted(e)
     @command 'core:move-up', => @moveUp()
     @command 'core:move-down', => @moveDown()
