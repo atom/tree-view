@@ -23,8 +23,10 @@
 '.tree-view':
   'right': 'tree-view:expand-directory'
   'ctrl-]': 'tree-view:expand-directory'
+  'l': 'tree-view:expand-directory'
   'left': 'tree-view:collapse-directory'
   'ctrl-[': 'tree-view:collapse-directory'
+  'h': 'tree-view:collapse-directory'
   'enter': 'tree-view:open-selected-entry'
   'ctrl-C': 'tree-view:copy-full-path'
   'm': 'tree-view:move'
