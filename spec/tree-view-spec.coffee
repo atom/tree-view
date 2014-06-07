@@ -745,6 +745,22 @@ describe "TreeView", ->
           runs ->
             treeView.trigger 'tree-view:expand-directory'
 
+    describe "tree-view:expand-directories", ->
+      describe "when an collapsed root is expanded while holding the alt key", ->
+        it "expands the root and all subdirectories", ->
+          treeView.root.click()
+          treeView.root.collapse()
+
+          expect(treeView.root).not.toHaveClass 'expanded'
+          treeView.trigger 'tree-view:expand-directories'
+          expect(treeView.root).toHaveClass 'expanded'
+
+          children = treeView.root.find('.directory')
+          expect(children.length).toBeGreaterThan 0
+          children.each (index, child) ->
+            childView = $(child).view()
+            expect(childView).toHaveClass 'expanded'
+
     describe "tree-view:collapse-directory", ->
       subdir = null
 
@@ -788,6 +804,32 @@ describe "TreeView", ->
             expect(subdir).not.toHaveClass 'expanded'
             expect(subdir).toHaveClass 'selected'
             expect(treeView.root).toHaveClass 'expanded'
+
+    describe "tree-view:collapse-directories", ->
+      parent    = null
+      children  = null
+
+      beforeEach ->
+        parent = treeView.root.find('> .entries > .directory').eq(2).view()
+        parent.expand()
+        children = parent.find('.expanded.directory')
+        children.each (index, child) ->
+          $(child).view().expand()
+
+      describe "when an expanded directory is collapsed while holding the alt key", ->
+        it "collapses the directory and all its child directories", ->
+          parent.click().expand()
+          expect(parent).toHaveClass 'expanded'
+          children.each (index, child) ->
+            $(child).view().click().expand()
+            expect($(child).view()).toHaveClass 'expanded'
+
+          treeView.trigger 'tree-view:collapse-directories'
+
+          expect(parent).not.toHaveClass 'expanded'
+          children.each (index, child) ->
+            expect($(child).view()).not.toHaveClass 'expanded'
+          expect(treeView.root).toHaveClass 'expanded'
 
     describe "tree-view:open-selected-entry", ->
       describe "when a file is selected", ->

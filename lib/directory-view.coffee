@@ -69,18 +69,29 @@ class DirectoryView extends View
   reload: ->
     @directory.reload() if @isExpanded
 
-  toggleExpansion: ->
-    if @isExpanded then @collapse() else @expand()
+  toggleExpansion: (isRecursive=false) ->
+    if @isExpanded then @collapse(isRecursive) else @expand(isRecursive)
 
-  expand: ->
-    return if @isExpanded
-    @addClass('expanded').removeClass('collapsed')
-    @subscribeToDirectory()
-    @directory.expand()
-    @isExpanded = true
+  expand: (isRecursive=false) ->
+    if not @isExpanded
+      @addClass('expanded').removeClass('collapsed')
+      @subscribeToDirectory()
+      @directory.expand()
+      @isExpanded = true
+
+    if isRecursive
+      for child in @entries.children()
+        childView = $(child).view()
+        childView.expand(true) if childView instanceof DirectoryView
+
     false
 
-  collapse: ->
+  collapse: (isRecursive=false) ->
+    if isRecursive
+      for child in @entries.children()
+        childView = $(child).view()
+        childView.collapse(true) if childView instanceof DirectoryView and childView.isExpanded
+
     @removeClass('expanded').addClass('collapsed')
     @directory.collapse()
     @unsubscribe(@directory)
