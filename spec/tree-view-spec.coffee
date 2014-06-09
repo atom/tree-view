@@ -977,9 +977,9 @@ describe "TreeView", ->
               treeView.trigger "tree-view:paste"
               treeView.trigger "tree-view:paste"
 
-              fileArr = filePath.split('/').pop().split('.')
-              numberedFileName0 = "#{dirPath}/#{fileArr[0]}0.#{fileArr[1]}"
-              numberedFileName1 = "#{dirPath}/#{fileArr[0]}1.#{fileArr[1]}"
+              fileArr = filePath.split(path.sep).pop().split('.')
+              numberedFileName0 = "#{dirPath}#{path.sep}#{fileArr[0]}0.#{fileArr[1]}"
+              numberedFileName1 = "#{dirPath}#{path.sep}#{fileArr[0]}1.#{fileArr[1]}"
               expect(fs.existsSync(numberedFileName0)).toBeTruthy()
               expect(fs.existsSync(numberedFileName1)).toBeTruthy()
               expect(fs.existsSync(filePath)).toBeTruthy()
