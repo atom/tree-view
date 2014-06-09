@@ -859,7 +859,6 @@ describe "TreeView", ->
         fileView2 = treeView.find('.file:contains(test-file2.txt)').view()
         fileView3 = treeView.find('.file:contains(test-file3.txt)').view()
 
-
     describe "tree-view:copy", ->
       LocalStorage = window.localStorage
       beforeEach ->
