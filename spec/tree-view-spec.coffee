@@ -859,7 +859,6 @@ describe "TreeView", ->
         fileView2 = treeView.find('.file:contains(test-file2.txt)').view()
         fileView3 = treeView.find('.file:contains(test-file3.txt)').view()
 
-
     describe "tree-view:copy", ->
       LocalStorage = window.localStorage
       beforeEach ->
@@ -966,7 +965,7 @@ describe "TreeView", ->
             fileView2.click()
             treeView.trigger "tree-view:paste"
 
-            expect(fs.existsSync("#{dirPath2}/#{filePath.split('/').pop()}")).toBeTruthy()
+            expect(fs.existsSync(path.join(dirPath2, path.basename(filePath)))).toBeTruthy()
             expect(fs.existsSync(filePath)).toBeTruthy()
 
           describe 'when target already exists', ->
@@ -977,9 +976,9 @@ describe "TreeView", ->
               treeView.trigger "tree-view:paste"
               treeView.trigger "tree-view:paste"
 
-              fileArr = filePath.split('/').pop().split('.')
-              numberedFileName0 = "#{dirPath}/#{fileArr[0]}0.#{fileArr[1]}"
-              numberedFileName1 = "#{dirPath}/#{fileArr[0]}1.#{fileArr[1]}"
+              fileArr = filePath.split(path.sep).pop().split('.')
+              numberedFileName0 = path.join(dirPath, "#{fileArr[0]}0.#{fileArr[1]}")
+              numberedFileName1 = path.join(dirPath, "#{fileArr[0]}1.#{fileArr[1]}")
               expect(fs.existsSync(numberedFileName0)).toBeTruthy()
               expect(fs.existsSync(numberedFileName1)).toBeTruthy()
               expect(fs.existsSync(filePath)).toBeTruthy()
@@ -991,7 +990,7 @@ describe "TreeView", ->
             dirView2.click()
             treeView.trigger "tree-view:paste"
 
-            expect(fs.existsSync("#{dirPath2}/#{filePath.split('/').pop()}")).toBeTruthy()
+            expect(fs.existsSync(path.join(dirPath2, path.basename(filePath)))).toBeTruthy()
             expect(fs.existsSync(filePath)).toBeTruthy()
 
           describe 'when target already exists', ->
@@ -1002,9 +1001,9 @@ describe "TreeView", ->
               treeView.trigger "tree-view:paste"
               treeView.trigger "tree-view:paste"
 
-              fileArr = filePath.split('/').pop().split('.')
-              numberedFileName0 = "#{dirPath}/#{fileArr[0]}0.#{fileArr[1]}"
-              numberedFileName1 = "#{dirPath}/#{fileArr[0]}1.#{fileArr[1]}"
+              fileArr = filePath.split(path.sep).pop().split('.')
+              numberedFileName0 = path.join(dirPath, "#{fileArr[0]}0.#{fileArr[1]}")
+              numberedFileName1 = path.join(dirPath, "#{fileArr[0]}1.#{fileArr[1]}")
               expect(fs.existsSync(numberedFileName0)).toBeTruthy()
               expect(fs.existsSync(numberedFileName1)).toBeTruthy()
               expect(fs.existsSync(filePath)).toBeTruthy()
@@ -1021,8 +1020,8 @@ describe "TreeView", ->
             fileView.click()
             treeView.trigger "tree-view:paste"
 
-            expect(fs.existsSync("#{dirPath}/#{filePath2.split('/').pop()}")).toBeTruthy()
-            expect(fs.existsSync("#{dirPath}/#{filePath3.split('/').pop()}")).toBeTruthy()
+            expect(fs.existsSync(path.join(dirPath, path.basename(filePath2)))).toBeTruthy()
+            expect(fs.existsSync(path.join(dirPath, path.basename(filePath3)))).toBeTruthy()
             expect(fs.existsSync(filePath2)).toBeTruthy()
             expect(fs.existsSync(filePath3)).toBeTruthy()
 
@@ -1049,7 +1048,7 @@ describe "TreeView", ->
             fileView2.click()
             treeView.trigger "tree-view:paste"
 
-            expect(fs.existsSync("#{dirPath2}/#{filePath.split('/').pop()}")).toBeTruthy()
+            expect(fs.existsSync(path.join(dirPath2, path.basename(filePath)))).toBeTruthy()
             expect(fs.existsSync(filePath)).toBeFalsy()
 
           describe 'when the target destination file exists', ->
@@ -1071,7 +1070,7 @@ describe "TreeView", ->
             dirView2.click()
             treeView.trigger "tree-view:paste"
 
-            expect(fs.existsSync("#{dirPath2}/#{filePath.split('/').pop()}")).toBeTruthy()
+            expect(fs.existsSync(path.join(dirPath2, path.basename(filePath)))).toBeTruthy()
             expect(fs.existsSync(filePath)).toBeFalsy()
 
       describe "when multiple files have been cut", ->
@@ -1082,8 +1081,8 @@ describe "TreeView", ->
             fileView.click()
             treeView.trigger "tree-view:paste"
 
-            expect(fs.existsSync("#{dirPath}/#{filePath2.split('/').pop()}")).toBeTruthy()
-            expect(fs.existsSync("#{dirPath}/#{filePath3.split('/').pop()}")).toBeTruthy()
+            expect(fs.existsSync(path.join(dirPath, path.basename(filePath2)))).toBeTruthy()
+            expect(fs.existsSync(path.join(dirPath, path.basename(filePath3)))).toBeTruthy()
             expect(fs.existsSync(filePath2)).toBeFalsy()
             expect(fs.existsSync(filePath3)).toBeFalsy()
 
@@ -1109,9 +1108,8 @@ describe "TreeView", ->
             dirView2.click()
             treeView.trigger "tree-view:paste"
 
-            expect(fs.existsSync("#{dirPath2}/#{filePath.split('/').pop()}")).toBeTruthy()
+            expect(fs.existsSync(path.join(dirPath2, path.basename(filePath)))).toBeTruthy()
             expect(fs.existsSync(filePath)).toBeFalsy()
-
 
     describe "tree-view:add", ->
       addDialog = null
