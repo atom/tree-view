@@ -75,6 +75,7 @@ class TreeView extends ScrollView
     @command 'tree-view:paste', => @pasteEntries()
     @command 'tree-view:copy-full-path', => @copySelectedEntryPath(false)
     @command 'tree-view:show-in-file-manager', => @showSelectedEntryInFileManager()
+    @command 'tree-view:open-in-new-window', => @openSelectedEntryInNewWindow()
     @command 'tree-view:copy-project-path', => @copySelectedEntryPath(true)
     @command 'tool-panel:unfocus', => @unfocus()
 
@@ -358,6 +359,10 @@ class TreeView extends ScrollView
           buttons: ['OK']
 
     new BufferedProcess({command, args, stderr, exit})
+
+  openSelectedEntryInNewWindow: ->
+    if pathToOpen = @selectedEntry()?.getPath()
+      atom.open({pathsToOpen: [pathToOpen], newWindow: true})
 
   copySelectedEntry: ->
     if @hasFocus()

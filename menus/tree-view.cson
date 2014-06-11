@@ -31,6 +31,7 @@
     'Paste': 'tree-view:paste'
     'Copy Full Path': 'tree-view:copy-full-path'
     'Copy Project Path': 'tree-view:copy-project-path'
+    'Open In New Window': 'tree-view:open-in-new-window'
 
   '.platform-darwin .tree-view.full-menu':
     'Show in Finder': 'tree-view:show-in-file-manager'
