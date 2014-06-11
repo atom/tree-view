@@ -31,6 +31,7 @@ class Dialog extends View
   attach: ->
     atom.workspaceView.append(this)
     @miniEditor.focus()
+    @miniEditor.scrollToCursorPosition()
 
   close: ->
     @remove()
