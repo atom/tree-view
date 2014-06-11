@@ -5,10 +5,8 @@ Dialog = require './dialog'
 module.exports =
 class CopyDialog extends Dialog
   constructor: (@initialPath) ->
-    prompt = 'Enter the new path for the duplicate.'
-
     super
-      prompt: prompt
+      prompt: 'Enter the new path for the duplicate.'
       initialPath: atom.project.relativize(@initialPath)
       select: true
       iconClass: 'icon-arrow-right'
