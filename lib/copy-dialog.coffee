@@ -23,8 +23,8 @@ class CopyDialog extends Dialog
       @showError("'#{newPath}' already exists.")
       return
 
-    directoryPath = path.dirname(newPath)
     activeEditor = atom.workspace.getActiveEditor()
+    activeEditor = null unless activeEditor?.getPath() is @initialPath
     try
       if fs.isDirectorySync(@initialPath)
         fs.copySync(@initialPath, newPath)
@@ -34,8 +34,8 @@ class CopyDialog extends Dialog
             if not error?
               atom.workspace.open newPath,
                 activatePane: true
-                initialLine: activeEditor?.getCursor()?.getBufferRow()
-                initialColumn: activeEditor?.getCursor()?.getBufferColumn()
+                initialLine: activeEditor?.getCursor()?.getBufferRow() ? 0
+                initialColumn: activeEditor?.getCursor()?.getBufferColumn() ? 0
             else
               throw error
       if repo = atom.project.getRepo()
