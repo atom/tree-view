@@ -24,11 +24,20 @@ class CopyDialog extends Dialog
       return
 
     directoryPath = path.dirname(newPath)
+    activeEditor = atom.workspace.getActiveEditor()
     try
       if fs.isDirectorySync(@initialPath)
         fs.copySync(@initialPath, newPath)
       else
-        fs.copy(@initialPath, newPath)
+        fs.copy @initialPath, newPath,
+          (error) ->
+            if not error?
+              atom.workspace.open newPath,
+                activatePane: true
+                initialLine: activeEditor?.getCursor()?.getBufferRow()
+                initialColumn: activeEditor?.getCursor()?.getBufferColumn()
+            else
+              throw error
       if repo = atom.project.getRepo()
         repo.getPathStatus(@initialPath)
         repo.getPathStatus(newPath)
