@@ -347,14 +347,15 @@ class TreeView extends ScrollView
     entry = @selectedEntry()
     return unless entry
 
-    {command, args, label} = @fileManagerCommandForPath(entry.getPath(), entry instanceof FileView)
+    isFile = entry instanceof FileView
+    {command, args, label} = @fileManagerCommandForPath(entry.getPath(), isFile)
 
     errorLines = []
     stderr = (lines) -> errorLines.push(lines)
     exit = (code) ->
       if code isnt 0
         atom.confirm
-          message: "Opening #{entryType} in #{label} failed"
+          message: "Opening #{if isFile then 'file' else 'folder'} in #{label} failed"
           detailedMessage: errorLines.join('\n')
           buttons: ['OK']
 
