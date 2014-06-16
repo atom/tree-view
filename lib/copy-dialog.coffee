@@ -34,8 +34,8 @@ class CopyDialog extends Dialog
             if not error?
               atom.workspace.open newPath,
                 activatePane: true
-                initialLine: activeEditor?.getCursor()?.getBufferRow() ? 0
-                initialColumn: activeEditor?.getCursor()?.getBufferColumn() ? 0
+                initialLine: activeEditor?.getCursor().getBufferRow()
+                initialColumn: activeEditor?.getCursor().getBufferColumn()
             else
               throw error
       if repo = atom.project.getRepo()
