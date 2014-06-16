@@ -330,9 +330,9 @@ class TreeView extends ScrollView
         label: 'Finder'
         args: ['-R', pathToOpen]
       when 'win32'
-        command: 'cmd.exe'
+        command: 'explorer.exe'
         label: 'Explorer'
-        args: ['/c', 'start', 'explorer.exe', pathToOpen]
+        args: [pathToOpen]
       else
         # Strip the filename from the path to make sure we pass a directory
         # path. If we pass xdg-open a file path, it will open that file in the
@@ -353,10 +353,17 @@ class TreeView extends ScrollView
     errorLines = []
     stderr = (lines) -> errorLines.push(lines)
     exit = (code) ->
-      if code isnt 0
+      failed = code isnt 0
+      error = errorLines.join('\n')
+
+      # Windows 8 seems to return a 1 with no error output even on success
+      if process.platform is 'win32' and code is 1 and not error
+        failed = false
+
+      if failed
         atom.confirm
           message: "Opening #{if isFile then 'file' else 'folder'} in #{label} failed"
-          detailedMessage: errorLines.join('\n')
+          detailedMessage: error
           buttons: ['OK']
 
     new BufferedProcess({command, args, stderr, exit})
