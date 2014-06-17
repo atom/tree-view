@@ -3,7 +3,7 @@ _ = require 'underscore-plus'
 fs = require 'fs-plus'
 TreeView = require '../lib/tree-view'
 path = require 'path'
-temp = require 'temp'
+temp = require('temp').track()
 wrench = require 'wrench'
 os = require 'os'
 
@@ -38,6 +38,9 @@ describe "TreeView", ->
       sampleTxt = treeView.find('.file:contains(tree-view.txt)')
 
       expect(treeView.root.directory.getSubscriptionCount()).toBeGreaterThan 0
+
+  afterEach ->
+    temp.cleanup()
 
   describe ".initialize(project)", ->
     it "renders the root of the project and its contents alphabetically with subdirectories first in a collapsed state", ->
@@ -1458,11 +1461,12 @@ describe "TreeView", ->
 
         describe "when the path is changed and confirmed", ->
           describe "when all the directories along the new path exist", ->
-            it "duplicates the file, updates the tree view, and closes the dialog", ->
+            it "duplicates the file, updates the tree view, opens the new file and closes the dialog", ->
               newPath = path.join(rootDirPath, 'duplicated-test-file.txt')
               copyDialog.miniEditor.setText(newPath)
 
-              copyDialog.trigger 'core:confirm'
+              waitsForFileToOpen ->
+                copyDialog.trigger 'core:confirm'
 
               waitsFor "tree view to update", ->
                 treeView.root.find('> .entries > .file:contains(duplicated-test-file.txt)').length > 0
@@ -1475,13 +1479,15 @@ describe "TreeView", ->
                 dirView = treeView.root.entries.find('.directory:contains(test-dir)').view()
                 dirView.expand()
                 expect(dirView.entries.children().length).toBe 1
+                expect(atom.workspace.getActiveEditor().getPath()).toBe(newPath)
 
           describe "when the directories along the new path don't exist", ->
-            it "duplicates the tree", ->
+            it "duplicates the tree and opens the new file", ->
               newPath = path.join(rootDirPath, 'new/directory', 'duplicated-test-file.txt')
               copyDialog.miniEditor.setText(newPath)
 
-              copyDialog.trigger 'core:confirm'
+              waitsForFileToOpen ->
+                copyDialog.trigger 'core:confirm'
 
               waitsFor "tree view to update", ->
                 treeView.root.find('> .entries > .directory:contains(new)').length > 0
@@ -1490,6 +1496,7 @@ describe "TreeView", ->
 
               runs ->
                 expect(fs.existsSync(filePath)).toBeTruthy()
+                expect(atom.workspace.getActiveEditor().getPath()).toBe(newPath)
 
           describe "when a file or directory already exists at the target path", ->
             it "shows an error message and does not close the dialog", ->
