@@ -95,31 +95,40 @@ describe "TreeView", ->
         filePath = path.join(os.tmpdir(), 'non-project-file.txt')
         fs.writeFileSync(filePath, 'test')
 
-        expect(-> atom.workspaceView.openSync(filePath)).not.toThrow()
+        waitsForPromise ->
+          atom.workspace.open(filePath)
 
       it "does not reveal the active file", ->
         filePath = path.join(os.tmpdir(), 'non-project-file.txt')
         fs.writeFileSync(filePath, 'test')
-        atom.workspaceView.openSync(filePath)
 
-        atom.workspaceView.trigger 'tree-view:reveal-active-file'
-        expect(treeView.hasParent()).toBeFalsy()
-        expect(treeView.root).not.toExist()
+        waitsForPromise ->
+          atom.workspace.open(filePath)
+
+        runs ->
+          atom.workspaceView.trigger 'tree-view:reveal-active-file'
+          expect(treeView.hasParent()).toBeFalsy()
+          expect(treeView.root).not.toExist()
 
       describe "when the project is assigned a path because a new buffer is saved", ->
         it "creates a root directory view but does not attach to the root view", ->
-          atom.workspaceView.openSync()
-          projectPath = temp.mkdirSync('atom-project')
-          atom.workspace.getActivePaneItem().saveAs(path.join(projectPath, 'test.txt'))
-          expect(treeView.hasParent()).toBeFalsy()
-          expect(fs.absolute(treeView.root.getPath())).toBe fs.absolute(projectPath)
-          expect(treeView.root.parent()).toMatchSelector(".tree-view")
+          waitsForPromise ->
+            atom.workspaceView.open()
+
+          runs ->
+            projectPath = temp.mkdirSync('atom-project')
+            atom.workspace.getActivePaneItem().saveAs(path.join(projectPath, 'test.txt'))
+            expect(treeView.hasParent()).toBeFalsy()
+            expect(fs.absolute(treeView.root.getPath())).toBe fs.absolute(projectPath)
+            expect(treeView.root.parent()).toMatchSelector(".tree-view")
 
     describe "when the root view is opened to a file path", ->
       it "does not attach to the root view but does create a root node when initialized", ->
         atom.packages.deactivatePackage("tree-view")
         atom.packages.packageStates = {}
-        atom.workspaceView.openSync('tree-view.js')
+
+        waitsForPromise ->
+          atom.workspace.open('tree-view.js')
 
         waitsForPromise ->
           atom.packages.activatePackage('tree-view')
@@ -278,21 +287,27 @@ describe "TreeView", ->
 
     describe "when the tree view is shown", ->
       it "focuses the tree view", ->
-        atom.workspaceView.openSync() # When we call focus below, we want an editor to become focused
-        atom.workspaceView.focus()
-        expect(treeView).toBeVisible()
-        atom.workspaceView.trigger 'tree-view:toggle-focus'
-        expect(treeView).toBeVisible()
-        expect(treeView.list).toMatchSelector(':focus')
+        waitsForPromise ->
+          atom.workspace.open() # When we call focus below, we want an editor to become focused
 
-      describe "when the tree view is focused", ->
-        it "unfocuses the tree view", ->
-          atom.workspaceView.openSync() # When we call focus below, we want an editor to become focused
-          treeView.focus()
+        runs ->
+          atom.workspaceView.focus()
           expect(treeView).toBeVisible()
           atom.workspaceView.trigger 'tree-view:toggle-focus'
           expect(treeView).toBeVisible()
-          expect(treeView.list).not.toMatchSelector(':focus')
+          expect(treeView.list).toMatchSelector(':focus')
+
+      describe "when the tree view is focused", ->
+        it "unfocuses the tree view", ->
+          waitsForPromise ->
+            atom.workspace.open() # When we call focus below, we want an editor to become focused
+
+          runs ->
+            treeView.focus()
+            expect(treeView).toBeVisible()
+            atom.workspaceView.trigger 'tree-view:toggle-focus'
+            expect(treeView).toBeVisible()
+            expect(treeView.list).not.toMatchSelector(':focus')
 
   describe "when tree-view:reveal-current-file is triggered on the root view", ->
     beforeEach ->
@@ -301,19 +316,25 @@ describe "TreeView", ->
 
     describe "if the current file has a path", ->
       it "shows and focuses the tree view and selects the file", ->
-        atom.workspaceView.openSync(path.join('dir1', 'file1'))
-        atom.workspaceView.trigger 'tree-view:reveal-active-file'
-        expect(treeView.hasParent()).toBeTruthy()
-        expect(treeView.focus).toHaveBeenCalled()
-        expect(treeView.selectedEntry().getPath()).toMatch new RegExp("dir1#{_.escapeRegExp(path.sep)}file1$")
+        waitsForPromise ->
+          atom.workspace.open(path.join('dir1', 'file1'))
+
+        runs ->
+          atom.workspaceView.trigger 'tree-view:reveal-active-file'
+          expect(treeView.hasParent()).toBeTruthy()
+          expect(treeView.focus).toHaveBeenCalled()
+          expect(treeView.selectedEntry().getPath()).toMatch new RegExp("dir1#{_.escapeRegExp(path.sep)}file1$")
 
     describe "if the current file has no path", ->
       it "shows and focuses the tree view, but does not attempt to select a specific file", ->
-        atom.workspaceView.openSync()
-        expect(atom.workspace.getActivePaneItem().getPath()).toBeUndefined()
-        atom.workspaceView.trigger 'tree-view:reveal-active-file'
-        expect(treeView.hasParent()).toBeTruthy()
-        expect(treeView.focus).toHaveBeenCalled()
+        waitsForPromise ->
+          atom.workspace.open()
+
+        runs ->
+          expect(atom.workspace.getActivePaneItem().getPath()).toBeUndefined()
+          atom.workspaceView.trigger 'tree-view:reveal-active-file'
+          expect(treeView.hasParent()).toBeTruthy()
+          expect(treeView.focus).toHaveBeenCalled()
 
     describe "if there is no editor open", ->
       it "shows and focuses the tree view, but does not attempt to select a specific file", ->
@@ -324,14 +345,17 @@ describe "TreeView", ->
 
   describe "when tool-panel:unfocus is triggered on the tree view", ->
     it "surrenders focus to the root view but remains open", ->
-      atom.workspaceView.openSync() # When we trigger 'tool-panel:unfocus' below, we want an editor to become focused
-      atom.workspaceView.attachToDom()
-      treeView.focus()
-      expect(treeView.list).toMatchSelector(':focus')
-      treeView.trigger 'tool-panel:unfocus'
-      expect(treeView).toBeVisible()
-      expect(treeView.list).not.toMatchSelector(':focus')
-      expect(atom.workspaceView.getActiveView().isFocused).toBeTruthy()
+      waitsForPromise ->
+        atom.workspace.open() # When we trigger 'tool-panel:unfocus' below, we want an editor to become focused
+
+      runs ->
+        atom.workspaceView.attachToDom()
+        treeView.focus()
+        expect(treeView.list).toMatchSelector(':focus')
+        treeView.trigger 'tool-panel:unfocus'
+        expect(treeView).toBeVisible()
+        expect(treeView.list).not.toMatchSelector(':focus')
+        expect(atom.workspaceView.getActiveView().isFocused).toBeTruthy()
 
   describe "copy path commands", ->
     [pathToSelect, relativizedPath] = []
@@ -494,15 +518,20 @@ describe "TreeView", ->
         waitsForFileToOpen ->
           sampleJs.click()
 
+        waitsForPromise ->
+          atom.workspace.open(atom.project.resolve('tree-view.txt'))
+
         runs ->
-          atom.workspaceView.openSync(atom.project.resolve('tree-view.txt'))
           expect(sampleTxt).toHaveClass 'selected'
           expect(treeView.find('.selected').length).toBe 1
 
       it "selects the path's parent dir if its entry is not visible", ->
-        atom.workspaceView.openSync('dir1/sub-dir1/sub-file1')
-        dirView = treeView.root.find('.directory:contains(dir1)').view()
-        expect(dirView).toHaveClass 'selected'
+        waitsForPromise ->
+          atom.workspace.open('dir1/sub-dir1/sub-file1')
+
+        runs ->
+          dirView = treeView.root.find('.directory:contains(dir1)').view()
+          expect(dirView).toHaveClass 'selected'
 
     describe "when the item has no path", ->
       it "deselects the previously selected entry", ->
@@ -510,7 +539,7 @@ describe "TreeView", ->
           sampleJs.click()
 
         runs ->
-          atom.workspaceView.getActivePane().showItem($$ -> @div('hello'))
+          atom.workspaceView.getActivePaneView().activateItem($$ -> @div('hello'))
           expect(atom.workspaceView.find('.selected')).not.toExist()
 
   describe "when a different editor becomes active", ->
@@ -1557,10 +1586,13 @@ describe "TreeView", ->
         copyDialog = null
 
         beforeEach ->
-          atom.workspaceView.openSync('tree-view.js')
-          editorView = atom.workspaceView.getActiveView()
-          editorView.trigger "tree-view:duplicate"
-          copyDialog = atom.workspaceView.find(".tree-view-dialog").view()
+          waitsForPromise ->
+            atom.workspace.open('tree-view.js')
+
+          runs ->
+            editorView = atom.workspaceView.getActiveView()
+            editorView.trigger "tree-view:duplicate"
+            copyDialog = atom.workspaceView.find(".tree-view-dialog").view()
 
         it "duplicates the current file", ->
           expect(copyDialog.miniEditor.getText()).toBe('tree-view.js')
