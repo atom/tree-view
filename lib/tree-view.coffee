@@ -112,6 +112,9 @@ class TreeView extends ScrollView
     @scroller.scrollLeft(@scrollLeftAfterAttach) if @scrollLeftAfterAttach > 0
     @scrollTop(@scrollTopAfterAttach) if @scrollTopAfterAttach > 0
 
+  beforeRemove: ->
+    @resizeStopped()
+
   serialize: ->
     directoryExpansionStates: @root?.directory.serializeExpansionStates()
     selectedPath: @selectedEntry()?.getPath()
