@@ -187,14 +187,16 @@ class TreeView extends ScrollView
     false
 
   resizeStarted: =>
-    $(document.body).on('mousemove', @resizeTreeView)
-    $(document.body).on('mouseup', @resizeStopped)
+    $(document).on('mousemove', @resizeTreeView)
+    $(document).on('mouseup', @resizeStopped)
 
   resizeStopped: =>
-    $(document.body).off('mousemove', @resizeTreeView)
-    $(document.body).off('mouseup', @resizeStopped)
+    $(document).off('mousemove', @resizeTreeView)
+    $(document).off('mouseup', @resizeStopped)
 
-  resizeTreeView: ({pageX}) =>
+  resizeTreeView: ({pageX, which}) =>
+    return @resizeStopped() unless which is 1
+
     if atom.config.get('tree-view.showOnRightSide')
       width = $(document.body).width() - pageX
     else
