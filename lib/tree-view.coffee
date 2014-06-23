@@ -406,9 +406,6 @@ class TreeView extends ScrollView
           for selectedPath in selectedPaths
             shell.moveItemToTrash(selectedPath)
         "Cancel": null
-        "Delete": =>
-          for selectedPath in selectedPaths
-            @removeSync(selectedPath)
 
   removeSync: (pathToRemove) ->
     try
