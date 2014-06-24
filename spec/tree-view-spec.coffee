@@ -174,13 +174,13 @@ describe "TreeView", ->
         atom.packages.deactivatePackage("tree-view")
 
       waitsForPromise ->
-          atom.packages.activatePackage("tree-view")
+        atom.packages.activatePackage("tree-view")
 
       runs ->
-          treeView = atom.workspaceView.find(".tree-view").view()
-          expect(treeView).toExist()
-          expect(treeView.selectedEntry()).toMatchSelector(".file:contains(tree-view.js)")
-          expect(treeView.find(".directory:contains(dir1)")).toHaveClass("expanded")
+        treeView = atom.workspaceView.find(".tree-view").view()
+        expect(treeView).toExist()
+        expect(treeView.selectedEntry()).toMatchSelector(".file:contains(tree-view.js)")
+        expect(treeView.find(".directory:contains(dir1)")).toHaveClass("expanded")
 
     it "restores the focus state of the tree view", ->
       atom.workspaceView.attachToDom()
