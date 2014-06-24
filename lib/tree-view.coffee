@@ -523,6 +523,7 @@ class TreeView extends ScrollView
   selectEntry: (entry) ->
     entry = entry?.view()
     return false unless entry?
+
     @selectedPath = entry.getPath()
     @deselect()
     entry.addClass('selected')
