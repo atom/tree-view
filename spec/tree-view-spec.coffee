@@ -1598,13 +1598,26 @@ describe "TreeView", ->
           expect(copyDialog.miniEditor.getText()).toBe('tree-view.js')
 
     describe "tree-view:remove", ->
+      it "won't remove the root directory", ->
+        spyOn(atom, 'confirm')
+        atom.workspaceView.attachToDom()
+        treeView.show()
+        treeView.root.view().click()
+        treeView.trigger 'tree-view:remove'
+
+        args = atom.confirm.mostRecentCall.args[0]
+        expect(args.buttons).toEqual ['OK']
+
       it "shows the native alert dialog", ->
         spyOn(atom, 'confirm')
+
         waitsForFileToOpen ->
           fileView.click()
+
         runs ->
           treeView.trigger 'tree-view:remove'
-          expect(atom.confirm).toHaveBeenCalled()
+          args = atom.confirm.mostRecentCall.args[0]
+          expect(Object.keys(args.buttons)).toEqual ['Move to Trash', 'Delete', 'Cancel']
 
   describe "file system events", ->
     temporaryFilePath = null

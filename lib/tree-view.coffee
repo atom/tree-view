@@ -400,17 +400,22 @@ class TreeView extends ScrollView
 
     return unless selectedPaths
 
-    atom.confirm
-      message: "Are you sure you want to delete the selected #{if selectedPaths.length > 1 then 'items' else 'item'}?"
-      detailedMessage: "You are deleting:\n#{selectedPaths.join('\n')}"
-      buttons:
-        "Move to Trash": ->
-          for selectedPath in selectedPaths
-            shell.moveItemToTrash(selectedPath)
-        "Cancel": null
-        "Delete": =>
-          for selectedPath in selectedPaths
-            @removeSync(selectedPath)
+    if @root.getPath() in selectedPaths
+      atom.confirm
+        message: "The root directory '#{@root.directory.name}' can't be removed."
+        buttons: ['OK']
+    else
+      atom.confirm
+        message: "Are you sure you want to delete the selected #{if selectedPaths.length > 1 then 'items' else 'item'}?"
+        detailedMessage: "You are deleting:\n#{selectedPaths.join('\n')}"
+        buttons:
+          "Move to Trash": ->
+            for selectedPath in selectedPaths
+              shell.moveItemToTrash(selectedPath)
+          "Delete": =>
+            for selectedPath in selectedPaths
+              @removeSync(selectedPath)
+          "Cancel": null
 
   removeSync: (pathToRemove) ->
     try
