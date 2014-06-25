@@ -67,9 +67,9 @@ class TreeView extends ScrollView
     @command 'core:move-up', => @moveUp()
     @command 'core:move-down', => @moveDown()
     @command 'tree-view:expand-directory', => @expandDirectory()
-    @command 'tree-view:recursive-expand-directory', => @expandDirectories()
+    @command 'tree-view:recursive-expand-directory', => @expandDirectory(true)
     @command 'tree-view:collapse-directory', => @collapseDirectory()
-    @command 'tree-view:recursive-collapse-directory', => @collapseDirectories()
+    @command 'tree-view:recursive-collapse-directory', => @collapseDirectory(true)
     @command 'tree-view:open-selected-entry', => @openSelectedEntry(true)
     @command 'tree-view:move', => @moveSelectedEntry()
     @command 'tree-view:copy', => @copySelectedEntries()
@@ -293,22 +293,13 @@ class TreeView extends ScrollView
 
     @scrollToEntry(@selectedEntry())
 
-  expandDirectory: ->
+  expandDirectory: (isRecursive=false) ->
     selectedEntry = @selectedEntry()
-    selectedEntry.view().expand() if selectedEntry instanceof DirectoryView
+    selectedEntry.view().expand(isRecursive) if selectedEntry instanceof DirectoryView
 
-  expandDirectories: ->
-    selectedEntry = @selectedEntry()
-    selectedEntry.view().expand(true) if selectedEntry instanceof DirectoryView
-
-  collapseDirectory: ->
+  collapseDirectory: (isRecursive=false) ->
     if directory = @selectedEntry()?.closest('.expanded.directory').view()
-      directory.collapse()
-      @selectEntry(directory)
-
-  collapseDirectories: ->
-    if directory = @selectedEntry()?.closest('.expanded.directory').view()
-      directory.collapse(true)
+      directory.collapse(isRecursive)
       @selectEntry(directory)
 
   openSelectedEntry: (changeFocus) ->
