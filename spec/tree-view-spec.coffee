@@ -745,14 +745,14 @@ describe "TreeView", ->
           runs ->
             treeView.trigger 'tree-view:expand-directory'
 
-    describe "tree-view:expand-directories", ->
+    describe "tree-view:recursive-expand-directory", ->
       describe "when an collapsed root is expanded while holding the alt key", ->
         it "expands the root and all subdirectories", ->
           treeView.root.click()
           treeView.root.collapse()
 
           expect(treeView.root).not.toHaveClass 'expanded'
-          treeView.trigger 'tree-view:expand-directories'
+          treeView.trigger 'tree-view:recursive-expand-directory'
           expect(treeView.root).toHaveClass 'expanded'
 
           children = treeView.root.find('.directory')
@@ -805,7 +805,7 @@ describe "TreeView", ->
             expect(subdir).toHaveClass 'selected'
             expect(treeView.root).toHaveClass 'expanded'
 
-    describe "tree-view:collapse-directories", ->
+    describe "tree-view:recursive-collapse-directory", ->
       parent    = null
       children  = null
 
@@ -824,7 +824,7 @@ describe "TreeView", ->
             $(child).view().click().expand()
             expect($(child).view()).toHaveClass 'expanded'
 
-          treeView.trigger 'tree-view:collapse-directories'
+          treeView.trigger 'tree-view:recursive-collapse-directory'
 
           expect(parent).not.toHaveClass 'expanded'
           children.each (index, child) ->
