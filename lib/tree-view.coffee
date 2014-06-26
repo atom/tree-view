@@ -412,21 +412,7 @@ class TreeView extends ScrollView
           "Move to Trash": ->
             for selectedPath in selectedPaths
               shell.moveItemToTrash(selectedPath)
-          "Delete": =>
-            for selectedPath in selectedPaths
-              @removeSync(selectedPath)
           "Cancel": null
-
-  removeSync: (pathToRemove) ->
-    try
-      fs.removeSync(pathToRemove)
-    catch error
-      if error.code is 'EACCES' and process.platform is 'darwin'
-        runas = require 'runas'
-        removed = runas('/bin/rm', ['-r', '-f', pathToRemove], admin: true) is 0
-        throw error unless removed
-      else
-        throw error
 
   # Public: Copy the path of the selected entry element.
   #         Save the path in localStorage, so that copying from 2 different
