@@ -67,7 +67,9 @@ class TreeView extends ScrollView
     @command 'core:move-up', => @moveUp()
     @command 'core:move-down', => @moveDown()
     @command 'tree-view:expand-directory', => @expandDirectory()
+    @command 'tree-view:recursive-expand-directory', => @expandDirectory(true)
     @command 'tree-view:collapse-directory', => @collapseDirectory()
+    @command 'tree-view:recursive-collapse-directory', => @collapseDirectory(true)
     @command 'tree-view:open-selected-entry', => @openSelectedEntry(true)
     @command 'tree-view:move', => @moveSelectedEntry()
     @command 'tree-view:copy', => @copySelectedEntries()
@@ -178,16 +180,17 @@ class TreeView extends ScrollView
 
   entryClicked: (e) ->
     entry = $(e.currentTarget).view()
+    isRecursive = e.altKey || false
     switch e.originalEvent?.detail ? 1
       when 1
         @selectEntry(entry)
         @openSelectedEntry(false) if entry instanceof FileView
-        entry.toggleExpansion() if entry instanceof DirectoryView
+        entry.toggleExpansion(isRecursive) if entry instanceof DirectoryView
       when 2
         if entry.is('.selected.file')
           atom.workspaceView.getActiveView()?.focus()
         else if entry.is('.selected.directory')
-          entry.toggleExpansion()
+          entry.toggleExpansion(isRecursive)
 
     false
 
@@ -298,13 +301,13 @@ class TreeView extends ScrollView
 
     @scrollToEntry(@selectedEntry())
 
-  expandDirectory: ->
+  expandDirectory: (isRecursive=false) ->
     selectedEntry = @selectedEntry()
-    selectedEntry.view().expand() if selectedEntry instanceof DirectoryView
+    selectedEntry.view().expand(isRecursive) if selectedEntry instanceof DirectoryView
 
-  collapseDirectory: ->
+  collapseDirectory: (isRecursive=false) ->
     if directory = @selectedEntry()?.closest('.expanded.directory').view()
-      directory.collapse()
+      directory.collapse(isRecursive)
       @selectEntry(directory)
 
   openSelectedEntry: (changeFocus) ->
