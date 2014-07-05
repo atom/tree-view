@@ -64,6 +64,7 @@ class Directory extends Model
       ignoredNames = [ignoredNames] if typeof ignoredNames is 'string'
       name = path.basename(filePath)
       return true if _.contains(ignoredNames, name)
+      return true if name.charAt(0) == "." and atom.config.get('tree-view.hideDotFiles')
       extension = path.extname(filePath)
       return true if extension and _.contains(ignoredNames, "*#{extension}")
 
