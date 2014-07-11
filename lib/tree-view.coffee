@@ -34,8 +34,7 @@ class TreeView extends ScrollView
 
     @on 'dblclick', '.tree-view-resize-handle', => @resizeToFitContent()
     @on 'click', '.entry', (e) =>
-      return if e.shiftKey || e.metaKey
-      @entryClicked(e)
+      @entryClicked(e) unless e.shiftKey or e.metaKey or e.ctrlKey
     @on 'mousedown', '.entry', (e) =>
       e.stopPropagation()
       currentTarget = $(e.currentTarget)
