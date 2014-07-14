@@ -339,9 +339,14 @@ class TreeView extends ScrollView
         label: 'Finder'
         args: ['-R', pathToOpen]
       when 'win32'
+        if isFile
+          args = ["/select,#{pathToOpen}"]
+        else
+          args = ["/root,#{pathToOpen}"]
+
         command: 'explorer.exe'
         label: 'Explorer'
-        args: [pathToOpen]
+        args: args
       else
         # Strip the filename from the path to make sure we pass a directory
         # path. If we pass xdg-open a file path, it will open that file in the
