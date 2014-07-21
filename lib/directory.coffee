@@ -15,7 +15,7 @@ class Directory extends Model
     entries: -> {}
     expandedEntries: -> {}
 
-  @::accessor 'name', -> @directory.getBaseName()
+  @::accessor 'name', -> @directory.getBaseName() or @path
   @::accessor 'path', -> @directory.getPath()
   @::accessor 'submodule', -> atom.project.getRepo()?.isSubmodule(@path)
   @::accessor 'symlink', -> @directory.symlink
