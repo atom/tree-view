@@ -107,6 +107,7 @@ class TreeView extends ScrollView
     @focusAfterAttach = state.hasFocus
     @scrollTopAfterAttach = state.scrollTop if state.scrollTop
     @scrollLeftAfterAttach = state.scrollLeft if state.scrollLeft
+    @attachAfterProjectPathSet = state.attached and not atom.project.getPath()
     @width(state.width) if state.width > 0
     @attach() if state.attached
 
@@ -221,8 +222,13 @@ class TreeView extends ScrollView
       directory = new Directory({directory: rootDirectory, isExpanded: true, expandedEntries, isRoot: true})
       @root = new DirectoryView(directory)
       @list.append(@root)
+
+      if @attachAfterProjectPathSet
+        @attach()
+        @attachAfterProjectPathSet = false
     else
       @root = null
+
 
   getActivePath: -> atom.workspace.getActivePaneItem()?.getPath?()
 
