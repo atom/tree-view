@@ -23,10 +23,8 @@ class DirectoryView extends View
         iconClass = 'icon-file-submodule' if @directory.submodule
     @directoryName.addClass(iconClass)
     @directoryName.text(@directory.name)
-
-    relativeDirectoryPath = atom.project.relativize(@directory.path)
     @directoryName.attr('data-name', @directory.name)
-    @directoryName.attr('data-path', relativeDirectoryPath)
+    @directoryName.attr('data-path', @directory.path)
 
     unless @directory.isRoot
       @subscribe @directory.$status.onValue (status) =>

@@ -8,10 +8,8 @@ class FileView extends View
 
   initialize: (@file) ->
     @fileName.text(@file.name)
-
-    relativeFilePath = atom.project.relativize(@file.path)
     @fileName.attr('data-name', @file.name)
-    @fileName.attr('data-path', relativeFilePath)
+    @fileName.attr('data-path', @file.path)
 
     if @file.symlink
       @fileName.addClass('icon-file-symlink-file')
