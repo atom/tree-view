@@ -100,6 +100,10 @@ class TreeView extends ScrollView
     @subscribe atom.config.observe 'tree-view.showOnRightSide', callNow: false, (newValue) =>
       @onSideToggled(newValue)
 
+    process.nextTick =>
+      @onStylesheetsChanged()
+      @subscribe atom.themes, 'stylesheets-changed', _.debounce(@onStylesheetsChanged, 100)
+
     @updateRoot(state.directoryExpansionStates)
     @selectEntry(@root) if @root?
 
@@ -562,6 +566,14 @@ class TreeView extends ScrollView
 
   toggleSide: ->
     atom.config.toggle('tree-view.showOnRightSide')
+
+  onStylesheetsChanged: =>
+    return unless @isVisible()
+
+    # Force a redraw so the scrollbars are styled correctly based on the theme
+    @[0].style.display = 'none'
+    @[0].offsetWidth
+    @[0].style.display = 'block'
 
   onSideToggled: (newValue) ->
     @detach()
