@@ -79,7 +79,7 @@ class TreeView extends ScrollView
     @command 'tree-view:open-in-new-window', => @openSelectedEntryInNewWindow()
     @command 'tree-view:copy-project-path', => @copySelectedEntryPath(true)
     @command 'tool-panel:unfocus', => @unfocus()
-    @command 'tree-view:toggleVcsIgnoredFiles', =>
+    @command 'tree-view:toggle-vcs-ignored-files', ->
       atom.config.toggle 'tree-view.hideVcsIgnoredFiles'
 
     @on 'tree-view:directory-modified', =>
