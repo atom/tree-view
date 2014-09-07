@@ -1,6 +1,8 @@
 path = require 'path'
 shell = require 'shell'
 
+DragAndDropHandler = require "./dnd-handler"
+
 _ = require 'underscore-plus'
 {$, BufferedProcess, ScrollView} = require 'atom'
 fs = require 'fs-plus'
@@ -114,6 +116,8 @@ class TreeView extends ScrollView
     @attachAfterProjectPathSet = state.attached and not atom.project.getPath()
     @width(state.width) if state.width > 0
     @attach() if state.attached
+
+    @dragAndDropHandler = new DragAndDropHandler(this)
 
   afterAttach: (onDom) ->
     @focus() if @focusAfterAttach
