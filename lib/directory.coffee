@@ -28,6 +28,7 @@ class Directory
   destroy: ->
     @unwatch()
     @unsubscribe()
+    @emit 'destroyed'
 
   # Subscribe to the given repo for changes to the Git status of this directory.
   subscribeToRepo: (repo) ->

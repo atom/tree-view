@@ -5,6 +5,8 @@ class FileView
   Subscriber.includeInto(this)
 
   constructor: (@file) ->
+    @subscribe @file, 'destroyed', => @unsubscribe()
+
     @element = document.createElement('li')
     @element.classList.add('file', 'entry', 'list-item')
 

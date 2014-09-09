@@ -10,6 +10,8 @@ class DirectoryView
   Subscriber.includeInto(this)
 
   constructor: (@directory) ->
+    @subscribe @directory, 'destroyed', => @unsubscribe()
+
     @element = document.createElement('li')
     @element.classList.add('directory', 'entry',  'list-nested-item',  'collapsed')
 
@@ -43,9 +45,6 @@ class DirectoryView
       @updateStatus()
 
     @expand() if @directory.isExpanded
-
-  beforeRemove: ->
-    @directory.destroy()
 
   updateStatus: =>
     @element.classList.remove('status-ignored', 'status-modified', 'status-added')
