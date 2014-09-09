@@ -4,7 +4,6 @@ Directory = require './directory'
 FileView = require './file-view'
 File = require './file'
 
-
 module.exports =
 class DirectoryView
   Subscriber.includeInto(this)
@@ -101,8 +100,9 @@ class DirectoryView
         childView = $(child).view()
         childView.collapse(true) if childView instanceof DirectoryView and childView.isExpanded
 
-    @removeClass('expanded').addClass('collapsed')
+    @element.classList.remove('expanded')
+    @element.classList.add('collapsed')
     @directory.collapse()
     @unsubscribe(@directory)
-    @entries.empty()
+    @entries.innerHTML = ''
     @isExpanded = false
