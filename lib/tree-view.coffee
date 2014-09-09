@@ -231,8 +231,9 @@ class TreeView extends ScrollView
         expandedEntries,
         isExpanded: true
       })
-      @root = new DirectoryView(directory)
-      @list.append(@root.element)
+      @root = new DirectoryView()
+      @root.initialize(directory)
+      @list.append(@root)
 
       if @attachAfterProjectPathSet
         @attach()

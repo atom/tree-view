@@ -1,17 +1,16 @@
 {Subscriber} = require 'emissary'
 
 module.exports =
-class FileView
+class FileView extends HTMLElement
   Subscriber.includeInto(this)
 
-  constructor: (@file) ->
+  initialize: (@file) ->
     @subscribe @file, 'destroyed', => @unsubscribe()
 
-    @element = document.createElement('li')
-    @element.classList.add('file', 'entry', 'list-item')
+    @classList.add('file', 'entry', 'list-item')
 
     @fileName = document.createElement('span')
-    @element.appendChild(@fileName)
+    @appendChild(@fileName)
     @fileName.textContent = @file.name
     @fileName.setAttribute('data-name', @file.name)
     @fileName.setAttribute('data-path', @file.path)
@@ -31,8 +30,10 @@ class FileView
     @updateStatus()
 
   updateStatus: =>
-    @element.classList.remove('status-ignored', 'status-modified',  'status-added')
-    @element.classList.add("status-#{@file.status}") if @file.status?
+    @classList.remove('status-ignored', 'status-modified',  'status-added')
+    @classList.add("status-#{@file.status}") if @file.status?
 
   getPath: ->
     @file.path
+
+module.exports = document.registerElement('tree-view-file', prototype: FileView.prototype, extends: 'li')
