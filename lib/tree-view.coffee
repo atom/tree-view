@@ -183,7 +183,7 @@ class TreeView extends ScrollView
       @show()
 
   entryClicked: (e) ->
-    entry = $(e.currentTarget).view()
+    entry = e.currentTarget
     isRecursive = e.altKey || false
     switch e.originalEvent?.detail ? 1
       when 1
@@ -191,9 +191,9 @@ class TreeView extends ScrollView
         @openSelectedEntry(false) if entry instanceof FileView
         entry.toggleExpansion(isRecursive) if entry instanceof DirectoryView
       when 2
-        if entry.is('.selected.file')
+        if entry instanceof FileView
           atom.workspaceView.getActiveView()?.focus()
-        else if entry.is('.selected.directory')
+        else if DirectoryView
           entry.toggleExpansion(isRecursive)
 
     false
@@ -276,18 +276,15 @@ class TreeView extends ScrollView
       atom.clipboard.write(pathToCopy)
 
   entryForPath: (entryPath) ->
-    return null
-
-    fn = (bestMatchEntry, element) ->
-      entry = $(element).view()
+    bestMatchEntry = @root
+    for entry in @list.element.querySelectorAll('.entry')
       if entry.getPath() is entryPath
-        entry
-      else if entry.getPath().length > bestMatchEntry.getPath().length and entry.directory?.contains(entryPath)
-        entry
-      else
-        bestMatchEntry
+        bestMatchEntry = entry
+        break
+      else if entry.getPath().length > bestMatchEntry.getPath().length and entry.directory?.contains?(entryPath)
+        bestMatchEntry = entry
 
-    @list.find(".entry").toArray().reduce(fn, @root)
+    bestMatchEntry
 
   selectEntryForPath: (entryPath) ->
     @selectEntry(@entryForPath(entryPath))
@@ -534,15 +531,15 @@ class TreeView extends ScrollView
     @list.find('.selected')?.view()
 
   selectEntry: (entry) ->
-    entry = entry?.view?()
-    return false unless entry?
-
-    @selectedPath = entry.getPath()
-    @deselect()
-    entry.addClass('selected')
+    if entry?
+      @selectedPath = entry.getPath()
+      @deselect()
+      entry.classList.add('selected')
 
   deselect: ->
-    @list.find('.selected').removeClass('selected')
+    for selected in @list.element.querySelectorAll('.selected')
+      selected.classList.remove('selected')
+    undefined
 
   scrollTop: (top) ->
     if top?
