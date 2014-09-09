@@ -1,18 +1,30 @@
 {$, View} = require 'atom'
-
+{Subscriber} = require 'emissary'
 Directory = require './directory'
 FileView = require './file-view'
 File = require './file'
 
-module.exports =
-class DirectoryView extends View
-  @content: ->
-    @li class: 'directory entry list-nested-item collapsed', =>
-      @div outlet: 'header', class: 'header list-item', =>
-        @span class: 'name icon', outlet: 'directoryName'
-      @ol class: 'entries list-tree', outlet: 'entries'
 
-  initialize: (@directory) ->
+module.exports =
+class DirectoryView
+  Subscriber.includeInto(this)
+
+  constructor: (@directory) ->
+    @element = document.createElement('li')
+    @element.classList.add('directory', 'entry',  'list-nested-item',  'collapsed')
+
+    header = document.createElement('div')
+    @element.appendChild(header)
+    header.classList.add('header', 'list-item')
+
+    @directoryName = document.createElement('span')
+    header.appendChild(@directoryName)
+    @directoryName.classList.add('name', 'icon')
+
+    @entries = document.createElement('ol')
+    @element.appendChild(@entries)
+    @entries.classList.add('entries', 'list-tree')
+
     if @directory.symlink
       iconClass = 'icon-file-symlink-directory'
     else
@@ -21,10 +33,10 @@ class DirectoryView extends View
         iconClass = 'icon-repo' if atom.project.getRepo()?.isProjectAtRoot()
       else
         iconClass = 'icon-file-submodule' if @directory.submodule
-    @directoryName.addClass(iconClass)
-    @directoryName.text(@directory.name)
-    @directoryName.attr('data-name', @directory.name)
-    @directoryName.attr('data-path', @directory.path)
+    @directoryName.classList.add(iconClass)
+    @directoryName.textContent = @directory.name
+    @directoryName.setAttribute('data-name', @directory.name)
+    @directoryName.setAttribute('data-path', @directory.path)
 
     unless @directory.isRoot
       @subscribe @directory, 'status-changed', @updateStatus
@@ -36,13 +48,13 @@ class DirectoryView extends View
     @directory.destroy()
 
   updateStatus: =>
-    @removeClass('status-ignored status-modified status-added')
-    @addClass("status-#{@directory.status}") if @directory.status?
+    @element.classList.remove('status-ignored', 'status-modified', 'status-added')
+    @element.classList.add("status-#{@directory.status}") if @directory.status?
 
   subscribeToDirectory: ->
     @subscribe @directory, 'entry-added', (entry) =>
       view = @createViewForEntry(entry)
-      @entries.append(view)
+      @entries.appendChild(view.element)
 
     @subscribe @directory, 'entry-added entry-removed', =>
       @trigger 'tree-view:directory-modified' if @isExpanded
@@ -71,7 +83,8 @@ class DirectoryView extends View
 
   expand: (isRecursive=false) ->
     if not @isExpanded
-      @addClass('expanded').removeClass('collapsed')
+      @element.classList.add('expanded')
+      @element.classList.remove('collapsed')
       @subscribeToDirectory()
       @directory.expand()
       @isExpanded = true

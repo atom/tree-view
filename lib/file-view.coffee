@@ -1,36 +1,36 @@
-{View} = require 'atom'
+{Subscriber} = require 'emissary'
 
 module.exports =
-class FileView extends View
-  @content: ->
-    @li class: 'file entry list-item', =>
-      @span class: 'name icon', outlet: 'fileName'
+class FileView
+  Subscriber.includeInto(this)
 
-  initialize: (@file) ->
-    @fileName.text(@file.name)
-    @fileName.attr('data-name', @file.name)
-    @fileName.attr('data-path', @file.path)
+  constructor: (@file) ->
+    @element = document.createElement('li')
+    @element.classList.add('file', 'entry', 'list-item')
+
+    @fileName = document.createElement('span')
+    @element.appendChild(@fileName)
+    @fileName.textContent = @file.name
+    @fileName.setAttribute('data-name', @file.name)
+    @fileName.setAttribute('data-path', @file.path)
 
     if @file.symlink
-      @fileName.addClass('icon-file-symlink-file')
+      @fileName.classList.add('icon-file-symlink-file')
     else
       switch @file.type
-        when 'binary'     then @fileName.addClass('icon-file-binary')
-        when 'compressed' then @fileName.addClass('icon-file-zip')
-        when 'image'      then @fileName.addClass('icon-file-media')
-        when 'pdf'        then @fileName.addClass('icon-file-pdf')
-        when 'readme'     then @fileName.addClass('icon-book')
-        when 'text'       then @fileName.addClass('icon-file-text')
+        when 'binary'     then @fileName.classList.add('icon-file-binary')
+        when 'compressed' then @fileName.classList.add('icon-file-zip')
+        when 'image'      then @fileName.classList.add('icon-file-media')
+        when 'pdf'        then @fileName.classList.add('icon-file-pdf')
+        when 'readme'     then @fileName.classList.add('icon-book')
+        when 'text'       then @fileName.classList.add('icon-file-text')
 
     @subscribe @file, 'status-changed', @updateStatus
     @updateStatus()
 
   updateStatus: =>
-    @removeClass('status-ignored status-modified status-added')
-    @addClass("status-#{@file.status}") if @file.status?
+    @element.classList.remove('status-ignored', 'status-modified',  'status-added')
+    @element.classList.add("status-#{@file.status}") if @file.status?
 
   getPath: ->
     @file.path
-
-  beforeRemove: ->
-    @file.destroy()

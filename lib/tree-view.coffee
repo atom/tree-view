@@ -232,7 +232,7 @@ class TreeView extends ScrollView
         isExpanded: true
       })
       @root = new DirectoryView(directory)
-      @list.append(@root)
+      @list.append(@root.element)
 
       if @attachAfterProjectPathSet
         @attach()
@@ -275,6 +275,8 @@ class TreeView extends ScrollView
       atom.clipboard.write(pathToCopy)
 
   entryForPath: (entryPath) ->
+    return null
+
     fn = (bestMatchEntry, element) ->
       entry = $(element).view()
       if entry.getPath() is entryPath
@@ -531,7 +533,7 @@ class TreeView extends ScrollView
     @list.find('.selected')?.view()
 
   selectEntry: (entry) ->
-    entry = entry?.view()
+    entry = entry?.view?()
     return false unless entry?
 
     @selectedPath = entry.getPath()
