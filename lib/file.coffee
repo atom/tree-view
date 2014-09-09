@@ -1,55 +1,45 @@
 path = require 'path'
 fs = require 'fs-plus'
-{Model} = require 'theorist'
+{Emitter, Subscriber} = require 'emissary'
 
 module.exports =
-class File extends Model
-  @properties
-    file: null
-    status: null # Either null, 'added', 'ignored', or 'modified'
+class File
+  Emitter.includeInto(this)
+  Subscriber.includeInto(this)
 
-  @::accessor 'name', -> @file.getBaseName()
-  @::accessor 'symlink', -> @file.symlink
-  @::accessor 'type', ->
+  constructor: ({@name, fullPath, @symlink}) ->
+    @path = fullPath
+    try
+      @path = fs.realpathSync(@path)
+
     extension = path.extname(@path)
     if fs.isReadmePath(@path)
-      'readme'
+      @type = 'readme'
     else if fs.isCompressedExtension(extension)
-      'compressed'
+      @type = 'compressed'
     else if fs.isImageExtension(extension)
-      'image'
+      @type = 'image'
     else if fs.isPdfExtension(extension)
-      'pdf'
+      @type = 'pdf'
     else if fs.isBinaryExtension(extension)
-      'binary'
+      @type = 'binary'
     else
-      'text'
+      @type = 'text'
 
-  constructor: ->
-    super
     repo = atom.project.getRepo()
-
-    try
-      @path = fs.realpathSync(@file.getPath())
-    catch error
-      @path = @file.getPath()
-
     if repo?
       @subscribeToRepo(repo)
       @updateStatus(repo)
 
-  # Called by theorist.
-  destroyed: ->
+  destroy: ->
     @unsubscribe()
 
   # Subscribe to the given repo for changes to the Git status of this directory.
-  subscribeToRepo: ->
-    repo = atom.project.getRepo()
-    if repo?
-      @subscribe repo, 'status-changed', (changedPath, status) =>
-        @updateStatus(repo) if changedPath is @path
-      @subscribe repo, 'statuses-changed', =>
-        @updateStatus(repo)
+  subscribeToRepo: (repo)->
+    @subscribe repo, 'status-changed', (changedPath, status) =>
+      @updateStatus(repo) if changedPath is @path
+    @subscribe repo, 'statuses-changed', =>
+      @updateStatus(repo)
 
   # Update the status property of this directory using the repo.
   updateStatus: (repo) ->
@@ -63,4 +53,6 @@ class File extends Model
       else if repo.isStatusNew(status)
         newStatus = 'added'
 
-    @status = newStatus if newStatus isnt @status
+    if newStatus isnt @status
+      @status = newStatus
+      @emit 'status-changed', newStatus

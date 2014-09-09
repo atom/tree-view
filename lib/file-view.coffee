@@ -22,9 +22,12 @@ class FileView extends View
         when 'readme'     then @fileName.addClass('icon-book')
         when 'text'       then @fileName.addClass('icon-file-text')
 
-    @subscribe @file.$status.onValue (status) =>
-      @removeClass('status-ignored status-modified status-added')
-      @addClass("status-#{status}") if status?
+    @subscribe @file, 'status-changed', @updateStatus
+    @updateStatus()
+
+  updateStatus: =>
+    @removeClass('status-ignored status-modified status-added')
+    @addClass("status-#{@file.status}") if @file.status?
 
   getPath: ->
     @file.path

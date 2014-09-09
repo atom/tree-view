@@ -27,23 +27,22 @@ class DirectoryView extends View
     @directoryName.attr('data-path', @directory.path)
 
     unless @directory.isRoot
-      @subscribe @directory.$status.onValue (status) =>
-        @removeClass('status-ignored status-modified status-added')
-        @addClass("status-#{status}") if status?
+      @subscribe @directory, 'status-changed', @updateStatus
+      @updateStatus()
 
     @expand() if @directory.isExpanded
 
   beforeRemove: ->
     @directory.destroy()
 
+  updateStatus: =>
+    @removeClass('status-ignored status-modified status-added')
+    @addClass("status-#{@directory.status}") if @directory.status?
+
   subscribeToDirectory: ->
     @subscribe @directory, 'entry-added', (entry) =>
       view = @createViewForEntry(entry)
-      insertionIndex = entry.indexInParentDirectory
-      if insertionIndex < @entries.children().length
-        @entries.children().eq(insertionIndex).before(view)
-      else
-        @entries.append(view)
+      @entries.append(view)
 
     @subscribe @directory, 'entry-added entry-removed', =>
       @trigger 'tree-view:directory-modified' if @isExpanded
