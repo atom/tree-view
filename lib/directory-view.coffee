@@ -36,7 +36,7 @@ class DirectoryView extends HTMLElement
     @directoryName.setAttribute('data-path', @directory.path)
 
     unless @directory.isRoot
-      @subscribe @directory, 'status-changed', @updateStatus
+      @subscribe @directory, 'status-changed', => @updateStatus()
       @updateStatus()
 
     @expand() if @directory.isExpanded
@@ -45,7 +45,7 @@ class DirectoryView extends HTMLElement
     @unsubscribe()
     @directory.destroy()
 
-  updateStatus: =>
+  updateStatus: ->
     @classList.remove('status-ignored', 'status-modified', 'status-added')
     @classList.add("status-#{@directory.status}") if @directory.status?
 

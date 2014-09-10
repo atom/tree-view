@@ -26,14 +26,14 @@ class FileView extends HTMLElement
         when 'readme'     then @fileName.classList.add('icon-book')
         when 'text'       then @fileName.classList.add('icon-file-text')
 
-    @subscribe @file, 'status-changed', @updateStatus
+    @subscribe @file, 'status-changed', => @updateStatus()
     @updateStatus()
 
   detachedCallback: ->
     @unsubscribe()
     @file.destroy()
 
-  updateStatus: =>
+  updateStatus: ->
     @classList.remove('status-ignored', 'status-modified',  'status-added')
     @classList.add("status-#{@file.status}") if @file.status?
 
