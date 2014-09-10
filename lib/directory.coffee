@@ -12,6 +12,8 @@ class Directory
 
   constructor: ({@name, fullPath, @symlink, @expandedEntries, @isExpanded, @isRoot}) ->
     @path = fullPath
+    @lowerCasePath = @path.toLowerCase() if fs.isCaseInsensitive()
+
     @isRoot ?= false
     @isExpanded ?= false
     @expandedEntries ?= {}
@@ -24,11 +26,22 @@ class Directory
     if repo?
       @subscribeToRepo(repo)
       @updateStatus(repo)
+    @loadRealPath(repo)
 
   destroy: ->
     @unwatch()
     @unsubscribe()
     @emit 'destroyed'
+
+  loadRealPath: (repo) ->
+    fs.realpathSync @path, (error, realPath) =>
+      if realPath
+        @realPath = realPath
+        @lowerCaseRealPath = @realPath.toLowerCase() if fs.isCaseInsensitive()
+        @updateStatus(repo) if repo?
+      else
+        @realPath = @path
+        @lowerCaseRealPath = @lowerCasePath
 
   # Subscribe to the given repo for changes to the Git status of this directory.
   subscribeToRepo: (repo) ->
@@ -69,11 +82,37 @@ class Directory
 
     false
 
+  # Does given full path start with the given prefix?
+  isPathPrefixOf: (prefix, fullPath) ->
+    fullPath.indexOf(prefix) is 0 and fullPath[prefix.length] is path.sep
+
   # Public: Does this directory contain the given path?
   #
   # See atom.Directory::contains for more details.
   contains: (pathToCheck) ->
-    # @directory.contains(pathToCheck)
+    return false unless pathToCheck
+
+    # Normalize forward slashes to back slashes on windows
+    pathToCheck = pathToCheck.replace(/\//g, '\\') if process.platform is 'win32'
+
+    if fs.isCaseInsensitive()
+      directoryPath = @lowerCasePath
+      pathToCheck = pathToCheck.toLowerCase()
+    else
+      directoryPath = @path
+
+    return true if @isPathPrefixOf(directoryPath, pathToCheck)
+
+    # Check real path
+    if @realPath
+      if fs.isCaseInsensitive()
+        directoryPath = @lowerCaseRealPath
+      else
+        directoryPath = @realPath
+
+      return @isPathPrefixOf(directoryPath, pathToCheck)
+
+    false
 
   # Public: Stop watching this directory for changes.
   unwatch: ->
