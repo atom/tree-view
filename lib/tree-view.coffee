@@ -535,8 +535,7 @@ class TreeView extends ScrollView
   getSelectedEntries: ->
     @list.element.querySelectorAll('.selected')
 
-  deselect: (elementsToDeselect) ->
-    elementsToDeselect ?= @getSelectedEntries()
+  deselect: (elementsToDeselect=@getSelectedEntries()) ->
     selected.classList.remove('selected') for selected in elementsToDeselect
     undefined
 
