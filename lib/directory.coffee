@@ -139,8 +139,6 @@ class Directory
         index++
         continue
 
-
-      console.log index
       entry.indexInParentDirectory = index
       index++
       newEntries.push(entry)
