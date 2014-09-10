@@ -97,9 +97,8 @@ class DirectoryView extends HTMLElement
 
   collapse: (isRecursive=false) ->
     if isRecursive
-      for child in @entries.children()
-        childView = $(child).view()
-        childView.collapse(true) if childView instanceof DirectoryView and childView.isExpanded
+      for entry in @entries.children when entry.isExpanded
+        entry.collapse(true)
 
     @classList.remove('expanded')
     @classList.add('collapsed')
