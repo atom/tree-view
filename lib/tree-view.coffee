@@ -43,7 +43,7 @@ class TreeView extends ScrollView
                 # mouse right click or ctrl click as right click on darwin platforms
                 (e.button is 2 || e.ctrlKey && process.platform is 'darwin')
 
-      entryToSelect = currentTarget.view()
+      entryToSelect = e.currentTarget
 
       if e.shiftKey
         @selectContinuousEntries(entryToSelect)
@@ -335,9 +335,9 @@ class TreeView extends ScrollView
   openSelectedEntry: (changeFocus) ->
     selectedEntry = @selectedEntry()
     if selectedEntry instanceof DirectoryView
-      selectedEntry.view().toggleExpansion()
+      selectedEntry.toggleExpansion()
     else if selectedEntry instanceof FileView
-      atom.workspaceView.open(selectedEntry.getPath(), { changeFocus })
+      atom.workspaceView.open(selectedEntry.getPath(), {changeFocus})
 
   moveSelectedEntry: ->
     entry = @selectedEntry()
@@ -574,7 +574,7 @@ class TreeView extends ScrollView
       @scrollTop(top + offset)
 
   scrollToBottom: ->
-    if lastEntry = @root?.find('.entry:last').view()
+    if lastEntry = @root?.find('.entry:last')[0]
       @selectEntry(lastEntry)
       @scrollToEntry(lastEntry)
 
@@ -604,7 +604,7 @@ class TreeView extends ScrollView
   # => ['selected/path/one', 'selected/path/two', 'selected/path/three']
   # Returns Array of selected item paths
   selectedPaths: ->
-    $(item).view().getPath() for item in @list.find('.selected')
+    item.getPath() for item in @list.element.querySelectorAll('.selected')
 
   # Public: Selects items within a range defined by a currently selected entry and
   #         a new given entry. This is shift+click functionality
@@ -629,9 +629,7 @@ class TreeView extends ScrollView
   #
   # Returns given entry
   selectMultipleEntries: (entry)->
-    entry = entry?.view()
-    return false unless entry?
-    entry.addClass('selected')
+    entry?.classList.add('selected')
     entry
 
   # Public: Toggle full-menu class on the main list element to display the full context
