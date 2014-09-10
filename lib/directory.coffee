@@ -148,12 +148,11 @@ class Directory
       fullPath = path.join(@path, name)
       continue if @isPathIgnored(fullPath)
 
-      try
-        stat = fs.lstatSync(fullPath)
-        symlink = stat.isSymbolicLink()
-        stat = fs.statSync(fullPath) if symlink
+      stat = fs.lstatSyncNoException(fullPath)
+      symlink = stat.isSymbolicLink()
+      stat = fs.statSyncNoException(fullPath) if symlink
 
-      if stat?.isDirectory()
+      if stat.isDirectory?()
         if @entries.hasOwnProperty(name)
           # push a placeholder since this entry already exists but this helps
           # track the insertion index for the created views
@@ -162,7 +161,7 @@ class Directory
           expandedEntries = @expandedEntries[name]
           isExpanded = expandedEntries?
           directories.push(new Directory({name, fullPath, symlink, isExpanded, expandedEntries}))
-      else if stat?.isFile()
+      else if stat.isFile?()
         if @entries.hasOwnProperty(name)
           # push a placeholder since this entry already exists but this helps
           # track the insertion index for the created views
