@@ -596,7 +596,7 @@ class TreeView extends ScrollView
   onSideToggled: (newValue) ->
     @detach()
     @attach()
-    @attr('data-show-on-right-side', newValue)
+    @[0].setAttribute('data-show-on-right-side', newValue)
 
   # Public: Return an array of paths from all selected items
   #
