@@ -12,12 +12,12 @@ class DirectoryView extends HTMLElement
 
     @classList.add('directory', 'entry',  'list-nested-item',  'collapsed')
 
-    header = document.createElement('div')
-    @appendChild(header)
-    header.classList.add('header', 'list-item')
+    @header = document.createElement('div')
+    @appendChild(@header)
+    @header.classList.add('header', 'list-item')
 
     @directoryName = document.createElement('span')
-    header.appendChild(@directoryName)
+    @header.appendChild(@directoryName)
     @directoryName.classList.add('name', 'icon')
 
     @entries = document.createElement('ol')
@@ -90,9 +90,8 @@ class DirectoryView extends HTMLElement
       @isExpanded = true
 
     if isRecursive
-      for child in @entries.children()
-        childView = $(child).view()
-        childView.expand(true) if childView instanceof DirectoryView
+      for entry in @entries.children when entry instanceof DirectoryView
+        entry.expand(true)
 
     false
 

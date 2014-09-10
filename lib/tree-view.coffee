@@ -291,12 +291,14 @@ class TreeView extends ScrollView
 
   moveDown: ->
     selectedEntry = @selectedEntry()
-    if selectedEntry
+    if selectedEntry?
+      selectedEntry = $(selectedEntry)
       if selectedEntry.is('.expanded.directory')
-        if @selectEntry(selectedEntry.find('.entry:first'))
+        if @selectEntry(selectedEntry.find('.entry:first')[0])
           @scrollToEntry(@selectedEntry())
           return
-      until @selectEntry(selectedEntry.next('.entry'))
+
+      until @selectEntry(selectedEntry.next('.entry')[0])
         selectedEntry = selectedEntry.parents('.entry:first')
         break unless selectedEntry.length
     else
@@ -306,23 +308,27 @@ class TreeView extends ScrollView
 
   moveUp: ->
     selectedEntry = @selectedEntry()
-    if selectedEntry
-      if previousEntry = @selectEntry(selectedEntry.prev('.entry'))
+    if selectedEntry?
+      selectedEntry = $(selectedEntry)
+      if previousEntry = @selectEntry(selectedEntry.prev('.entry')[0])
+        previousEntry = $(previousEntry)
         if previousEntry.is('.expanded.directory')
-          @selectEntry(previousEntry.find('.entry:last'))
+          @selectEntry(previousEntry.find('.entry:last')[0])
       else
-        @selectEntry(selectedEntry.parents('.directory').first())
+        @selectEntry(selectedEntry.parents('.directory').first()?[0])
     else
-      @selectEntry(@list.find('.entry').last())
+      @selectEntry(@list.find('.entry').last()?[0])
 
     @scrollToEntry(@selectedEntry())
 
   expandDirectory: (isRecursive=false) ->
-    selectedEntry = @selectedEntry()
-    selectedEntry.view().expand(isRecursive) if selectedEntry instanceof DirectoryView
+    @selectedEntry()?.expand?(isRecursive)
 
   collapseDirectory: (isRecursive=false) ->
-    if directory = @selectedEntry()?.closest('.expanded.directory').view()
+    selectedEntry = @selectedEntry()
+    return unless selectedEntry?
+
+    if directory = $(selectedEntry).closest('.expanded.directory')[0]
       directory.collapse(isRecursive)
       @selectEntry(directory)
 
@@ -528,13 +534,14 @@ class TreeView extends ScrollView
     dialog.attach()
 
   selectedEntry: ->
-    @list.find('.selected')?.view()
+    @list.element.querySelector('.selected')
 
   selectEntry: (entry) ->
     if entry?
       @selectedPath = entry.getPath()
       @deselect()
       entry.classList.add('selected')
+    entry
 
   deselect: ->
     for selected in @list.element.querySelectorAll('.selected')
@@ -554,7 +561,11 @@ class TreeView extends ScrollView
       @scroller.scrollBottom()
 
   scrollToEntry: (entry, offset = 0) ->
-    displayElement = if entry instanceof DirectoryView then entry.header else entry
+    if entry instanceof DirectoryView
+      displayElement = $(entry.header)
+    else
+      displayElement = $(entry)
+
     top = displayElement.position().top
     bottom = top + displayElement.outerHeight()
     if bottom > @scrollBottom()
