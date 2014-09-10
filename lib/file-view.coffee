@@ -29,6 +29,9 @@ class FileView extends HTMLElement
     @subscribe @file, 'status-changed', @updateStatus
     @updateStatus()
 
+  detachedCallback: ->
+    @unsubscribe()
+
   updateStatus: =>
     @classList.remove('status-ignored', 'status-modified',  'status-added')
     @classList.add("status-#{@file.status}") if @file.status?
