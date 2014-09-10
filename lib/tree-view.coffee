@@ -35,28 +35,7 @@ class TreeView extends ScrollView
     @on 'dblclick', '.tree-view-resize-handle', => @resizeToFitContent()
     @on 'click', '.entry', (e) =>
       @entryClicked(e) unless e.shiftKey or e.metaKey or e.ctrlKey
-    @on 'mousedown', '.entry', (e) =>
-      e.stopPropagation()
-      currentTarget = $(e.currentTarget)
-      # return early if we're opening a contextual menu (right click) during multi-select mode
-      return if @multiSelectEnabled() && currentTarget.hasClass('selected') &&
-                # mouse right click or ctrl click as right click on darwin platforms
-                (e.button is 2 || e.ctrlKey && process.platform is 'darwin')
-
-      entryToSelect = e.currentTarget
-
-      if e.shiftKey
-        @selectContinuousEntries(entryToSelect)
-        @showMultiSelectMenu()
-      # only allow ctrl click for multi selection on non darwin systems
-      else if e.metaKey || (e.ctrlKey && process.platform isnt 'darwin')
-        @selectMultipleEntries(entryToSelect)
-
-        # only show the multi select menu if more then one file/directory is selected
-        @showMultiSelectMenu() if @selectedPaths().length > 1
-      else
-        @selectEntry(entryToSelect)
-        @showFullMenu()
+    @on 'mousedown', '.entry', (e) => @onMouseDown(e)
 
     # turn off default scrolling behavior from ScrollView
     @off 'core:move-up'
@@ -264,7 +243,7 @@ class TreeView extends ScrollView
     for pathComponent in activePathComponents
       currentPath += path.sep + pathComponent
       entry = @entryForPath(currentPath)
-      if entry.hasClass('directory')
+      if entry instanceof DirectoryView
         entry.expand()
       else
         centeringOffset = (@scrollBottom() - @scrollTop()) / 2
@@ -592,6 +571,31 @@ class TreeView extends ScrollView
     @[0].style.display = 'none'
     @[0].offsetWidth
     @[0].style.display = 'block'
+
+  onMouseDown: (event) ->
+    event.stopPropagation()
+
+    # return early if we're opening a contextual menu (right click) during multi-select mode
+    if @multiSelectEnabled() and
+       event.currentTarget.classList.contains('selected') and
+       # mouse right click or ctrl click as right click on darwin platforms
+       (e.button is 2 or e.ctrlKey && process.platform is 'darwin')
+      return
+
+    entryToSelect = e.currentTarget
+
+    if e.shiftKey
+      @selectContinuousEntries(entryToSelect)
+      @showMultiSelectMenu()
+    # only allow ctrl click for multi selection on non darwin systems
+    else if e.metaKey or (e.ctrlKey && process.platform isnt 'darwin')
+      @selectMultipleEntries(entryToSelect)
+
+      # only show the multi select menu if more then one file/directory is selected
+      @showMultiSelectMenu() if @selectedPaths().length > 1
+    else
+      @selectEntry(entryToSelect)
+      @showFullMenu()
 
   onSideToggled: (newValue) ->
     @detach()
