@@ -31,6 +31,7 @@ class FileView extends HTMLElement
 
   detachedCallback: ->
     @unsubscribe()
+    @file.destroy()
 
   updateStatus: =>
     @classList.remove('status-ignored', 'status-modified',  'status-added')

@@ -43,6 +43,7 @@ class DirectoryView extends HTMLElement
 
   detachedCallback: ->
     @unsubscribe()
+    @directory.destroy()
 
   updateStatus: =>
     @classList.remove('status-ignored', 'status-modified', 'status-added')
