@@ -629,11 +629,11 @@ class TreeView extends ScrollView
   # Returns array of selected elements
   selectContinuousEntries: (entry)->
     currentSelectedEntry = @selectedEntry()
-    parentContainer = entry.parent()
-    if $.contains(parentContainer[0], currentSelectedEntry[0])
+    parentContainer = $(entry).parent()
+    if $.contains(parentContainer[0], currentSelectedEntry)
       entryIndex = parentContainer.indexOf(entry)
       selectedIndex = parentContainer.indexOf(currentSelectedEntry)
-      elements = (parentContainer.children()[i] for i in [entryIndex..selectedIndex])
+      elements = (parentContainer[0].children[i] for i in [entryIndex..selectedIndex])
 
       @deselect()
       element.classList.add('selected') for element in elements
