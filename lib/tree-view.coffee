@@ -580,9 +580,9 @@ class TreeView extends ScrollView
     return unless @isVisible()
 
     # Force a redraw so the scrollbars are styled correctly based on the theme
-    @[0].style.display = 'none'
-    @[0].offsetWidth
-    @[0].style.display = 'block'
+    @element.style.display = 'none'
+    @element.offsetWidth
+    @element.style.display = 'block'
 
   onMouseDown: (e) ->
     e.stopPropagation()
@@ -612,7 +612,7 @@ class TreeView extends ScrollView
   onSideToggled: (newValue) ->
     @detach()
     @attach()
-    @[0].setAttribute('data-show-on-right-side', newValue)
+    @element.setAttribute('data-show-on-right-side', newValue)
 
   # Public: Return an array of paths from all selected items
   #
