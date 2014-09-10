@@ -41,10 +41,6 @@ class DirectoryView extends HTMLElement
 
     @expand() if @directory.isExpanded
 
-  detachedCallback: ->
-    @unsubscribe()
-    @directory.destroy()
-
   updateStatus: ->
     @classList.remove('status-ignored', 'status-modified', 'status-added')
     @classList.add("status-#{@directory.status}") if @directory.status?
