@@ -1,4 +1,3 @@
-{$, View} = require 'atom'
 {Subscriber} = require 'emissary'
 Directory = require './directory'
 FileView = require './file-view'
