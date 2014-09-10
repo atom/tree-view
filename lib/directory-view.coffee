@@ -81,7 +81,7 @@ class DirectoryView extends HTMLElement
     if @isExpanded then @collapse(isRecursive) else @expand(isRecursive)
 
   expand: (isRecursive=false) ->
-    if not @isExpanded
+    unless @isExpanded
       @classList.add('expanded')
       @classList.remove('collapsed')
       @subscribeToDirectory()
