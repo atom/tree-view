@@ -123,14 +123,16 @@ class Directory
 
       newEntries.push(entry) if entry?
 
-    for name, entry of removedEntries
-      entry.destroy()
-      delete @entries[name]
-      delete @expandedEntries[name]
-    @emit 'entries-removed', removedEntries
+    if removedEntries.length > 0
+      for name, entry of removedEntries
+        entry.destroy()
+        delete @entries[name]
+        delete @expandedEntries[name]
+      @emit 'entries-removed', removedEntries
 
-    @entries[entry.name] = entry for entry in newEntries
-    @emit 'entries-added', newEntries
+    if newEntries.length > 0
+      @entries[entry.name] = entry for entry in newEntries
+      @emit 'entries-added', newEntries
 
   # Public: Collapse this directory and stop watching it.
   collapse: ->
