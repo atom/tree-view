@@ -588,7 +588,7 @@ class TreeView extends ScrollView
        (e.button is 2 or e.ctrlKey && process.platform is 'darwin')
       return
 
-    entryToSelect = e.currentTarget
+    entryToSelect = event.currentTarget
 
     if e.shiftKey
       @selectContinuousEntries(entryToSelect)
