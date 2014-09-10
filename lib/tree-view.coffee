@@ -396,7 +396,7 @@ class TreeView extends ScrollView
   copySelectedEntry: ->
     if @hasFocus()
       entry = @selectedEntry()
-      return unless entry isnt root
+      return if entry is @root
       oldPath = entry.getPath()
     else
       oldPath = @getActivePath()
@@ -436,7 +436,7 @@ class TreeView extends ScrollView
   # Returns `copyPath`.
   copySelectedEntries: ->
     selectedPaths = @selectedPaths()
-    return unless selectedPaths && selectedPaths.length > 0
+    return unless selectedPaths and selectedPaths.length > 0
     # save to localStorage so we can paste across multiple open apps
     LocalStorage.removeItem('tree-view:cutPath')
     LocalStorage['tree-view:copyPath'] = JSON.stringify(selectedPaths)
@@ -449,7 +449,7 @@ class TreeView extends ScrollView
   # Returns `cutPath`
   cutSelectedEntries: ->
     selectedPaths = @selectedPaths()
-    return unless selectedPaths && selectedPaths.length > 0
+    return unless selectedPaths and selectedPaths.length > 0
     # save to localStorage so we can paste across multiple open apps
     LocalStorage.removeItem('tree-view:copyPath')
     LocalStorage['tree-view:cutPath'] = JSON.stringify(selectedPaths)
@@ -464,18 +464,13 @@ class TreeView extends ScrollView
     entry = @selectedEntry()
     cutPaths = if LocalStorage['tree-view:cutPath'] then JSON.parse(LocalStorage['tree-view:cutPath']) else null
     copiedPaths = if LocalStorage['tree-view:copyPath'] then JSON.parse(LocalStorage['tree-view:copyPath']) else null
-    initialPaths = copiedPaths || cutPaths
+    initialPaths = copiedPaths or cutPaths
 
     for initialPath in initialPaths ? []
       initialPathIsDirectory = fs.isDirectorySync(initialPath)
-      if entry && initialPath
-
+      if entry and initialPath
         basePath = atom.project.resolve(entry.getPath())
-        entryType = if entry instanceof DirectoryView then "directory" else "file"
-
-        if entryType is 'file'
-          basePath = path.dirname(basePath)
-
+        basePath = path.dirname(basePath) if entry instanceof FileView
         newPath = path.join(basePath, path.basename(initialPath))
 
         if copiedPaths
@@ -499,7 +494,7 @@ class TreeView extends ScrollView
         else if cutPaths
           # Only move the target if the cut target doesn't exists and if the newPath
           # is not within the initial path
-          unless fs.existsSync(newPath) || !!newPath.match(new RegExp("^#{initialPath}"))
+          unless fs.existsSync(newPath) or !!newPath.match(new RegExp("^#{initialPath}"))
             fs.moveSync(initialPath, newPath)
 
   add: (isCreatingFile) ->
