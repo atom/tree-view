@@ -522,15 +522,22 @@ class TreeView extends ScrollView
     @list.element.querySelector('.selected')
 
   selectEntry: (entry) ->
-    if entry?
-      @selectedPath = entry.getPath()
-      @deselect()
+    return unless entry?
+
+    @selectedPath = entry.getPath()
+
+    selectedEntries = @getSelectedEntries()
+    if selectedEntries.length > 1 or selectedEntries[0] isnt entry
+      @deselect(selectedEntries)
       entry.classList.add('selected')
     entry
 
-  deselect: ->
-    for selected in @list.element.querySelectorAll('.selected')
-      selected.classList.remove('selected')
+  getSelectedEntries: ->
+    @list.element.querySelectorAll('.selected')
+
+  deselect: (elementsToDeselect) ->
+    elementsToDeselect ?= @getSelectedEntries()
+    selected.classList.remove('selected') for selected in elementsToDeselect
     undefined
 
   scrollTop: (top) ->
