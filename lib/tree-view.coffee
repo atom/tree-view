@@ -11,7 +11,6 @@ CopyDialog = null # Defer requiring until actually needed
 
 Directory = require './directory'
 DirectoryView = require './directory-view'
-File = require './file'
 FileView = require './file-view'
 LocalStorage = window.localStorage
 
