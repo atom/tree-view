@@ -50,10 +50,17 @@ class DirectoryView extends HTMLElement
     @subscribe @directory, 'entries-added', (addedEntries) =>
       for entry in addedEntries
         view = @createViewForEntry(entry)
-        @entries.appendChild(view)
+
+        insertionIndex = entry.indexInParentDirectory
+        if insertionIndex < @entries.children.length
+          @entries.insertBefore(view, @entries.children[insertionIndex])
+        else
+          @entries.appendChild(view)
 
     @subscribe @directory, 'entries-added entries-removed', =>
-      @trigger 'tree-view:directory-modified' if @isExpanded
+      if @isExpanded
+        event = new CustomEvent('tree-view:directory-modified', bubbles: true)
+        @dispatchEvent(event)
 
   getPath: ->
     @directory.path
@@ -66,7 +73,7 @@ class DirectoryView extends HTMLElement
     view.initialize(entry)
 
     subscription = @subscribe @directory, 'entries-removed', (removedEntries) ->
-      for removedEntry in removedEntries when entry is removedEntry
+      for removedName, removedEntry of removedEntries when entry is removedEntry
         view.remove()
         subscription.off()
         break

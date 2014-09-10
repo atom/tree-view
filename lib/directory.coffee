@@ -92,20 +92,14 @@ class Directory
     @watchSubscription ?= PathWatcher.watch @path, (eventType) =>
       @reload() if eventType is 'change'
 
-  list: ->
-    fs.readdirSync(@path).sort (name1, name2) ->
+  getEntries: ->
+    names = fs.readdirSync(@path).sort (name1, name2) ->
       name1.toLowerCase().localeCompare(name2.toLowerCase())
 
-  # Public: Perform a synchronous reload of the directory.
-  reload: ->
-    newEntries = []
-    removedEntries = _.clone(@entries)
+    files = []
+    directories = []
 
-    for name in @list()
-      if @entries.hasOwnProperty(name)
-        delete removedEntries[name]
-        return
-
+    for name in names
       fullPath = path.join(@path, name)
       continue if @isPathIgnored(fullPath)
 
@@ -115,20 +109,49 @@ class Directory
         stat = fs.statSync(fullPath) if symlink
 
       if stat?.isDirectory()
-        expandedEntries = @expandedEntries[name]
-        isExpanded = expandedEntries?
-        entry = new Directory({name, fullPath, symlink, isExpanded, expandedEntries})
+        if @entries.hasOwnProperty(name)
+          # push a placeholder since this entry already exists but this helps
+          # track the insertion index for the created views
+          directories.push(name)
+        else
+          expandedEntries = @expandedEntries[name]
+          isExpanded = expandedEntries?
+          directories.push(new Directory({name, fullPath, symlink, isExpanded, expandedEntries}))
       else if stat?.isFile()
-        entry = new File({name, fullPath, symlink})
+        if @entries.hasOwnProperty(name)
+          # push a placeholder since this entry already exists but this helps
+          # track the insertion index for the created views
+          files.push(name)
+        else
+          files.push(new File({name, fullPath, symlink}))
 
-      newEntries.push(entry) if entry?
+    directories.concat(files)
 
-    if removedEntries.length > 0
-      for name, entry of removedEntries
-        entry.destroy()
-        delete @entries[name]
-        delete @expandedEntries[name]
-      @emit 'entries-removed', removedEntries
+  # Public: Perform a synchronous reload of the directory.
+  reload: ->
+    newEntries = []
+    removedEntries = _.clone(@entries)
+    index = 0
+
+    for entry in @getEntries()
+      if @entries.hasOwnProperty(entry)
+        delete removedEntries[entry]
+        index++
+        continue
+
+
+      console.log index
+      entry.indexInParentDirectory = index
+      index++
+      newEntries.push(entry)
+
+    entriesRemoved = false
+    for name, entry of removedEntries
+      entriesRemoved = true
+      entry.destroy()
+      delete @entries[name]
+      delete @expandedEntries[name]
+    @emit 'entries-removed', removedEntries if entriesRemoved
 
     if newEntries.length > 0
       @entries[entry.name] = entry for entry in newEntries
