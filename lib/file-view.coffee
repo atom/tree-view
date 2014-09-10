@@ -10,6 +10,7 @@ class FileView extends HTMLElement
     @classList.add('file', 'entry', 'list-item')
 
     @fileName = document.createElement('span')
+    @fileName.classList.add('name')
     @appendChild(@fileName)
     @fileName.textContent = @file.name
     @fileName.setAttribute('data-name', @file.name)
