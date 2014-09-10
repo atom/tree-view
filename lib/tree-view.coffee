@@ -619,8 +619,7 @@ class TreeView extends ScrollView
       elements = (parentContainer.children()[i] for i in [entryIndex..selectedIndex])
 
       @deselect()
-      for element in elements
-        $(element).addClass('selected')
+      element.classList.add('selected') for element in elements
 
     elements
 
