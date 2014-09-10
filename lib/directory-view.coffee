@@ -1,7 +1,6 @@
 {Subscriber} = require 'emissary'
 Directory = require './directory'
 FileView = require './file-view'
-File = require './file'
 
 class DirectoryView extends HTMLElement
   Subscriber.includeInto(this)
