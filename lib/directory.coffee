@@ -90,7 +90,9 @@ class Directory
   # The changes will be emitted as 'entries-added' and 'entries-removed' events.
   watch: ->
     @watchSubscription ?= PathWatcher.watch @path, (eventType) =>
-      @reload() if eventType is 'change'
+      switch eventType
+        when 'change' then @reload()
+        when 'delete' then @destroy()
 
   getEntries: ->
     names = fs.readdirSync(@path).sort (name1, name2) ->
