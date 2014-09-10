@@ -25,11 +25,11 @@ class TreeView extends ScrollView
   initialize: (state) ->
     super
 
-    focusAfterAttach = false
-    root = null
-    scrollLeftAfterAttach = -1
-    scrollTopAfterAttach = -1
-    selectedPath = null
+    @focusAfterAttach = false
+    @root = null
+    @scrollLeftAfterAttach = -1
+    @scrollTopAfterAttach = -1
+    @selectedPath = null
 
     @handleEvents()
 
