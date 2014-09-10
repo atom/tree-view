@@ -621,7 +621,7 @@ class TreeView extends ScrollView
   # => ['selected/path/one', 'selected/path/two', 'selected/path/three']
   # Returns Array of selected item paths
   selectedPaths: ->
-    item.getPath() for item in @list.element.querySelectorAll('.selected')
+    entry.getPath() for entry in @getSelectedEntries()
 
   # Public: Selects items within a range defined by a currently selected entry and
   #         a new given entry. This is shift+click functionality
