@@ -564,7 +564,9 @@ class TreeView extends ScrollView
       @scrollTop(top + offset)
 
   scrollToBottom: ->
-    if lastEntry = @root?.find('.entry:last')[0]
+    return unless @root?
+
+    if lastEntry = _.last(@root?.querySelectorAll('.entry'))
       @selectEntry(lastEntry)
       @scrollToEntry(lastEntry)
 
