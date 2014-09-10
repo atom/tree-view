@@ -34,7 +34,7 @@ class Directory
     @emit 'destroyed'
 
   loadRealPath: (repo) ->
-    fs.realpathSync @path, (error, realPath) =>
+    fs.realpath @path, (error, realPath) =>
       if realPath
         @realPath = realPath
         @lowerCaseRealPath = @realPath.toLowerCase() if fs.isCaseInsensitive()
