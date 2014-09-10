@@ -590,11 +590,11 @@ class TreeView extends ScrollView
 
     entryToSelect = event.currentTarget
 
-    if e.shiftKey
+    if event.shiftKey
       @selectContinuousEntries(entryToSelect)
       @showMultiSelectMenu()
     # only allow ctrl click for multi selection on non darwin systems
-    else if e.metaKey or (e.ctrlKey && process.platform isnt 'darwin')
+    else if event.metaKey or (event.ctrlKey && process.platform isnt 'darwin')
       @selectMultipleEntries(entryToSelect)
 
       # only show the multi select menu if more then one file/directory is selected
