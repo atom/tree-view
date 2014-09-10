@@ -32,52 +32,7 @@ class TreeView extends ScrollView
     scrollTopAfterAttach = -1
     selectedPath = null
 
-    @on 'dblclick', '.tree-view-resize-handle', => @resizeToFitContent()
-    @on 'click', '.entry', (e) =>
-      @entryClicked(e) unless e.shiftKey or e.metaKey or e.ctrlKey
-    @on 'mousedown', '.entry', (e) => @onMouseDown(e)
-
-    # turn off default scrolling behavior from ScrollView
-    @off 'core:move-up'
-    @off 'core:move-down'
-
-    @on 'mousedown', '.tree-view-resize-handle', (e) => @resizeStarted(e)
-    @command 'core:move-up', => @moveUp()
-    @command 'core:move-down', => @moveDown()
-    @command 'tree-view:expand-directory', => @expandDirectory()
-    @command 'tree-view:recursive-expand-directory', => @expandDirectory(true)
-    @command 'tree-view:collapse-directory', => @collapseDirectory()
-    @command 'tree-view:recursive-collapse-directory', => @collapseDirectory(true)
-    @command 'tree-view:open-selected-entry', => @openSelectedEntry(true)
-    @command 'tree-view:move', => @moveSelectedEntry()
-    @command 'tree-view:copy', => @copySelectedEntries()
-    @command 'tree-view:cut', => @cutSelectedEntries()
-    @command 'tree-view:paste', => @pasteEntries()
-    @command 'tree-view:copy-full-path', => @copySelectedEntryPath(false)
-    @command 'tree-view:show-in-file-manager', => @showSelectedEntryInFileManager()
-    @command 'tree-view:open-in-new-window', => @openSelectedEntryInNewWindow()
-    @command 'tree-view:copy-project-path', => @copySelectedEntryPath(true)
-    @command 'tool-panel:unfocus', => @unfocus()
-    @command 'tree-view:toggle-vcs-ignored-files', -> atom.config.toggle 'tree-view.hideVcsIgnoredFiles'
-    @command 'tree-view:toggle-ignored-names', -> atom.config.toggle 'tree-view.hideIgnoredNames'
-
-    @on 'tree-view:directory-modified', =>
-      if @hasFocus()
-        @selectEntryForPath(@selectedPath) if @selectedPath
-      else
-        @selectActiveFile()
-
-    @subscribe atom.workspaceView, 'pane-container:active-pane-item-changed', =>
-      @selectActiveFile()
-    @subscribe atom.project, 'path-changed', => @updateRoot()
-    @subscribe atom.config.observe 'tree-view.hideVcsIgnoredFiles', callNow: false, =>
-      @updateRoot()
-    @subscribe atom.config.observe 'tree-view.hideIgnoredNames', callNow: false, =>
-      @updateRoot()
-    @subscribe atom.config.observe 'core.ignoredNames', callNow: false, =>
-      @updateRoot() if atom.config.get('tree-view.hideIgnoredNames')
-    @subscribe atom.config.observe 'tree-view.showOnRightSide', callNow: false, (newValue) =>
-      @onSideToggled(newValue)
+    @handleEvents()
 
     process.nextTick =>
       @onStylesheetsChanged()
@@ -113,6 +68,57 @@ class TreeView extends ScrollView
 
   deactivate: ->
     @remove()
+
+  handleEvents: ->
+    @on 'dblclick', '.tree-view-resize-handle', =>
+      @resizeToFitContent()
+    @on 'click', '.entry', (e) =>
+      @entryClicked(e) unless e.shiftKey or e.metaKey or e.ctrlKey
+    @on 'mousedown', '.entry', (e) =>
+      @onMouseDown(e)
+
+    # turn off default scrolling behavior from ScrollView
+    @off 'core:move-up'
+    @off 'core:move-down'
+
+    @on 'mousedown', '.tree-view-resize-handle', (e) => @resizeStarted(e)
+    @command 'core:move-up', => @moveUp()
+    @command 'core:move-down', => @moveDown()
+    @command 'tree-view:expand-directory', => @expandDirectory()
+    @command 'tree-view:recursive-expand-directory', => @expandDirectory(true)
+    @command 'tree-view:collapse-directory', => @collapseDirectory()
+    @command 'tree-view:recursive-collapse-directory', => @collapseDirectory(true)
+    @command 'tree-view:open-selected-entry', => @openSelectedEntry(true)
+    @command 'tree-view:move', => @moveSelectedEntry()
+    @command 'tree-view:copy', => @copySelectedEntries()
+    @command 'tree-view:cut', => @cutSelectedEntries()
+    @command 'tree-view:paste', => @pasteEntries()
+    @command 'tree-view:copy-full-path', => @copySelectedEntryPath(false)
+    @command 'tree-view:show-in-file-manager', => @showSelectedEntryInFileManager()
+    @command 'tree-view:open-in-new-window', => @openSelectedEntryInNewWindow()
+    @command 'tree-view:copy-project-path', => @copySelectedEntryPath(true)
+    @command 'tool-panel:unfocus', => @unfocus()
+    @command 'tree-view:toggle-vcs-ignored-files', -> atom.config.toggle 'tree-view.hideVcsIgnoredFiles'
+    @command 'tree-view:toggle-ignored-names', -> atom.config.toggle 'tree-view.hideIgnoredNames'
+
+    @on 'tree-view:directory-modified', =>
+      if @hasFocus()
+        @selectEntryForPath(@selectedPath) if @selectedPath
+      else
+        @selectActiveFile()
+
+    @subscribe atom.workspaceView, 'pane-container:active-pane-item-changed', =>
+      @selectActiveFile()
+    @subscribe atom.project, 'path-changed', =>
+      @updateRoot()
+    @subscribe atom.config.observe 'tree-view.hideVcsIgnoredFiles', callNow: false, =>
+      @updateRoot()
+    @subscribe atom.config.observe 'tree-view.hideIgnoredNames', callNow: false, =>
+      @updateRoot()
+    @subscribe atom.config.observe 'core.ignoredNames', callNow: false, =>
+      @updateRoot() if atom.config.get('tree-view.hideIgnoredNames')
+    @subscribe atom.config.observe 'tree-view.showOnRightSide', callNow: false, (newValue) =>
+      @onSideToggled(newValue)
 
   toggle: ->
     if @isVisible()
