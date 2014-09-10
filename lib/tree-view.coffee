@@ -637,17 +637,19 @@ class TreeView extends ScrollView
   #
   # Returns noop
   showFullMenu: ->
-    @list.removeClass('multi-select').addClass('full-menu')
+    @list.element.classList.remove('multi-select')
+    @list.element.classList.add('full-menu')
 
   # Public: Toggle multi-select class on the main list element to display the the
   #         menu with only items that make sense for multi select functionality
   #
   # Returns noop
   showMultiSelectMenu: ->
-    @list.removeClass('full-menu').addClass('multi-select')
+    @list.element.classList.remove('full-menu')
+    @list.element.classList.add('multi-select')
 
   # Public: Check for multi-select class on the main list
   #
   # Returns boolean
   multiSelectEnabled: ->
-    @list.hasClass('multi-select')
+    @list.element.classList.contains('multi-select')
