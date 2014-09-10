@@ -95,8 +95,12 @@ class Directory
         when 'delete' then @destroy()
 
   getEntries: ->
-    names = fs.readdirSync(@path).sort (name1, name2) ->
-      name1.toLowerCase().localeCompare(name2.toLowerCase())
+    try
+      names = fs.readdirSync(@path)
+    catch error
+      names = []
+
+    names.sort (name1, name2) -> name1.toLowerCase().localeCompare(name2.toLowerCase())
 
     files = []
     directories = []
