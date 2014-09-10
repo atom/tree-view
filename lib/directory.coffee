@@ -87,7 +87,7 @@ class Directory
 
   # Public: Watch this directory for changes.
   #
-  # The changes will be emitted as 'entry-added' and 'entries-removed' events.
+  # The changes will be emitted as 'entries-added' and 'entries-removed' events.
   watch: ->
     @watchSubscription ?= PathWatcher.watch @path, (eventType) =>
       @reload() if eventType is 'change'
@@ -129,9 +129,8 @@ class Directory
       delete @expandedEntries[name]
     @emit 'entries-removed', removedEntries
 
-    for entry in newEntries
-      @entries[entry.name] = entry
-      @emit 'entry-added', entry
+    @entries[entry.name] = entry for entry in newEntries
+    @emit 'entries-added', newEntries
 
   # Public: Collapse this directory and stop watching it.
   collapse: ->

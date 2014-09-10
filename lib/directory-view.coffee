@@ -47,11 +47,12 @@ class DirectoryView extends HTMLElement
     @classList.add("status-#{@directory.status}") if @directory.status?
 
   subscribeToDirectory: ->
-    @subscribe @directory, 'entry-added', (entry) =>
-      view = @createViewForEntry(entry)
-      @entries.appendChild(view)
+    @subscribe @directory, 'entries-added', (addedEntries) =>
+      for entry in addedEntries
+        view = @createViewForEntry(entry)
+        @entries.appendChild(view)
 
-    @subscribe @directory, 'entry-added entries-removed', =>
+    @subscribe @directory, 'entries-added entries-removed', =>
       @trigger 'tree-view:directory-modified' if @isExpanded
 
   getPath: ->
