@@ -293,12 +293,12 @@ class TreeView extends ScrollView
   moveDown: ->
     selectedEntry = @selectedEntry()
     if selectedEntry?
-      selectedEntry = $(selectedEntry)
-      if selectedEntry.is('.expanded.directory')
-        if @selectEntry(selectedEntry.find('.entry:first')[0])
+      if selectedEntry instanceof DirectoryView
+        if @selectEntry(selectedEntry.entries.children[0])
           @scrollToEntry(@selectedEntry())
           return
 
+      selectedEntry = $(selectedEntry)
       until @selectEntry(selectedEntry.next('.entry')[0])
         selectedEntry = selectedEntry.parents('.entry:first')
         break unless selectedEntry.length
@@ -312,9 +312,8 @@ class TreeView extends ScrollView
     if selectedEntry?
       selectedEntry = $(selectedEntry)
       if previousEntry = @selectEntry(selectedEntry.prev('.entry')[0])
-        previousEntry = $(previousEntry)
-        if previousEntry.is('.expanded.directory')
-          @selectEntry(previousEntry.find('.entry:last')[0])
+        if previousEntry instanceof DirectoryView
+          @selectEntry(_.last(previousEntry.entries.children))
       else
         @selectEntry(selectedEntry.parents('.directory').first()?[0])
     else
