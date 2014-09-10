@@ -1345,7 +1345,7 @@ describe "TreeView", ->
           addDialog.cancel()
           root.click()
           root.removeClass('selected')
-          expect(treeView.selectedEntry()).toBeUndefined()
+          expect(treeView.selectedEntry()).toBeNull()
           treeView.trigger "tree-view:add-file"
           addDialog = atom.workspaceView.find(".tree-view-dialog").view()
 
@@ -1386,7 +1386,7 @@ describe "TreeView", ->
               expect(atom.workspace.getActivePaneItem().getPath()).not.toBe newPath
               expect(treeView.find(".tree-view")).toMatchSelector(':focus')
               expect(atom.workspaceView.getActiveView().isFocused).toBeFalsy()
-              expect(dirView.find('.directory.selected:contains(new)').length).toBe(1)
+              expect(dirView.find('.directory.selected:contains(new)').length).toBe 1
 
         describe "when the path with a trailing '/' is changed and confirmed", ->
           describe "when no directory exists at the given path", ->
@@ -1479,7 +1479,7 @@ describe "TreeView", ->
               runs ->
                 dirView = $(treeView.root.entries).find('.directory:contains(test-dir)')
                 dirView[0].expand()
-                expect(dirView.entries.children().length).toBe 0
+                expect($(dirView[0].entries).children().length).toBe 0
 
           describe "when the directories along the new path don't exist", ->
             it "creates the target directory before moving the file", ->
@@ -1593,9 +1593,9 @@ describe "TreeView", ->
                 expect(fs.existsSync(newPath)).toBeTruthy()
                 expect(fs.existsSync(filePath)).toBeTruthy()
                 expect(copyDialog.parent()).not.toExist()
-                dirView = treeView.root.entries.find('.directory:contains(test-dir)')
-                dirView.expand()
-                expect(dirView.entries.children().length).toBe 1
+                dirView = $(treeView.root.entries).find('.directory:contains(test-dir)')
+                dirView[0].expand()
+                expect($(dirView[0].entries).children().length).toBe 1
                 expect(atom.workspace.getActiveEditor().getPath()).toBe(newPath)
 
           describe "when the directories along the new path don't exist", ->
@@ -1648,8 +1648,8 @@ describe "TreeView", ->
         beforeEach ->
           dotFilePath = path.join(dirPath, ".dotfile")
           fs.writeFileSync(dotFilePath, "dot")
-          dirView.collapse()
-          dirView.expand()
+          dirView[0].collapse()
+          dirView[0].expand()
           dotFileView = treeView.find('.file:contains(.dotfile)')
 
           waitsForFileToOpen ->
