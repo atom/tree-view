@@ -969,12 +969,13 @@ describe "TreeView", ->
 
       runs ->
         atom.workspaceView.trigger 'tree-view:toggle'
-        treeView = atom.workspaceView.find(".tree-view")
-        dirView = treeView.root.entries.find('.directory:contains(test-dir)')
-        dirView.expand()
+        treeView = atom.workspaceView.find(".tree-view").view()
+        root = $(treeView.root)
+        dirView = $(treeView.root.entries).find('.directory:contains(test-dir):first')
+        dirView[0].expand()
         fileView = treeView.find('.file:contains(test-file.txt)')
-        dirView2 = treeView.root.entries.find('.directory:contains(test-dir2)')
-        dirView2.expand()
+        dirView2 = $(treeView.root.entries).find('.directory:contains(test-dir2):last')
+        dirView2[0].expand()
         fileView2 = treeView.find('.file:contains(test-file2.txt)')
         fileView3 = treeView.find('.file:contains(test-file3.txt)')
 
@@ -1007,8 +1008,8 @@ describe "TreeView", ->
           storedPaths = JSON.parse(LocalStorage['tree-view:copyPath'])
 
           expect(storedPaths.length).toBe 2
-          expect(storedPaths[0]).toBe fileView2.getPath()
-          expect(storedPaths[1]).toBe fileView3.getPath()
+          expect(storedPaths[0]).toBe fileView2[0].getPath()
+          expect(storedPaths[1]).toBe fileView3[0].getPath()
 
     describe "tree-view:cut", ->
       LocalStorage = window.localStorage
@@ -1040,8 +1041,8 @@ describe "TreeView", ->
           storedPaths = JSON.parse(LocalStorage['tree-view:cutPath'])
 
           expect(storedPaths.length).toBe 2
-          expect(storedPaths[0]).toBe fileView2.getPath()
-          expect(storedPaths[1]).toBe fileView3.getPath()
+          expect(storedPaths[0]).toBe fileView2[0].getPath()
+          expect(storedPaths[1]).toBe fileView3[0].getPath()
 
     describe "tree-view:paste", ->
       LocalStorage = window.localStorage
@@ -1241,7 +1242,7 @@ describe "TreeView", ->
 
         runs ->
           treeView.trigger "tree-view:add-file"
-          addDialog = atom.workspaceView.find(".tree-view-dialog")
+          addDialog = atom.workspaceView.find(".tree-view-dialog").view()
 
       describe "when a file is selected", ->
         it "opens an add dialog with the file's current directory path populated", ->
@@ -1257,7 +1258,7 @@ describe "TreeView", ->
             directoryModifiedHandler = jasmine.createSpy("directory-modified")
             dirView.on "tree-view:directory-modified", directoryModifiedHandler
 
-            dirView.directory.emit 'entry-removed', {name: 'deleted.txt'}
+            dirView[0].directory.emit 'entries-removed', {'deleted.txt': {}}
             expect(directoryModifiedHandler).toHaveBeenCalled()
             expect(treeView.find('.selected').text()).toBe path.basename(filePath)
 
@@ -1277,7 +1278,7 @@ describe "TreeView", ->
                 expect(atom.workspace.getActivePaneItem().getPath()).toBe newPath
 
               waitsFor "tree view to be updated", ->
-                dirView.entries.find("> .file").length > 1
+                $(dirView[0].entries).find("> .file").length > 1
 
               runs ->
                 expect(treeView.find('.selected').text()).toBe path.basename(newPath)
@@ -1321,7 +1322,7 @@ describe "TreeView", ->
           addDialog.cancel()
           dirView.click()
           treeView.trigger "tree-view:add-file"
-          addDialog = atom.workspaceView.find(".tree-view-dialog")
+          addDialog = atom.workspaceView.find(".tree-view-dialog").view()
 
           expect(addDialog).toExist()
           expect(addDialog.promptText.text()).toBeTruthy()
@@ -1333,20 +1334,20 @@ describe "TreeView", ->
       describe "when the root directory is selected", ->
         it "opens an add dialog with no path populated", ->
           addDialog.cancel()
-          treeView.root.click()
+          root.click()
           treeView.trigger "tree-view:add-file"
-          addDialog = atom.workspaceView.find(".tree-view-dialog")
+          addDialog = atom.workspaceView.find(".tree-view-dialog").view()
 
           expect(addDialog.miniEditor.getText().length).toBe 0
 
       describe "when there is no entry selected", ->
         it "opens an add dialog with no path populated", ->
           addDialog.cancel()
-          treeView.root.click()
-          treeView.root.removeClass('selected')
+          root.click()
+          root.removeClass('selected')
           expect(treeView.selectedEntry()).toBeUndefined()
           treeView.trigger "tree-view:add-file"
-          addDialog = atom.workspaceView.find(".tree-view-dialog")
+          addDialog = atom.workspaceView.find(".tree-view-dialog").view()
 
           expect(addDialog.miniEditor.getText().length).toBe 0
 
@@ -1361,7 +1362,7 @@ describe "TreeView", ->
 
         runs ->
           treeView.trigger "tree-view:add-folder"
-          addDialog = atom.workspaceView.find(".tree-view-dialog")
+          addDialog = atom.workspaceView.find(".tree-view-dialog").view()
 
       describe "when a file is selected", ->
         it "opens an add dialog with the file's current directory path populated", ->
@@ -1446,7 +1447,7 @@ describe "TreeView", ->
 
           runs ->
             treeView.trigger "tree-view:move"
-            moveDialog = atom.workspaceView.find(".tree-view-dialog")
+            moveDialog = atom.workspaceView.find(".tree-view-dialog").view()
 
         afterEach ->
           waits 50 # The move specs cause too many false positives because of their async nature, so wait a little bit before we cleanup
@@ -1476,8 +1477,8 @@ describe "TreeView", ->
                 root.find('> .entries > .file:contains(renamed-test-file.txt)').length > 0
 
               runs ->
-                dirView = treeView.root.entries.find('.directory:contains(test-dir)')
-                dirView.expand()
+                dirView = $(treeView.root.entries).find('.directory:contains(test-dir)')
+                dirView[0].expand()
                 expect(dirView.entries.children().length).toBe 0
 
           describe "when the directories along the new path don't exist", ->
@@ -1527,8 +1528,8 @@ describe "TreeView", ->
         beforeEach ->
           dotFilePath = path.join(dirPath, ".dotfile")
           fs.writeFileSync(dotFilePath, "dot")
-          dirView.collapse()
-          dirView.expand()
+          dirView[0].collapse()
+          dirView[0].expand()
           dotFileView = treeView.find('.file:contains(.dotfile)')
 
           waitsForFileToOpen ->
@@ -1536,7 +1537,7 @@ describe "TreeView", ->
 
           runs ->
             treeView.trigger "tree-view:move"
-            moveDialog = atom.workspaceView.find(".tree-view-dialog")
+            moveDialog = atom.workspaceView.find(".tree-view-dialog").view()
 
         it "selects the entire file name", ->
           expect(moveDialog).toExist()
@@ -1561,7 +1562,7 @@ describe "TreeView", ->
 
           runs ->
             treeView.trigger "tree-view:duplicate"
-            copyDialog = atom.workspaceView.find(".tree-view-dialog")
+            copyDialog = atom.workspaceView.find(".tree-view-dialog").view()
 
         afterEach ->
           waits 50 # The copy specs cause too many false positives because of their async nature, so wait a little bit before we cleanup
@@ -1656,7 +1657,7 @@ describe "TreeView", ->
 
           runs ->
             treeView.trigger "tree-view:duplicate"
-            copyDialog = atom.workspaceView.find(".tree-view-dialog")
+            copyDialog = atom.workspaceView.find(".tree-view-dialog").view()
 
         it "selects the entire file name", ->
           expect(copyDialog).toExist()
@@ -1679,7 +1680,7 @@ describe "TreeView", ->
           runs ->
             editorView = atom.workspaceView.getActiveView()
             editorView.trigger "tree-view:duplicate"
-            copyDialog = atom.workspaceView.find(".tree-view-dialog")
+            copyDialog = atom.workspaceView.find(".tree-view-dialog").view()
 
         it "duplicates the current file", ->
           expect(copyDialog.miniEditor.getText()).toBe('tree-view.js')
@@ -1719,19 +1720,19 @@ describe "TreeView", ->
 
         runs ->
           expect(fs.existsSync(temporaryFilePath)).toBeFalsy()
-          entriesCountBefore = treeView.root.entries.find('.entry').length
+          entriesCountBefore = $(treeView.root.entries).find('.entry').length
           fs.writeFileSync temporaryFilePath, 'hi'
 
-        waitsFor "directory view contens to refresh", ->
-          treeView.root.entries.find('.entry').length == entriesCountBefore + 1
+        waitsFor "directory view contents to refresh", ->
+          $(treeView.root.entries).find('.entry').length == entriesCountBefore + 1
 
         runs ->
-          expect(treeView.root.entries.find('.entry').length).toBe entriesCountBefore + 1
-          expect(treeView.root.entries.find('.file:contains(temporary)')).toExist()
+          expect($(treeView.root.entries).find('.entry').length).toBe entriesCountBefore + 1
+          expect($(treeView.root.entries).find('.file:contains(temporary)')).toExist()
           fs.removeSync(temporaryFilePath)
 
-        waitsFor "directory view contens to refresh", ->
-          treeView.root.entries.find('.entry').length == entriesCountBefore
+        waitsFor "directory view contents to refresh", ->
+          $(treeView.root.entries).find('.entry').length == entriesCountBefore
 
   describe "the hideVcsIgnoredFiles config option", ->
     describe "when the project's path is the repository's working directory", ->
@@ -1824,7 +1825,7 @@ describe "TreeView", ->
       atom.project.getRepo().getPathStatus(modifiedFile)
 
       treeView.updateRoot()
-      treeView.root.entries.find('.directory:contains(dir)').expand()
+      $(treeView.root.entries).find('.directory:contains(dir)')[0].expand()
 
     describe "when the project is the repository root", ->
       it "adds a custom style", ->
@@ -1832,7 +1833,7 @@ describe "TreeView", ->
 
     describe "when a file is modified", ->
       it "adds a custom style", ->
-        treeView.root.entries.find('.directory:contains(dir)').expand()
+        $(treeView.root.entries).find('.directory:contains(dir)')[0].expand()
         expect(treeView.find('.file:contains(b.txt)')).toHaveClass 'status-modified'
 
     describe "when a directory if modified", ->
@@ -1841,7 +1842,7 @@ describe "TreeView", ->
 
     describe "when a file is new", ->
       it "adds a custom style", ->
-        treeView.root.entries.find('.directory:contains(dir2)').expand()
+        $(treeView.root.entries).find('.directory:contains(dir2)')[0].expand()
         expect(treeView.find('.file:contains(new2)')).toHaveClass 'status-added'
 
     describe "when a directory is new", ->
@@ -1890,9 +1891,9 @@ describe "TreeView", ->
 
       runs ->
         atom.workspaceView.trigger 'tree-view:toggle'
-        treeView = atom.workspaceView.find(".tree-view")
-        dirView = treeView.root.entries.find('.directory:contains(test-dir)')
-        dirView.expand()
+        treeView = atom.workspaceView.find(".tree-view").view()
+        dirView = $(treeView.root.entries).find('.directory:contains(test-dir)')
+        dirView[0].expand()
         fileView1 = treeView.find('.file:contains(test-file1.txt)')
         fileView2 = treeView.find('.file:contains(test-file2.txt)')
         fileView3 = treeView.find('.file:contains(test-file3.txt)')
