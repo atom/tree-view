@@ -9,8 +9,6 @@ class File
 
   constructor: ({@name, fullPath, @symlink}) ->
     @path = fullPath
-    try
-      @path = fs.realpathSync(@path)
 
     extension = path.extname(@path)
     if fs.isReadmePath(@path)
@@ -30,6 +28,11 @@ class File
     if repo?
       @subscribeToRepo(repo)
       @updateStatus(repo)
+
+    fs.realpath @path, (error, realPath) =>
+      if realPath and realPath isnt @path
+        @path = realPath
+        @updateStatus(repo) if repo?
 
   destroy: ->
     @unsubscribe()
