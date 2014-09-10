@@ -266,7 +266,7 @@ class TreeView extends ScrollView
       if entry.getPath() is entryPath
         bestMatchEntry = entry
         break
-      else if entry.getPath().length > bestMatchEntry.getPath().length and entry.directory?.contains?(entryPath)
+      if entry.getPath().length > bestMatchEntry.getPath().length and entry.directory?.contains(entryPath)
         bestMatchEntry = entry
 
     bestMatchEntry
