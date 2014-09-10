@@ -49,12 +49,9 @@ class DirectoryView extends HTMLElement
   subscribeToDirectory: ->
     @subscribe @directory, 'entry-added', (entry) =>
       view = @createViewForEntry(entry)
-      if view instanceof HTMLElement
-        @entries.appendChild(view)
-      else
-        @entries.appendChild(view.element)
+      @entries.appendChild(view)
 
-    @subscribe @directory, 'entry-added entry-removed', =>
+    @subscribe @directory, 'entry-added entries-removed', =>
       @trigger 'tree-view:directory-modified' if @isExpanded
 
   getPath: ->
@@ -67,10 +64,11 @@ class DirectoryView extends HTMLElement
       view = new FileView()
     view.initialize(entry)
 
-    subscription = @subscribe @directory, 'entry-removed', (removedEntry) ->
-      if entry is removedEntry
+    subscription = @subscribe @directory, 'entries-removed', (removedEntries) ->
+      for removedEntry in removedEntries when entry is removedEntry
         view.remove()
         subscription.off()
+        break
 
     view
 
