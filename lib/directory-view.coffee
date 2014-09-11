@@ -53,14 +53,18 @@ class DirectoryView extends HTMLElement
     @subscriptions.add @directory.onDidAddEntries (addedEntries) =>
       return unless @isExpanded
 
+      numberOfEntries = @entries.children.length
+
       for entry in addedEntries
         view = @createViewForEntry(entry)
 
         insertionIndex = entry.indexInParentDirectory
-        if insertionIndex < @entries.children.length
+        if insertionIndex < numberOfEntries
           @entries.insertBefore(view, @entries.children[insertionIndex])
         else
           @entries.appendChild(view)
+
+        numberOfEntries++
 
       @emitDirectoryModifiedEvent()
 
