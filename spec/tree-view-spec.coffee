@@ -1,7 +1,6 @@
 _ = require 'underscore-plus'
 {$, $$, WorkspaceView} = require 'atom'
 fs = require 'fs-plus'
-TreeView = require '../lib/tree-view'
 path = require 'path'
 temp = require('temp').track()
 wrench = require 'wrench'
