@@ -215,7 +215,7 @@ class TreeView extends ScrollView
         fullPath: projectPath
         symlink: false
         isRoot: true
-        expandedEntries,
+        expandedEntries
         isExpanded: true
       })
       @root = new DirectoryView()
