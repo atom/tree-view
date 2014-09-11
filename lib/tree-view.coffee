@@ -220,7 +220,7 @@ class TreeView extends ScrollView
       })
       @root = new DirectoryView()
       @root.initialize(directory)
-      @list.append(@root)
+      @list.element.appendChild(@root)
 
       if @attachAfterProjectPathSet
         @attach()
