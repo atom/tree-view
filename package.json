@@ -15,7 +15,7 @@
     "theorist": "1.x",
     "underscore-plus": "1.x",
     "wrench": "1.5.x",
-    "emissary": "^1.3.1",
-    "pathwatcher": "^2.0.12"
+    "pathwatcher": "^2.0.12",
+    "event-kit": "~0.7.0"
   }
 }

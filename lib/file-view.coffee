@@ -1,11 +1,10 @@
-{Subscriber} = require 'emissary'
+{CompositeDisposable} = require 'event-kit'
 
 module.exports =
 class FileView extends HTMLElement
-  Subscriber.includeInto(this)
-
   initialize: (@file) ->
-    @subscribe @file, 'destroyed', => @unsubscribe()
+    @subscriptions = new CompositeDisposable()
+    @subscriptions.add @file.onDidDestroy => @subscriptions.dispose()
 
     @classList.add('file', 'entry', 'list-item')
 
@@ -27,7 +26,7 @@ class FileView extends HTMLElement
         when 'readme'     then @fileName.classList.add('icon-book')
         when 'text'       then @fileName.classList.add('icon-file-text')
 
-    @subscribe @file, 'status-changed', => @updateStatus()
+    @subscriptions.add @file.onDidStatusChange => @updateStatus()
     @updateStatus()
 
   updateStatus: ->

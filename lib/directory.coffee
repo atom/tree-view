@@ -1,16 +1,16 @@
 path = require 'path'
 _ = require 'underscore-plus'
-{Emitter, Subscriber} = require 'emissary'
+{CompositeDisposable, Emitter} = require 'event-kit'
 fs = require 'fs-plus'
 PathWatcher = require 'pathwatcher'
 File = require './file'
 
 module.exports =
 class Directory
-  Emitter.includeInto(this)
-  Subscriber.includeInto(this)
-
   constructor: ({@name, fullPath, @symlink, @expandedEntries, @isExpanded, @isRoot}) ->
+    @emitter = new Emitter()
+    @subscriptions = new CompositeDisposable()
+
     @path = fullPath
     @lowerCasePath = @path.toLowerCase() if fs.isCaseInsensitive()
 
@@ -30,8 +30,20 @@ class Directory
 
   destroy: ->
     @unwatch()
-    @unsubscribe()
-    @emit 'destroyed'
+    @subscriptions.dispose()
+    @emitter.emit('did-destroy')
+
+  onDidDestroy: (callback) ->
+    @emitter.on('did-destroy', callback)
+
+  onDidStatusChange: (callback) ->
+    @emitter.on('did-status-change', callback)
+
+  onDidAddEntries: (callback) ->
+    @emitter.on('did-add-entries', callback)
+
+  onDidRemoveEntries: (callback) ->
+    @emitter.on('did-remove-entries', callback)
 
   loadRealPath: (repo) ->
     fs.realpath @path, (error, realPath) =>
@@ -45,9 +57,9 @@ class Directory
 
   # Subscribe to the given repo for changes to the Git status of this directory.
   subscribeToRepo: (repo) ->
-    @subscribe repo, 'status-changed', (changedPath, status) =>
-      @updateStatus(repo) if changedPath.indexOf("#{@path}#{path.sep}") is 0
-    @subscribe repo, 'statuses-changed', =>
+    @subscriptions.add repo.onDidChangeStatus (event) =>
+      @updateStatus(repo) if event.path.indexOf("#{@path}#{path.sep}") is 0
+    @subscriptions.add repo.onDidChangeStatuses =>
       @updateStatus(repo)
 
   # Update the status property of this directory using the repo.
@@ -64,7 +76,7 @@ class Directory
 
     if newStatus isnt @status
       @status = newStatus
-      @emit 'status-changed', newStatus
+      @emitter.emit('did-status-change', newStatus)
 
   # Is the given path ignored?
   isPathIgnored: (filePath) ->
@@ -125,8 +137,6 @@ class Directory
       delete @entries[key]
 
   # Public: Watch this directory for changes.
-  #
-  # The changes will be emitted as 'entries-added' and 'entries-removed' events.
   watch: ->
     @watchSubscription ?= PathWatcher.watch @path, (eventType) =>
       switch eventType
@@ -193,11 +203,11 @@ class Directory
       entry.destroy()
       delete @entries[name]
       delete @expandedEntries[name]
-    @emit 'entries-removed', removedEntries if entriesRemoved
+    @emitter.emit('did-remove-entries', removedEntries) if entriesRemoved
 
     if newEntries.length > 0
       @entries[entry.name] = entry for entry in newEntries
-      @emit 'entries-added', newEntries
+      @emitter.emit('did-add-entries', newEntries)
 
   # Public: Collapse this directory and stop watching it.
   collapse: ->

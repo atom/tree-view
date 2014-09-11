@@ -1,12 +1,11 @@
-{Subscriber} = require 'emissary'
+{CompositeDisposable} = require 'event-kit'
 Directory = require './directory'
 FileView = require './file-view'
 
 class DirectoryView extends HTMLElement
-  Subscriber.includeInto(this)
-
   initialize: (@directory) ->
-    @subscribe @directory, 'destroyed', => @unsubscribe()
+    @subscriptions = new CompositeDisposable()
+    @subscriptions.add @directory.onDidDestroy => @subscriptions.dispose()
 
     @classList.add('directory', 'entry',  'list-nested-item',  'collapsed')
 
@@ -36,7 +35,7 @@ class DirectoryView extends HTMLElement
     @directoryName.setAttribute('data-path', @directory.path)
 
     unless @directory.isRoot
-      @subscribe @directory, 'status-changed', => @updateStatus()
+      @subscriptions.add @directory.onDidStatusChange => @updateStatus()
       @updateStatus()
 
     @expand() if @directory.isExpanded
@@ -45,8 +44,15 @@ class DirectoryView extends HTMLElement
     @classList.remove('status-ignored', 'status-modified', 'status-added')
     @classList.add("status-#{@directory.status}") if @directory.status?
 
+  emitDirectoryModifiedEvent: ->
+    if @isExpanded
+      event = new CustomEvent('tree-view:directory-modified', bubbles: true)
+      @dispatchEvent(event)
+
   subscribeToDirectory: ->
-    @subscribe @directory, 'entries-added', (addedEntries) =>
+    @subscriptions.add @directory.onDidAddEntries (addedEntries) =>
+      return unless @isExpanded
+
       for entry in addedEntries
         view = @createViewForEntry(entry)
 
@@ -56,10 +62,10 @@ class DirectoryView extends HTMLElement
         else
           @entries.appendChild(view)
 
-    @subscribe @directory, 'entries-added entries-removed', =>
-      if @isExpanded
-        event = new CustomEvent('tree-view:directory-modified', bubbles: true)
-        @dispatchEvent(event)
+      @emitDirectoryModifiedEvent()
+
+    @subscriptions.add @directory.onDidRemoveEntries =>
+      @emitDirectoryModifiedEvent() if @isExpanded
 
   getPath: ->
     @directory.path
@@ -71,11 +77,12 @@ class DirectoryView extends HTMLElement
       view = new FileView()
     view.initialize(entry)
 
-    subscription = @subscribe @directory, 'entries-removed', (removedEntries) ->
+    subscription = @directory.onDidRemoveEntries (removedEntries) ->
       for removedName, removedEntry of removedEntries when entry is removedEntry
         view.remove()
-        subscription.off()
+        subscription.dispose()
         break
+    @subscriptions.add(subscription)
 
     view
 
@@ -87,11 +94,11 @@ class DirectoryView extends HTMLElement
 
   expand: (isRecursive=false) ->
     unless @isExpanded
+      @isExpanded = true
       @classList.add('expanded')
       @classList.remove('collapsed')
       @subscribeToDirectory()
       @directory.expand()
-      @isExpanded = true
 
     if isRecursive
       for entry in @entries.children when entry instanceof DirectoryView
@@ -100,6 +107,8 @@ class DirectoryView extends HTMLElement
     false
 
   collapse: (isRecursive=false) ->
+    @isExpanded = false
+
     if isRecursive
       for entry in @entries.children when entry.isExpanded
         entry.collapse(true)
@@ -107,9 +116,7 @@ class DirectoryView extends HTMLElement
     @classList.remove('expanded')
     @classList.add('collapsed')
     @directory.collapse()
-    @unsubscribe(@directory)
     @entries.innerHTML = ''
-    @isExpanded = false
 
 DirectoryElement = document.registerElement('tree-view-directory', prototype: DirectoryView.prototype, extends: 'li')
 module.exports = DirectoryElement

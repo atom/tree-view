@@ -65,7 +65,7 @@ describe "TreeView", ->
       expect(rootEntries.find('> .file [data-name="tree-view.js"]')).toExist()
       expect(rootEntries.find('> .file [data-name="tree-view.txt"]')).toExist()
 
-    it "selects the rootview", ->
+    it "selects the root folder", ->
       expect(treeView.selectedEntry()).toEqual treeView.root
 
     describe "when the project has no path", ->
@@ -1258,7 +1258,7 @@ describe "TreeView", ->
             directoryModifiedHandler = jasmine.createSpy("directory-modified")
             dirView.on "tree-view:directory-modified", directoryModifiedHandler
 
-            dirView[0].directory.emit 'entries-removed', {'deleted.txt': {}}
+            dirView[0].directory.emitter.emit 'did-remove-entries', {'deleted.txt': {}}
             expect(directoryModifiedHandler).toHaveBeenCalled()
             expect(treeView.find('.selected').text()).toBe path.basename(filePath)
 
