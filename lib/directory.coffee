@@ -5,6 +5,8 @@ fs = require 'fs-plus'
 PathWatcher = require 'pathwatcher'
 File = require './file'
 
+realpathCache = {}
+
 module.exports =
 class Directory
   constructor: ({@name, fullPath, @symlink, @expandedEntries, @isExpanded, @isRoot}) ->
@@ -46,7 +48,7 @@ class Directory
     @emitter.on('did-remove-entries', callback)
 
   loadRealPath: (repo) ->
-    fs.realpath @path, (error, realPath) =>
+    fs.realpath @path, realpathCache, (error, realPath) =>
       if realPath
         @realPath = realPath
         @lowerCaseRealPath = @realPath.toLowerCase() if fs.isCaseInsensitive()
@@ -177,7 +179,7 @@ class Directory
           # track the insertion index for the created views
           files.push(name)
         else
-          files.push(new File({name, fullPath, symlink}))
+          files.push(new File({name, fullPath, symlink, realpathCache}))
 
     directories.concat(files)
 

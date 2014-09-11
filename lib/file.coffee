@@ -2,9 +2,10 @@ path = require 'path'
 fs = require 'fs-plus'
 {CompositeDisposable, Emitter} = require 'event-kit'
 
+
 module.exports =
 class File
-  constructor: ({@name, fullPath, @symlink}) ->
+  constructor: ({@name, fullPath, @symlink, realpathCache}) ->
     @emitter = new Emitter()
     @subscriptions = new CompositeDisposable()
 
@@ -29,7 +30,7 @@ class File
       @subscribeToRepo(repo)
       @updateStatus(repo)
 
-    fs.realpath @path, (error, realPath) =>
+    fs.realpath @path, realpathCache, (error, realPath) =>
       if realPath and realPath isnt @path
         @path = realPath
         @updateStatus(repo) if repo?
