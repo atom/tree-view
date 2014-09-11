@@ -207,7 +207,7 @@ class TreeView extends ScrollView
   updateRoot: (expandedEntries={}) ->
     if @root?
       @root.directory.destroy()
-      @list.element.removeChild(@root)
+      @root.remove()
 
     if projectPath = atom.project.getPath()
       directory = new Directory({
