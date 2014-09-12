@@ -66,6 +66,7 @@ class TreeView extends ScrollView
     width: @width()
 
   deactivate: ->
+    @root?.directory.destroy()
     @remove()
 
   handleEvents: ->
