@@ -34,7 +34,9 @@ class DirectoryView extends HTMLElement
     @directoryName.setAttribute('data-name', @directory.name)
     @directoryName.setAttribute('data-path', @directory.path)
 
-    unless @directory.isRoot
+    if @directory.isRoot
+      @classList.add('project-root')
+    else
       @subscriptions.add @directory.onDidStatusChange => @updateStatus()
       @updateStatus()
 
