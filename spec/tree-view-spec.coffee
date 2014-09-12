@@ -1271,7 +1271,6 @@ describe "TreeView", ->
                 addDialog.trigger 'core:confirm'
 
               runs ->
-                expect(fs.existsSync(newPath)).toBeTruthy()
                 expect(fs.isFileSync(newPath)).toBeTruthy()
                 expect(addDialog.parent()).not.toExist()
                 expect(atom.workspace.getActivePaneItem().getPath()).toBe newPath
@@ -1391,7 +1390,6 @@ describe "TreeView", ->
               newPath = path.join(dirPath, "new/dir")
               addDialog.miniEditor.insertText("new/dir")
               addDialog.trigger 'core:confirm'
-              expect(fs.existsSync(newPath)).toBeTruthy()
               expect(fs.isDirectorySync(newPath)).toBeTruthy()
               expect(addDialog.parent()).not.toExist()
               expect(atom.workspace.getActivePaneItem().getPath()).not.toBe newPath
@@ -1406,7 +1404,6 @@ describe "TreeView", ->
               newPath = path.join(dirPath, "new/dir")
               addDialog.miniEditor.insertText("new/dir/")
               addDialog.trigger 'core:confirm'
-              expect(fs.existsSync(newPath)).toBeTruthy()
               expect(fs.isDirectorySync(newPath)).toBeTruthy()
               expect(addDialog.parent()).not.toExist()
               expect(atom.workspace.getActivePaneItem().getPath()).not.toBe newPath
@@ -1426,7 +1423,6 @@ describe "TreeView", ->
               newPath = path.join(dirPath, "new2/")
               addDialog.miniEditor.insertText("new2/")
               addDialog.trigger 'core:confirm'
-              expect(fs.existsSync(newPath)).toBeTruthy()
               expect(fs.isDirectorySync(newPath)).toBeTruthy()
               expect(addDialog.parent()).not.toExist()
               expect(atom.workspace.getActivePaneItem().getPath()).not.toBe newPath
