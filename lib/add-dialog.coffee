@@ -13,8 +13,7 @@ class AddDialog extends Dialog
       directoryPath = initialPath
     relativeDirectoryPath = atom.project.relativize(directoryPath)
 
-    dirSeparator = if process.platform is 'win32' then '\\' else '/'
-    relativeDirectoryPath += dirSeparator if relativeDirectoryPath.length > 0
+    relativeDirectoryPath += path.sep if relativeDirectoryPath.length > 0
 
     super
       prompt: "Enter the path for the new " + if isCreatingFile then "file." else "folder."
@@ -33,7 +32,7 @@ class AddDialog extends Dialog
         @showError("'#{pathToCreate}' already exists.")
       else if @isCreatingFile
         if endsWithDirectorySeparator
-          @showError("File names must not end with a '#{dirSeparator}' character.")
+          @showError("File names must not end with a '#{path.sep}' character.")
         else
           fs.writeFileSync(pathToCreate, '')
           atom.project.getRepo()?.getPathStatus(pathToCreate)
