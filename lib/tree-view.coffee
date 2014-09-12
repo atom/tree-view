@@ -11,7 +11,6 @@ CopyDialog = null # Defer requiring until actually needed
 
 Directory = require './directory'
 DirectoryView = require './directory-view'
-File = require './file'
 FileView = require './file-view'
 LocalStorage = window.localStorage
 
@@ -26,79 +25,13 @@ class TreeView extends ScrollView
   initialize: (state) ->
     super
 
-    focusAfterAttach = false
-    root = null
-    scrollLeftAfterAttach = -1
-    scrollTopAfterAttach = -1
-    selectedPath = null
+    @focusAfterAttach = false
+    @root = null
+    @scrollLeftAfterAttach = -1
+    @scrollTopAfterAttach = -1
+    @selectedPath = null
 
-    @on 'dblclick', '.tree-view-resize-handle', => @resizeToFitContent()
-    @on 'click', '.entry', (e) =>
-      @entryClicked(e) unless e.shiftKey or e.metaKey or e.ctrlKey
-    @on 'mousedown', '.entry', (e) =>
-      e.stopPropagation()
-      currentTarget = $(e.currentTarget)
-      # return early if we're opening a contextual menu (right click) during multi-select mode
-      return if @multiSelectEnabled() && currentTarget.hasClass('selected') &&
-                # mouse right click or ctrl click as right click on darwin platforms
-                (e.button is 2 || e.ctrlKey && process.platform is 'darwin')
-
-      entryToSelect = currentTarget.view()
-
-      if e.shiftKey
-        @selectContinuousEntries(entryToSelect)
-        @showMultiSelectMenu()
-      # only allow ctrl click for multi selection on non darwin systems
-      else if e.metaKey || (e.ctrlKey && process.platform isnt 'darwin')
-        @selectMultipleEntries(entryToSelect)
-
-        # only show the multi select menu if more then one file/directory is selected
-        @showMultiSelectMenu() if @selectedPaths().length > 1
-      else
-        @selectEntry(entryToSelect)
-        @showFullMenu()
-
-    # turn off default scrolling behavior from ScrollView
-    @off 'core:move-up'
-    @off 'core:move-down'
-
-    @on 'mousedown', '.tree-view-resize-handle', (e) => @resizeStarted(e)
-    @command 'core:move-up', => @moveUp()
-    @command 'core:move-down', => @moveDown()
-    @command 'tree-view:expand-directory', => @expandDirectory()
-    @command 'tree-view:recursive-expand-directory', => @expandDirectory(true)
-    @command 'tree-view:collapse-directory', => @collapseDirectory()
-    @command 'tree-view:recursive-collapse-directory', => @collapseDirectory(true)
-    @command 'tree-view:open-selected-entry', => @openSelectedEntry(true)
-    @command 'tree-view:move', => @moveSelectedEntry()
-    @command 'tree-view:copy', => @copySelectedEntries()
-    @command 'tree-view:cut', => @cutSelectedEntries()
-    @command 'tree-view:paste', => @pasteEntries()
-    @command 'tree-view:copy-full-path', => @copySelectedEntryPath(false)
-    @command 'tree-view:show-in-file-manager', => @showSelectedEntryInFileManager()
-    @command 'tree-view:open-in-new-window', => @openSelectedEntryInNewWindow()
-    @command 'tree-view:copy-project-path', => @copySelectedEntryPath(true)
-    @command 'tool-panel:unfocus', => @unfocus()
-    @command 'tree-view:toggle-vcs-ignored-files', -> atom.config.toggle 'tree-view.hideVcsIgnoredFiles'
-    @command 'tree-view:toggle-ignored-names', -> atom.config.toggle 'tree-view.hideIgnoredNames'
-
-    @on 'tree-view:directory-modified', =>
-      if @hasFocus()
-        @selectEntryForPath(@selectedPath) if @selectedPath
-      else
-        @selectActiveFile()
-
-    @subscribe atom.workspaceView, 'pane-container:active-pane-item-changed', =>
-      @selectActiveFile()
-    @subscribe atom.project, 'path-changed', => @updateRoot()
-    @subscribe atom.config.observe 'tree-view.hideVcsIgnoredFiles', callNow: false, =>
-      @updateRoot()
-    @subscribe atom.config.observe 'tree-view.hideIgnoredNames', callNow: false, =>
-      @updateRoot()
-    @subscribe atom.config.observe 'core.ignoredNames', callNow: false, =>
-      @updateRoot() if atom.config.get('tree-view.hideIgnoredNames')
-    @subscribe atom.config.observe 'tree-view.showOnRightSide', callNow: false, (newValue) =>
-      @onSideToggled(newValue)
+    @handleEvents()
 
     process.nextTick =>
       @onStylesheetsChanged()
@@ -135,6 +68,57 @@ class TreeView extends ScrollView
   deactivate: ->
     @remove()
 
+  handleEvents: ->
+    @on 'dblclick', '.tree-view-resize-handle', =>
+      @resizeToFitContent()
+    @on 'click', '.entry', (e) =>
+      @entryClicked(e) unless e.shiftKey or e.metaKey or e.ctrlKey
+    @on 'mousedown', '.entry', (e) =>
+      @onMouseDown(e)
+
+    # turn off default scrolling behavior from ScrollView
+    @off 'core:move-up'
+    @off 'core:move-down'
+
+    @on 'mousedown', '.tree-view-resize-handle', (e) => @resizeStarted(e)
+    @command 'core:move-up', => @moveUp()
+    @command 'core:move-down', => @moveDown()
+    @command 'tree-view:expand-directory', => @expandDirectory()
+    @command 'tree-view:recursive-expand-directory', => @expandDirectory(true)
+    @command 'tree-view:collapse-directory', => @collapseDirectory()
+    @command 'tree-view:recursive-collapse-directory', => @collapseDirectory(true)
+    @command 'tree-view:open-selected-entry', => @openSelectedEntry(true)
+    @command 'tree-view:move', => @moveSelectedEntry()
+    @command 'tree-view:copy', => @copySelectedEntries()
+    @command 'tree-view:cut', => @cutSelectedEntries()
+    @command 'tree-view:paste', => @pasteEntries()
+    @command 'tree-view:copy-full-path', => @copySelectedEntryPath(false)
+    @command 'tree-view:show-in-file-manager', => @showSelectedEntryInFileManager()
+    @command 'tree-view:open-in-new-window', => @openSelectedEntryInNewWindow()
+    @command 'tree-view:copy-project-path', => @copySelectedEntryPath(true)
+    @command 'tool-panel:unfocus', => @unfocus()
+    @command 'tree-view:toggle-vcs-ignored-files', -> atom.config.toggle 'tree-view.hideVcsIgnoredFiles'
+    @command 'tree-view:toggle-ignored-names', -> atom.config.toggle 'tree-view.hideIgnoredNames'
+
+    @on 'tree-view:directory-modified', =>
+      if @hasFocus()
+        @selectEntryForPath(@selectedPath) if @selectedPath
+      else
+        @selectActiveFile()
+
+    @subscribe atom.workspaceView, 'pane-container:active-pane-item-changed', =>
+      @selectActiveFile()
+    @subscribe atom.project, 'path-changed', =>
+      @updateRoot()
+    @subscribe atom.config.observe 'tree-view.hideVcsIgnoredFiles', callNow: false, =>
+      @updateRoot()
+    @subscribe atom.config.observe 'tree-view.hideIgnoredNames', callNow: false, =>
+      @updateRoot()
+    @subscribe atom.config.observe 'core.ignoredNames', callNow: false, =>
+      @updateRoot() if atom.config.get('tree-view.hideIgnoredNames')
+    @subscribe atom.config.observe 'tree-view.showOnRightSide', callNow: false, (newValue) =>
+      @onSideToggled(newValue)
+
   toggle: ->
     if @isVisible()
       @detach()
@@ -147,13 +131,14 @@ class TreeView extends ScrollView
 
   attach: ->
     return unless atom.project.getPath()
+
     if atom.config.get('tree-view.showOnRightSide')
-      @removeClass('panel-left')
-      @addClass('panel-right')
+      @element.classList.remove('panel-left')
+      @element.classList.add('panel-right')
       atom.workspaceView.appendToRight(this)
     else
-      @removeClass('panel-right')
-      @addClass('panel-left')
+      @element.classList.remove('panel-right')
+      @element.classList.add('panel-left')
       atom.workspaceView.appendToLeft(this)
 
   detach: ->
@@ -183,7 +168,7 @@ class TreeView extends ScrollView
       @show()
 
   entryClicked: (e) ->
-    entry = $(e.currentTarget).view()
+    entry = e.currentTarget
     isRecursive = e.altKey || false
     switch e.originalEvent?.detail ? 1
       when 1
@@ -191,9 +176,9 @@ class TreeView extends ScrollView
         @openSelectedEntry(false) if entry instanceof FileView
         entry.toggleExpansion(isRecursive) if entry instanceof DirectoryView
       when 2
-        if entry.is('.selected.file')
+        if entry instanceof FileView
           atom.workspaceView.getActiveView()?.focus()
-        else if entry.is('.selected.directory')
+        else if DirectoryView
           entry.toggleExpansion(isRecursive)
 
     false
@@ -220,12 +205,22 @@ class TreeView extends ScrollView
     @width(@list.outerWidth())
 
   updateRoot: (expandedEntries={}) ->
-    @root?.remove()
+    if @root?
+      @root.directory.destroy()
+      @root.remove()
 
-    if rootDirectory = atom.project.getRootDirectory()
-      directory = new Directory({directory: rootDirectory, isExpanded: true, expandedEntries, isRoot: true})
-      @root = new DirectoryView(directory)
-      @list.append(@root)
+    if projectPath = atom.project.getPath()
+      directory = new Directory({
+        name: path.basename(projectPath)
+        fullPath: projectPath
+        symlink: false
+        isRoot: true
+        expandedEntries
+        isExpanded: true
+      })
+      @root = new DirectoryView()
+      @root.initialize(directory)
+      @list.element.appendChild(@root)
 
       if @attachAfterProjectPathSet
         @attach()
@@ -255,7 +250,7 @@ class TreeView extends ScrollView
     for pathComponent in activePathComponents
       currentPath += path.sep + pathComponent
       entry = @entryForPath(currentPath)
-      if entry.hasClass('directory')
+      if entry instanceof DirectoryView
         entry.expand()
       else
         centeringOffset = (@scrollBottom() - @scrollTop()) / 2
@@ -268,28 +263,29 @@ class TreeView extends ScrollView
       atom.clipboard.write(pathToCopy)
 
   entryForPath: (entryPath) ->
-    fn = (bestMatchEntry, element) ->
-      entry = $(element).view()
+    bestMatchEntry = @root
+    for entry in @list.element.querySelectorAll('.entry')
       if entry.getPath() is entryPath
-        entry
-      else if entry.getPath().length > bestMatchEntry.getPath().length and entry.directory?.contains(entryPath)
-        entry
-      else
-        bestMatchEntry
+        bestMatchEntry = entry
+        break
+      if entry.getPath().length > bestMatchEntry.getPath().length and entry.directory?.contains(entryPath)
+        bestMatchEntry = entry
 
-    @list.find(".entry").toArray().reduce(fn, @root)
+    bestMatchEntry
 
   selectEntryForPath: (entryPath) ->
     @selectEntry(@entryForPath(entryPath))
 
   moveDown: ->
     selectedEntry = @selectedEntry()
-    if selectedEntry
-      if selectedEntry.is('.expanded.directory')
-        if @selectEntry(selectedEntry.find('.entry:first'))
+    if selectedEntry?
+      if selectedEntry instanceof DirectoryView
+        if @selectEntry(selectedEntry.entries.children[0])
           @scrollToEntry(@selectedEntry())
           return
-      until @selectEntry(selectedEntry.next('.entry'))
+
+      selectedEntry = $(selectedEntry)
+      until @selectEntry(selectedEntry.next('.entry')[0])
         selectedEntry = selectedEntry.parents('.entry:first')
         break unless selectedEntry.length
     else
@@ -299,32 +295,35 @@ class TreeView extends ScrollView
 
   moveUp: ->
     selectedEntry = @selectedEntry()
-    if selectedEntry
-      if previousEntry = @selectEntry(selectedEntry.prev('.entry'))
-        if previousEntry.is('.expanded.directory')
-          @selectEntry(previousEntry.find('.entry:last'))
+    if selectedEntry?
+      selectedEntry = $(selectedEntry)
+      if previousEntry = @selectEntry(selectedEntry.prev('.entry')[0])
+        if previousEntry instanceof DirectoryView
+          @selectEntry(_.last(previousEntry.entries.children))
       else
-        @selectEntry(selectedEntry.parents('.directory').first())
+        @selectEntry(selectedEntry.parents('.directory').first()?[0])
     else
-      @selectEntry(@list.find('.entry').last())
+      @selectEntry(@list.find('.entry').last()?[0])
 
     @scrollToEntry(@selectedEntry())
 
   expandDirectory: (isRecursive=false) ->
-    selectedEntry = @selectedEntry()
-    selectedEntry.view().expand(isRecursive) if selectedEntry instanceof DirectoryView
+    @selectedEntry()?.expand?(isRecursive)
 
   collapseDirectory: (isRecursive=false) ->
-    if directory = @selectedEntry()?.closest('.expanded.directory').view()
+    selectedEntry = @selectedEntry()
+    return unless selectedEntry?
+
+    if directory = $(selectedEntry).closest('.expanded.directory')[0]
       directory.collapse(isRecursive)
       @selectEntry(directory)
 
   openSelectedEntry: (changeFocus) ->
     selectedEntry = @selectedEntry()
     if selectedEntry instanceof DirectoryView
-      selectedEntry.view().toggleExpansion()
+      selectedEntry.toggleExpansion()
     else if selectedEntry instanceof FileView
-      atom.workspaceView.open(selectedEntry.getPath(), { changeFocus })
+      atom.workspaceView.open(selectedEntry.getPath(), {changeFocus})
 
   moveSelectedEntry: ->
     entry = @selectedEntry()
@@ -399,7 +398,7 @@ class TreeView extends ScrollView
   copySelectedEntry: ->
     if @hasFocus()
       entry = @selectedEntry()
-      return unless entry isnt root
+      return if entry is @root
       oldPath = entry.getPath()
     else
       oldPath = @getActivePath()
@@ -439,7 +438,7 @@ class TreeView extends ScrollView
   # Returns `copyPath`.
   copySelectedEntries: ->
     selectedPaths = @selectedPaths()
-    return unless selectedPaths && selectedPaths.length > 0
+    return unless selectedPaths and selectedPaths.length > 0
     # save to localStorage so we can paste across multiple open apps
     LocalStorage.removeItem('tree-view:cutPath')
     LocalStorage['tree-view:copyPath'] = JSON.stringify(selectedPaths)
@@ -452,7 +451,7 @@ class TreeView extends ScrollView
   # Returns `cutPath`
   cutSelectedEntries: ->
     selectedPaths = @selectedPaths()
-    return unless selectedPaths && selectedPaths.length > 0
+    return unless selectedPaths and selectedPaths.length > 0
     # save to localStorage so we can paste across multiple open apps
     LocalStorage.removeItem('tree-view:copyPath')
     LocalStorage['tree-view:cutPath'] = JSON.stringify(selectedPaths)
@@ -467,18 +466,13 @@ class TreeView extends ScrollView
     entry = @selectedEntry()
     cutPaths = if LocalStorage['tree-view:cutPath'] then JSON.parse(LocalStorage['tree-view:cutPath']) else null
     copiedPaths = if LocalStorage['tree-view:copyPath'] then JSON.parse(LocalStorage['tree-view:copyPath']) else null
-    initialPaths = copiedPaths || cutPaths
+    initialPaths = copiedPaths or cutPaths
 
     for initialPath in initialPaths ? []
       initialPathIsDirectory = fs.isDirectorySync(initialPath)
-      if entry && initialPath
-
+      if entry and initialPath
         basePath = atom.project.resolve(entry.getPath())
-        entryType = if entry instanceof DirectoryView then "directory" else "file"
-
-        if entryType is 'file'
-          basePath = path.dirname(basePath)
-
+        basePath = path.dirname(basePath) if entry instanceof FileView
         newPath = path.join(basePath, path.basename(initialPath))
 
         if copiedPaths
@@ -502,7 +496,7 @@ class TreeView extends ScrollView
         else if cutPaths
           # Only move the target if the cut target doesn't exists and if the newPath
           # is not within the initial path
-          unless fs.existsSync(newPath) || !!newPath.match(new RegExp("^#{initialPath}"))
+          unless fs.existsSync(newPath) or !!newPath.match(new RegExp("^#{initialPath}"))
             fs.moveSync(initialPath, newPath)
 
   add: (isCreatingFile) ->
@@ -521,18 +515,25 @@ class TreeView extends ScrollView
     dialog.attach()
 
   selectedEntry: ->
-    @list.find('.selected')?.view()
+    @list.element.querySelector('.selected')
 
   selectEntry: (entry) ->
-    entry = entry?.view()
-    return false unless entry?
+    return unless entry?
 
     @selectedPath = entry.getPath()
-    @deselect()
-    entry.addClass('selected')
 
-  deselect: ->
-    @list.find('.selected').removeClass('selected')
+    selectedEntries = @getSelectedEntries()
+    if selectedEntries.length > 1 or selectedEntries[0] isnt entry
+      @deselect(selectedEntries)
+      entry.classList.add('selected')
+    entry
+
+  getSelectedEntries: ->
+    @list.element.querySelectorAll('.selected')
+
+  deselect: (elementsToDeselect=@getSelectedEntries()) ->
+    selected.classList.remove('selected') for selected in elementsToDeselect
+    undefined
 
   scrollTop: (top) ->
     if top?
@@ -547,7 +548,11 @@ class TreeView extends ScrollView
       @scroller.scrollBottom()
 
   scrollToEntry: (entry, offset = 0) ->
-    displayElement = if entry instanceof DirectoryView then entry.header else entry
+    if entry instanceof DirectoryView
+      displayElement = $(entry.header)
+    else
+      displayElement = $(entry)
+
     top = displayElement.position().top
     bottom = top + displayElement.outerHeight()
     if bottom > @scrollBottom()
@@ -556,7 +561,9 @@ class TreeView extends ScrollView
       @scrollTop(top + offset)
 
   scrollToBottom: ->
-    if lastEntry = @root?.find('.entry:last').view()
+    return unless @root?
+
+    if lastEntry = _.last(@root?.querySelectorAll('.entry'))
       @selectEntry(lastEntry)
       @scrollToEntry(lastEntry)
 
@@ -571,14 +578,39 @@ class TreeView extends ScrollView
     return unless @isVisible()
 
     # Force a redraw so the scrollbars are styled correctly based on the theme
-    @[0].style.display = 'none'
-    @[0].offsetWidth
-    @[0].style.display = 'block'
+    @element.style.display = 'none'
+    @element.offsetWidth
+    @element.style.display = 'block'
+
+  onMouseDown: (e) ->
+    e.stopPropagation()
+
+    # return early if we're opening a contextual menu (right click) during multi-select mode
+    if @multiSelectEnabled() and
+       e.currentTarget.classList.contains('selected') and
+       # mouse right click or ctrl click as right click on darwin platforms
+       (e.button is 2 or e.ctrlKey && process.platform is 'darwin')
+      return
+
+    entryToSelect = e.currentTarget
+
+    if e.shiftKey
+      @selectContinuousEntries(entryToSelect)
+      @showMultiSelectMenu()
+    # only allow ctrl click for multi selection on non darwin systems
+    else if e.metaKey or (e.ctrlKey && process.platform isnt 'darwin')
+      @selectMultipleEntries(entryToSelect)
+
+      # only show the multi select menu if more then one file/directory is selected
+      @showMultiSelectMenu() if @selectedPaths().length > 1
+    else
+      @selectEntry(entryToSelect)
+      @showFullMenu()
 
   onSideToggled: (newValue) ->
     @detach()
     @attach()
-    @attr('data-show-on-right-side', newValue)
+    @element.setAttribute('data-show-on-right-side', newValue)
 
   # Public: Return an array of paths from all selected items
   #
@@ -586,7 +618,7 @@ class TreeView extends ScrollView
   # => ['selected/path/one', 'selected/path/two', 'selected/path/three']
   # Returns Array of selected item paths
   selectedPaths: ->
-    $(item).view().getPath() for item in @list.find('.selected')
+    entry.getPath() for entry in @getSelectedEntries()
 
   # Public: Selects items within a range defined by a currently selected entry and
   #         a new given entry. This is shift+click functionality
@@ -594,15 +626,14 @@ class TreeView extends ScrollView
   # Returns array of selected elements
   selectContinuousEntries: (entry)->
     currentSelectedEntry = @selectedEntry()
-    parentContainer = entry.parent()
-    if $.contains(parentContainer[0], currentSelectedEntry[0])
+    parentContainer = $(entry).parent()
+    if $.contains(parentContainer[0], currentSelectedEntry)
       entryIndex = parentContainer.indexOf(entry)
       selectedIndex = parentContainer.indexOf(currentSelectedEntry)
-      elements = (parentContainer.children()[i] for i in [entryIndex..selectedIndex])
+      elements = (parentContainer[0].children[i] for i in [entryIndex..selectedIndex])
 
       @deselect()
-      for element in elements
-        $(element).addClass('selected')
+      element.classList.add('selected') for element in elements
 
     elements
 
@@ -611,9 +642,7 @@ class TreeView extends ScrollView
   #
   # Returns given entry
   selectMultipleEntries: (entry)->
-    entry = entry?.view()
-    return false unless entry?
-    entry.addClass('selected')
+    entry?.classList.add('selected')
     entry
 
   # Public: Toggle full-menu class on the main list element to display the full context
@@ -621,17 +650,19 @@ class TreeView extends ScrollView
   #
   # Returns noop
   showFullMenu: ->
-    @list.removeClass('multi-select').addClass('full-menu')
+    @list.element.classList.remove('multi-select')
+    @list.element.classList.add('full-menu')
 
   # Public: Toggle multi-select class on the main list element to display the the
   #         menu with only items that make sense for multi select functionality
   #
   # Returns noop
   showMultiSelectMenu: ->
-    @list.removeClass('full-menu').addClass('multi-select')
+    @list.element.classList.remove('full-menu')
+    @list.element.classList.add('multi-select')
 
   # Public: Check for multi-select class on the main list
   #
   # Returns boolean
   multiSelectEnabled: ->
-    @list.hasClass('multi-select')
+    @list.element.classList.contains('multi-select')

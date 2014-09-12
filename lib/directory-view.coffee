@@ -1,18 +1,26 @@
-{$, View} = require 'atom'
-
+{CompositeDisposable} = require 'event-kit'
 Directory = require './directory'
 FileView = require './file-view'
-File = require './file'
 
-module.exports =
-class DirectoryView extends View
-  @content: ->
-    @li class: 'directory entry list-nested-item collapsed', =>
-      @div outlet: 'header', class: 'header list-item', =>
-        @span class: 'name icon', outlet: 'directoryName'
-      @ol class: 'entries list-tree', outlet: 'entries'
-
+class DirectoryView extends HTMLElement
   initialize: (@directory) ->
+    @subscriptions = new CompositeDisposable()
+    @subscriptions.add @directory.onDidDestroy => @subscriptions.dispose()
+
+    @classList.add('directory', 'entry',  'list-nested-item',  'collapsed')
+
+    @header = document.createElement('div')
+    @appendChild(@header)
+    @header.classList.add('header', 'list-item')
+
+    @directoryName = document.createElement('span')
+    @header.appendChild(@directoryName)
+    @directoryName.classList.add('name', 'icon')
+
+    @entries = document.createElement('ol')
+    @appendChild(@entries)
+    @entries.classList.add('entries', 'list-tree')
+
     if @directory.symlink
       iconClass = 'icon-file-symlink-directory'
     else
@@ -21,46 +29,64 @@ class DirectoryView extends View
         iconClass = 'icon-repo' if atom.project.getRepo()?.isProjectAtRoot()
       else
         iconClass = 'icon-file-submodule' if @directory.submodule
-    @directoryName.addClass(iconClass)
-    @directoryName.text(@directory.name)
-    @directoryName.attr('data-name', @directory.name)
-    @directoryName.attr('data-path', @directory.path)
+    @directoryName.classList.add(iconClass)
+    @directoryName.textContent = @directory.name
+    @directoryName.setAttribute('data-name', @directory.name)
+    @directoryName.setAttribute('data-path', @directory.path)
 
     unless @directory.isRoot
-      @subscribe @directory.$status.onValue (status) =>
-        @removeClass('status-ignored status-modified status-added')
-        @addClass("status-#{status}") if status?
+      @subscriptions.add @directory.onDidStatusChange => @updateStatus()
+      @updateStatus()
 
     @expand() if @directory.isExpanded
 
-  beforeRemove: ->
-    @directory.destroy()
+  updateStatus: ->
+    @classList.remove('status-ignored', 'status-modified', 'status-added')
+    @classList.add("status-#{@directory.status}") if @directory.status?
+
+  emitDirectoryModifiedEvent: ->
+    if @isExpanded
+      event = new CustomEvent('tree-view:directory-modified', bubbles: true)
+      @dispatchEvent(event)
 
   subscribeToDirectory: ->
-    @subscribe @directory, 'entry-added', (entry) =>
-      view = @createViewForEntry(entry)
-      insertionIndex = entry.indexInParentDirectory
-      if insertionIndex < @entries.children().length
-        @entries.children().eq(insertionIndex).before(view)
-      else
-        @entries.append(view)
+    @subscriptions.add @directory.onDidAddEntries (addedEntries) =>
+      return unless @isExpanded
 
-    @subscribe @directory, 'entry-added entry-removed', =>
-      @trigger 'tree-view:directory-modified' if @isExpanded
+      numberOfEntries = @entries.children.length
+
+      for entry in addedEntries
+        view = @createViewForEntry(entry)
+
+        insertionIndex = entry.indexInParentDirectory
+        if insertionIndex < numberOfEntries
+          @entries.insertBefore(view, @entries.children[insertionIndex])
+        else
+          @entries.appendChild(view)
+
+        numberOfEntries++
+
+      @emitDirectoryModifiedEvent()
+
+    @subscriptions.add @directory.onDidRemoveEntries =>
+      @emitDirectoryModifiedEvent() if @isExpanded
 
   getPath: ->
     @directory.path
 
   createViewForEntry: (entry) ->
     if entry instanceof Directory
-      view = new DirectoryView(entry)
+      view = new DirectoryElement()
     else
-      view = new FileView(entry)
+      view = new FileView()
+    view.initialize(entry)
 
-    subscription = @subscribe @directory, 'entry-removed', (removedEntry) ->
-      if entry is removedEntry
+    subscription = @directory.onDidRemoveEntries (removedEntries) ->
+      for removedName, removedEntry of removedEntries when entry is removedEntry
         view.remove()
-        subscription.off()
+        subscription.dispose()
+        break
+    @subscriptions.add(subscription)
 
     view
 
@@ -71,27 +97,30 @@ class DirectoryView extends View
     if @isExpanded then @collapse(isRecursive) else @expand(isRecursive)
 
   expand: (isRecursive=false) ->
-    if not @isExpanded
-      @addClass('expanded').removeClass('collapsed')
+    unless @isExpanded
+      @isExpanded = true
+      @classList.add('expanded')
+      @classList.remove('collapsed')
       @subscribeToDirectory()
       @directory.expand()
-      @isExpanded = true
 
     if isRecursive
-      for child in @entries.children()
-        childView = $(child).view()
-        childView.expand(true) if childView instanceof DirectoryView
+      for entry in @entries.children when entry instanceof DirectoryView
+        entry.expand(true)
 
     false
 
   collapse: (isRecursive=false) ->
-    if isRecursive
-      for child in @entries.children()
-        childView = $(child).view()
-        childView.collapse(true) if childView instanceof DirectoryView and childView.isExpanded
-
-    @removeClass('expanded').addClass('collapsed')
-    @directory.collapse()
-    @unsubscribe(@directory)
-    @entries.empty()
     @isExpanded = false
+
+    if isRecursive
+      for entry in @entries.children when entry.isExpanded
+        entry.collapse(true)
+
+    @classList.remove('expanded')
+    @classList.add('collapsed')
+    @directory.collapse()
+    @entries.innerHTML = ''
+
+DirectoryElement = document.registerElement('tree-view-directory', prototype: DirectoryView.prototype, extends: 'li')
+module.exports = DirectoryElement

@@ -1,42 +1,67 @@
 path = require 'path'
-
-{Model} = require 'theorist'
 _ = require 'underscore-plus'
-
+{CompositeDisposable, Emitter} = require 'event-kit'
+fs = require 'fs-plus'
+PathWatcher = require 'pathwatcher'
 File = require './file'
 
+realpathCache = {}
+
 module.exports =
-class Directory extends Model
-  @properties
-    directory: null
-    isRoot: false
-    isExpanded: false
-    status: null # Either null, 'added', 'ignored', or 'modified'
-    entries: -> {}
-    expandedEntries: -> {}
+class Directory
+  constructor: ({@name, fullPath, @symlink, @expandedEntries, @isExpanded, @isRoot}) ->
+    @emitter = new Emitter()
+    @subscriptions = new CompositeDisposable()
 
-  @::accessor 'name', -> @directory.getBaseName() or @path
-  @::accessor 'path', -> @directory.getPath()
-  @::accessor 'submodule', -> atom.project.getRepo()?.isSubmodule(@path)
-  @::accessor 'symlink', -> @directory.symlink
+    @path = fullPath
+    @lowerCasePath = @path.toLowerCase() if fs.isCaseInsensitive()
 
-  constructor: ->
-    super
+    @isRoot ?= false
+    @isExpanded ?= false
+    @expandedEntries ?= {}
+    @status = null
+    @entries = {}
+
+    @submodule = atom.project.getRepo()?.isSubmodule(@path)
+
     repo = atom.project.getRepo()
     if repo?
       @subscribeToRepo(repo)
       @updateStatus(repo)
+    @loadRealPath(repo)
 
-  # Called by theorist.
-  destroyed: ->
+  destroy: ->
     @unwatch()
-    @unsubscribe()
+    @subscriptions.dispose()
+    @emitter.emit('did-destroy')
+
+  onDidDestroy: (callback) ->
+    @emitter.on('did-destroy', callback)
+
+  onDidStatusChange: (callback) ->
+    @emitter.on('did-status-change', callback)
+
+  onDidAddEntries: (callback) ->
+    @emitter.on('did-add-entries', callback)
+
+  onDidRemoveEntries: (callback) ->
+    @emitter.on('did-remove-entries', callback)
+
+  loadRealPath: (repo) ->
+    fs.realpath @path, realpathCache, (error, realPath) =>
+      if realPath
+        @realPath = realPath
+        @lowerCaseRealPath = @realPath.toLowerCase() if fs.isCaseInsensitive()
+        @updateStatus(repo) if repo?
+      else
+        @realPath = @path
+        @lowerCaseRealPath = @lowerCasePath
 
   # Subscribe to the given repo for changes to the Git status of this directory.
   subscribeToRepo: (repo) ->
-    @subscribe repo, 'status-changed', (changedPath, status) =>
-      @updateStatus(repo) if changedPath.indexOf("#{@path}#{path.sep}") is 0
-    @subscribe repo, 'statuses-changed', =>
+    @subscriptions.add repo.onDidChangeStatus (event) =>
+      @updateStatus(repo) if event.path.indexOf("#{@path}#{path.sep}") is 0
+    @subscriptions.add repo.onDidChangeStatuses =>
       @updateStatus(repo)
 
   # Update the status property of this directory using the repo.
@@ -51,7 +76,9 @@ class Directory extends Model
       else if repo.isStatusNew(status)
         newStatus = 'added'
 
-    @status = newStatus if newStatus isnt @status
+    if newStatus isnt @status
+      @status = newStatus
+      @emitter.emit('did-status-change', newStatus)
 
   # Is the given path ignored?
   isPathIgnored: (filePath) ->
@@ -69,40 +96,92 @@ class Directory extends Model
 
     false
 
-  # Create a new model for the given atom.File or atom.Directory entry.
-  createEntry: (entry, index) ->
-    if entry.getEntriesSync?
-      expandedEntries = @expandedEntries[entry.getBaseName()]
-      isExpanded = expandedEntries?
-      entry = new Directory({directory: entry, isExpanded, expandedEntries})
-    else
-      entry = new File(file: entry)
-    entry.indexInParentDirectory = index
-    entry
+  # Does given full path start with the given prefix?
+  isPathPrefixOf: (prefix, fullPath) ->
+    fullPath.indexOf(prefix) is 0 and fullPath[prefix.length] is path.sep
 
   # Public: Does this directory contain the given path?
   #
   # See atom.Directory::contains for more details.
   contains: (pathToCheck) ->
-    @directory.contains(pathToCheck)
+    return false unless pathToCheck
+
+    # Normalize forward slashes to back slashes on windows
+    pathToCheck = pathToCheck.replace(/\//g, '\\') if process.platform is 'win32'
+
+    if fs.isCaseInsensitive()
+      directoryPath = @lowerCasePath
+      pathToCheck = pathToCheck.toLowerCase()
+    else
+      directoryPath = @path
+
+    return true if @isPathPrefixOf(directoryPath, pathToCheck)
+
+    # Check real path
+    if @realPath
+      if fs.isCaseInsensitive()
+        directoryPath = @lowerCaseRealPath
+      else
+        directoryPath = @realPath
+
+      return @isPathPrefixOf(directoryPath, pathToCheck)
+
+    false
 
   # Public: Stop watching this directory for changes.
   unwatch: ->
     if @watchSubscription?
-      @watchSubscription.off()
+      @watchSubscription.close()
       @watchSubscription = null
-      if @isAlive()
-        for key, entry of @entries
-          entry.destroy()
-          delete @entries[key]
+
+    for key, entry of @entries
+      entry.destroy()
+      delete @entries[key]
 
   # Public: Watch this directory for changes.
-  #
-  # The changes will be emitted as 'entry-added' and 'entry-removed' events.
   watch: ->
-    unless @watchSubscription?
-      @watchSubscription = @directory.on 'contents-changed', => @reload()
-      @subscribe(@watchSubscription)
+    @watchSubscription ?= PathWatcher.watch @path, (eventType) =>
+      switch eventType
+        when 'change' then @reload()
+        when 'delete' then @destroy()
+
+  getEntries: ->
+    try
+      names = fs.readdirSync(@path)
+    catch error
+      names = []
+
+    names.sort (name1, name2) -> name1.toLowerCase().localeCompare(name2.toLowerCase())
+
+    files = []
+    directories = []
+
+    for name in names
+      fullPath = path.join(@path, name)
+      continue if @isPathIgnored(fullPath)
+
+      stat = fs.lstatSyncNoException(fullPath)
+      symlink = stat.isSymbolicLink()
+      stat = fs.statSyncNoException(fullPath) if symlink
+
+      if stat.isDirectory?()
+        if @entries.hasOwnProperty(name)
+          # push a placeholder since this entry already exists but this helps
+          # track the insertion index for the created views
+          directories.push(name)
+        else
+          expandedEntries = @expandedEntries[name]
+          isExpanded = expandedEntries?
+          directories.push(new Directory({name, fullPath, symlink, isExpanded, expandedEntries}))
+      else if stat.isFile?()
+        if @entries.hasOwnProperty(name)
+          # push a placeholder since this entry already exists but this helps
+          # track the insertion index for the created views
+          files.push(name)
+        else
+          files.push(new File({name, fullPath, symlink, realpathCache}))
+
+    directories.concat(files)
 
   # Public: Perform a synchronous reload of the directory.
   reload: ->
@@ -110,25 +189,27 @@ class Directory extends Model
     removedEntries = _.clone(@entries)
     index = 0
 
-    for entry in @directory.getEntriesSync()
-      name = entry.getBaseName()
-      if @entries.hasOwnProperty(name)
-        delete removedEntries[name]
+    for entry in @getEntries()
+      if @entries.hasOwnProperty(entry)
+        delete removedEntries[entry]
         index++
-      else if not @isPathIgnored(entry.path)
-        newEntries.push([entry, index])
-        index++
+        continue
 
+      entry.indexInParentDirectory = index
+      index++
+      newEntries.push(entry)
+
+    entriesRemoved = false
     for name, entry of removedEntries
+      entriesRemoved = true
       entry.destroy()
       delete @entries[name]
       delete @expandedEntries[name]
-      @emit 'entry-removed', entry
+    @emitter.emit('did-remove-entries', removedEntries) if entriesRemoved
 
-    for [entry, index] in newEntries
-      entry = @createEntry(entry, index)
-      @entries[entry.name] = entry
-      @emit 'entry-added', entry
+    if newEntries.length > 0
+      @entries[entry.name] = entry for entry in newEntries
+      @emitter.emit('did-add-entries', newEntries)
 
   # Public: Collapse this directory and stop watching it.
   collapse: ->

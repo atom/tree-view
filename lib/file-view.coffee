@@ -1,33 +1,39 @@
-{View} = require 'atom'
+{CompositeDisposable} = require 'event-kit'
 
 module.exports =
-class FileView extends View
-  @content: ->
-    @li class: 'file entry list-item', =>
-      @span class: 'name icon', outlet: 'fileName'
-
+class FileView extends HTMLElement
   initialize: (@file) ->
-    @fileName.text(@file.name)
-    @fileName.attr('data-name', @file.name)
-    @fileName.attr('data-path', @file.path)
+    @subscriptions = new CompositeDisposable()
+    @subscriptions.add @file.onDidDestroy => @subscriptions.dispose()
+
+    @classList.add('file', 'entry', 'list-item')
+
+    @fileName = document.createElement('span')
+    @fileName.classList.add('name')
+    @appendChild(@fileName)
+    @fileName.textContent = @file.name
+    @fileName.setAttribute('data-name', @file.name)
+    @fileName.setAttribute('data-path', @file.path)
 
     if @file.symlink
-      @fileName.addClass('icon-file-symlink-file')
+      @fileName.classList.add('icon-file-symlink-file')
     else
       switch @file.type
-        when 'binary'     then @fileName.addClass('icon-file-binary')
-        when 'compressed' then @fileName.addClass('icon-file-zip')
-        when 'image'      then @fileName.addClass('icon-file-media')
-        when 'pdf'        then @fileName.addClass('icon-file-pdf')
-        when 'readme'     then @fileName.addClass('icon-book')
-        when 'text'       then @fileName.addClass('icon-file-text')
+        when 'binary'     then @fileName.classList.add('icon-file-binary')
+        when 'compressed' then @fileName.classList.add('icon-file-zip')
+        when 'image'      then @fileName.classList.add('icon-file-media')
+        when 'pdf'        then @fileName.classList.add('icon-file-pdf')
+        when 'readme'     then @fileName.classList.add('icon-book')
+        when 'text'       then @fileName.classList.add('icon-file-text')
 
-    @subscribe @file.$status.onValue (status) =>
-      @removeClass('status-ignored status-modified status-added')
-      @addClass("status-#{status}") if status?
+    @subscriptions.add @file.onDidStatusChange => @updateStatus()
+    @updateStatus()
+
+  updateStatus: ->
+    @classList.remove('status-ignored', 'status-modified',  'status-added')
+    @classList.add("status-#{@file.status}") if @file.status?
 
   getPath: ->
     @file.path
 
-  beforeRemove: ->
-    @file.destroy()
+module.exports = document.registerElement('tree-view-file', prototype: FileView.prototype, extends: 'li')
