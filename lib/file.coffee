@@ -25,15 +25,13 @@ class File
     else
       @type = 'text'
 
-    repo = atom.project.getRepo()
-    if repo?
-      @subscribeToRepo(repo)
-      @updateStatus(repo)
+    @subscribeToRepo()
+    @updateStatus()
 
     fs.realpath @path, realpathCache, (error, realPath) =>
       if realPath and realPath isnt @path
         @path = realPath
-        @updateStatus(repo) if repo?
+        @updateStatus()
 
   destroy: ->
     @subscriptions.dispose()
@@ -45,15 +43,21 @@ class File
   onDidStatusChange: (callback) ->
     @emitter.on('did-status-change', callback)
 
-  # Subscribe to the given repo for changes to the Git status of this directory.
-  subscribeToRepo: (repo)->
+  # Subscribe to the project' repo for changes to the Git status of this file.
+  subscribeToRepo: ->
+    repo = atom.project.getRepo()
+    return unless repo?
+
     @subscriptions.add repo.onDidChangeStatus (event) =>
       @updateStatus(repo) if event.path is @path
     @subscriptions.add repo.onDidChangeStatuses =>
       @updateStatus(repo)
 
   # Update the status property of this directory using the repo.
-  updateStatus: (repo) ->
+  updateStatus:  ->
+    repo = atom.project.getRepo()
+    return unless repo?
+
     newStatus = null
     if repo.isPathIgnored(@path)
       newStatus = 'ignored'
