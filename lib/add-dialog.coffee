@@ -23,7 +23,7 @@ class AddDialog extends Dialog
 
   onConfirm: (relativePath) ->
     relativePath = relativePath.replace(/\s+$/, '') # Remove trailing whitespace
-    endsWithDirectorySeparator = /\/|\\$/.test(relativePath)
+    endsWithDirectorySeparator = relativePath[relativePath.length - 1] is path.sep
     pathToCreate = atom.project.resolve(relativePath)
     return unless pathToCreate
 
