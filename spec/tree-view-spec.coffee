@@ -1316,6 +1316,18 @@ describe "TreeView", ->
             expect(addDialog.parent()).not.toExist()
             expect(atom.workspaceView.getActiveView().isFocused).toBeTruthy()
 
+        describe "when the path ends with whitespace", ->
+          it "removes the trailing whitespace before creating the file", ->
+            newPath = path.join(dirPath, "new-test-file.txt")
+            addDialog.miniEditor.insertText(path.basename(newPath) + "  ")
+
+            waitsForFileToOpen ->
+              addDialog.trigger 'core:confirm'
+
+            runs ->
+              expect(fs.isFileSync(newPath)).toBeTruthy()
+              expect(atom.workspace.getActivePaneItem().getPath()).toBe newPath
+
       describe "when a directory is selected", ->
         it "opens an add dialog with the directory's path populated", ->
           addDialog.cancel()

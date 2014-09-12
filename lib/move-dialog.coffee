@@ -17,6 +17,7 @@ class MoveDialog extends Dialog
       iconClass: 'icon-arrow-right'
 
   onConfirm: (newPath) ->
+    newPath = newPath.replace(/\s+$/, '') # Remove trailing whitespace
     newPath = atom.project.resolve(newPath)
     return unless newPath
 

@@ -21,6 +21,7 @@ class AddDialog extends Dialog
       iconClass: if isCreatingFile then 'icon-file-add' else 'icon-file-directory-create'
 
   onConfirm: (relativePath) ->
+    relativePath = relativePath.replace(/\s+$/, '') # Remove trailing whitespace
     endsWithDirectorySeparator = /\/$/.test(relativePath)
     pathToCreate = atom.project.resolve(relativePath)
     return unless pathToCreate
