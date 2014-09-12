@@ -6,6 +6,7 @@ class DirectoryView extends HTMLElement
   initialize: (@directory) ->
     @subscriptions = new CompositeDisposable()
     @subscriptions.add @directory.onDidDestroy => @subscriptions.dispose()
+    @subscribeToDirectory()
 
     @classList.add('directory', 'entry',  'list-nested-item',  'collapsed')
 
@@ -103,7 +104,6 @@ class DirectoryView extends HTMLElement
       @isExpanded = true
       @classList.add('expanded')
       @classList.remove('collapsed')
-      @subscribeToDirectory()
       @directory.expand()
 
     if isRecursive
