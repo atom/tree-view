@@ -12,7 +12,8 @@ class AddDialog extends Dialog
     else
       directoryPath = initialPath
     relativeDirectoryPath = atom.project.relativize(directoryPath)
-    relativeDirectoryPath += '/' if relativeDirectoryPath.length > 0
+
+    relativeDirectoryPath += path.sep if relativeDirectoryPath.length > 0
 
     super
       prompt: "Enter the path for the new " + if isCreatingFile then "file." else "folder."
@@ -22,7 +23,7 @@ class AddDialog extends Dialog
 
   onConfirm: (relativePath) ->
     relativePath = relativePath.replace(/\s+$/, '') # Remove trailing whitespace
-    endsWithDirectorySeparator = /\/$/.test(relativePath)
+    endsWithDirectorySeparator = relativePath[relativePath.length - 1] is path.sep
     pathToCreate = atom.project.resolve(relativePath)
     return unless pathToCreate
 
@@ -31,7 +32,7 @@ class AddDialog extends Dialog
         @showError("'#{pathToCreate}' already exists.")
       else if @isCreatingFile
         if endsWithDirectorySeparator
-          @showError("File names must not end with a '/' character.")
+          @showError("File names must not end with a '#{path.sep}' character.")
         else
           fs.writeFileSync(pathToCreate, '')
           atom.project.getRepo()?.getPathStatus(pathToCreate)
