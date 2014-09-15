@@ -264,6 +264,7 @@ describe "TreeView", ->
           expect(treeView).toBeVisible()
           atom.workspaceView.trigger 'tree-view:toggle-side'
           expect(treeView).toMatchSelector('[data-show-on-right-side="true"]')
+
       describe "when the tree view is on the right", ->
         beforeEach ->
           atom.workspaceView.trigger 'tree-view:toggle-side'
