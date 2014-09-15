@@ -625,13 +625,14 @@ class TreeView extends ScrollView
   #         a new given entry. This is shift+click functionality
   #
   # Returns array of selected elements
-  selectContinuousEntries: (entry)->
+  selectContinuousEntries: (entry) ->
     currentSelectedEntry = @selectedEntry()
     parentContainer = $(entry).parent()
     if $.contains(parentContainer[0], currentSelectedEntry)
-      entryIndex = parentContainer.indexOf(entry)
-      selectedIndex = parentContainer.indexOf(currentSelectedEntry)
-      elements = (parentContainer[0].children[i] for i in [entryIndex..selectedIndex])
+      entries = parentContainer.find('.entry').toArray()
+      entryIndex = entries.indexOf(entry)
+      selectedIndex = entries.indexOf(currentSelectedEntry)
+      elements = (entries[i] for i in [entryIndex..selectedIndex])
 
       @deselect()
       element.classList.add('selected') for element in elements
@@ -642,7 +643,7 @@ class TreeView extends ScrollView
   #         items. This is cmd+click functionality
   #
   # Returns given entry
-  selectMultipleEntries: (entry)->
+  selectMultipleEntries: (entry) ->
     entry?.classList.add('selected')
     entry
 
