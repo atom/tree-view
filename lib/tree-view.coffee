@@ -170,7 +170,7 @@ class TreeView extends ScrollView
 
   entryClicked: (e) ->
     entry = e.currentTarget
-    isRecursive = e.altKey || false
+    isRecursive = e.altKey or false
     switch e.originalEvent?.detail ? 1
       when 1
         @selectEntry(entry)
@@ -590,7 +590,7 @@ class TreeView extends ScrollView
     if @multiSelectEnabled() and
        e.currentTarget.classList.contains('selected') and
        # mouse right click or ctrl click as right click on darwin platforms
-       (e.button is 2 or e.ctrlKey && process.platform is 'darwin')
+       (e.button is 2 or e.ctrlKey and process.platform is 'darwin')
       return
 
     entryToSelect = e.currentTarget
@@ -599,7 +599,7 @@ class TreeView extends ScrollView
       @selectContinuousEntries(entryToSelect)
       @showMultiSelectMenu()
     # only allow ctrl click for multi selection on non darwin systems
-    else if e.metaKey or (e.ctrlKey && process.platform isnt 'darwin')
+    else if e.metaKey or (e.ctrlKey and process.platform isnt 'darwin')
       @selectMultipleEntries(entryToSelect)
 
       # only show the multi select menu if more then one file/directory is selected
