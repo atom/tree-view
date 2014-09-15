@@ -12,8 +12,8 @@ class FileView extends HTMLElement
     @fileName.classList.add('name')
     @appendChild(@fileName)
     @fileName.textContent = @file.name
-    @fileName.setAttribute('data-name', @file.name)
-    @fileName.setAttribute('data-path', @file.path)
+    @fileName.dataset.name = @file.name
+    @fileName.dataset.path = @file.path
 
     if @file.symlink
       @fileName.classList.add('icon-file-symlink-file')
