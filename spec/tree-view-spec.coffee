@@ -567,7 +567,7 @@ describe "TreeView", ->
 
       it "selects the path's parent dir if its entry is not visible", ->
         waitsForPromise ->
-          atom.workspace.open('dir1/sub-dir1/sub-file1')
+          atom.workspace.open(path.join('dir1', 'sub-dir1', 'sub-file1'))
 
         runs ->
           dirView = root.find('.directory:contains(dir1)')
@@ -1248,8 +1248,8 @@ describe "TreeView", ->
         it "opens an add dialog with the file's current directory path populated", ->
           expect(addDialog).toExist()
           expect(addDialog.promptText.text()).toBeTruthy()
-          expect(atom.project.relativize(dirPath)).toMatch(/[^\/]$/)
-          expect(addDialog.miniEditor.getText()).toBe(atom.project.relativize(dirPath) + "/")
+          expect(atom.project.relativize(dirPath)).toMatch(/[^\\\/]$/)
+          expect(addDialog.miniEditor.getText()).toBe(atom.project.relativize(dirPath) + path.sep)
           expect(addDialog.miniEditor.getEditor().getCursorBufferPosition().column).toBe addDialog.miniEditor.getText().length
           expect(addDialog.miniEditor.isFocused).toBeTruthy()
 
@@ -1262,7 +1262,7 @@ describe "TreeView", ->
             expect(directoryModifiedHandler).toHaveBeenCalled()
             expect(treeView.find('.selected').text()).toBe path.basename(filePath)
 
-        describe "when the path without a trailing '/' is changed and confirmed", ->
+        describe "when the path without a trailing '#{path.sep}' is changed and confirmed", ->
           describe "when no file exists at that location", ->
             it "add a file, closes the dialog and selects the file in the tree-view", ->
               newPath = path.join(dirPath, "new-test-file.txt")
@@ -1293,9 +1293,9 @@ describe "TreeView", ->
               expect(addDialog).toHaveClass('error')
               expect(addDialog.hasParent()).toBeTruthy()
 
-        describe "when the path with a trailing '/' is changed and confirmed", ->
+        describe "when the path with a trailing '#{path.sep}' is changed and confirmed", ->
           it "shows an error message and does not close the dialog", ->
-            addDialog.miniEditor.insertText("new-test-file/")
+            addDialog.miniEditor.insertText("new-test-file" + path.sep)
             addDialog.trigger 'core:confirm'
 
             expect(addDialog.errorMessage.text()).toContain 'names must not end with'
@@ -1337,8 +1337,8 @@ describe "TreeView", ->
 
           expect(addDialog).toExist()
           expect(addDialog.promptText.text()).toBeTruthy()
-          expect(atom.project.relativize(dirPath)).toMatch(/[^\/]$/)
-          expect(addDialog.miniEditor.getText()).toBe(atom.project.relativize(dirPath) + "/")
+          expect(atom.project.relativize(dirPath)).toMatch(/[^\\\/]$/)
+          expect(addDialog.miniEditor.getText()).toBe(atom.project.relativize(dirPath) + path.sep)
           expect(addDialog.miniEditor.getEditor().getCursorBufferPosition().column).toBe addDialog.miniEditor.getText().length
           expect(addDialog.miniEditor.isFocused).toBeTruthy()
 
@@ -1379,17 +1379,17 @@ describe "TreeView", ->
         it "opens an add dialog with the file's current directory path populated", ->
           expect(addDialog).toExist()
           expect(addDialog.promptText.text()).toBeTruthy()
-          expect(atom.project.relativize(dirPath)).toMatch(/[^\/]$/)
-          expect(addDialog.miniEditor.getText()).toBe(atom.project.relativize(dirPath) + "/")
+          expect(atom.project.relativize(dirPath)).toMatch(/[^\\\/]$/)
+          expect(addDialog.miniEditor.getText()).toBe(atom.project.relativize(dirPath) + path.sep)
           expect(addDialog.miniEditor.getEditor().getCursorBufferPosition().column).toBe addDialog.miniEditor.getText().length
           expect(addDialog.miniEditor.isFocused).toBeTruthy()
 
-        describe "when the path without a trailing '/' is changed and confirmed", ->
+        describe "when the path without a trailing '#{path.sep}' is changed and confirmed", ->
           describe "when no directory exists at the given path", ->
             it "adds a directory and closes the dialog", ->
               treeView.attachToDom()
-              newPath = path.join(dirPath, "new/dir")
-              addDialog.miniEditor.insertText("new/dir")
+              newPath = path.join(dirPath, 'new', 'dir')
+              addDialog.miniEditor.insertText("new#{path.sep}dir")
               addDialog.trigger 'core:confirm'
               expect(fs.isDirectorySync(newPath)).toBeTruthy()
               expect(addDialog.parent()).not.toExist()
@@ -1398,12 +1398,12 @@ describe "TreeView", ->
               expect(atom.workspaceView.getActiveView().isFocused).toBeFalsy()
               expect(dirView.find('.directory.selected:contains(new)').length).toBe 1
 
-        describe "when the path with a trailing '/' is changed and confirmed", ->
+        describe "when the path with a trailing '#{path.sep}' is changed and confirmed", ->
           describe "when no directory exists at the given path", ->
             it "adds a directory and closes the dialog", ->
               treeView.attachToDom()
-              newPath = path.join(dirPath, "new/dir")
-              addDialog.miniEditor.insertText("new/dir/")
+              newPath = path.join(dirPath, 'new', 'dir')
+              addDialog.miniEditor.insertText("new#{path.sep}dir#{path.sep}")
               addDialog.trigger 'core:confirm'
               expect(fs.isDirectorySync(newPath)).toBeTruthy()
               expect(addDialog.parent()).not.toExist()
@@ -1421,8 +1421,8 @@ describe "TreeView", ->
               expandedView.expand()
 
               treeView.attachToDom()
-              newPath = path.join(dirPath, "new2/")
-              addDialog.miniEditor.insertText("new2/")
+              newPath = path.join(dirPath, "new2") + path.sep
+              addDialog.miniEditor.insertText("new2#{path.sep}")
               addDialog.trigger 'core:confirm'
               expect(fs.isDirectorySync(newPath)).toBeTruthy()
               expect(addDialog.parent()).not.toExist()
@@ -1436,7 +1436,7 @@ describe "TreeView", ->
             it "shows an error message and does not close the dialog", ->
               newPath = path.join(dirPath, "new-dir")
               fs.makeTreeSync(newPath)
-              addDialog.miniEditor.insertText("new-dir/")
+              addDialog.miniEditor.insertText("new-dir#{path.sep}")
               addDialog.trigger 'core:confirm'
 
               expect(addDialog.errorMessage.text()).toContain 'already exists'
@@ -1491,7 +1491,7 @@ describe "TreeView", ->
 
           describe "when the directories along the new path don't exist", ->
             it "creates the target directory before moving the file", ->
-              newPath = path.join(rootDirPath, 'new/directory', 'renamed-test-file.txt')
+              newPath = path.join(rootDirPath, 'new', 'directory', 'renamed-test-file.txt')
               moveDialog.miniEditor.setText(newPath)
 
               moveDialog.trigger 'core:confirm'
@@ -1608,7 +1608,7 @@ describe "TreeView", ->
 
           describe "when the directories along the new path don't exist", ->
             it "duplicates the tree and opens the new file", ->
-              newPath = path.join(rootDirPath, 'new/directory', 'duplicated-test-file.txt')
+              newPath = path.join(rootDirPath, 'new', 'directory', 'duplicated-test-file.txt')
               copyDialog.miniEditor.setText(newPath)
 
               waitsForFileToOpen ->
