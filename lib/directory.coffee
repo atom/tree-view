@@ -162,6 +162,7 @@ class Directory
       continue if @isPathIgnored(fullPath)
 
       stat = fs.lstatSyncNoException(fullPath)
+      continue unless stat
       symlink = stat.isSymbolicLink()
       stat = fs.statSyncNoException(fullPath) if symlink
 
