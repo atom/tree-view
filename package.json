@@ -10,7 +10,7 @@
   },
   "private": true,
   "dependencies": {
-    "fs-plus": "^2.0.4",
+    "fs-plus": "^2.3.0",
     "temp": "~0.7.0",
     "underscore-plus": "1.x",
     "wrench": "1.5.x",
