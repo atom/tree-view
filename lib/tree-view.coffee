@@ -417,7 +417,7 @@ class TreeView extends ScrollView
 
     return unless selectedPaths
 
-    if @root.getPath() in selectedPaths
+    if @root?.getPath() in selectedPaths
       atom.confirm
         message: "The root directory '#{@root.directory.name}' can't be removed."
         buttons: ['OK']
