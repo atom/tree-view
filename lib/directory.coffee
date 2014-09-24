@@ -141,10 +141,11 @@ class Directory
 
   # Public: Watch this directory for changes.
   watch: ->
-    @watchSubscription ?= PathWatcher.watch @path, (eventType) =>
-      switch eventType
-        when 'change' then @reload()
-        when 'delete' then @destroy()
+    try
+      @watchSubscription ?= PathWatcher.watch @path, (eventType) =>
+        switch eventType
+          when 'change' then @reload()
+          when 'delete' then @destroy()
 
   getEntries: ->
     try
