@@ -414,6 +414,9 @@ class TreeView extends ScrollView
     dialog.attach()
 
   removeSelectedEntries: ->
+    parents = _.uniq(_.map(@selectedPaths(),  (path) ->
+      return path.substring(0, path.lastIndexOf('/'))
+    ))
     if @hasFocus()
       selectedPaths = @selectedPaths()
     else if activePath = @getActivePath()
@@ -430,9 +433,10 @@ class TreeView extends ScrollView
         message: "Are you sure you want to delete the selected #{if selectedPaths.length > 1 then 'items' else 'item'}?"
         detailedMessage: "You are deleting:\n#{selectedPaths.join('\n')}"
         buttons:
-          "Move to Trash": ->
+          "Move to Trash": =>
             for selectedPath in selectedPaths
               shell.moveItemToTrash(selectedPath)
+            @selectEntry(@list.find("[data-path='#{parents[0]}']").parents('li').first()?[0])
           "Cancel": null
 
   # Public: Copy the path of the selected entry element.
