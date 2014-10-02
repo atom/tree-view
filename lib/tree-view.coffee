@@ -327,13 +327,17 @@ class TreeView extends ScrollView
       atom.workspaceView.open(selectedEntry.getPath(), {changeFocus})
 
   moveSelectedEntry: ->
-    entry = @selectedEntry()
-    return unless entry and entry isnt @root
-    oldPath = entry.getPath()
+    if @hasFocus()
+      entry = @selectedEntry()
+      return unless entry and entry isnt @root
+      oldPath = entry.getPath()
+    else
+      oldPath = @getActivePath()
 
-    MoveDialog ?= require './move-dialog'
-    dialog = new MoveDialog(oldPath)
-    dialog.attach()
+    if oldPath
+      MoveDialog ?= require './move-dialog'
+      dialog = new MoveDialog(oldPath)
+      dialog.attach()
 
   # Get the outline of a system call to the current platform's file manager.
   #
