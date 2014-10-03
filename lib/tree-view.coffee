@@ -414,8 +414,8 @@ class TreeView extends ScrollView
     dialog.attach()
 
   removeSelectedEntries: ->
-    parents = _.uniq(_.map(@selectedPaths(),  (selected_path) ->
-      return selected_path.substring(0, selected_path.lastIndexOf(path.sep))
+    parents = _.uniq(_.map(@selectedPaths(),  (selectedPath) ->
+      return selectedPath.substring(0, selectedPath.lastIndexOf(path.sep))
     ))
     if @hasFocus()
       selectedPaths = @selectedPaths()
