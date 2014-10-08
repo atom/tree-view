@@ -14,6 +14,8 @@
   'cmd-c': 'tree-view:copy'
   'cmd-x': 'tree-view:cut'
   'cmd-v': 'tree-view:paste'
+  'ctrl-f': 'tree-view:expand-directory'
+
 
 '.platform-win32 .tree-view, .platform-linux .tree-view':
   'ctrl-c': 'tree-view:copy'
@@ -24,7 +26,6 @@
   'right': 'tree-view:expand-directory'
   'ctrl-]': 'tree-view:expand-directory'
   'l': 'tree-view:expand-directory'
-  'ctrl-f': 'tree-view:expand-directory'
   'left': 'tree-view:collapse-directory'
   'ctrl-[': 'tree-view:collapse-directory'
   'alt-ctrl-]': 'tree-view:recursive-expand-directory'
