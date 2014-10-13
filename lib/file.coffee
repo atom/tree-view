@@ -2,7 +2,6 @@ path = require 'path'
 fs = require 'fs-plus'
 {CompositeDisposable, Emitter} = require 'event-kit'
 
-
 module.exports =
 class File
   constructor: ({@name, fullPath, @symlink, realpathCache}) ->
