@@ -34,6 +34,6 @@ class FileView extends HTMLElement
     @classList.add("status-#{@file.status}") if @file.status?
 
   getPath: ->
-    @file.path
+    @fileName.dataset.path
 
 module.exports = document.registerElement('tree-view-file', prototype: FileView.prototype, extends: 'li')
