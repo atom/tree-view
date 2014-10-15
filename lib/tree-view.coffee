@@ -648,10 +648,7 @@ class TreeView extends ScrollView
   #
   # Returns given entry
   selectMultipleEntries: (entry) ->
-    if entry?.classList.contains('selected')
-      entry?.classList.remove('selected')
-    else
-      entry?.classList.add('selected')
+    entry?.classList.toggle('selected')
     entry
 
   # Public: Toggle full-menu class on the main list element to display the full context
