@@ -46,7 +46,7 @@ class TreeView extends ScrollView
     @scrollLeftAfterAttach = state.scrollLeft if state.scrollLeft
     @attachAfterProjectPathSet = state.attached and not atom.project.getPath()
     @width(state.width) if state.width > 0
-    @attach() if state.attached
+    @attach(visible: !!state.attached)
 
   afterAttach: (onDom) ->
     @focus() if @focusAfterAttach
@@ -60,7 +60,7 @@ class TreeView extends ScrollView
     directoryExpansionStates: @root?.directory.serializeExpansionStates()
     selectedPath: @selectedEntry()?.getPath()
     hasFocus: @hasFocus()
-    attached: @hasParent()
+    attached: @isVisible()
     scrollLeft: @scroller.scrollLeft()
     scrollTop: @scrollTop()
     width: @width()
@@ -122,25 +122,31 @@ class TreeView extends ScrollView
 
   toggle: ->
     if @isVisible()
-      @detach()
+      @panel.hide()
     else
-      @show()
+      @panel.show()
 
   show: ->
-    @attach() unless @hasParent()
+    @panel.show()
     @focus()
 
-  attach: ->
+  isVisible: ->
+    @panel?.isVisible()
+
+  attach: ({visible}={}) ->
     return unless atom.project.getPath()
 
+    console.log 'making panel'
+
+    @panel?.destroy()
     if atom.config.get('tree-view.showOnRightSide')
       @element.classList.remove('panel-left')
       @element.classList.add('panel-right')
-      atom.workspaceView.appendToRight(this)
+      @panel = atom.workspace.addRightPanel({visible, item: this})
     else
       @element.classList.remove('panel-right')
       @element.classList.add('panel-left')
-      atom.workspaceView.appendToLeft(this)
+      @panel = atom.workspace.addLeftPanel({visible, item: this})
 
   detach: ->
     @scrollLeftAfterAttach = @scroller.scrollLeft()
@@ -150,7 +156,7 @@ class TreeView extends ScrollView
     LocalStorage['tree-view:cutPath'] = null
     LocalStorage['tree-view:copyPath'] = null
 
-    super
+    @panel?.destroy()
     atom.workspaceView.focus()
 
   focus: ->
@@ -224,7 +230,7 @@ class TreeView extends ScrollView
       @list.element.appendChild(@root)
 
       if @attachAfterProjectPathSet
-        @attach()
+        @attach({visible: true})
         @attachAfterProjectPathSet = false
     else
       @root = null
@@ -241,8 +247,7 @@ class TreeView extends ScrollView
   revealActiveFile: ->
     return unless atom.project.getPath()
 
-    @attach()
-    @focus()
+    @show()
 
     return unless activeFilePath = @getActivePath()
 
