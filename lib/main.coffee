@@ -22,6 +22,7 @@ module.exports =
     atom.workspaceView.command 'tree-view:duplicate', => @createView().copySelectedEntry()
     atom.workspaceView.command 'tree-view:remove', => @createView().removeSelectedEntries()
     atom.workspaceView.command 'tree-view:rename', => @createView().moveSelectedEntry()
+    atom.workspace.observeTextEditors (editor) -> @createView().revealActiveFile()
 
   deactivate: ->
     @treeView?.deactivate()
