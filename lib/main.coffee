@@ -12,6 +12,7 @@ module.exports =
     @state.attached ?= true if @shouldAttach()
 
     @createView() if @state.attached
+    atom.workspace.observeTextEditors => @createView().revealActiveFile()
     atom.workspaceView.command 'tree-view:show', => @createView().show()
     atom.workspaceView.command 'tree-view:toggle', => @createView().toggle()
     atom.workspaceView.command 'tree-view:toggle-focus', => @createView().toggleFocus()
@@ -22,7 +23,6 @@ module.exports =
     atom.workspaceView.command 'tree-view:duplicate', => @createView().copySelectedEntry()
     atom.workspaceView.command 'tree-view:remove', => @createView().removeSelectedEntries()
     atom.workspaceView.command 'tree-view:rename', => @createView().moveSelectedEntry()
-    atom.workspace.observeTextEditors (editor) -> @createView().revealActiveFile()
 
   deactivate: ->
     @treeView?.deactivate()
