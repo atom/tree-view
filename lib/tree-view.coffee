@@ -266,7 +266,7 @@ class TreeView extends ScrollView
   entryForPath: (entryPath) ->
     bestMatchEntry = @root
     for entry in @list.element.querySelectorAll('.entry')
-      if entry.getPath() is entryPath
+      if entry.isPathEqual(entryPath)
         bestMatchEntry = entry
         break
       if entry.getPath().length > bestMatchEntry.getPath().length and entry.directory?.contains(entryPath)

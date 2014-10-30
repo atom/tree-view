@@ -36,4 +36,7 @@ class FileView extends HTMLElement
   getPath: ->
     @fileName.dataset.path
 
+  isPathEqual: (pathToCompare) ->
+    @file.isPathEqual(pathToCompare)
+
 module.exports = document.registerElement('tree-view-file', prototype: FileView.prototype, extends: 'li')

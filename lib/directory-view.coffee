@@ -77,6 +77,9 @@ class DirectoryView extends HTMLElement
   getPath: ->
     @directory.path
 
+  isPathEqual: (pathToCompare) ->
+    @directory.isPathEqual(pathToCompare)
+
   createViewForEntry: (entry) ->
     if entry instanceof Directory
       view = new DirectoryElement()

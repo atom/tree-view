@@ -14,7 +14,10 @@ class Directory
     @subscriptions = new CompositeDisposable()
 
     @path = fullPath
-    @lowerCasePath = @path.toLowerCase() if fs.isCaseInsensitive()
+    @realPath = @path
+    if fs.isCaseInsensitive()
+      @lowerCasePath = @path.toLowerCase()
+      @lowerCaseRealPath = @lowerCasePath
 
     @isRoot ?= false
     @isExpanded ?= false
@@ -101,6 +104,9 @@ class Directory
   isPathPrefixOf: (prefix, fullPath) ->
     fullPath.indexOf(prefix) is 0 and fullPath[prefix.length] is path.sep
 
+  isPathEqual: (pathToCompare) ->
+    @path is pathToCompare or @realPath is pathToCompare
+
   # Public: Does this directory contain the given path?
   #
   # See atom.Directory::contains for more details.
@@ -119,7 +125,7 @@ class Directory
     return true if @isPathPrefixOf(directoryPath, pathToCheck)
 
     # Check real path
-    if @realPath
+    if @realPath isnt @path
       if fs.isCaseInsensitive()
         directoryPath = @lowerCaseRealPath
       else

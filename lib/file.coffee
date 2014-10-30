@@ -9,6 +9,7 @@ class File
     @subscriptions = new CompositeDisposable()
 
     @path = fullPath
+    @realPath = @path
 
     extension = path.extname(@path)
     if fs.isReadmePath(@path)
@@ -29,7 +30,7 @@ class File
 
     fs.realpath @path, realpathCache, (error, realPath) =>
       if realPath and realPath isnt @path
-        @path = realPath
+        @realPath = realPath
         @updateStatus()
 
   destroy: ->
@@ -48,7 +49,7 @@ class File
     return unless repo?
 
     @subscriptions.add repo.onDidChangeStatus (event) =>
-      @updateStatus(repo) if event.path is @path
+      @updateStatus(repo) if @isPathEqual(event.path)
     @subscriptions.add repo.onDidChangeStatuses =>
       @updateStatus(repo)
 
@@ -70,3 +71,6 @@ class File
     if newStatus isnt @status
       @status = newStatus
       @emitter.emit('did-status-change', newStatus)
+
+  isPathEqual: (pathToCompare) ->
+    @path is pathToCompare or @realPath is pathToCompare
