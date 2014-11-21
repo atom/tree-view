@@ -9,7 +9,7 @@ realpathCache = {}
 
 module.exports =
 class Directory
-  constructor: ({@name, fullPath, @symlink, @expandedEntries, @isExpanded, @isRoot}) ->
+  constructor: ({@name, fullPath, @symlink, @expandedEntries, @isExpanded, @isRoot, @ignoredPatterns}) ->
     @emitter = new Emitter()
     @subscriptions = new CompositeDisposable()
 
@@ -91,12 +91,8 @@ class Directory
       return true if repo? and repo.isProjectAtRoot() and repo.isPathIgnored(filePath)
 
     if atom.config.get('tree-view.hideIgnoredNames')
-      ignoredNames = atom.config.get('core.ignoredNames') ? []
-      ignoredNames = [ignoredNames] if typeof ignoredNames is 'string'
-      name = path.basename(filePath)
-      return true if _.contains(ignoredNames, name)
-      extension = path.extname(filePath)
-      return true if extension and _.contains(ignoredNames, "*#{extension}")
+      for ignoredPattern in @ignoredPatterns
+        return true if ignoredPattern.match(filePath)
 
     false
 
@@ -180,7 +176,7 @@ class Directory
         else
           expandedEntries = @expandedEntries[name]
           isExpanded = expandedEntries?
-          directories.push(new Directory({name, fullPath, symlink, isExpanded, expandedEntries}))
+          directories.push(new Directory({name, fullPath, symlink, isExpanded, expandedEntries, @ignoredPatterns}))
       else if stat.isFile?()
         if @entries.hasOwnProperty(name)
           # push a placeholder since this entry already exists but this helps

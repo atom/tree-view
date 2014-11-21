@@ -15,6 +15,7 @@
     "underscore-plus": "1.x",
     "wrench": "1.5.x",
     "pathwatcher": "^2.0.12",
-    "event-kit": "~0.7.0"
+    "event-kit": "~0.7.0",
+    "minimatch": "~0.3.0"
   }
 }
