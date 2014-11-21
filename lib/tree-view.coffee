@@ -75,6 +75,9 @@ class TreeView extends ScrollView
     @on 'dblclick', '.tree-view-resize-handle', =>
       @resizeToFitContent()
     @on 'click', '.entry', (e) =>
+      # This prevents accidental collapsing when a .entries element is the event target
+      return if e.target.classList.contains('entries')
+
       @entryClicked(e) unless e.shiftKey or e.metaKey or e.ctrlKey
     @on 'mousedown', '.entry', (e) =>
       @onMouseDown(e)
