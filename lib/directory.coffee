@@ -185,7 +185,10 @@ class Directory
         else
           files.push(new File({name, fullPath, symlink, realpathCache}))
 
-    directories.concat(files)
+    combined = directories.concat(files)
+
+    combined.sort (first, second) ->
+      first.name.toLowerCase().localeCompare(second.name.toLowerCase())
 
   # Public: Perform a synchronous reload of the directory.
   reload: ->
