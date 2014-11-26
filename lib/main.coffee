@@ -1,10 +1,16 @@
 path = require 'path'
 
 module.exports =
-  configDefaults:
-    hideVcsIgnoredFiles: false
-    hideIgnoredNames: false
-    showOnRightSide: false
+  config:
+    hideVcsIgnoredFiles:
+      type: 'boolean'
+      default: false
+    hideIgnoredNames:
+      type: 'boolean'
+      default: false
+    showOnRightSide:
+      type: 'boolean'
+      default: false
 
   treeView: null
 
