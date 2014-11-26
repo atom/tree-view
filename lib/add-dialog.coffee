@@ -35,7 +35,7 @@ class AddDialog extends Dialog
           @showError("File names must not end with a '#{path.sep}' character.")
         else
           fs.writeFileSync(pathToCreate, '')
-          atom.project.getRepo()?.getPathStatus(pathToCreate)
+          atom.project.getRepositories()[0]?.getPathStatus(pathToCreate)
           @trigger 'file-created', [pathToCreate]
           @close()
       else

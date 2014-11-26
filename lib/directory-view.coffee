@@ -27,7 +27,7 @@ class DirectoryView extends HTMLElement
     else
       iconClass = 'icon-file-directory'
       if @directory.isRoot
-        iconClass = 'icon-repo' if atom.project.getRepo()?.isProjectAtRoot()
+        iconClass = 'icon-repo' if atom.project.getRepositories()[0]?.isProjectAtRoot()
       else
         iconClass = 'icon-file-submodule' if @directory.submodule
     @directoryName.classList.add(iconClass)

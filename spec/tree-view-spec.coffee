@@ -1820,7 +1820,7 @@ describe "TreeView", ->
 
       newFile = path.join(newDir, 'new2')
       fs.writeFileSync(newFile, '')
-      atom.project.getRepo().getPathStatus(newFile)
+      atom.project.getRepositories()[0].getPathStatus(newFile)
 
       ignoreFile = path.join(projectPath, '.gitignore')
       fs.writeFileSync(ignoreFile, 'ignored.txt')
@@ -1830,7 +1830,7 @@ describe "TreeView", ->
       modifiedFile = path.join(projectPath, 'dir', 'b.txt')
       originalFileContent = fs.readFileSync(modifiedFile, 'utf8')
       fs.writeFileSync modifiedFile, 'ch ch changes'
-      atom.project.getRepo().getPathStatus(modifiedFile)
+      atom.project.getRepositories()[0].getPathStatus(modifiedFile)
 
       treeView.updateRoot()
       $(treeView.root.entries).find('.directory:contains(dir)')[0].expand()
