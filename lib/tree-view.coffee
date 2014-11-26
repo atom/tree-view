@@ -112,17 +112,17 @@ class TreeView extends ScrollView
       else
         @selectActiveFile()
 
-    @subscribe atom.workspaceView, 'pane-container:active-pane-item-changed', =>
+    @subscribe atom.workspace.onDidChangeActivePaneItem =>
       @selectActiveFile()
-    @subscribe atom.project, 'path-changed', =>
+    @subscribe atom.project.onDidChangePaths =>
       @updateRoot()
-    @subscribe atom.config.observe 'tree-view.hideVcsIgnoredFiles', callNow: false, =>
+    @subscribe atom.config.onDidChange 'tree-view.hideVcsIgnoredFiles', =>
       @updateRoot()
-    @subscribe atom.config.observe 'tree-view.hideIgnoredNames', callNow: false, =>
+    @subscribe atom.config.onDidChange 'tree-view.hideIgnoredNames', =>
       @updateRoot()
-    @subscribe atom.config.observe 'core.ignoredNames', callNow: false, =>
+    @subscribe atom.config.onDidChange 'core.ignoredNames', =>
       @updateRoot() if atom.config.get('tree-view.hideIgnoredNames')
-    @subscribe atom.config.observe 'tree-view.showOnRightSide', callNow: false, (newValue) =>
+    @subscribe atom.config.onDidChange 'tree-view.showOnRightSide', ({newValue}) =>
       @onSideToggled(newValue)
 
   toggle: ->
