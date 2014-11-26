@@ -20,9 +20,9 @@ describe "TreeView", ->
 
   beforeEach ->
     tempPath = fs.realpathSync(temp.mkdirSync('atom'))
-    fixturesPath = atom.project.getPath()
+    fixturesPath = atom.project.getPaths()[0]
     wrench.copyDirSyncRecursive(fixturesPath, tempPath, forceDelete: true)
-    atom.project.setPath(path.join(tempPath, 'tree-view'))
+    atom.project.setPaths([path.join(tempPath, 'tree-view')])
 
     atom.workspaceView = new WorkspaceView
 
@@ -69,7 +69,7 @@ describe "TreeView", ->
 
     describe "when the project has no path", ->
       beforeEach ->
-        atom.project.setPath(undefined)
+        atom.project.setPaths([])
         atom.packages.deactivatePackage("tree-view")
 
         waitsForPromise ->
@@ -151,7 +151,7 @@ describe "TreeView", ->
       it "does not create the tree view", ->
         dotGit = path.join(temp.mkdirSync('repo'), '.git')
         fs.makeTreeSync(dotGit)
-        atom.project.setPath(dotGit)
+        atom.project.setPaths([dotGit])
         atom.packages.deactivatePackage("tree-view")
         atom.packages.packageStates = {}
 
@@ -962,7 +962,7 @@ describe "TreeView", ->
       fs.writeFileSync(filePath2, "doesn't matter")
       fs.writeFileSync(filePath3, "doesn't matter")
 
-      atom.project.setPath(rootDirPath)
+      atom.project.setPaths([rootDirPath])
 
       waitsForPromise ->
         atom.packages.activatePackage('tree-view')
@@ -1719,8 +1719,8 @@ describe "TreeView", ->
     temporaryFilePath = null
 
     beforeEach ->
-      atom.project.setPath(fs.absolute(temp.mkdirSync('tree-view')))
-      temporaryFilePath = path.join(atom.project.getPath(), 'temporary')
+      atom.project.setPaths([fs.absolute(temp.mkdirSync('tree-view'))])
+      temporaryFilePath = path.join(atom.project.getPaths()[0], 'temporary')
 
     describe "when a file is added or removed in an expanded directory", ->
       it "updates the directory view to display the directory's new contents", ->
@@ -1754,7 +1754,7 @@ describe "TreeView", ->
         ignoredFile = path.join(projectPath, 'ignored.txt')
         fs.writeFileSync(ignoredFile, 'ignored text')
 
-        atom.project.setPath(projectPath)
+        atom.project.setPaths([projectPath])
         atom.config.set "tree-view.hideVcsIgnoredFiles", false
 
       it "hides git-ignored files if the option is set, but otherwise shows them", ->
@@ -1774,7 +1774,7 @@ describe "TreeView", ->
         ignoreFile = path.join(projectPath, '.gitignore')
         fs.writeFileSync(ignoreFile, 'tree-view.js')
 
-        atom.project.setPath(projectPath)
+        atom.project.setPaths([projectPath])
         atom.config.set("tree-view.hideVcsIgnoredFiles", true)
 
       it "does not hide git ignored files", ->
@@ -1789,7 +1789,7 @@ describe "TreeView", ->
       fs.copySync(dotGitFixture, dotGit)
       fs.writeFileSync(path.join(projectPath, 'test.js'), '')
       fs.writeFileSync(path.join(projectPath, 'test.txt'), '')
-      atom.project.setPath(projectPath)
+      atom.project.setPaths([projectPath])
       atom.config.set "tree-view.hideIgnoredNames", false
 
     it "hides ignored files if the option is set, but otherwise shows them", ->
@@ -1813,7 +1813,7 @@ describe "TreeView", ->
       workingDirFixture = path.join(__dirname, 'fixtures', 'git', 'working-dir')
       fs.copySync(workingDirFixture, projectPath)
       fs.moveSync(path.join(projectPath, 'git.git'), path.join(projectPath, '.git'))
-      atom.project.setPath(projectPath)
+      atom.project.setPaths([projectPath])
 
       newDir = path.join(projectPath, 'dir2')
       fs.mkdirSync(newDir)
@@ -1892,7 +1892,7 @@ describe "TreeView", ->
       fs.writeFileSync(filePath2, "doesn't matter")
       fs.writeFileSync(filePath3, "doesn't matter")
 
-      atom.project.setPath(rootDirPath)
+      atom.project.setPaths([rootDirPath])
 
       waitsForPromise ->
         atom.packages.activatePackage('tree-view')

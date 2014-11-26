@@ -46,7 +46,7 @@ class TreeView extends ScrollView
     @focusAfterAttach = state.hasFocus
     @scrollTopAfterAttach = state.scrollTop if state.scrollTop
     @scrollLeftAfterAttach = state.scrollLeft if state.scrollLeft
-    @attachAfterProjectPathSet = state.attached and not atom.project.getPath()
+    @attachAfterProjectPathSet = state.attached and _.isEmpty(atom.project.getPaths())
     @width(state.width) if state.width > 0
     @attach() if state.attached
 
@@ -136,7 +136,7 @@ class TreeView extends ScrollView
     @focus()
 
   attach: ->
-    return unless atom.project.getPath()
+    return if _.isEmpty(atom.project.getPaths())
 
     if atom.config.get('tree-view.showOnRightSide')
       @element.classList.remove('panel-left')
@@ -231,7 +231,7 @@ class TreeView extends ScrollView
 
     @loadIgnoredPatterns()
 
-    if projectPath = atom.project.getPath()
+    if projectPath = atom.project.getPaths()[0]
       directory = new Directory({
         name: path.basename(projectPath)
         fullPath: projectPath
@@ -261,7 +261,7 @@ class TreeView extends ScrollView
       @deselect()
 
   revealActiveFile: ->
-    return unless atom.project.getPath()
+    return if _.isEmpty(atom.project.getPaths())
 
     @attach()
     @focus()
@@ -269,7 +269,7 @@ class TreeView extends ScrollView
     return unless activeFilePath = @getActivePath()
 
     activePathComponents = atom.project.relativize(activeFilePath).split(path.sep)
-    currentPath = atom.project.getPath().replace(new RegExp("#{_.escapeRegExp(path.sep)}$"), '')
+    currentPath = atom.project.getPaths()[0].replace(new RegExp("#{_.escapeRegExp(path.sep)}$"), '')
     for pathComponent in activePathComponents
       currentPath += path.sep + pathComponent
       entry = @entryForPath(currentPath)
