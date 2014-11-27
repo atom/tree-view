@@ -156,13 +156,13 @@ class TreeView extends ScrollView
 
     @panel.destroy()
     @panel = null
-    atom.workspaceView.focus()
+    @unfocus()
 
   focus: ->
     @list.focus()
 
   unfocus: ->
-    atom.workspaceView.focus()
+    atom.workspace.getActivePane().activate()
 
   hasFocus: ->
     @list.is(':focus') or document.activeElement is @list[0]
@@ -183,7 +183,7 @@ class TreeView extends ScrollView
         entry.toggleExpansion(isRecursive) if entry instanceof DirectoryView
       when 2
         if entry instanceof FileView
-          atom.workspaceView.getActiveView()?.focus()
+          @unfocus()
         else if DirectoryView
           entry.toggleExpansion(isRecursive)
 
