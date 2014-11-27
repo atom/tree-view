@@ -1,3 +1,4 @@
+fs = require 'fs-plus'
 path = require 'path'
 shell = require 'shell'
 
@@ -455,6 +456,19 @@ class TreeView extends ScrollView
           "Move to Trash": ->
             for selectedPath in selectedPaths
               shell.moveItemToTrash(selectedPath)
+          "Delete permanently": ->
+            # recursively removes directories (and their contained files)
+            rmdirR = (dirPath) ->
+              fs.traverseTreeSync dirPath, (filePath) ->
+                fs.unlinkSync filePath
+              , (subDirPath) ->
+                rmdirR subDirPath
+              fs.rmdirSync dirPath
+            for selectedPath in selectedPaths
+              fs.isDirectory selectedPath, (answer) ->
+                # fs.unlink if file, else remove directory and their contents
+                return fs.unlinkSync selectedPath unless answer
+                rmdirR selectedPath
           "Cancel": null
 
   # Public: Copy the path of the selected entry element.

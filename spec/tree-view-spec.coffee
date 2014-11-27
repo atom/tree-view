@@ -1713,7 +1713,7 @@ describe "TreeView", ->
         runs ->
           treeView.trigger 'tree-view:remove'
           args = atom.confirm.mostRecentCall.args[0]
-          expect(Object.keys(args.buttons)).toEqual ['Move to Trash', 'Cancel']
+          expect(Object.keys(args.buttons)).toEqual ['Move to Trash', 'Delete permanently', 'Cancel']
 
   describe "file system events", ->
     temporaryFilePath = null
