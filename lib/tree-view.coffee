@@ -449,27 +449,29 @@ class TreeView extends ScrollView
         message: "The root directory '#{@root.directory.name}' can't be removed."
         buttons: ['OK']
     else
+      buttons = {}
+      buttons["Move to Trash"] = ->
+        for selectedPath in selectedPaths
+          shell.moveItemToTrash(selectedPath)
+      if atom.config.get 'tree-view.showPermanentDeleteButton'
+        buttons["Delete permanently"] = ->
+          # recursively removes directories (and their contained files)
+          rmdirR = (dirPath) ->
+            fs.traverseTreeSync dirPath, (filePath) ->
+              fs.unlinkSync filePath
+            , (subDirPath) ->
+              rmdirR subDirPath
+            fs.rmdirSync dirPath
+          for selectedPath in selectedPaths
+            fs.isDirectory selectedPath, (answer) ->
+              # fs.unlink if file, else remove directory and their contents
+              return fs.unlinkSync selectedPath unless answer
+              rmdirR selectedPath
+      buttons["Cancel"] = null
       atom.confirm
         message: "Are you sure you want to delete the selected #{if selectedPaths.length > 1 then 'items' else 'item'}?"
         detailedMessage: "You are deleting:\n#{selectedPaths.join('\n')}"
-        buttons:
-          "Move to Trash": ->
-            for selectedPath in selectedPaths
-              shell.moveItemToTrash(selectedPath)
-          "Delete permanently": ->
-            # recursively removes directories (and their contained files)
-            rmdirR = (dirPath) ->
-              fs.traverseTreeSync dirPath, (filePath) ->
-                fs.unlinkSync filePath
-              , (subDirPath) ->
-                rmdirR subDirPath
-              fs.rmdirSync dirPath
-            for selectedPath in selectedPaths
-              fs.isDirectory selectedPath, (answer) ->
-                # fs.unlink if file, else remove directory and their contents
-                return fs.unlinkSync selectedPath unless answer
-                rmdirR selectedPath
-          "Cancel": null
+        buttons: buttons
 
   # Public: Copy the path of the selected entry element.
   #         Save the path in localStorage, so that copying from 2 different
