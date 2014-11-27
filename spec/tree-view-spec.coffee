@@ -1705,7 +1705,7 @@ describe "TreeView", ->
         expect(args.buttons).toEqual ['OK']
 
       describe "when the showPermanentDeleteButton config option is disabled", ->
-        it "shows the native alert dialog with two buttons", ->
+        it "shows the native alert dialog with 'Move to Trash' and 'Cancel' buttons", ->
           spyOn(atom, 'confirm')
 
           waitsForFileToOpen ->
@@ -1718,7 +1718,7 @@ describe "TreeView", ->
             expect(Object.keys(buttons)).toEqual ['Move to Trash', 'Cancel']
 
       describe "when the showPermanentDeleteButton config option is enabled", ->
-        it "shows the native alert dialog with three buttons", ->
+        it "shows the native alert dialog with a third 'Delete Permanently' button", ->
           spyOn(atom, 'confirm')
 
           waitsForFileToOpen ->
