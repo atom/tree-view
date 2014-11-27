@@ -1,3 +1,4 @@
+fs = require 'fs'
 path = require 'path'
 shell = require 'shell'
 
@@ -455,6 +456,9 @@ class TreeView extends ScrollView
           "Move to Trash": ->
             for selectedPath in selectedPaths
               shell.moveItemToTrash(selectedPath)
+          "Delete permanently": ->
+            for selectedPath in selectedPaths
+              fs.unlink(selectedPath)
           "Cancel": null
 
   # Public: Copy the path of the selected entry element.
