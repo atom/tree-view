@@ -6,14 +6,12 @@ temp = require('temp').track()
 wrench = require 'wrench'
 os = require 'os'
 
-waitsForFileToOpen = (fn) ->
-  openHandler = jasmine.createSpy()
-  runs ->
-    atom.workspaceView.one "uri-opened", openHandler
-    fn()
-
-  waitsFor ->
-    openHandler.callCount == 1
+waitsForFileToOpen = (causeFileToOpen) ->
+  waitsFor (done) ->
+    disposable = atom.workspace.onDidOpen ->
+      disposable.dispose()
+      done()
+    causeFileToOpen()
 
 describe "TreeView", ->
   [treeView, root, sampleJs, sampleTxt] = []
