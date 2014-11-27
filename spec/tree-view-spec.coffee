@@ -212,7 +212,7 @@ describe "TreeView", ->
       runs -> expect(treeView.scrollTop()).toBe(10)
 
     it "restores the scroll left when toggled", ->
-      atom.workspaceView.width(5)
+      treeView.width(5)
       atom.workspaceView.attachToDom()
       expect(treeView).toBeVisible()
       treeView.focus()

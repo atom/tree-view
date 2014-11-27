@@ -17,6 +17,8 @@ LocalStorage = window.localStorage
 
 module.exports =
 class TreeView extends ScrollView
+  panel: null
+
   @content: ->
     @div class: 'tree-view-resizer tool-panel', 'data-show-on-right-side': atom.config.get('tree-view.showOnRightSide'), =>
       @div class: 'tree-view-scroller', outlet: 'scroller', =>
@@ -132,20 +134,17 @@ class TreeView extends ScrollView
       @show()
 
   show: ->
-    @attach() unless @hasParent()
+    @attach() unless @panel?
     @focus()
 
   attach: ->
     return if _.isEmpty(atom.project.getPaths())
 
-    if atom.config.get('tree-view.showOnRightSide')
-      @element.classList.remove('panel-left')
-      @element.classList.add('panel-right')
-      atom.workspaceView.appendToRight(this)
-    else
-      @element.classList.remove('panel-right')
-      @element.classList.add('panel-left')
-      atom.workspaceView.appendToLeft(this)
+    @panel =
+      if atom.config.get('tree-view.showOnRightSide')
+        atom.workspace.addRightPanel(item: this)
+      else
+        atom.workspace.addLeftPanel(item: this)
 
   detach: ->
     @scrollLeftAfterAttach = @scroller.scrollLeft()
@@ -155,7 +154,8 @@ class TreeView extends ScrollView
     LocalStorage['tree-view:cutPath'] = null
     LocalStorage['tree-view:copyPath'] = null
 
-    super
+    @panel.destroy()
+    @panel = null
     atom.workspaceView.focus()
 
   focus: ->
