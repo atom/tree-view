@@ -71,7 +71,7 @@ class TreeView extends ScrollView
 
   deactivate: ->
     @root?.directory.destroy()
-    @remove()
+    @detach() if @panel?
 
   handleEvents: ->
     @on 'dblclick', '.tree-view-resize-handle', =>
