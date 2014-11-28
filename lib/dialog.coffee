@@ -4,7 +4,7 @@ path = require 'path'
 module.exports =
 class Dialog extends View
   @content: ({prompt} = {}) ->
-    @div class: 'tree-view-dialog overlay from-top', =>
+    @div class: 'tree-view-dialog', =>
       @label prompt, class: 'icon', outlet: 'promptText'
       @subview 'miniEditor', new EditorView(mini: true)
       @div class: 'error-message', outlet: 'errorMessage'
@@ -29,16 +29,16 @@ class Dialog extends View
       @miniEditor.getEditor().setSelectedBufferRange(range)
 
   attach: ->
-    atom.workspaceView.append(this)
+    @panel = atom.workspace.addModalPanel(item: this.element)
     @miniEditor.focus()
     @miniEditor.scrollToCursorPosition()
 
   close: ->
-    @remove()
-    atom.workspaceView.focus()
+    @panel.destroy()
+    atom.workspace.getActivePane().activate()
 
   cancel: ->
-    @remove()
+    @close()
     $('.tree-view').focus()
 
   showError: (message='') ->
