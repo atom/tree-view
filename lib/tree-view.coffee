@@ -39,7 +39,10 @@ class TreeView extends ScrollView
 
     process.nextTick =>
       @onStylesheetsChanged()
-      @subscribe atom.themes, 'stylesheets-changed', _.debounce(@onStylesheetsChanged, 100)
+      onStylesheetsChanged = _.debounce(@onStylesheetsChanged, 100)
+      @subscribe atom.styles.onDidAddStyleElement(onStylesheetsChanged)
+      @subscribe atom.styles.onDidRemoveStyleElement(onStylesheetsChanged)
+      @subscribe atom.styles.onDidUpdateStyleElement(onStylesheetsChanged)
 
     @updateRoot(state.directoryExpansionStates)
     @selectEntry(@root) if @root?
