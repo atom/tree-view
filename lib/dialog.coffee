@@ -1,4 +1,4 @@
-{$, EditorView, View} = require 'atom'
+{$, TextEditorView, View} = require 'atom-space-pen-views'
 path = require 'path'
 
 module.exports =
@@ -6,17 +6,17 @@ class Dialog extends View
   @content: ({prompt} = {}) ->
     @div class: 'tree-view-dialog', =>
       @label prompt, class: 'icon', outlet: 'promptText'
-      @subview 'miniEditor', new EditorView(mini: true)
+      @subview 'miniEditor', new TextEditorView(mini: true)
       @div class: 'error-message', outlet: 'errorMessage'
 
   initialize: ({initialPath, select, iconClass} = {}) ->
     @promptText.addClass(iconClass) if iconClass
-    @on 'core:confirm', => @onConfirm(@miniEditor.getText())
-    @on 'core:cancel', => @cancel()
-    @miniEditor.hiddenInput.on 'focusout', => @remove()
-    @miniEditor.getEditor().getBuffer().on 'changed', => @showError()
-
-    @miniEditor.setText(initialPath)
+    atom.commands.add @element,
+      'core:confirm': => @onConfirm(@miniEditor.getText())
+      'core:cancel': => @cancel()
+    @miniEditor.on 'blur', => @remove()
+    @miniEditor.getModel().getBuffer().on 'changed', => @showError()
+    @miniEditor.getModel().setText(initialPath)
 
     if select
       extension = path.extname(initialPath)
@@ -26,12 +26,12 @@ class Dialog extends View
       else
         selectionEnd = initialPath.length - extension.length
       range = [[0, initialPath.length - baseName.length], [0, selectionEnd]]
-      @miniEditor.getEditor().setSelectedBufferRange(range)
+      @miniEditor.getModel().setSelectedBufferRange(range)
 
   attach: ->
     @panel = atom.workspace.addModalPanel(item: this.element)
     @miniEditor.focus()
-    @miniEditor.scrollToCursorPosition()
+    @miniEditor.getModel().scrollToCursorPosition()
 
   close: ->
     @panel.destroy()
