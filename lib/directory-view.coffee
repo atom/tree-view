@@ -47,11 +47,6 @@ class DirectoryView extends HTMLElement
     @classList.remove('status-ignored', 'status-modified', 'status-added')
     @classList.add("status-#{@directory.status}") if @directory.status?
 
-  emitDirectoryModifiedEvent: ->
-    if @isExpanded
-      event = new CustomEvent('tree-view:directory-modified', bubbles: true)
-      @dispatchEvent(event)
-
   subscribeToDirectory: ->
     @subscriptions.add @directory.onDidAddEntries (addedEntries) =>
       return unless @isExpanded
@@ -68,11 +63,6 @@ class DirectoryView extends HTMLElement
           @entries.appendChild(view)
 
         numberOfEntries++
-
-      @emitDirectoryModifiedEvent()
-
-    @subscriptions.add @directory.onDidRemoveEntries =>
-      @emitDirectoryModifiedEvent() if @isExpanded
 
   getPath: ->
     @directory.path

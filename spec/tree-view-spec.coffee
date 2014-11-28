@@ -1257,12 +1257,8 @@ describe "TreeView", ->
           expect(addDialog.miniEditor).toHaveFocus()
 
         describe "when the parent directory of the selected file changes", ->
-          it "the active file is still shown as selected in the tree view", ->
-            directoryModifiedHandler = jasmine.createSpy("directory-modified")
-            dirView.on "tree-view:directory-modified", directoryModifiedHandler
-
+          it "still shows the active file as selected", ->
             dirView[0].directory.emitter.emit 'did-remove-entries', {'deleted.txt': {}}
-            expect(directoryModifiedHandler).toHaveBeenCalled()
             expect(treeView.find('.selected').text()).toBe path.basename(filePath)
 
         describe "when the path without a trailing '#{path.sep}' is changed and confirmed", ->

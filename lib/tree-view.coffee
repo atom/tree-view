@@ -114,12 +114,6 @@ class TreeView extends View
      'tree-view:toggle-vcs-ignored-files', -> atom.config.toggle 'tree-view.hideVcsIgnoredFiles'
      'tree-view:toggle-ignored-names', -> atom.config.toggle 'tree-view.hideIgnoredNames'
 
-    @on 'tree-view:directory-modified', =>
-      if @hasFocus()
-        @selectEntryForPath(@selectedPath) if @selectedPath
-      else
-        @selectActiveFile()
-
     @disposables.add atom.workspace.onDidChangeActivePaneItem =>
       @selectActiveFile()
     @disposables.add atom.project.onDidChangePaths =>
