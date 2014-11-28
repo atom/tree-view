@@ -341,12 +341,12 @@ class TreeView extends ScrollView
       directory.collapse(isRecursive)
       @selectEntry(directory)
 
-  openSelectedEntry: (changeFocus) ->
+  openSelectedEntry: (activatePane) ->
     selectedEntry = @selectedEntry()
     if selectedEntry instanceof DirectoryView
       selectedEntry.toggleExpansion()
     else if selectedEntry instanceof FileView
-      atom.workspace.open(selectedEntry.getPath(), {changeFocus})
+      atom.workspace.open(selectedEntry.getPath(), {activatePane})
 
   moveSelectedEntry: ->
     if @hasFocus()
