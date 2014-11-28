@@ -1,3 +1,4 @@
+{CompositeDisposable} = require 'event-kit'
 path = require 'path'
 
 module.exports =
@@ -15,21 +16,26 @@ module.exports =
   treeView: null
 
   activate: (@state) ->
+    @disposables = new CompositeDisposable
     @state.attached ?= true if @shouldAttach()
 
     @createView() if @state.attached
-    atom.workspaceView.command 'tree-view:show', => @createView().show()
-    atom.workspaceView.command 'tree-view:toggle', => @createView().toggle()
-    atom.workspaceView.command 'tree-view:toggle-focus', => @createView().toggleFocus()
-    atom.workspaceView.command 'tree-view:reveal-active-file', => @createView().revealActiveFile()
-    atom.workspaceView.command 'tree-view:toggle-side', => @createView().toggleSide()
-    atom.workspaceView.command 'tree-view:add-file', => @createView().add(true)
-    atom.workspaceView.command 'tree-view:add-folder', => @createView().add(false)
-    atom.workspaceView.command 'tree-view:duplicate', => @createView().copySelectedEntry()
-    atom.workspaceView.command 'tree-view:remove', => @createView().removeSelectedEntries()
-    atom.workspaceView.command 'tree-view:rename', => @createView().moveSelectedEntry()
+
+    @disposables.add atom.commands.add('atom-workspace', {
+      'tree-view:show': => @createView().show()
+      'tree-view:toggle': => @createView().toggle()
+      'tree-view:toggle-focus': => @createView().toggleFocus()
+      'tree-view:reveal-active-file': => @createView().revealActiveFile()
+      'tree-view:toggle-side': => @createView().toggleSide()
+      'tree-view:add-file': => @createView().add(true)
+      'tree-view:add-folder': => @createView().add(false)
+      'tree-view:duplicate': => @createView().copySelectedEntry()
+      'tree-view:remove': => @createView().removeSelectedEntries()
+      'tree-view:rename': => @createView().moveSelectedEntry()
+    })
 
   deactivate: ->
+    @disposables.dispose()
     @treeView?.deactivate()
     @treeView = null
 
