@@ -581,7 +581,7 @@ describe "TreeView", ->
           sampleJs.click()
 
         runs ->
-          atom.workspace.getActivePane().activateItem($$ -> @div('hello'))
+          atom.workspace.getActivePane().activateItem(document.createElement("div"))
           expect(treeView.find('.selected')).not.toExist()
 
   describe "when a different editor becomes active", ->
