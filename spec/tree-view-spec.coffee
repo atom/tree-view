@@ -939,7 +939,7 @@ describe "TreeView", ->
 
       describe "when nothing is selected", ->
         it "does nothing", ->
-          root.trigger 'tree-view:open-selected-entry'
+          atom.commands.dispatch(treeView.element, 'tree-view:open-selected-entry')
           expect(atom.workspace.getActivePaneItem()).toBeUndefined()
 
   describe "file modification", ->
