@@ -33,8 +33,8 @@ class CopyDialog extends Dialog
         fs.copy @initialPath, newPath, ->
           atom.workspace.open newPath,
             activatePane: true
-            initialLine: activeEditor?.getCursor().getBufferRow()
-            initialColumn: activeEditor?.getCursor().getBufferColumn()
+            initialLine: activeEditor?.getLastCursor().getBufferRow()
+            initialColumn: activeEditor?.getLastCursor().getBufferColumn()
       if repo = atom.project.getRepositories()[0]
         repo.getPathStatus(@initialPath)
         repo.getPathStatus(newPath)
