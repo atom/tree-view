@@ -15,7 +15,7 @@ class Dialog extends View
       'core:confirm': => @onConfirm(@miniEditor.getText())
       'core:cancel': => @cancel()
     @miniEditor.on 'blur', => @remove()
-    @miniEditor.getModel().getBuffer().on 'changed', => @showError()
+    @miniEditor.getModel().onDidChange => @showError()
     @miniEditor.getModel().setText(initialPath)
 
     if select
