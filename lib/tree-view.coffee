@@ -16,6 +16,9 @@ DirectoryView = require './directory-view'
 FileView = require './file-view'
 LocalStorage = window.localStorage
 
+toggleConfig = (keyPath) ->
+  atom.config.set(keyPath, not atom.config.get(keyPath))
+
 module.exports =
 class TreeView extends View
   panel: null
@@ -111,8 +114,8 @@ class TreeView extends View
      'tree-view:open-in-new-window': => @openSelectedEntryInNewWindow()
      'tree-view:copy-project-path': => @copySelectedEntryPath(true)
      'tool-panel:unfocus': => @unfocus()
-     'tree-view:toggle-vcs-ignored-files', -> atom.config.toggle 'tree-view.hideVcsIgnoredFiles'
-     'tree-view:toggle-ignored-names', -> atom.config.toggle 'tree-view.hideIgnoredNames'
+     'tree-view:toggle-vcs-ignored-files', -> toggleConfig 'tree-view.hideVcsIgnoredFiles'
+     'tree-view:toggle-ignored-names', -> toggleConfig 'tree-view.hideIgnoredNames'
 
     @disposables.add atom.workspace.onDidChangeActivePaneItem =>
       @selectActiveFile()
@@ -601,7 +604,7 @@ class TreeView extends View
     @scrollTop(0)
 
   toggleSide: ->
-    atom.config.toggle('tree-view.showOnRightSide')
+    toggleConfig('tree-view.showOnRightSide')
 
   onStylesheetsChanged: =>
     return unless @isVisible()
