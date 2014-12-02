@@ -1704,16 +1704,31 @@ describe "TreeView", ->
         args = atom.confirm.mostRecentCall.args[0]
         expect(args.buttons).toEqual ['OK']
 
-      it "shows the native alert dialog", ->
-        spyOn(atom, 'confirm')
+      describe "when the showPermanentDeleteButton config option is disabled", ->
+        it "shows the native alert dialog with 'Move to Trash' and 'Cancel' buttons", ->
+          spyOn(atom, 'confirm')
 
-        waitsForFileToOpen ->
-          fileView.click()
+          waitsForFileToOpen ->
+            fileView.click()
 
-        runs ->
-          treeView.trigger 'tree-view:remove'
-          args = atom.confirm.mostRecentCall.args[0]
-          expect(Object.keys(args.buttons)).toEqual ['Move to Trash', 'Cancel']
+          runs ->
+            atom.config.set 'tree-view.showPermanentDeleteButton', false
+            treeView.trigger 'tree-view:remove'
+            buttons = atom.confirm.mostRecentCall.args[0].buttons
+            expect(Object.keys(buttons)).toEqual ['Move to Trash', 'Cancel']
+
+      describe "when the showPermanentDeleteButton config option is enabled", ->
+        it "shows the native alert dialog with a third 'Delete Permanently' button", ->
+          spyOn(atom, 'confirm')
+
+          waitsForFileToOpen ->
+            fileView.click()
+
+          runs ->
+            atom.config.set 'tree-view.showPermanentDeleteButton', true
+            treeView.trigger 'tree-view:remove'
+            buttons = atom.confirm.mostRecentCall.args[0].buttons
+            expect(Object.keys(buttons)).toEqual ['Move to Trash', 'Delete permanently', 'Cancel']
 
   describe "file system events", ->
     temporaryFilePath = null
