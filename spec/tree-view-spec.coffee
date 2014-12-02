@@ -29,7 +29,7 @@ describe "TreeView", ->
 
     runs ->
       atom.commands.dispatch(workspaceElement, 'tree-view:toggle')
-      treeView = $(atom.workspace.getLeftPanels()[0].getItemView()).view()
+      treeView = $(atom.workspace.getLeftPanels()[0].getItem()).view()
 
       root = $(treeView.root)
       sampleJs = treeView.find('.file:contains(tree-view.js)')
@@ -175,7 +175,7 @@ describe "TreeView", ->
         atom.packages.activatePackage("tree-view")
 
       runs ->
-        treeView = $(atom.workspace.getLeftPanels()[0].getItemView()).view()
+        treeView = $(atom.workspace.getLeftPanels()[0].getItem()).view()
         expect(treeView).toExist()
         expect(treeView.selectedEntry()).toMatchSelector(".file:contains(tree-view.js)")
         expect(treeView.find(".directory:contains(dir1)")).toHaveClass("expanded")
@@ -190,7 +190,7 @@ describe "TreeView", ->
         atom.packages.activatePackage("tree-view")
 
       runs ->
-        treeView = $(atom.workspace.getLeftPanels()[0].getItemView()).view()
+        treeView = $(atom.workspace.getLeftPanels()[0].getItem()).view()
         expect(treeView.list).toMatchSelector ':focus'
 
     it "restores the scroll top when toggled", ->
@@ -971,7 +971,7 @@ describe "TreeView", ->
 
       runs ->
         atom.commands.dispatch(workspaceElement, 'tree-view:toggle')
-        treeView = $(atom.workspace.getLeftPanels()[0].getItemView()).view()
+        treeView = $(atom.workspace.getLeftPanels()[0].getItem()).view()
         root = $(treeView.root)
         dirView = $(treeView.root.entries).find('.directory:contains(test-dir):first')
         dirView[0].expand()
@@ -1245,7 +1245,7 @@ describe "TreeView", ->
 
         runs ->
           atom.commands.dispatch(treeView.element, "tree-view:add-file")
-          addDialog = $(atom.workspace.getModalPanels()[0].getItemView()).view()
+          addDialog = $(atom.workspace.getModalPanels()[0].getItem()).view()
 
       describe "when a file is selected", ->
         it "opens an add dialog with the file's current directory path populated", ->
@@ -1332,7 +1332,7 @@ describe "TreeView", ->
           addDialog.cancel()
           dirView.click()
           atom.commands.dispatch(treeView.element, "tree-view:add-file")
-          addDialog = $(atom.workspace.getModalPanels()[0].getItemView()).view()
+          addDialog = $(atom.workspace.getModalPanels()[0].getItem()).view()
 
           expect(addDialog).toExist()
           expect(addDialog.promptText.text()).toBeTruthy()
@@ -1346,7 +1346,7 @@ describe "TreeView", ->
           addDialog.cancel()
           root.click()
           atom.commands.dispatch(treeView.element, "tree-view:add-file")
-          addDialog = $(atom.workspace.getModalPanels()[0].getItemView()).view()
+          addDialog = $(atom.workspace.getModalPanels()[0].getItem()).view()
 
           expect(addDialog.miniEditor.getText().length).toBe 0
 
@@ -1357,7 +1357,7 @@ describe "TreeView", ->
           root.removeClass('selected')
           expect(treeView.selectedEntry()).toBeNull()
           atom.commands.dispatch(treeView.element, "tree-view:add-file")
-          addDialog = $(atom.workspace.getModalPanels()[0].getItemView()).view()
+          addDialog = $(atom.workspace.getModalPanels()[0].getItem()).view()
 
           expect(addDialog.miniEditor.getText().length).toBe 0
 
@@ -1372,7 +1372,7 @@ describe "TreeView", ->
 
         runs ->
           atom.commands.dispatch(treeView.element, "tree-view:add-folder")
-          addDialog = $(atom.workspace.getModalPanels()[0].getItemView()).view()
+          addDialog = $(atom.workspace.getModalPanels()[0].getItem()).view()
 
       describe "when a file is selected", ->
         it "opens an add dialog with the file's current directory path populated", ->
@@ -1451,7 +1451,7 @@ describe "TreeView", ->
 
           runs ->
             atom.commands.dispatch(treeView.element, "tree-view:move")
-            moveDialog = $(atom.workspace.getModalPanels()[0].getItemView()).view()
+            moveDialog = $(atom.workspace.getModalPanels()[0].getItem()).view()
 
         afterEach ->
           waits 50 # The move specs cause too many false positives because of their async nature, so wait a little bit before we cleanup
@@ -1541,7 +1541,7 @@ describe "TreeView", ->
 
           runs ->
             atom.commands.dispatch(treeView.element, "tree-view:move")
-            moveDialog = $(atom.workspace.getModalPanels()[0].getItemView()).view()
+            moveDialog = $(atom.workspace.getModalPanels()[0].getItem()).view()
 
         it "selects the entire file name", ->
           expect(moveDialog).toExist()
@@ -1566,7 +1566,7 @@ describe "TreeView", ->
 
           runs ->
             atom.commands.dispatch(treeView.element, "tree-view:duplicate")
-            copyDialog = $(atom.workspace.getModalPanels()[0].getItemView()).view()
+            copyDialog = $(atom.workspace.getModalPanels()[0].getItem()).view()
 
         afterEach ->
           waits 50 # The copy specs cause too many false positives because of their async nature, so wait a little bit before we cleanup
@@ -1661,7 +1661,7 @@ describe "TreeView", ->
 
           runs ->
             atom.commands.dispatch(treeView.element, "tree-view:duplicate")
-            copyDialog = $(atom.workspace.getModalPanels()[0].getItemView()).view()
+            copyDialog = $(atom.workspace.getModalPanels()[0].getItem()).view()
 
         it "selects the entire file name", ->
           expect(copyDialog).toExist()
@@ -1684,7 +1684,7 @@ describe "TreeView", ->
           runs ->
             editorElement = atom.views.getView(atom.workspace.getActivePaneItem())
             atom.commands.dispatch(editorElement, "tree-view:duplicate")
-            copyDialog = $(atom.workspace.getModalPanels()[0].getItemView()).view()
+            copyDialog = $(atom.workspace.getModalPanels()[0].getItem()).view()
 
         it "duplicates the current file", ->
           expect(copyDialog.miniEditor.getText()).toBe('tree-view.js')
@@ -1895,7 +1895,7 @@ describe "TreeView", ->
 
       runs ->
         atom.commands.dispatch(workspaceElement, 'tree-view:toggle')
-        treeView = $(atom.workspace.getLeftPanels()[0].getItemView()).view()
+        treeView = $(atom.workspace.getLeftPanels()[0].getItem()).view()
         dirView = $(treeView.root.entries).find('.directory:contains(test-dir)')
         dirView[0].expand()
         fileView1 = treeView.find('.file:contains(test-file1.txt)')
