@@ -30,8 +30,8 @@ describe "TreeView", ->
       atom.packages.activatePackage("tree-view")
 
     runs ->
-      atom.workspaceView.trigger 'tree-view:toggle'
       treeView = atom.workspaceView.find(".tree-view").view()
+      treeView.show()
       root = $(treeView.root)
       sampleJs = treeView.find('.file:contains(tree-view.js)')
       sampleTxt = treeView.find('.file:contains(tree-view.txt)')
@@ -134,7 +134,7 @@ describe "TreeView", ->
 
         runs ->
           treeView = atom.packages.getActivePackage("tree-view").mainModule.createView()
-          expect(treeView.hasParent()).toBeFalsy()
+          expect(treeView.isVisible()).toBeFalsy()
           expect(treeView.root).toBeTruthy()
 
     describe "when the root view is opened to a directory", ->
