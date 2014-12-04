@@ -12,6 +12,7 @@ module.exports =
     @state.attached ?= true if @shouldAttach()
 
     @createView() if @state.attached
+    atom.workspace.observeTextEditors => @createView().revealActiveFile()
     atom.workspaceView.command 'tree-view:show', => @createView().show()
     atom.workspaceView.command 'tree-view:toggle', => @createView().toggle()
     atom.workspaceView.command 'tree-view:toggle-focus', => @createView().toggleFocus()
