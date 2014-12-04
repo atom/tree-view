@@ -191,13 +191,17 @@ class Directory
       firstName = first.name
       unless firstName?
         firstName = first
+      unless firstName?
+        firstName = firstName.toLowerCase()
 
       secondName = second.name
       unless secondName?
         secondName = second
-        
-      firstName.toLowerCase().localeCompare(secondName.toLowerCase())
+      unless secondName?
+        secondName = secondName.toLowerCase()
 
+      firstName.localeCompare(secondName)
+      
   # Public: Perform a synchronous reload of the directory.
   reload: ->
     newEntries = []
