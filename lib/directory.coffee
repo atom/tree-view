@@ -185,9 +185,10 @@ class Directory
         else
           files.push(new File({name, fullPath, symlink, realpathCache}))
 
-    combined = directories.concat(files)
+    @sortEntries(directories.concat(files))
 
-    combined.sort (first, second) ->
+  sortEntries: (combinedEntries) ->
+    combinedEntries.sort (first, second) ->
       firstName = first.name
       unless firstName?
         firstName = first
@@ -201,7 +202,7 @@ class Directory
         secondName = secondName.toLowerCase()
 
       firstName.localeCompare(secondName)
-      
+
   # Public: Perform a synchronous reload of the directory.
   reload: ->
     newEntries = []
