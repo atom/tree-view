@@ -188,7 +188,15 @@ class Directory
     combined = directories.concat(files)
 
     combined.sort (first, second) ->
-      first.name.toLowerCase().localeCompare(second.name.toLowerCase())
+      firstName = first.name
+      unless firstName?
+        firstName = first
+
+      secondName = second.name
+      unless secondName?
+        secondName = second
+        
+      firstName.toLowerCase().localeCompare(secondName.toLowerCase())
 
   # Public: Perform a synchronous reload of the directory.
   reload: ->
