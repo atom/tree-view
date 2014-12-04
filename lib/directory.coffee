@@ -187,20 +187,18 @@ class Directory
 
     @sortEntries(directories.concat(files))
 
+  normalizeEntryName: (value) ->
+    normalizedValue = value.name
+    unless normalizedValue?
+      normalizedValue = value
+    if normalizedValue?
+      normalizedValue = normalizedValue.toLowerCase()
+    normalizedValue
+
   sortEntries: (combinedEntries) ->
-    combinedEntries.sort (first, second) ->
-      firstName = first.name
-      unless firstName?
-        firstName = first
-      unless firstName?
-        firstName = firstName.toLowerCase()
-
-      secondName = second.name
-      unless secondName?
-        secondName = second
-      unless secondName?
-        secondName = secondName.toLowerCase()
-
+    combinedEntries.sort (first, second) =>
+      firstName = @normalizeEntryName(first)
+      secondName = @normalizeEntryName(second)
       firstName.localeCompare(secondName)
 
   # Public: Perform a synchronous reload of the directory.
