@@ -380,7 +380,12 @@ class TreeView extends ScrollView
         else
           args = ["/root,#{pathToOpen}"]
 
-        command: 'explorer.exe'
+        if process.env.SystemRoot
+          command = path.join(process.env.SystemRoot, 'explorer.exe')
+        else
+          command = 'explorer.exe'
+
+        command: command
         label: 'Explorer'
         args: args
       else
