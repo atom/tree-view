@@ -124,6 +124,8 @@ class TreeView extends ScrollView
       @updateRoot() if atom.config.get('tree-view.hideIgnoredNames')
     @subscribe atom.config.observe 'tree-view.showOnRightSide', callNow: false, (newValue) =>
       @onSideToggled(newValue)
+    @subscribe atom.config.observe 'tree-view.sortFoldersInline', callNow: false, =>
+      @updateRoot()
 
   toggle: ->
     if @isVisible()

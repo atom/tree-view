@@ -5,6 +5,7 @@ module.exports =
     hideVcsIgnoredFiles: false
     hideIgnoredNames: false
     showOnRightSide: false
+    sortFoldersInline: false
 
   treeView: null
 

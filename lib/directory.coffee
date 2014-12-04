@@ -196,10 +196,13 @@ class Directory
     normalizedValue
 
   sortEntries: (combinedEntries) ->
-    combinedEntries.sort (first, second) =>
-      firstName = @normalizeEntryName(first)
-      secondName = @normalizeEntryName(second)
-      firstName.localeCompare(secondName)
+    if atom.config.get('tree-view.sortFoldersInline')
+      combinedEntries.sort (first, second) =>
+        firstName = @normalizeEntryName(first)
+        secondName = @normalizeEntryName(second)
+        firstName.localeCompare(secondName)
+    else
+      combinedEntries
 
   # Public: Perform a synchronous reload of the directory.
   reload: ->
