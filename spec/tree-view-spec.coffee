@@ -1600,7 +1600,7 @@ describe "TreeView", ->
                 dirView = $(treeView.root.entries).find('.directory:contains(test-dir)')
                 dirView[0].expand()
                 expect($(dirView[0].entries).children().length).toBe 1
-                expect(atom.workspace.getActiveEditor().getPath()).toBe(newPath)
+                expect(atom.workspace.getActiveTextEditor().getPath()).toBe(newPath)
 
           describe "when the directories along the new path don't exist", ->
             it "duplicates the tree and opens the new file", ->
@@ -1617,7 +1617,7 @@ describe "TreeView", ->
 
               runs ->
                 expect(fs.existsSync(filePath)).toBeTruthy()
-                expect(atom.workspace.getActiveEditor().getPath()).toBe(newPath)
+                expect(atom.workspace.getActiveTextEditor().getPath()).toBe(newPath)
 
           describe "when a file or directory already exists at the target path", ->
             it "shows an error message and does not close the dialog", ->

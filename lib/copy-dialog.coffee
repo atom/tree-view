@@ -24,7 +24,7 @@ class CopyDialog extends Dialog
       @showError("'#{newPath}' already exists.")
       return
 
-    activeEditor = atom.workspace.getActiveEditor()
+    activeEditor = atom.workspace.getActiveTextEditor()
     activeEditor = null unless activeEditor?.getPath() is @initialPath
     try
       if fs.isDirectorySync(@initialPath)
