@@ -33,7 +33,7 @@ class MoveDialog extends Dialog
     try
       fs.makeTreeSync(directoryPath) unless fs.existsSync(directoryPath)
       fs.moveSync(@initialPath, newPath)
-      if repo = atom.project.getRepo()
+      if repo = atom.project.getRepositories()[0]
         repo.getPathStatus(@initialPath)
         repo.getPathStatus(newPath)
       @close()

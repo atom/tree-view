@@ -10,12 +10,13 @@
   },
   "private": true,
   "dependencies": {
+    "atom-space-pen-views": "^0.20.0",
+    "event-kit": "~0.7.0",
     "fs-plus": "^2.3.0",
+    "minimatch": "~0.3.0",
+    "pathwatcher": "^2.0.12",
     "temp": "~0.7.0",
     "underscore-plus": "1.x",
-    "wrench": "1.5.x",
-    "pathwatcher": "^2.0.12",
-    "event-kit": "~0.7.0",
-    "minimatch": "~0.3.0"
+    "wrench": "1.5.x"
   }
 }
