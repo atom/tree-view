@@ -137,13 +137,13 @@ class TreeView extends View
       @show()
 
   show: ->
-    @attach() unless @panel?
+    @attach()
     @focus()
 
   attach: ->
     return if _.isEmpty(atom.project.getPaths())
 
-    @panel =
+    @panel ?=
       if atom.config.get('tree-view.showOnRightSide')
         atom.workspace.addRightPanel(item: this)
       else
@@ -253,7 +253,6 @@ class TreeView extends View
         @attachAfterProjectPathSet = false
     else
       @root = null
-
 
   getActivePath: -> atom.workspace.getActivePaneItem()?.getPath?()
 
