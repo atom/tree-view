@@ -114,8 +114,8 @@ class TreeView extends View
      'tree-view:open-in-new-window': => @openSelectedEntryInNewWindow()
      'tree-view:copy-project-path': => @copySelectedEntryPath(true)
      'tool-panel:unfocus': => @unfocus()
-     'tree-view:toggle-vcs-ignored-files', -> toggleConfig 'tree-view.hideVcsIgnoredFiles'
-     'tree-view:toggle-ignored-names', -> toggleConfig 'tree-view.hideIgnoredNames'
+     'tree-view:toggle-vcs-ignored-files': -> toggleConfig 'tree-view.hideVcsIgnoredFiles'
+     'tree-view:toggle-ignored-names': -> toggleConfig 'tree-view.hideIgnoredNames'
 
     @disposables.add atom.workspace.onDidChangeActivePaneItem =>
       @selectActiveFile()
