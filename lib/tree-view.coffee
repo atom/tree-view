@@ -644,9 +644,10 @@ class TreeView extends View
       @showFullMenu()
 
   onSideToggled: (newValue) ->
-    @detach()
-    @attach()
-    @element.dataset.showOnRightSide = newValue
+    if @isVisible()  
+      @detach()
+      @attach()
+      @element.dataset.showOnRightSide = newValue
 
   # Public: Return an array of paths from all selected items
   #
