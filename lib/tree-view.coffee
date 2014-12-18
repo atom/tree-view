@@ -642,11 +642,13 @@ class TreeView extends View
     else
       @selectEntry(entryToSelect)
       @showFullMenu()
-
+  
+  # Toggles the tree view side (from left to right & vice versa) when the user hits the menu dropdown option
   onSideToggled: (newValue) ->
-    @detach()
-    @attach()
-    @element.dataset.showOnRightSide = newValue
+    if @isVisible()  
+      @detach()
+      @attach()
+      @element.dataset.showOnRightSide = newValue
 
   # Public: Return an array of paths from all selected items
   #
