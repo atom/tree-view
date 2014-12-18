@@ -256,7 +256,7 @@ describe "TreeView", ->
 
     describe "when tree-view:toggle-side is triggered on the root view", ->
       describe "when the tree view is on the left", ->
-        it "should be moved to the right", ->
+        it "moves the tree view to the right", ->
           expect(treeView).toBeVisible()
           atom.commands.dispatch(workspaceElement, 'tree-view:toggle-side')
           expect(treeView).toMatchSelector('[data-show-on-right-side="true"]')
@@ -265,10 +265,19 @@ describe "TreeView", ->
         beforeEach ->
           atom.commands.dispatch(workspaceElement, 'tree-view:toggle-side')
 
-        it "should be moved to the left", ->
+        it "moves the tree view to the left", ->
           expect(treeView).toBeVisible()
           atom.commands.dispatch(workspaceElement, 'tree-view:toggle-side')
           expect(treeView).toMatchSelector('[data-show-on-right-side="false"]')
+
+      describe "when the tree view is hidden", ->
+        it "shows the tree view on the other side next time it is opened", ->
+          atom.commands.dispatch(workspaceElement, 'tree-view:toggle')
+          atom.commands.dispatch(workspaceElement, 'tree-view:toggle-side')
+          atom.commands.dispatch(workspaceElement, 'tree-view:toggle')
+          expect(atom.workspace.getLeftPanels().length).toBe 0
+          treeView = $(atom.workspace.getRightPanels()[0].getItem()).view()
+          expect(treeView).toMatchSelector('[data-show-on-right-side="true"]')
 
   describe "when tree-view:toggle-focus is triggered on the root view", ->
     beforeEach ->
