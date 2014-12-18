@@ -14,7 +14,7 @@ class Dialog extends View
     atom.commands.add @element,
       'core:confirm': => @onConfirm(@miniEditor.getText())
       'core:cancel': => @cancel()
-    @miniEditor.on 'blur', => @remove()
+    @miniEditor.on 'blur', => @close()
     @miniEditor.getModel().onDidChange => @showError()
     @miniEditor.getModel().setText(initialPath)
 
@@ -34,7 +34,9 @@ class Dialog extends View
     @miniEditor.getModel().scrollToCursorPosition()
 
   close: ->
-    @panel.destroy()
+    panelToDestroy = @panel
+    @panel = null
+    panelToDestroy?.destroy()
     atom.workspace.getActivePane().activate()
 
   cancel: ->
