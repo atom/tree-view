@@ -1244,7 +1244,7 @@ describe "TreeView", ->
             expect(fs.existsSync(filePath)).toBeFalsy()
 
     describe "tree-view:add", ->
-      addDialog = null
+      [addPanel, addDialog] = []
 
       beforeEach ->
         jasmine.attachToDOM(workspaceElement)
@@ -1254,7 +1254,8 @@ describe "TreeView", ->
 
         runs ->
           atom.commands.dispatch(treeView.element, "tree-view:add-file")
-          addDialog = $(atom.workspace.getModalPanels()[0].getItem()).view()
+          addPanel = atom.workspace.getModalPanels()[0]
+          addDialog = $(addPanel.getItem()).view()
 
       describe "when a file is selected", ->
         it "opens an add dialog with the file's current directory path populated", ->
@@ -1281,7 +1282,7 @@ describe "TreeView", ->
 
               runs ->
                 expect(fs.isFileSync(newPath)).toBeTruthy()
-                expect(addDialog.parent()).not.toExist()
+                expect(atom.workspace.getModalPanels().length).toBe 0
                 expect(atom.workspace.getActivePaneItem().getPath()).toBe newPath
 
               waitsFor "tree view to be updated", ->
@@ -1299,7 +1300,7 @@ describe "TreeView", ->
 
               expect(addDialog.errorMessage.text()).toContain 'already exists'
               expect(addDialog).toHaveClass('error')
-              expect(addDialog.hasParent()).toBeTruthy()
+              expect(atom.workspace.getModalPanels()[0]).toBe addPanel
 
         describe "when the path with a trailing '#{path.sep}' is changed and confirmed", ->
           it "shows an error message and does not close the dialog", ->
@@ -1308,20 +1309,20 @@ describe "TreeView", ->
 
             expect(addDialog.errorMessage.text()).toContain 'names must not end with'
             expect(addDialog).toHaveClass('error')
-            expect(addDialog.hasParent()).toBeTruthy()
+            expect(atom.workspace.getModalPanels()[0]).toBe addPanel
 
         describe "when 'core:cancel' is triggered on the add dialog", ->
           it "removes the dialog and focuses the tree view", ->
             jasmine.attachToDOM(treeView.element)
             atom.commands.dispatch addDialog.element, 'core:cancel'
-            expect(addDialog.parent()).not.toExist()
+            expect(atom.workspace.getModalPanels().length).toBe 0
             expect(treeView.find(".tree-view")).toMatchSelector(':focus')
 
         describe "when the add dialog's editor loses focus", ->
           it "removes the dialog and focuses root view", ->
             jasmine.attachToDOM(workspaceElement)
             $(workspaceElement).focus()
-            expect(addDialog.parent()).not.toExist()
+            expect(atom.workspace.getModalPanels().length).toBe 0
             expect(atom.views.getView(atom.workspace.getActivePane())).toHaveFocus()
 
         describe "when the path ends with whitespace", ->
@@ -1371,7 +1372,7 @@ describe "TreeView", ->
           expect(addDialog.miniEditor.getText().length).toBe 0
 
     describe "tree-view:add-folder", ->
-      addDialog = null
+      [addPanel, addDialog] = []
 
       beforeEach ->
         jasmine.attachToDOM(workspaceElement)
@@ -1381,7 +1382,8 @@ describe "TreeView", ->
 
         runs ->
           atom.commands.dispatch(treeView.element, "tree-view:add-folder")
-          addDialog = $(atom.workspace.getModalPanels()[0].getItem()).view()
+          addPanel = atom.workspace.getModalPanels()[0]
+          addDialog = $(addPanel.getItem()).view()
 
       describe "when a file is selected", ->
         it "opens an add dialog with the file's current directory path populated", ->
@@ -1395,12 +1397,11 @@ describe "TreeView", ->
         describe "when the path without a trailing '#{path.sep}' is changed and confirmed", ->
           describe "when no directory exists at the given path", ->
             it "adds a directory and closes the dialog", ->
-              jasmine.attachToDOM(treeView.element)
               newPath = path.join(dirPath, 'new', 'dir')
               addDialog.miniEditor.getModel().insertText("new#{path.sep}dir")
               atom.commands.dispatch addDialog.element, 'core:confirm'
               expect(fs.isDirectorySync(newPath)).toBeTruthy()
-              expect(addDialog.parent()).not.toExist()
+              expect(atom.workspace.getModalPanels().length).toBe 0
               expect(atom.workspace.getActivePaneItem().getPath()).not.toBe newPath
               expect(treeView.find(".tree-view")).toMatchSelector(':focus')
               expect(dirView.find('.directory.selected:contains(new)').length).toBe 1
@@ -1408,12 +1409,11 @@ describe "TreeView", ->
         describe "when the path with a trailing '#{path.sep}' is changed and confirmed", ->
           describe "when no directory exists at the given path", ->
             it "adds a directory and closes the dialog", ->
-              jasmine.attachToDOM(treeView.element)
               newPath = path.join(dirPath, 'new', 'dir')
               addDialog.miniEditor.getModel().insertText("new#{path.sep}dir#{path.sep}")
               atom.commands.dispatch addDialog.element, 'core:confirm'
               expect(fs.isDirectorySync(newPath)).toBeTruthy()
-              expect(addDialog.parent()).not.toExist()
+              expect(atom.workspace.getModalPanels().length).toBe 0
               expect(atom.workspace.getActivePaneItem().getPath()).not.toBe newPath
               expect(treeView.find(".tree-view")).toMatchSelector(':focus')
               expect(dirView.find('.directory.selected:contains(new)').length).toBe(1)
@@ -1426,12 +1426,11 @@ describe "TreeView", ->
               expandedView = treeView.entryForPath(expandedPath)
               expandedView.expand()
 
-              jasmine.attachToDOM(treeView.element)
               newPath = path.join(dirPath, "new2") + path.sep
               addDialog.miniEditor.getModel().insertText("new2#{path.sep}")
               atom.commands.dispatch addDialog.element, 'core:confirm'
               expect(fs.isDirectorySync(newPath)).toBeTruthy()
-              expect(addDialog.parent()).not.toExist()
+              expect(atom.workspace.getModalPanels().length).toBe 0
               expect(atom.workspace.getActivePaneItem().getPath()).not.toBe newPath
               expect(treeView.find(".tree-view")).toMatchSelector(':focus')
               expect(dirView.find('.directory.selected:contains(new2)').length).toBe(1)
@@ -1446,7 +1445,7 @@ describe "TreeView", ->
 
               expect(addDialog.errorMessage.text()).toContain 'already exists'
               expect(addDialog).toHaveClass('error')
-              expect(addDialog.hasParent()).toBeTruthy()
+              expect(atom.workspace.getModalPanels()[0]).toBe addPanel
 
     describe "tree-view:move", ->
       describe "when a file is selected", ->
@@ -1484,7 +1483,7 @@ describe "TreeView", ->
 
               expect(fs.existsSync(newPath)).toBeTruthy()
               expect(fs.existsSync(filePath)).toBeFalsy()
-              expect(moveDialog.parent()).not.toExist()
+              expect(atom.workspace.getModalPanels().length).toBe 0
 
               waitsFor "tree view to update", ->
                 root.find('> .entries > .file:contains(renamed-test-file.txt)').length > 0
@@ -1523,16 +1522,14 @@ describe "TreeView", ->
 
         describe "when 'core:cancel' is triggered on the move dialog", ->
           it "removes the dialog and focuses the tree view", ->
-            jasmine.attachToDOM(treeView.element)
             atom.commands.dispatch moveDialog.element, 'core:cancel'
-            expect(moveDialog.parent()).not.toExist()
+            expect(atom.workspace.getModalPanels().length).toBe 0
             expect(treeView.find(".tree-view")).toMatchSelector(':focus')
 
         describe "when the move dialog's editor loses focus", ->
           it "removes the dialog and focuses root view", ->
-            jasmine.attachToDOM(workspaceElement)
             $(workspaceElement).focus()
-            expect(moveDialog.parent()).not.toExist()
+            expect(atom.workspace.getModalPanels().length).toBe 0
             expect(atom.views.getView(atom.workspace.getActivePane())).toHaveFocus()
 
       describe "when a file is selected that's name starts with a '.'", ->
@@ -1602,10 +1599,9 @@ describe "TreeView", ->
                 root.find('> .entries > .file:contains(duplicated-test-file.txt)').length > 0
 
               runs ->
-                atom.commands.dispatch(treeView.element, "tree-view:duplicate")
                 expect(fs.existsSync(newPath)).toBeTruthy()
                 expect(fs.existsSync(filePath)).toBeTruthy()
-                expect(copyDialog.parent()).not.toExist()
+                expect(atom.workspace.getModalPanels().length).toBe 0
                 dirView = $(treeView.root.entries).find('.directory:contains(test-dir)')
                 dirView[0].expand()
                 expect($(dirView[0].entries).children().length).toBe 1
@@ -1645,14 +1641,14 @@ describe "TreeView", ->
           it "removes the dialog and focuses the tree view", ->
             jasmine.attachToDOM(treeView.element)
             atom.commands.dispatch copyDialog.element, 'core:cancel'
-            expect(copyDialog.parent()).not.toExist()
+            expect(atom.workspace.getModalPanels().length).toBe 0
             expect(treeView.find(".tree-view")).toMatchSelector(':focus')
 
         describe "when the duplicate dialog's editor loses focus", ->
           it "removes the dialog and focuses root view", ->
             jasmine.attachToDOM(workspaceElement)
             $(workspaceElement).focus()
-            expect(copyDialog.parent()).not.toExist()
+            expect(atom.workspace.getModalPanels().length).toBe 0
             expect(atom.views.getView(atom.workspace.getActivePane())).toHaveFocus()
 
       describe "when a file is selected that's name starts with a '.'", ->
