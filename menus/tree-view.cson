@@ -20,38 +20,47 @@
 ]
 
 'context-menu':
-  '.tree-view.full-menu':
-    'Add File': 'tree-view:add-file'
-    'Add Folder': 'tree-view:add-folder'
-    'separator1': '-'
-    'Rename': 'tree-view:move'
-    'Duplicate': 'tree-view:duplicate'
-    'Delete': 'tree-view:remove'
-    'Copy': 'tree-view:copy'
-    'Cut': 'tree-view:cut'
-    'Paste': 'tree-view:paste'
-    'separator2': '-'
-    'Copy Full Path': 'tree-view:copy-full-path'
-    'Copy Project Path': 'tree-view:copy-project-path'
-    'Open In New Window': 'tree-view:open-in-new-window'
+  '.tree-view.full-menu': [
+    {'label': 'Add File', 'command': 'tree-view:add-file'}
+    {'label': 'Add Folder', 'command': 'tree-view:add-folder'}
+    {'type': 'separator'}
 
-  '.platform-darwin .tree-view.full-menu':
-    'Show in Finder': 'tree-view:show-in-file-manager'
+    {'label': 'Rename', 'command': 'tree-view:move'}
+    {'label': 'Duplicate', 'command': 'tree-view:duplicate'}
+    {'label': 'Delete', 'command': 'tree-view:remove'}
+    {'label': 'Copy', 'command': 'tree-view:copy'}
+    {'label': 'Cut', 'command': 'tree-view:cut'}
+    {'label': 'Paste', 'command': 'tree-view:paste'}
+    {'type': 'separator'}
 
-  '.platform-win32 .tree-view.full-menu':
-    'Show in Explorer': 'tree-view:show-in-file-manager'
+    {'label': 'Copy Full Path', 'command': 'tree-view:copy-full-path'}
+    {'label': 'Copy Project Path', 'command': 'tree-view:copy-project-path'}
+    {'label': 'Open In New Window', 'command': 'tree-view:open-in-new-window'}
+  ]
 
-  '.platform-linux .tree-view.full-menu':
-    'Show in File Manager': 'tree-view:show-in-file-manager'
+  '.platform-darwin .tree-view.full-menu': [
+    {'label': 'Show in Finder', 'command': 'tree-view:show-in-file-manager'}
+  ]
 
-  '.tree-view.multi-select':
-    'Delete': 'tree-view:remove'
-    'Copy': 'tree-view:copy'
-    'Cut': 'tree-view:cut'
-    'Paste': 'tree-view:paste'
+  '.platform-win32 .tree-view.full-menu': [
+    {'label': 'Show in Explorer', 'command': 'tree-view:show-in-file-manager'}
+  ]
 
-  '.pane .item-views':
-    'Reveal in Tree View': 'tree-view:reveal-active-file'
+  '.platform-linux .tree-view.full-menu': [
+    {'label': 'Show in File Manager', 'command': 'tree-view:show-in-file-manager'}
+  ]
 
-  '.pane .tab.active':
-    'Reveal in Tree View': 'tree-view:reveal-active-file'
+  '.tree-view.multi-select': [
+    {'label': 'Delete', 'command': 'tree-view:remove'}
+    {'label': 'Copy', 'command': 'tree-view:copy'}
+    {'label': 'Cut', 'command': 'tree-view:cut'}
+    {'label': 'Paste', 'command': 'tree-view:paste'}
+  ]
+
+  '.pane .item-views': [
+    {'label': 'Reveal in Tree View', 'command': 'tree-view:reveal-active-file'}
+  ]
+
+  '.pane .tab.active': [
+    {'label': 'Reveal in Tree View', 'command': 'tree-view:reveal-active-file'}
+  ]

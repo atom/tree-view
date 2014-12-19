@@ -27,7 +27,7 @@ class DirectoryView extends HTMLElement
     else
       iconClass = 'icon-file-directory'
       if @directory.isRoot
-        iconClass = 'icon-repo' if atom.project.getRepo()?.isProjectAtRoot()
+        iconClass = 'icon-repo' if atom.project.getRepositories()[0]?.isProjectAtRoot()
       else
         iconClass = 'icon-file-submodule' if @directory.submodule
     @directoryName.classList.add(iconClass)
@@ -47,11 +47,6 @@ class DirectoryView extends HTMLElement
     @classList.remove('status-ignored', 'status-modified', 'status-added')
     @classList.add("status-#{@directory.status}") if @directory.status?
 
-  emitDirectoryModifiedEvent: ->
-    if @isExpanded
-      event = new CustomEvent('tree-view:directory-modified', bubbles: true)
-      @dispatchEvent(event)
-
   subscribeToDirectory: ->
     @subscriptions.add @directory.onDidAddEntries (addedEntries) =>
       return unless @isExpanded
@@ -68,11 +63,6 @@ class DirectoryView extends HTMLElement
           @entries.appendChild(view)
 
         numberOfEntries++
-
-      @emitDirectoryModifiedEvent()
-
-    @subscriptions.add @directory.onDidRemoveEntries =>
-      @emitDirectoryModifiedEvent() if @isExpanded
 
   getPath: ->
     @directory.path

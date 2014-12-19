@@ -25,7 +25,7 @@ class Directory
     @status = null
     @entries = {}
 
-    @submodule = atom.project.getRepo()?.isSubmodule(@path)
+    @submodule = atom.project.getRepositories()[0]?.isSubmodule(@path)
 
     @subscribeToRepo()
     @updateStatus()
@@ -57,7 +57,7 @@ class Directory
 
   # Subscribe to project's repo for changes to the Git status of this directory.
   subscribeToRepo: ->
-    repo = atom.project.getRepo()
+    repo = atom.project.getRepositories()[0]
     return unless repo?
 
     @subscriptions.add repo.onDidChangeStatus (event) =>
@@ -67,7 +67,7 @@ class Directory
 
   # Update the status property of this directory using the repo.
   updateStatus: ->
-    repo = atom.project.getRepo()
+    repo = atom.project.getRepositories()[0]
     return unless repo?
 
     newStatus = null
@@ -87,7 +87,7 @@ class Directory
   # Is the given path ignored?
   isPathIgnored: (filePath) ->
     if atom.config.get('tree-view.hideVcsIgnoredFiles')
-      repo = atom.project.getRepo()
+      repo = atom.project.getRepositories()[0]
       return true if repo? and repo.isProjectAtRoot() and repo.isPathIgnored(filePath)
 
     if atom.config.get('tree-view.hideIgnoredNames')

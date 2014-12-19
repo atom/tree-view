@@ -45,7 +45,7 @@ class File
 
   # Subscribe to the project' repo for changes to the Git status of this file.
   subscribeToRepo: ->
-    repo = atom.project.getRepo()
+    repo = atom.project.getRepositories()[0]
     return unless repo?
 
     @subscriptions.add repo.onDidChangeStatus (event) =>
@@ -55,7 +55,7 @@ class File
 
   # Update the status property of this directory using the repo.
   updateStatus:  ->
-    repo = atom.project.getRepo()
+    repo = atom.project.getRepositories()[0]
     return unless repo?
 
     newStatus = null
