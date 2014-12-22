@@ -6,6 +6,7 @@ module.exports =
     hideVcsIgnoredFiles:
       type: 'boolean'
       default: false
+      title: 'Hide VCS Ignored Files'
     hideIgnoredNames:
       type: 'boolean'
       default: false
