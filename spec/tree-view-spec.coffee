@@ -1254,7 +1254,7 @@ describe "TreeView", ->
 
         runs ->
           atom.commands.dispatch(treeView.element, "tree-view:add-file")
-          addPanel = atom.workspace.getModalPanels()[0]
+          [addPanel] = atom.workspace.getModalPanels()
           addDialog = $(addPanel.getItem()).view()
 
       describe "when a file is selected", ->
@@ -1301,6 +1301,25 @@ describe "TreeView", ->
               expect(addDialog.errorMessage.text()).toContain 'already exists'
               expect(addDialog).toHaveClass('error')
               expect(atom.workspace.getModalPanels()[0]).toBe addPanel
+
+          describe "when the project has no path", ->
+            it "add a file and closes the dialog", ->
+              atom.project.setPaths([])
+              addDialog.close()
+              atom.commands.dispatch(treeView.element, "tree-view:add-file")
+              [addPanel] = atom.workspace.getModalPanels()
+              addDialog = $(addPanel.getItem()).view()
+
+              newPath = temp.path()
+              addDialog.miniEditor.getModel().insertText(newPath)
+
+              waitsForFileToOpen ->
+                atom.commands.dispatch addDialog.element, 'core:confirm'
+
+              runs ->
+                expect(fs.isFileSync(newPath)).toBeTruthy()
+                expect(atom.workspace.getModalPanels().length).toBe 0
+                expect(atom.workspace.getActivePaneItem().getPath()).toBe fs.realpathSync(newPath)
 
         describe "when the path with a trailing '#{path.sep}' is changed and confirmed", ->
           it "shows an error message and does not close the dialog", ->
@@ -1382,7 +1401,7 @@ describe "TreeView", ->
 
         runs ->
           atom.commands.dispatch(treeView.element, "tree-view:add-folder")
-          addPanel = atom.workspace.getModalPanels()[0]
+          [addPanel] = atom.workspace.getModalPanels()
           addDialog = $(addPanel.getItem()).view()
 
       describe "when a file is selected", ->
@@ -1435,6 +1454,21 @@ describe "TreeView", ->
               expect(treeView.find(".tree-view")).toMatchSelector(':focus')
               expect(dirView.find('.directory.selected:contains(new2)').length).toBe(1)
               expect(treeView.entryForPath(expandedPath).isExpanded).toBeTruthy()
+
+            describe "when the project has no path", ->
+              it "adds a directory and closes the dialog", ->
+                addDialog.close()
+                atom.project.setPaths([])
+                atom.commands.dispatch(treeView.element, "tree-view:add-folder")
+                [addPanel] = atom.workspace.getModalPanels()
+                addDialog = $(addPanel.getItem()).view()
+
+                expect(addDialog.miniEditor.getModel().getText()).toBe ''
+                newPath = temp.path()
+                addDialog.miniEditor.getModel().insertText(newPath)
+                atom.commands.dispatch addDialog.element, 'core:confirm'
+                expect(fs.isDirectorySync(newPath)).toBeTruthy()
+                expect(atom.workspace.getModalPanels().length).toBe 0
 
           describe "when a directory already exists at the given path", ->
             it "shows an error message and does not close the dialog", ->

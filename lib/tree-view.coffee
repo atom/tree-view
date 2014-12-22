@@ -536,13 +536,13 @@ class TreeView extends View
             fs.moveSync(initialPath, newPath)
 
   add: (isCreatingFile) ->
-    selectedEntry = @selectedEntry() or @root
-    selectedPath = selectedEntry.getPath()
+    selectedEntry = @selectedEntry() ? @root
+    selectedPath = selectedEntry?.getPath() ? ''
 
     AddDialog ?= require './add-dialog'
     dialog = new AddDialog(selectedPath, isCreatingFile)
     dialog.on 'directory-created', (event, createdPath) =>
-      @entryForPath(createdPath).reload()
+      @entryForPath(createdPath)?.reload()
       @selectEntryForPath(createdPath)
       false
     dialog.on 'file-created', (event, createdPath) ->
