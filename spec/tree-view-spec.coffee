@@ -1728,6 +1728,14 @@ describe "TreeView", ->
         it "duplicates the current file", ->
           expect(copyDialog.miniEditor.getText()).toBe('tree-view.js')
 
+      describe "when nothing is selected", ->
+        it "doesn't display the copy dialog", ->
+          jasmine.attachToDOM(workspaceElement)
+          treeView.focus()
+          treeView.deselect()
+          atom.commands.dispatch(treeView.element, "tree-view:duplicate")
+          expect(atom.workspace.getModalPanels().length).toBe(0)
+
     describe "tree-view:remove", ->
       it "won't remove the root directory", ->
         spyOn(atom, 'confirm')

@@ -435,7 +435,7 @@ class TreeView extends View
     if @hasFocus()
       entry = @selectedEntry()
       return if entry is @root
-      oldPath = entry.getPath()
+      oldPath = entry?.getPath()
     else
       oldPath = @getActivePath()
     return unless oldPath
