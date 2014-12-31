@@ -162,6 +162,19 @@ describe "TreeView", ->
           expect(treeView).toBeFalsy()
 
   describe "serialization", ->
+    it "restores the attached/detached state of the tree-view", ->
+      jasmine.attachToDOM(workspaceElement)
+      atom.commands.dispatch(workspaceElement, 'tree-view:toggle')
+      expect(atom.workspace.getLeftPanels().length).toBe(0)
+
+      atom.packages.deactivatePackage("tree-view")
+
+      waitsForPromise ->
+        atom.packages.activatePackage("tree-view")
+
+      runs ->
+        expect(atom.workspace.getLeftPanels().length).toBe(0)
+
     it "restores expanded directories and selected file when deserialized", ->
       root.find('.directory:contains(dir1)').click()
 
