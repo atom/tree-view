@@ -16,6 +16,6 @@
     "minimatch": "~0.3.0",
     "pathwatcher": "^2.0.12",
     "temp": "~0.7.0",
-    "underscore-plus": "1.x"
+    "underscore-plus": "^1.0.0"
   }
 }
