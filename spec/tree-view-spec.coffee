@@ -1875,31 +1875,61 @@ describe "TreeView", ->
       treeView.updateRoot()
       $(treeView.root.entries).find('.directory:contains(dir)')[0].expand()
 
-    describe "when the project is the repository root", ->
-      it "adds a custom style", ->
-        expect(treeView.find('.icon-repo').length).toBe 1
+    describe "with enableVcsColoring set to true", ->
+      beforeEach ->
+        atom.config.set "tree-view.enableVcsColoring", true
 
-    describe "when a file is modified", ->
-      it "adds a custom style", ->
-        $(treeView.root.entries).find('.directory:contains(dir)')[0].expand()
-        expect(treeView.find('.file:contains(b.txt)')).toHaveClass 'status-modified'
+      describe "when the project is the repository root", ->
+        it "adds a custom style", ->
+          expect(treeView.find('.icon-repo').length).toBe 1
 
-    describe "when a directory if modified", ->
-      it "adds a custom style", ->
-        expect(treeView.find('.directory:contains(dir)')).toHaveClass 'status-modified'
+      describe "when a file is modified", ->
+        it "adds a custom style", ->
+          $(treeView.root.entries).find('.directory:contains(dir)')[0].expand()
+          expect(treeView.find('.file:contains(b.txt)')).toHaveClass 'status-modified'
 
-    describe "when a file is new", ->
-      it "adds a custom style", ->
-        $(treeView.root.entries).find('.directory:contains(dir2)')[0].expand()
-        expect(treeView.find('.file:contains(new2)')).toHaveClass 'status-added'
+      describe "when a directory if modified", ->
+        it "adds a custom style", ->
+          expect(treeView.find('.directory:contains(dir)')).toHaveClass 'status-modified'
 
-    describe "when a directory is new", ->
-      it "adds a custom style", ->
-        expect(treeView.find('.directory:contains(dir2)')).toHaveClass 'status-added'
+      describe "when a file is new", ->
+        it "adds a custom style", ->
+          $(treeView.root.entries).find('.directory:contains(dir2)')[0].expand()
+          expect(treeView.find('.file:contains(new2)')).toHaveClass 'status-added'
 
-    describe "when a file is ignored", ->
-      it "adds a custom style", ->
-        expect(treeView.find('.file:contains(ignored.txt)')).toHaveClass 'status-ignored'
+      describe "when a directory is new", ->
+        it "adds a custom style", ->
+          expect(treeView.find('.directory:contains(dir2)')).toHaveClass 'status-added'
+
+      describe "when a file is ignored", ->
+        it "adds a custom style", ->
+          expect(treeView.find('.file:contains(ignored.txt)')).toHaveClass 'status-ignored'
+
+    describe "with enableVcsColoring set to false", ->
+      beforeEach ->
+        atom.config.set "tree-view.enableVcsColoring", false
+
+      describe "when a file is modified", ->
+        it "adds a custom style", ->
+          $(treeView.root.entries).find('.directory:contains(dir)')[0].expand()
+          expect(treeView.find('.file:contains(b.txt)')).not.toHaveClass 'status-modified'
+
+      describe "when a directory if modified", ->
+        it "adds a custom style", ->
+          expect(treeView.find('.directory:contains(dir)')).not.toHaveClass 'status-modified'
+
+      describe "when a file is new", ->
+        it "adds a custom style", ->
+          $(treeView.root.entries).find('.directory:contains(dir2)')[0].expand()
+          expect(treeView.find('.file:contains(new2)')).not.toHaveClass 'status-added'
+
+      describe "when a directory is new", ->
+        it "adds a custom style", ->
+          expect(treeView.find('.directory:contains(dir2)')).not.toHaveClass 'status-added'
+
+      describe "when a file is ignored", ->
+        it "adds a custom style", ->
+          expect(treeView.find('.file:contains(ignored.txt)')).not.toHaveClass 'status-ignored'
 
   describe "when the resize handle is double clicked", ->
     beforeEach ->

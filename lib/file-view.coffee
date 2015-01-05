@@ -30,8 +30,9 @@ class FileView extends HTMLElement
     @updateStatus()
 
   updateStatus: ->
-    @classList.remove('status-ignored', 'status-modified',  'status-added')
-    @classList.add("status-#{@file.status}") if @file.status?
+    if atom.config.get('tree-view.enableVcsColoring')
+      @classList.remove('status-ignored', 'status-modified',  'status-added')
+      @classList.add("status-#{@file.status}") if @file.status?
 
   getPath: ->
     @fileName.dataset.path
