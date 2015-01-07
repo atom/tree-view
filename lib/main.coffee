@@ -13,6 +13,9 @@ module.exports =
     showOnRightSide:
       type: 'boolean'
       default: false
+    hidePattern:
+      type: 'string'
+      default: ''
 
   treeView: null
 

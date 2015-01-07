@@ -94,6 +94,16 @@ class Directory
       for ignoredPattern in @ignoredPatterns
         return true if ignoredPattern.match(filePath)
 
+    if atom.config.get('tree-view.hidePattern')
+      basePath = path.basename(filePath)
+      hidePattern = atom.config.get('tree-view.hidePattern')
+      try
+        match = basePath.match(hidePattern)
+      catch
+        console.warn("Bad regex " + hidePattern)
+        return false
+      return true if match
+
     false
 
   # Does given full path start with the given prefix?
