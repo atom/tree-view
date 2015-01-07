@@ -100,7 +100,7 @@ class Directory
       try
         match = basePath.match(hidePattern)
       catch
-        console.warn("Bad regex " + hidePattern)
+        console.warn("Bad hidePattern regex: " + hidePattern)
         return false
       return true if match
 
