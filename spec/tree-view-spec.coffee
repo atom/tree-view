@@ -1847,6 +1847,20 @@ describe "TreeView", ->
       expect(treeView.find('.directory .name:contains(test.js)').length).toBe 1
       expect(treeView.find('.directory .name:contains(test.txt)').length).toBe 1
 
+  describe "the hidePattern config option", ->
+    beforeEach ->
+      atom.config.set('tree-view.hidePattern', '\.txt')
+      dotGitFixture = path.join(__dirname, 'fixtures', 'git', 'working-dir')
+      atom.project.setPaths([dotGitFixture])
+
+    it "hides files matching the pattern given", ->
+      expect(treeView.find('.directory .name:contains(file.txt)').length).toBe 0
+      expect(treeView.find('.directory .name:contains(other.txt)').length).toBe 0
+
+      atom.config.set('tree-view.hidePattern', '')
+      expect(treeView.find('.directory .name:contains(file.txt)').length).toBe 1
+      expect(treeView.find('.directory .name:contains(other.txt)').length).toBe 1
+
   describe "Git status decorations", ->
     beforeEach ->
       projectPath = fs.realpathSync(temp.mkdirSync('tree-view-project'))
