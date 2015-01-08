@@ -57,10 +57,10 @@
     {'label': 'Paste', 'command': 'tree-view:paste'}
   ]
 
-  '.pane .item-views': [
+  'atom-pane .item-views': [
     {'label': 'Reveal in Tree View', 'command': 'tree-view:reveal-active-file'}
   ]
 
-  '.pane .tab.active': [
+  'atom-pane .tab.active': [
     {'label': 'Reveal in Tree View', 'command': 'tree-view:reveal-active-file'}
   ]
