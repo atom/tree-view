@@ -27,6 +27,7 @@ module.exports =
       'tree-view:toggle': => @createView().toggle()
       'tree-view:toggle-focus': => @createView().toggleFocus()
       'tree-view:reveal-active-file': => @createView().revealActiveFile()
+      'tree-view:reveal-active-file-if-open': => @createView().revealActiveFile() if @treeView?
       'tree-view:toggle-side': => @createView().toggleSide()
       'tree-view:add-file': => @createView().add(true)
       'tree-view:add-folder': => @createView().add(false)
