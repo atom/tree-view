@@ -70,7 +70,7 @@ class TreeView extends View
     directoryExpansionStates: @root?.directory.serializeExpansionStates()
     selectedPath: @selectedEntry()?.getPath()
     hasFocus: @hasFocus()
-    attached: @hasParent()
+    attached: @panel?
     scrollLeft: @scroller.scrollLeft()
     scrollTop: @scrollTop()
     width: @width()
@@ -129,7 +129,7 @@ class TreeView extends View
       @updateRoot() if atom.config.get('tree-view.hideIgnoredNames')
     @disposables.add atom.config.onDidChange 'tree-view.showOnRightSide', ({newValue}) =>
       @onSideToggled(newValue)
-    @subscribe atom.config.observe 'tree-view.sortFoldersInline', callNow: false, =>
+    @disposables.add atom.config.onDidChange 'tree-view.sortFoldersInline', =>
       @updateRoot()
 
   toggle: ->
@@ -437,7 +437,7 @@ class TreeView extends View
     if @hasFocus()
       entry = @selectedEntry()
       return if entry is @root
-      oldPath = entry.getPath()
+      oldPath = entry?.getPath()
     else
       oldPath = @getActivePath()
     return unless oldPath
@@ -538,13 +538,13 @@ class TreeView extends View
             fs.moveSync(initialPath, newPath)
 
   add: (isCreatingFile) ->
-    selectedEntry = @selectedEntry() or @root
-    selectedPath = selectedEntry.getPath()
+    selectedEntry = @selectedEntry() ? @root
+    selectedPath = selectedEntry?.getPath() ? ''
 
     AddDialog ?= require './add-dialog'
     dialog = new AddDialog(selectedPath, isCreatingFile)
     dialog.on 'directory-created', (event, createdPath) =>
-      @entryForPath(createdPath).reload()
+      @entryForPath(createdPath)?.reload()
       @selectEntryForPath(createdPath)
       false
     dialog.on 'file-created', (event, createdPath) ->

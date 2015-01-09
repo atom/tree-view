@@ -3,7 +3,6 @@ _ = require 'underscore-plus'
 fs = require 'fs-plus'
 path = require 'path'
 temp = require('temp').track()
-wrench = require 'wrench'
 os = require 'os'
 
 waitsForFileToOpen = (causeFileToOpen) ->
@@ -17,10 +16,8 @@ describe "TreeView", ->
   [treeView, root, sampleJs, sampleTxt, workspaceElement] = []
 
   beforeEach ->
-    tempPath = fs.realpathSync(temp.mkdirSync('atom'))
     fixturesPath = atom.project.getPaths()[0]
-    wrench.copyDirSyncRecursive(fixturesPath, tempPath, forceDelete: true)
-    atom.project.setPaths([path.join(tempPath, 'tree-view')])
+    atom.project.setPaths([path.join(fixturesPath, "tree-view")])
 
     workspaceElement = atom.views.getView(atom.workspace)
 
@@ -162,6 +159,19 @@ describe "TreeView", ->
           expect(treeView).toBeFalsy()
 
   describe "serialization", ->
+    it "restores the attached/detached state of the tree-view", ->
+      jasmine.attachToDOM(workspaceElement)
+      atom.commands.dispatch(workspaceElement, 'tree-view:toggle')
+      expect(atom.workspace.getLeftPanels().length).toBe(0)
+
+      atom.packages.deactivatePackage("tree-view")
+
+      waitsForPromise ->
+        atom.packages.activatePackage("tree-view")
+
+      runs ->
+        expect(atom.workspace.getLeftPanels().length).toBe(0)
+
     it "restores expanded directories and selected file when deserialized", ->
       root.find('.directory:contains(dir1)').click()
 
@@ -919,10 +929,9 @@ describe "TreeView", ->
 
     describe "tree-view:open-selected-entry", ->
       describe "when a file is selected", ->
-        beforeEach ->
+        it "opens the file in the editor and focuses it", ->
           jasmine.attachToDOM(workspaceElement)
 
-        it "opens the file in the editor and focuses it", ->
           waitsForFileToOpen ->
             root.find('.file:contains(tree-view.js)').click()
 
@@ -955,8 +964,6 @@ describe "TreeView", ->
     [dirView, fileView, dirView2, fileView2, fileView3, rootDirPath, dirPath, filePath, dirPath2, filePath2, filePath3] = []
 
     beforeEach ->
-      atom.packages.deactivatePackage('tree-view')
-
       rootDirPath = fs.absolute(temp.mkdirSync('tree-view'))
 
       dirPath = path.join(rootDirPath, "test-dir")
@@ -975,25 +982,18 @@ describe "TreeView", ->
 
       atom.project.setPaths([rootDirPath])
 
-      waitsForPromise ->
-        atom.packages.activatePackage('tree-view')
-
-      runs ->
-        atom.commands.dispatch(workspaceElement, 'tree-view:toggle')
-        treeView = $(atom.workspace.getLeftPanels()[0].getItem()).view()
-        root = $(treeView.root)
-        dirView = $(treeView.root.entries).find('.directory:contains(test-dir):first')
-        dirView[0].expand()
-        fileView = treeView.find('.file:contains(test-file.txt)')
-        dirView2 = $(treeView.root.entries).find('.directory:contains(test-dir2):last')
-        dirView2[0].expand()
-        fileView2 = treeView.find('.file:contains(test-file2.txt)')
-        fileView3 = treeView.find('.file:contains(test-file3.txt)')
+      root = $(treeView.root)
+      dirView = $(treeView.root.entries).find('.directory:contains(test-dir):first')
+      dirView[0].expand()
+      fileView = treeView.find('.file:contains(test-file.txt)')
+      dirView2 = $(treeView.root.entries).find('.directory:contains(test-dir2):last')
+      dirView2[0].expand()
+      fileView2 = treeView.find('.file:contains(test-file2.txt)')
+      fileView3 = treeView.find('.file:contains(test-file3.txt)')
 
     describe "tree-view:copy", ->
       LocalStorage = window.localStorage
       beforeEach ->
-        jasmine.attachToDOM(workspaceElement)
         LocalStorage.clear()
 
         waitsForFileToOpen ->
@@ -1024,8 +1024,8 @@ describe "TreeView", ->
 
     describe "tree-view:cut", ->
       LocalStorage = window.localStorage
+
       beforeEach ->
-        jasmine.attachToDOM(workspaceElement)
         LocalStorage.clear()
 
         waitsForFileToOpen ->
@@ -1057,8 +1057,8 @@ describe "TreeView", ->
 
     describe "tree-view:paste", ->
       LocalStorage = window.localStorage
+
       beforeEach ->
-        jasmine.attachToDOM(workspaceElement)
         LocalStorage.clear()
 
       describe "when attempting to paste a directory into itself", ->
@@ -1254,7 +1254,7 @@ describe "TreeView", ->
 
         runs ->
           atom.commands.dispatch(treeView.element, "tree-view:add-file")
-          addPanel = atom.workspace.getModalPanels()[0]
+          [addPanel] = atom.workspace.getModalPanels()
           addDialog = $(addPanel.getItem()).view()
 
       describe "when a file is selected", ->
@@ -1302,6 +1302,25 @@ describe "TreeView", ->
               expect(addDialog).toHaveClass('error')
               expect(atom.workspace.getModalPanels()[0]).toBe addPanel
 
+          describe "when the project has no path", ->
+            it "add a file and closes the dialog", ->
+              atom.project.setPaths([])
+              addDialog.close()
+              atom.commands.dispatch(treeView.element, "tree-view:add-file")
+              [addPanel] = atom.workspace.getModalPanels()
+              addDialog = $(addPanel.getItem()).view()
+
+              newPath = temp.path()
+              addDialog.miniEditor.getModel().insertText(newPath)
+
+              waitsForFileToOpen ->
+                atom.commands.dispatch addDialog.element, 'core:confirm'
+
+              runs ->
+                expect(fs.isFileSync(newPath)).toBeTruthy()
+                expect(atom.workspace.getModalPanels().length).toBe 0
+                expect(atom.workspace.getActivePaneItem().getPath()).toBe fs.realpathSync(newPath)
+
         describe "when the path with a trailing '#{path.sep}' is changed and confirmed", ->
           it "shows an error message and does not close the dialog", ->
             addDialog.miniEditor.getModel().insertText("new-test-file" + path.sep)
@@ -1313,15 +1332,13 @@ describe "TreeView", ->
 
         describe "when 'core:cancel' is triggered on the add dialog", ->
           it "removes the dialog and focuses the tree view", ->
-            jasmine.attachToDOM(treeView.element)
             atom.commands.dispatch addDialog.element, 'core:cancel'
             expect(atom.workspace.getModalPanels().length).toBe 0
             expect(treeView.find(".tree-view")).toMatchSelector(':focus')
 
         describe "when the add dialog's editor loses focus", ->
           it "removes the dialog and focuses root view", ->
-            jasmine.attachToDOM(workspaceElement)
-            $(workspaceElement).focus()
+            workspaceElement.focus()
             expect(atom.workspace.getModalPanels().length).toBe 0
             expect(atom.views.getView(atom.workspace.getActivePane())).toHaveFocus()
 
@@ -1382,7 +1399,7 @@ describe "TreeView", ->
 
         runs ->
           atom.commands.dispatch(treeView.element, "tree-view:add-folder")
-          addPanel = atom.workspace.getModalPanels()[0]
+          [addPanel] = atom.workspace.getModalPanels()
           addDialog = $(addPanel.getItem()).view()
 
       describe "when a file is selected", ->
@@ -1435,6 +1452,21 @@ describe "TreeView", ->
               expect(treeView.find(".tree-view")).toMatchSelector(':focus')
               expect(dirView.find('.directory.selected:contains(new2)').length).toBe(1)
               expect(treeView.entryForPath(expandedPath).isExpanded).toBeTruthy()
+
+            describe "when the project has no path", ->
+              it "adds a directory and closes the dialog", ->
+                addDialog.close()
+                atom.project.setPaths([])
+                atom.commands.dispatch(treeView.element, "tree-view:add-folder")
+                [addPanel] = atom.workspace.getModalPanels()
+                addDialog = $(addPanel.getItem()).view()
+
+                expect(addDialog.miniEditor.getModel().getText()).toBe ''
+                newPath = temp.path()
+                addDialog.miniEditor.getModel().insertText(newPath)
+                atom.commands.dispatch addDialog.element, 'core:confirm'
+                expect(fs.isDirectorySync(newPath)).toBeTruthy()
+                expect(atom.workspace.getModalPanels().length).toBe 0
 
           describe "when a directory already exists at the given path", ->
             it "shows an error message and does not close the dialog", ->
@@ -1646,8 +1678,7 @@ describe "TreeView", ->
 
         describe "when the duplicate dialog's editor loses focus", ->
           it "removes the dialog and focuses root view", ->
-            jasmine.attachToDOM(workspaceElement)
-            $(workspaceElement).focus()
+            workspaceElement.focus()
             expect(atom.workspace.getModalPanels().length).toBe 0
             expect(atom.views.getView(atom.workspace.getActivePane())).toHaveFocus()
 
@@ -1694,12 +1725,20 @@ describe "TreeView", ->
         it "duplicates the current file", ->
           expect(copyDialog.miniEditor.getText()).toBe('tree-view.js')
 
+      describe "when nothing is selected", ->
+        it "doesn't display the copy dialog", ->
+          jasmine.attachToDOM(workspaceElement)
+          treeView.focus()
+          treeView.deselect()
+          atom.commands.dispatch(treeView.element, "tree-view:duplicate")
+          expect(atom.workspace.getModalPanels().length).toBe(0)
+
     describe "tree-view:remove", ->
       it "won't remove the root directory", ->
         spyOn(atom, 'confirm')
         jasmine.attachToDOM(workspaceElement)
-        treeView.show()
-        treeView.root.click()
+        treeView.focus()
+        root.click()
         atom.commands.dispatch(treeView.element, 'tree-view:remove')
 
         args = atom.confirm.mostRecentCall.args[0]
@@ -1879,8 +1918,6 @@ describe "TreeView", ->
     [dirView, fileView1, fileView2, fileView3, treeView, rootDirPath, dirPath, filePath1, filePath2, filePath3] = []
 
     beforeEach ->
-      atom.packages.deactivatePackage('tree-view')
-
       rootDirPath = fs.absolute(temp.mkdirSync('tree-view'))
 
       dirPath = path.join(rootDirPath, "test-dir")
@@ -1895,17 +1932,11 @@ describe "TreeView", ->
 
       atom.project.setPaths([rootDirPath])
 
-      waitsForPromise ->
-        atom.packages.activatePackage('tree-view')
-
-      runs ->
-        atom.commands.dispatch(workspaceElement, 'tree-view:toggle')
-        treeView = $(atom.workspace.getLeftPanels()[0].getItem()).view()
-        dirView = $(treeView.root.entries).find('.directory:contains(test-dir)')
-        dirView[0].expand()
-        fileView1 = treeView.find('.file:contains(test-file1.txt)')
-        fileView2 = treeView.find('.file:contains(test-file2.txt)')
-        fileView3 = treeView.find('.file:contains(test-file3.txt)')
+      dirView = $(treeView.root.entries).find('.directory:contains(test-dir)')
+      dirView[0].expand()
+      fileView1 = treeView.find('.file:contains(test-file1.txt)')
+      fileView2 = treeView.find('.file:contains(test-file2.txt)')
+      fileView3 = treeView.find('.file:contains(test-file3.txt)')
 
     describe 'selecting multiple items', ->
       it 'switches the contextual menu to muli-select mode', ->
