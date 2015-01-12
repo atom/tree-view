@@ -16,6 +16,8 @@ DirectoryView = require './directory-view'
 FileView = require './file-view'
 LocalStorage = window.localStorage
 
+AdditionalFolders = require './additional-folders'
+
 toggleConfig = (keyPath) ->
   atom.config.set(keyPath, not atom.config.get(keyPath))
 
@@ -38,7 +40,17 @@ class TreeView extends View
     @selectedPath = null
     @ignoredPatterns = []
 
+    @Directory = Directory
+    @DirectoryView = DirectoryView
+
+    # current instance of treeView
+    atom.workspace.treeView = @
+    window.treeview = @
+
     @handleEvents()
+
+    # addon class for adding additional folder support
+    @addFolders = new AdditionalFolders @
 
     process.nextTick =>
       @onStylesheetsChanged()
