@@ -70,7 +70,7 @@ class TreeView extends View
     directoryExpansionStates: @root?.directory.serializeExpansionStates()
     selectedPath: @selectedEntry()?.getPath()
     hasFocus: @hasFocus()
-    attached: @hasParent()
+    attached: @panel?
     scrollLeft: @scroller.scrollLeft()
     scrollTop: @scrollTop()
     width: @width()
