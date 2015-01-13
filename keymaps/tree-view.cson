@@ -10,7 +10,7 @@
   'ctrl-|': 'tree-view:reveal-active-file'
   'ctrl-0': 'tree-view:toggle-focus'
 
-'.platform-darwin .tree-view':
+'.platform-darwin tree-view':
   'cmd-c': 'tree-view:copy'
   'cmd-x': 'tree-view:cut'
   'cmd-v': 'tree-view:paste'
@@ -18,12 +18,12 @@
   'ctrl-b': 'tree-view:collapse-directory'
 
 
-'.platform-win32 .tree-view, .platform-linux .tree-view':
+'.platform-win32 tree-view, .platform-linux tree-view':
   'ctrl-c': 'tree-view:copy'
   'ctrl-x': 'tree-view:cut'
   'ctrl-v': 'tree-view:paste'
 
-'.tree-view':
+'tree-view':
   'right': 'tree-view:expand-directory'
   'ctrl-]': 'tree-view:expand-directory'
   'l': 'tree-view:expand-directory'
