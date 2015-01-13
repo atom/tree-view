@@ -19,15 +19,41 @@ LocalStorage = window.localStorage
 toggleConfig = (keyPath) ->
   atom.config.set(keyPath, not atom.config.get(keyPath))
 
+TreeViewElementPototype = Object.create(HTMLElement::)
+TreeViewElementPototype.attachedCallback = -> @attached?()
+TreeViewElementPototype.detachedCallback = -> @detached?()
+
+document.registerElement 'tree-view', prototype: Object.create(TreeViewElementPototype)
+
 module.exports =
 class TreeView extends View
   panel: null
 
-  @content: ->
-    @div class: 'tree-view-resizer tool-panel', 'data-show-on-right-side': atom.config.get('tree-view.showOnRightSide'), =>
-      @div class: 'tree-view-scroller', outlet: 'scroller', =>
-        @ol class: 'tree-view full-menu list-tree has-collapsable-children focusable-panel', tabindex: -1, outlet: 'list'
-      @div class: 'tree-view-resize-handle', outlet: 'resizeHandle'
+  constructor: ->
+    @element = document.createElement('tree-view')
+    @element.setAttribute('show-on-right-side', atom.config.get('tree-view.showOnRightSide'))
+    @element.classList.add('tree-view-resizer')
+
+    @element.attached = => @attached()
+    @element.detached = => @detached()
+
+    scroller = document.createElement('div')
+    scroller.classList.add('tree-view-scroller')
+    @scroller = $(scroller)
+
+    list = document.createElement('ol')
+    list.setAttribute('tabindex', -1)
+    list.classList.add('tree-view', 'full-menu', 'list-tree', 'has-collapsable-children', 'focusable-panel')
+    @list = $(list)
+
+    resizeHandle = document.createElement('div')
+    resizeHandle.classList.add('tree-view-resize-handle')
+    @resizeHandle = $(resizeHandle)
+
+    scroller.appendChild(list)
+    @element.appendChild(scroller)
+    @element.appendChild(resizeHandle)
+    super
 
   initialize: (state) ->
     @disposables = new CompositeDisposable
@@ -644,7 +670,7 @@ class TreeView extends View
       @showFullMenu()
 
   onSideToggled: (newValue) ->
-    @element.dataset.showOnRightSide = newValue
+    @element.setAttribute('show-on-right-side', newValue)
     if @isVisible()
       @detach()
       @attach()

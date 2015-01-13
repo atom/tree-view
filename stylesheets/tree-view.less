@@ -1,6 +1,7 @@
 @import "ui-variables";
 
-.tree-view-resizer {
+tree-view {
+  display: block;
   position: relative;
   height: 100%;
   overflow: hidden;
@@ -19,36 +20,36 @@
     z-index: 3;
   }
 
-  &[data-show-on-right-side='true'] {
+  &[show-on-right-side='true'] {
     .tree-view-resize-handle {
       left: -5px;
     }
   }
 
-  &[data-show-on-right-side='false'] {
+  &[show-on-right-side='false'] {
     .tree-view-resize-handle {
       right: -5px;
     }
   }
-}
 
-.tree-view-scroller {
-  height: 100%;
-  width: 100%;
-  overflow: auto;
-}
+  .tree-view-scroller {
+    height: 100%;
+    width: 100%;
+    overflow: auto;
+  }
 
-.tree-view {
-  min-width: -webkit-min-content;
-  min-height: 100%;
-  padding-left: @component-icon-padding;
-  padding-right: @component-padding;
-  position: relative;
+  .list-tree {
+    min-width: -webkit-min-content;
+    min-height: 100%;
+    padding-left: @component-icon-padding;
+    padding-right: @component-padding;
+    position: relative;
 
-  // This fixes #110, see that issue for more details
-  .entry:before {
-    content: '';
-    position: absolute;
+    // This fixes #110, see that issue for more details
+    .entry:before {
+      content: '';
+      position: absolute;
+    }
   }
 }
 
