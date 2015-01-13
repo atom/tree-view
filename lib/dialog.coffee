@@ -41,7 +41,7 @@ class Dialog extends View
 
   cancel: ->
     @close()
-    $('.tree-view').focus()
+    $('tree-view .list-tree').focus()
 
   showError: (message='') ->
     @errorMessage.text(message)
