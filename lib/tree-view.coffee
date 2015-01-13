@@ -670,7 +670,7 @@ class TreeView extends View
       @showFullMenu()
 
   onSideToggled: (newValue) ->
-    @element.dataset.showOnRightSide = newValue
+    @element.setAttribute('show-on-right-side', newValue)
     if @isVisible()
       @detach()
       @attach()
