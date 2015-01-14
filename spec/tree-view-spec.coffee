@@ -15,8 +15,8 @@ waitsForFileToOpen = (causeFileToOpen) ->
 describe "TreeView", ->
   [treeView, root, sampleJs, sampleTxt, workspaceElement] = []
 
-  selectEntry = (path) ->
-    treeView.selectEntryForPath atom.project.resolve path
+  selectEntry = (pathToSelect) ->
+    treeView.selectEntryForPath atom.project.resolve pathToSelect
 
   beforeEach ->
     fixturesPath = atom.project.getPaths()[0]
