@@ -21,26 +21,28 @@ class AddDialog extends Dialog
       select: false
       iconClass: if isCreatingFile then 'icon-file-add' else 'icon-file-directory-create'
 
-  onConfirm: (relativePath) ->
-    relativePath = relativePath.replace(/\s+$/, '') # Remove trailing whitespace
-    endsWithDirectorySeparator = relativePath[relativePath.length - 1] is path.sep
-    pathToCreate = atom.project.resolve(relativePath)
-    return unless pathToCreate
+  onConfirm: (newPath) ->
+    newPath = newPath.replace(/\s+$/, '') # Remove trailing whitespace
+    endsWithDirectorySeparator = newPath[newPath.length - 1] is path.sep
+    unless path.isAbsolute(newPath)
+      newPath = atom.project.getDirectories()[0]?.resolve(newPath)
+
+    return unless newPath
 
     try
-      if fs.existsSync(pathToCreate)
-        @showError("'#{pathToCreate}' already exists.")
+      if fs.existsSync(newPath)
+        @showError("'#{newPath}' already exists.")
       else if @isCreatingFile
         if endsWithDirectorySeparator
           @showError("File names must not end with a '#{path.sep}' character.")
         else
-          fs.writeFileSync(pathToCreate, '')
-          atom.project.getRepositories()[0]?.getPathStatus(pathToCreate)
-          @trigger 'file-created', [pathToCreate]
+          fs.writeFileSync(newPath, '')
+          atom.project.getRepositories()[0]?.getPathStatus(newPath)
+          @trigger 'file-created', [newPath]
           @close()
       else
-        fs.makeTreeSync(pathToCreate)
-        @trigger 'directory-created', [pathToCreate]
+        fs.makeTreeSync(newPath)
+        @trigger 'directory-created', [newPath]
         @cancel()
     catch error
       @showError("#{error.message}.")
