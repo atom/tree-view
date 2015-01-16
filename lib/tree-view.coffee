@@ -366,7 +366,7 @@ class TreeView extends View
     if pane and selectedEntry instanceof FileView
       if atom.workspace.getActivePaneItem()
         split = pane.split orientation, side
-        atom.workspace.openUriInPane selectedEntry.getPath(), split
+        atom.workspace.openURIInPane selectedEntry.getPath(), split
       else
         @openSelectedEntry yes
 
@@ -386,7 +386,7 @@ class TreeView extends View
     selectedEntry = @selectedEntry()
     pane = atom.workspace.getPanes()[index]
     if pane and selectedEntry instanceof FileView
-      atom.workspace.openUriInPane selectedEntry.getPath(), pane
+      atom.workspace.openURIInPane selectedEntry.getPath(), pane
 
   moveSelectedEntry: ->
     if @hasFocus()
