@@ -45,7 +45,8 @@ class DirectoryView extends HTMLElement
 
   updateStatus: ->
     @classList.remove('status-ignored', 'status-modified', 'status-added')
-    @classList.add("status-#{@directory.status}") if @directory.status?
+    if atom.config.get('tree-view.enableVcsColoring') and @directory.status?
+      @classList.add("status-#{@directory.status}")
 
   subscribeToDirectory: ->
     @subscriptions.add @directory.onDidAddEntries (addedEntries) =>

@@ -125,6 +125,8 @@ class TreeView extends View
       @updateRoot()
     @disposables.add atom.config.onDidChange 'tree-view.hideIgnoredNames', =>
       @updateRoot()
+    @disposables.add atom.config.onDidChange 'tree-view.enableVcsColoring', =>
+      @updateRoot()
     @disposables.add atom.config.onDidChange 'core.ignoredNames', =>
       @updateRoot() if atom.config.get('tree-view.hideIgnoredNames')
     @disposables.add atom.config.onDidChange 'tree-view.showOnRightSide', ({newValue}) =>
