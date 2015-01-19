@@ -2118,16 +2118,6 @@ describe "TreeView", ->
       atom.config.set "tree-view.sortFoldersInline", false
 
     it "lists folders first if the option is not set", ->
-
-      # root = $(treeView.root)
-      # dirView = $(treeView.root.entries).find('.directory:contains(test-dir):first')
-      # dirView[0].expand()
-      # fileView = treeView.find('.file:contains(test-file.txt)')
-      # dirView2 = $(treeView.root.entries).find('.directory:contains(test-dir2):last')
-      # dirView2[0].expand()
-      # fileView2 = treeView.find('.file:contains(test-file2.txt)')
-      # fileView3 = treeView.find('.file:contains(test-file3.txt)')
-
       topLevelEntries = [].slice.call(treeView.root.entries.children).map (element) ->
         element.innerText
 
@@ -2146,7 +2136,6 @@ describe "TreeView", ->
         element.innerText
 
       expect(gammaEntries).toEqual(["theta", "delta.txt", "epsilon.txt"])
-
 
     it "sorts folders as files if the option is set", ->
       atom.config.set "tree-view.sortFoldersInline", true
