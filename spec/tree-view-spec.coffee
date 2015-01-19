@@ -478,7 +478,7 @@ describe "TreeView", ->
 
       runs ->
         expect(sampleJs).toHaveClass 'selected'
-        expect(atom.workspace.getActivePaneItem().getPath()).toBe atom.project.resolve('tree-view.js')
+        expect(atom.workspace.getActivePaneItem().getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
         expect(treeView.list).toHaveFocus()
 
       waitsForFileToOpen ->
@@ -487,7 +487,7 @@ describe "TreeView", ->
       runs ->
         expect(sampleTxt).toHaveClass 'selected'
         expect(treeView.find('.selected').length).toBe 1
-        expect(atom.workspace.getActivePaneItem().getPath()).toBe atom.project.resolve('tree-view.txt')
+        expect(atom.workspace.getActivePaneItem().getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.txt')
         expect(treeView.list).toHaveFocus()
 
   describe "when a file is double-clicked", ->
@@ -503,7 +503,7 @@ describe "TreeView", ->
       runs ->
         expect(sampleJs).toHaveClass 'selected'
         item = atom.workspace.getActivePaneItem()
-        expect(item.getPath()).toBe atom.project.resolve('tree-view.js')
+        expect(item.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
 
         sampleJs.trigger clickEvent(originalEvent: { detail: 2 })
         expect(atom.views.getView(item)).toHaveFocus()
@@ -580,7 +580,7 @@ describe "TreeView", ->
           sampleJs.click()
 
         waitsForPromise ->
-          atom.workspace.open(atom.project.resolve('tree-view.txt'))
+          atom.workspace.open(atom.project.getDirectories()[0].resolve('tree-view.txt'))
 
         runs ->
           expect(sampleTxt).toHaveClass 'selected'
@@ -940,7 +940,7 @@ describe "TreeView", ->
 
           runs ->
             item = atom.workspace.getActivePaneItem()
-            expect(item.getPath()).toBe atom.project.resolve('tree-view.js')
+            expect(item.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
             expect(atom.views.getView(item)).toHaveFocus()
 
       describe "when a directory is selected", ->

@@ -13,8 +13,9 @@ class CopyDialog extends Dialog
 
   onConfirm: (newPath) ->
     newPath = newPath.replace(/\s+$/, '') # Remove trailing whitespace
-    newPath = atom.project.resolve(newPath)
-    return unless newPath
+    unless path.isAbsolute(newPath)
+      newPath = atom.project.getDirectories()[0].resolve(newPath)
+      return unless newPath
 
     if @initialPath is newPath
       @close()

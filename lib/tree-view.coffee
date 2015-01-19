@@ -509,7 +509,7 @@ class TreeView extends View
     for initialPath in initialPaths ? []
       initialPathIsDirectory = fs.isDirectorySync(initialPath)
       if entry and initialPath
-        basePath = atom.project.resolve(entry.getPath())
+        basePath = atom.project.getDirectories()[0].resolve(entry.getPath())
         basePath = path.dirname(basePath) if entry instanceof FileView
         newPath = path.join(basePath, path.basename(initialPath))
 
