@@ -2083,3 +2083,52 @@ describe "TreeView", ->
               expect(fileView3).toHaveClass('selected')
               expect(treeView.list).toHaveClass('full-menu')
               expect(treeView.list).not.toHaveClass('multi-select')
+
+  describe 'the automaticallyRevealFile config option', ->
+    file1 = 'tree-view.js'
+    file2 = 'tree-view.txt'
+
+    beforeEach ->
+      spyOn(treeView, 'revealActiveFile')
+
+    describe 'when it is set to "Never"', ->
+      it 'will only reveal the active file when the user chooses to', ->
+        atom.config.set('tree-view.automaticallyRevealFile', 'Never')
+
+        waitsForPromise ->
+          atom.workspace.open(file1)
+
+        waitsForPromise ->
+          atom.workspace.open(file2)
+
+        runs ->
+          atom.workspace.getActivePane().activateItemAtIndex(0)
+          expect(treeView.revealActiveFile.calls.length).toEqual(0);
+
+    describe 'when it is set to "Upon Opening"', ->
+      it 'will reveal the active file when a file is opened', ->
+        atom.config.set('tree-view.automaticallyRevealFile', 'Upon Opening')
+
+        waitsForPromise ->
+          atom.workspace.open(file1)
+
+        waitsForPromise ->
+          atom.workspace.open(file2)
+
+        runs ->
+          atom.workspace.getActivePane().activateItemAtIndex(0)
+          expect(treeView.revealActiveFile.calls.length).toEqual(2);
+
+    describe 'when it is set to "Upon Focusing"', ->
+      it 'will reveal the active file when a file is focused', ->
+        atom.config.set('tree-view.automaticallyRevealFile', 'Upon Focusing')
+
+        waitsForPromise ->
+          atom.workspace.open(file1)
+
+        waitsForPromise ->
+          atom.workspace.open(file2)
+
+        runs ->
+          atom.workspace.getActivePane().activateItemAtIndex(0)
+          expect(treeView.revealActiveFile.calls.length).toEqual(3);

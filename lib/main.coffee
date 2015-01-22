@@ -13,6 +13,14 @@ module.exports =
     showOnRightSide:
       type: 'boolean'
       default: false
+    automaticallyRevealFile:
+      type: 'string'
+      default: 'Never'
+      enum: [
+        'Never',
+        'Upon Opening',
+        'Upon Focusing'
+      ]
 
   treeView: null
 
@@ -34,6 +42,16 @@ module.exports =
       'tree-view:remove': => @createView().removeSelectedEntries()
       'tree-view:rename': => @createView().moveSelectedEntry()
     })
+
+    workspaceElement = atom.views.getView(atom.workspace)
+
+    atom.workspace.onDidOpen ->
+      if atom.config.get('tree-view.automaticallyRevealFile') is 'Upon Opening'
+        atom.commands.dispatch workspaceElement, 'tree-view:reveal-active-file'
+
+    atom.workspace.onDidChangeActivePaneItem ->
+      if atom.config.get('tree-view.automaticallyRevealFile') is 'Upon Focusing'
+        atom.commands.dispatch workspaceElement, 'tree-view:reveal-active-file'
 
   deactivate: ->
     @disposables.dispose()
