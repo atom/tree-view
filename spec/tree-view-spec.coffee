@@ -2084,7 +2084,7 @@ describe "TreeView", ->
               expect(treeView.list).toHaveClass('full-menu')
               expect(treeView.list).not.toHaveClass('multi-select')
 
-  describe "the sortFoldersInline config option", ->
+  describe "the sortFoldersBeforeFiles config option", ->
     [dirView, fileView, dirView2, fileView2, fileView3, rootDirPath, dirPath, filePath, dirPath2, filePath2, filePath3] = []
 
     beforeEach ->
@@ -2115,9 +2115,14 @@ describe "TreeView", ->
       fs.makeTreeSync(thetaDirPath)
 
       atom.project.setPaths([rootDirPath])
-      atom.config.set "tree-view.sortFoldersInline", false
 
-    it "lists folders first if the option is not set", ->
+
+    it "defaults to set", ->
+      expect(atom.config.get("tree-view.sortFoldersBeforeFiles")).toBeTruthy()
+
+    it "lists folders first if the option is set", ->
+      atom.config.set "tree-view.sortFoldersBeforeFiles", true
+
       topLevelEntries = [].slice.call(treeView.root.entries.children).map (element) ->
         element.innerText
 
@@ -2137,8 +2142,8 @@ describe "TreeView", ->
 
       expect(gammaEntries).toEqual(["theta", "delta.txt", "epsilon.txt"])
 
-    it "sorts folders as files if the option is set", ->
-      atom.config.set "tree-view.sortFoldersInline", true
+    it "sorts folders as files if the option is not set", ->
+      atom.config.set "tree-view.sortFoldersBeforeFiles", false
 
       topLevelEntries = [].slice.call(treeView.root.entries.children).map (element) ->
         element.innerText
