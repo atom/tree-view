@@ -185,7 +185,24 @@ class Directory
         else
           files.push(new File({name, fullPath, symlink, realpathCache}))
 
-    directories.concat(files)
+    @sortEntries(directories.concat(files))
+
+  normalizeEntryName: (value) ->
+    normalizedValue = value.name
+    unless normalizedValue?
+      normalizedValue = value
+    if normalizedValue?
+      normalizedValue = normalizedValue.toLowerCase()
+    normalizedValue
+
+  sortEntries: (combinedEntries) ->
+    if atom.config.get('tree-view.sortFoldersBeforeFiles')
+      combinedEntries
+    else
+      combinedEntries.sort (first, second) =>
+        firstName = @normalizeEntryName(first)
+        secondName = @normalizeEntryName(second)
+        firstName.localeCompare(secondName)
 
   # Public: Perform a synchronous reload of the directory.
   reload: ->

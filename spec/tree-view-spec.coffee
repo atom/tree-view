@@ -2083,3 +2083,83 @@ describe "TreeView", ->
               expect(fileView3).toHaveClass('selected')
               expect(treeView.list).toHaveClass('full-menu')
               expect(treeView.list).not.toHaveClass('multi-select')
+
+  describe "the sortFoldersBeforeFiles config option", ->
+    [dirView, fileView, dirView2, fileView2, fileView3, rootDirPath, dirPath, filePath, dirPath2, filePath2, filePath3] = []
+
+    beforeEach ->
+      rootDirPath = fs.absolute(temp.mkdirSync('tree-view'))
+
+      alphaFilePath = path.join(rootDirPath, "alpha.txt")
+      zetaFilePath = path.join(rootDirPath, "zeta.txt")
+
+      alphaDirPath = path.join(rootDirPath, "alpha")
+      betaFilePath = path.join(alphaDirPath, "beta.txt")
+      etaDirPath = path.join(alphaDirPath, "eta")
+
+      gammaDirPath = path.join(rootDirPath, "gamma")
+      deltaFilePath = path.join(gammaDirPath, "delta.txt")
+      epsilonFilePath = path.join(gammaDirPath, "epsilon.txt")
+      thetaDirPath = path.join(gammaDirPath, "theta")
+
+      fs.writeFileSync(alphaFilePath, "doesn't matter")
+      fs.writeFileSync(zetaFilePath, "doesn't matter")
+
+      fs.makeTreeSync(alphaDirPath)
+      fs.writeFileSync(betaFilePath, "doesn't matter")
+      fs.makeTreeSync(etaDirPath)
+
+      fs.makeTreeSync(gammaDirPath)
+      fs.writeFileSync(deltaFilePath, "doesn't matter")
+      fs.writeFileSync(epsilonFilePath, "doesn't matter")
+      fs.makeTreeSync(thetaDirPath)
+
+      atom.project.setPaths([rootDirPath])
+
+
+    it "defaults to set", ->
+      expect(atom.config.get("tree-view.sortFoldersBeforeFiles")).toBeTruthy()
+
+    it "lists folders first if the option is set", ->
+      atom.config.set "tree-view.sortFoldersBeforeFiles", true
+
+      topLevelEntries = [].slice.call(treeView.root.entries.children).map (element) ->
+        element.innerText
+
+      expect(topLevelEntries).toEqual(["alpha", "gamma", "alpha.txt", "zeta.txt"])
+
+      alphaDir = $(treeView.root.entries).find('.directory:contains(alpha):first')
+      alphaDir[0].expand()
+      alphaEntries = [].slice.call(alphaDir[0].children[1].children).map (element) ->
+        element.innerText
+
+      expect(alphaEntries).toEqual(["eta", "beta.txt"])
+
+      gammaDir = $(treeView.root.entries).find('.directory:contains(gamma):first')
+      gammaDir[0].expand()
+      gammaEntries = [].slice.call(gammaDir[0].children[1].children).map (element) ->
+        element.innerText
+
+      expect(gammaEntries).toEqual(["theta", "delta.txt", "epsilon.txt"])
+
+    it "sorts folders as files if the option is not set", ->
+      atom.config.set "tree-view.sortFoldersBeforeFiles", false
+
+      topLevelEntries = [].slice.call(treeView.root.entries.children).map (element) ->
+        element.innerText
+
+      expect(topLevelEntries).toEqual(["alpha", "alpha.txt", "gamma", "zeta.txt"])
+
+      alphaDir = $(treeView.root.entries).find('.directory:contains(alpha):first')
+      alphaDir[0].expand()
+      alphaEntries = [].slice.call(alphaDir[0].children[1].children).map (element) ->
+        element.innerText
+
+      expect(alphaEntries).toEqual(["beta.txt", "eta"])
+
+      gammaDir = $(treeView.root.entries).find('.directory:contains(gamma):first')
+      gammaDir[0].expand()
+      gammaEntries = [].slice.call(gammaDir[0].children[1].children).map (element) ->
+        element.innerText
+
+      expect(gammaEntries).toEqual(["delta.txt", "epsilon.txt", "theta"])

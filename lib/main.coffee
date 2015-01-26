@@ -13,6 +13,9 @@ module.exports =
     showOnRightSide:
       type: 'boolean'
       default: false
+    sortFoldersBeforeFiles:
+      type: 'boolean'
+      default: true
 
   treeView: null
 
