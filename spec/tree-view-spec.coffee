@@ -15,6 +15,9 @@ waitsForFileToOpen = (causeFileToOpen) ->
 describe "TreeView", ->
   [treeView, root, sampleJs, sampleTxt, workspaceElement] = []
 
+  selectEntry = (pathToSelect) ->
+    treeView.selectEntryForPath atom.project.resolve pathToSelect
+
   beforeEach ->
     fixturesPath = atom.project.getPaths()[0]
     atom.project.setPaths([path.join(fixturesPath, "tree-view")])
@@ -959,6 +962,82 @@ describe "TreeView", ->
         it "does nothing", ->
           atom.commands.dispatch(treeView.element, 'tree-view:open-selected-entry')
           expect(atom.workspace.getActivePaneItem()).toBeUndefined()
+
+    describe "opening in new split panes", ->
+      splitOptions =
+        right: ['horizontal', 'after']
+        left: ['horizontal', 'before']
+        up: ['vertical', 'before']
+        down: ['vertical', 'after']
+
+      _.each splitOptions, (options, direction) ->
+        command = "tree-view:open-selected-entry-#{direction}"
+
+        describe command, ->
+          describe "when a file is selected", ->
+            previousPane = null
+
+            beforeEach ->
+              jasmine.attachToDOM(workspaceElement)
+
+              waitsForFileToOpen ->
+                root.find('.file:contains(tree-view.js)').click()
+
+              runs ->
+                previousPane = atom.workspace.getActivePane()
+                spyOn(previousPane, 'split').andCallThrough()
+
+              waitsForFileToOpen ->
+                selectEntry 'tree-view.txt'
+                atom.commands.dispatch(treeView.element, command)
+
+            it "creates a new split pane #{direction}", ->
+              expect(previousPane.split).toHaveBeenCalledWith options...
+
+            it "opens the file in the new split pane and focuses it", ->
+              splitPane = atom.workspace.getActivePane()
+              splitPaneItem = atom.workspace.getActivePaneItem()
+              expect(previousPane).not.toBe splitPane
+              expect(splitPaneItem.getPath()).toBe atom.project.resolve('tree-view.txt')
+              expect(atom.views.getView(splitPaneItem)).toHaveFocus()
+
+          describe "when a directory is selected", ->
+            it "does nothing", ->
+              atom.commands.dispatch(treeView.element, command)
+              expect(atom.workspace.getActivePaneItem()).toBeUndefined()
+
+          describe "when nothing is selected", ->
+            it "does nothing", ->
+              atom.commands.dispatch(treeView.element, command)
+              expect(atom.workspace.getActivePaneItem()).toBeUndefined()
+
+  describe "opening in existing split panes", ->
+    beforeEach ->
+      jasmine.attachToDOM(workspaceElement)
+      [1..9].forEach ->
+        waitsForFileToOpen ->
+          selectEntry "tree-view.js"
+          atom.commands.dispatch(treeView.element, 'tree-view:open-selected-entry-right')
+
+    it "should have opened all windows", ->
+      expect(atom.workspace.getPanes().length).toBe 9
+
+    [0..8].forEach (index) ->
+      paneNumber = index + 1
+      command = "tree-view:open-selected-entry-in-pane-#{paneNumber}"
+
+      describe command, ->
+        describe "when a file is selected", ->
+          beforeEach ->
+            selectEntry 'tree-view.txt'
+            waitsForFileToOpen ->
+              atom.commands.dispatch treeView.element, command
+
+          it "opens the file in pane #{paneNumber} and focuses it", ->
+            pane = atom.workspace.getPanes()[index]
+            item = atom.workspace.getActivePaneItem()
+            expect(atom.views.getView(pane)).toHaveFocus()
+            expect(item.getPath()).toBe atom.project.resolve('tree-view.txt')
 
   describe "file modification", ->
     [dirView, fileView, dirView2, fileView2, fileView3, rootDirPath, dirPath, filePath, dirPath2, filePath2, filePath3] = []
