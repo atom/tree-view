@@ -1024,7 +1024,7 @@ describe "TreeView", ->
 
     [0..8].forEach (index) ->
       paneNumber = index + 1
-      command = "tree-view:open-selected-entry-pane-#{paneNumber}"
+      command = "tree-view:open-selected-entry-in-pane-#{paneNumber}"
 
       describe command, ->
         describe "when a file is selected", ->

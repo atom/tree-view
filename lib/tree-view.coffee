@@ -122,7 +122,7 @@ class TreeView extends View
      'tree-view:toggle-ignored-names': -> toggleConfig 'tree-view.hideIgnoredNames'
 
     [0..8].forEach (index) =>
-      atom.commands.add @element, "tree-view:open-selected-entry-pane-#{index + 1}", =>
+      atom.commands.add @element, "tree-view:open-selected-entry-in-pane-#{index + 1}", =>
         @openSelectedEntryInPane index
 
     @disposables.add atom.workspace.onDidChangeActivePaneItem =>
