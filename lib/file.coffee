@@ -1,10 +1,11 @@
 path = require 'path'
 fs = require 'fs-plus'
+Q = require 'q'
 {CompositeDisposable, Emitter} = require 'event-kit'
 
 module.exports =
 class File
-  constructor: ({@name, fullPath, @symlink, realpathCache}) ->
+  constructor: ({@name, fullPath, @symlink, @realpathCache}) ->
     @emitter = new Emitter()
     @subscriptions = new CompositeDisposable()
 
@@ -27,11 +28,7 @@ class File
 
     @subscribeToRepo()
     @updateStatus()
-
-    fs.realpath @path, realpathCache, (error, realPath) =>
-      if realPath and realPath isnt @path
-        @realPath = realPath
-        @updateStatus()
+    @loadRealPath()
 
   destroy: ->
     @subscriptions.dispose()
@@ -42,6 +39,12 @@ class File
 
   onDidStatusChange: (callback) ->
     @emitter.on('did-status-change', callback)
+
+  loadRealPath: ->
+    Q.nfcall(fs.realpath, @path, @realpathCache).then (realPath) =>
+      if realPath and realPath isnt @path
+        @realPath = realPath
+        @updateStatus()
 
   # Subscribe to the project' repo for changes to the Git status of this file.
   subscribeToRepo: ->

@@ -2,6 +2,8 @@ path = require 'path'
 _ = require 'underscore-plus'
 {CompositeDisposable, Emitter} = require 'event-kit'
 fs = require 'fs-plus'
+Q = require 'q'
+async = require 'async'
 PathWatcher = require 'pathwatcher'
 File = require './file'
 
@@ -49,7 +51,7 @@ class Directory
     @emitter.on('did-remove-entries', callback)
 
   loadRealPath: ->
-    fs.realpath @path, realpathCache, (error, realPath) =>
+    Q.nfcall(fs.realpath, @path, realpathCache).then (realPath) =>
       if realPath and realPath isnt @path
         @realPath = realPath
         @lowerCaseRealPath = @realPath.toLowerCase() if fs.isCaseInsensitive()
@@ -149,7 +151,7 @@ class Directory
           when 'change' then @reload()
           when 'delete' then @destroy()
 
-  getEntries: ->
+  getEntriesSync: ->
     try
       names = fs.readdirSync(@path)
     catch error
@@ -204,33 +206,76 @@ class Directory
         secondName = @normalizeEntryName(second)
         firstName.localeCompare(secondName)
 
+
+  # Public: Reads file entries in this directory from disk asynchronously.
+  #
+  #   * `entries` An {Array} of {File} and {Directory} objects.
+  getEntries: () ->
+    Q.nfcall(fs.readdir, @path).then (names) =>
+      names.sort (name1, name2) -> name1.toLowerCase().localeCompare(name2.toLowerCase())
+
+      directories = []
+      files = []
+      addEntry = (name, fullPath, stat, symlink, callback) =>
+        if stat?.isDirectory()
+          if @entries.hasOwnProperty(name)
+            # push a placeholder since this entry already exists but this helps
+            # track the insertion index for the created views
+            directories.push(name)
+          else
+            expandedEntries = @expandedEntries[name]
+            isExpanded = expandedEntries?
+            directories.push(new Directory({name, fullPath, symlink, isExpanded, expandedEntries, @ignoredPatterns}))
+        else if stat?.isFile()
+          if @entries.hasOwnProperty(name)
+            # push a placeholder since this entry already exists but this helps
+            # track the insertion index for the created views
+            files.push(name)
+          else
+            files.push(new File({name, fullPath, symlink, realpathCache}))
+        callback()
+
+      statEntry = (name, callback) =>
+        fullPath = path.join(@path, name)
+        fs.lstat fullPath, (error, stat) ->
+          if stat?.isSymbolicLink()
+            fs.stat fullPath, (error, stat) ->
+              addEntry(name, fullPath, stat, true, callback)
+          else
+            addEntry(name, fullPath, stat, false, callback)
+
+      Q.Promise (resolve, reject) ->
+        async.eachLimit names, 1, statEntry, ->
+          resolve(directories.concat(files))
+
   # Public: Perform a synchronous reload of the directory.
   reload: ->
     newEntries = []
     removedEntries = _.clone(@entries)
     index = 0
 
-    for entry in @getEntries()
-      if @entries.hasOwnProperty(entry)
-        delete removedEntries[entry]
+    @getEntries().then (entries) =>
+      for entry in entries
+        if @entries.hasOwnProperty(entry)
+          delete removedEntries[entry]
+          index++
+          continue
+
+        entry.indexInParentDirectory = index
         index++
-        continue
+        newEntries.push(entry)
 
-      entry.indexInParentDirectory = index
-      index++
-      newEntries.push(entry)
+      entriesRemoved = false
+      for name, entry of removedEntries
+        entriesRemoved = true
+        entry.destroy()
+        delete @entries[name]
+        delete @expandedEntries[name]
+      @emitter.emit('did-remove-entries', removedEntries) if entriesRemoved
 
-    entriesRemoved = false
-    for name, entry of removedEntries
-      entriesRemoved = true
-      entry.destroy()
-      delete @entries[name]
-      delete @expandedEntries[name]
-    @emitter.emit('did-remove-entries', removedEntries) if entriesRemoved
-
-    if newEntries.length > 0
-      @entries[entry.name] = entry for entry in newEntries
-      @emitter.emit('did-add-entries', newEntries)
+      if newEntries.length > 0
+        @entries[entry.name] = entry for entry in newEntries
+        @emitter.emit('did-add-entries', newEntries)
 
   # Public: Collapse this directory and stop watching it.
   collapse: ->
@@ -242,8 +287,7 @@ class Directory
   # changes.
   expand: ->
     @isExpanded = true
-    @reload()
-    @watch()
+    @reload().then () => @watch()
 
   serializeExpansionStates: ->
     expandedEntries = {}
