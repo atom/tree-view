@@ -16,7 +16,7 @@ describe "TreeView", ->
   [treeView, root, sampleJs, sampleTxt, workspaceElement] = []
 
   selectEntry = (pathToSelect) ->
-    treeView.selectEntryForPath atom.project.resolve pathToSelect
+    treeView.selectEntryForPath atom.project.getDirectories()[0].resolve pathToSelect
 
   beforeEach ->
     fixturesPath = atom.project.getPaths()[0]
@@ -998,7 +998,7 @@ describe "TreeView", ->
               splitPane = atom.workspace.getActivePane()
               splitPaneItem = atom.workspace.getActivePaneItem()
               expect(previousPane).not.toBe splitPane
-              expect(splitPaneItem.getPath()).toBe atom.project.resolve('tree-view.txt')
+              expect(splitPaneItem.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.txt')
               expect(atom.views.getView(splitPaneItem)).toHaveFocus()
 
           describe "when a directory is selected", ->
@@ -1037,7 +1037,7 @@ describe "TreeView", ->
             pane = atom.workspace.getPanes()[index]
             item = atom.workspace.getActivePaneItem()
             expect(atom.views.getView(pane)).toHaveFocus()
-            expect(item.getPath()).toBe atom.project.resolve('tree-view.txt')
+            expect(item.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.txt')
 
   describe "file modification", ->
     [dirView, fileView, dirView2, fileView2, fileView3, rootDirPath, dirPath, filePath, dirPath2, filePath2, filePath3] = []
