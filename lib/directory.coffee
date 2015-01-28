@@ -151,66 +151,10 @@ class Directory
           when 'change' then @reload()
           when 'delete' then @destroy()
 
-  getEntriesSync: ->
-    try
-      names = fs.readdirSync(@path)
-    catch error
-      names = []
-
-    names.sort (name1, name2) -> name1.toLowerCase().localeCompare(name2.toLowerCase())
-
-    files = []
-    directories = []
-
-    for name in names
-      fullPath = path.join(@path, name)
-      continue if @isPathIgnored(fullPath)
-
-      stat = fs.lstatSyncNoException(fullPath)
-      symlink = stat.isSymbolicLink?()
-      stat = fs.statSyncNoException(fullPath) if symlink
-
-      if stat.isDirectory?()
-        if @entries.hasOwnProperty(name)
-          # push a placeholder since this entry already exists but this helps
-          # track the insertion index for the created views
-          directories.push(name)
-        else
-          expandedEntries = @expandedEntries[name]
-          isExpanded = expandedEntries?
-          directories.push(new Directory({name, fullPath, symlink, isExpanded, expandedEntries, @ignoredPatterns}))
-      else if stat.isFile?()
-        if @entries.hasOwnProperty(name)
-          # push a placeholder since this entry already exists but this helps
-          # track the insertion index for the created views
-          files.push(name)
-        else
-          files.push(new File({name, fullPath, symlink, realpathCache}))
-
-    @sortEntries(directories.concat(files))
-
-  normalizeEntryName: (value) ->
-    normalizedValue = value.name
-    unless normalizedValue?
-      normalizedValue = value
-    if normalizedValue?
-      normalizedValue = normalizedValue.toLowerCase()
-    normalizedValue
-
-  sortEntries: (combinedEntries) ->
-    if atom.config.get('tree-view.sortFoldersBeforeFiles')
-      combinedEntries
-    else
-      combinedEntries.sort (first, second) =>
-        firstName = @normalizeEntryName(first)
-        secondName = @normalizeEntryName(second)
-        firstName.localeCompare(secondName)
-
-
   # Public: Reads file entries in this directory from disk asynchronously.
   #
-  #   * `entries` An {Array} of {File} and {Directory} objects.
-  getEntries: () ->
+  # @return a promise of: `entries` An {Array} of {File} and {Directory} objects.
+  getEntries: ->
     Q.nfcall(fs.readdir, @path).then (names) =>
       names.sort (name1, name2) -> name1.toLowerCase().localeCompare(name2.toLowerCase())
 
@@ -287,7 +231,7 @@ class Directory
   # changes.
   expand: ->
     @isExpanded = true
-    @reload().then () => @watch()
+    @reload().then => @watch()
 
   serializeExpansionStates: ->
     expandedEntries = {}
