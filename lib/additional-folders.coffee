@@ -22,6 +22,7 @@ module.exports =
 
       @addDirs = []
       @addViews = []
+      @addPaths = []
 
       atom.treeView ||= treeview
       atom.treeView.additionalFolders = @
@@ -30,6 +31,40 @@ module.exports =
       @disposables = new CompositeDisposable
       @disposables.add atom.commands.add 'atom-workspace',
         'tree-view:open-another-folder': @openAnotherFolder.bind @
+
+    serialize: ->
+      @addPaths
+
+    load: (state) ->
+      for f in state
+        @openDir(f)
+
+    destory: ->
+
+    openDir: (p) ->
+      if p
+        p = p.toString()
+        console.log 'Adding new folder: '+p
+        expandedEntries = {}
+        dir = new Directory({
+          name: path.basename(p)
+          fullPath: p
+          symlink: false
+          isRoot: false
+          expandedEntries
+          isExpanded: true
+          @ignoredPatterns
+        })
+
+        view = new DirectoryView()
+        view.initialize(dir)
+
+        @addDirs.push dir
+        @addViews.push view
+        @addPaths.push p
+
+        @treeview.list[0].appendChild view
+        console.log 'Added: '+p
 
     openAnotherFolder: ->
       console.log 'openAnotherFolder'
@@ -53,6 +88,7 @@ module.exports =
 
         @addDirs.push dir
         @addViews.push view
+        @addPaths.push p
 
         @treeview.list[0].appendChild view
         console.log 'Added: '+p

@@ -52,6 +52,8 @@ class TreeView extends View
     # addon class for adding additional folder support
     @addFolders = new AdditionalFolders @
 
+    if state.additionalDirectories then @addFolders.load state.additionalDirectories
+
     process.nextTick =>
       @onStylesheetsChanged()
       onStylesheetsChanged = _.debounce(@onStylesheetsChanged, 100)
@@ -81,6 +83,7 @@ class TreeView extends View
   serialize: ->
     directoryExpansionStates: @root?.directory.serializeExpansionStates()
     selectedPath: @selectedEntry()?.getPath()
+    additionalDirectories: @addFolders.serialize()
     hasFocus: @hasFocus()
     attached: @panel?
     scrollLeft: @scroller.scrollLeft()
@@ -89,6 +92,7 @@ class TreeView extends View
 
   deactivate: ->
     @root?.directory.destroy()
+    @addFolders.destroy()
     @disposables.dispose()
     @detach() if @panel?
 
