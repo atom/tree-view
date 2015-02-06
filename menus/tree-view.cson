@@ -21,8 +21,8 @@
 
 'context-menu':
   '.tree-view.full-menu': [
-    {'label': 'Add File', 'command': 'tree-view:add-file'}
-    {'label': 'Add Folder', 'command': 'tree-view:add-folder'}
+    {'label': 'New File', 'command': 'tree-view:add-file'}
+    {'label': 'New Folder', 'command': 'tree-view:add-folder'}
     {'type': 'separator'}
 
     {'label': 'Rename', 'command': 'tree-view:move'}
