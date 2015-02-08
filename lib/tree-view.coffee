@@ -463,9 +463,9 @@ class TreeView extends ScrollView
               rmdirR subDirPath
             fs.rmdirSync dirPath
           for selectedPath in selectedPaths
-            fs.isDirectory selectedPath, (answer) ->
+            fs.isDirectory selectedPath, (isDirectory) ->
               # fs.unlink if file, else remove directory and their contents
-              return fs.unlinkSync selectedPath unless answer
+              return fs.unlinkSync selectedPath unless isDirectory
               rmdirR selectedPath
       buttons["Cancel"] = null
       atom.confirm
