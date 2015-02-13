@@ -585,6 +585,10 @@ class TreeView extends View
       false
     dialog.attach()
 
+  addRootFolder: ->
+    atom.pickFolder (path) ->
+      atom.project.addPath(path)
+
   selectedEntry: ->
     @list[0].querySelector('.selected')
 
