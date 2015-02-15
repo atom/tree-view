@@ -1168,6 +1168,23 @@ describe "TreeView", ->
             expect(fs.existsSync(dirPath)).toBeTruthy()
             expect(fs.existsSync(path.join(dirPath, path.basename(dirPath)))).toBeFalsy()
 
+      describe "when pasting entries which don't exist anymore", ->
+        it "skips the entry which doesn't exist", ->
+          filePathDoesntExist1 = path.join(dirPath2, "test-file-doesnt-exist1.txt")
+          filePathDoesntExist2 = path.join(dirPath2, "test-file-doesnt-exist2.txt")
+
+          LocalStorage['tree-view:copyPath'] = JSON.stringify([filePath2, filePathDoesntExist1, filePath3, filePathDoesntExist2])
+
+          fileView.click()
+          atom.commands.dispatch(treeView.element, "tree-view:paste")
+
+          expect(fs.existsSync(path.join(dirPath, path.basename(filePath2)))).toBeTruthy()
+          expect(fs.existsSync(path.join(dirPath, path.basename(filePath3)))).toBeTruthy()
+          expect(fs.existsSync(path.join(dirPath, path.basename(filePathDoesntExist1)))).toBeFalsy()
+          expect(fs.existsSync(path.join(dirPath, path.basename(filePathDoesntExist2)))).toBeFalsy()
+          expect(fs.existsSync(filePath2)).toBeTruthy()
+          expect(fs.existsSync(filePath3)).toBeTruthy()
+
       describe "when a file has been copied", ->
         describe "when a file is selected", ->
           it "creates a copy of the original file in the selected file's parent directory", ->
