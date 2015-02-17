@@ -32,7 +32,7 @@ class TreeView extends View
   initialize: (state) ->
     @disposables = new CompositeDisposable
     @focusAfterAttach = false
-    @root = null
+    @roots = []
     @scrollLeftAfterAttach = -1
     @scrollTopAfterAttach = -1
     @selectedPath = null
@@ -48,7 +48,7 @@ class TreeView extends View
       @disposables.add atom.styles.onDidUpdateStyleElement(onStylesheetsChanged)
 
     @updateRoot(state.directoryExpansionStates)
-    @selectEntry(@root) if @root?
+    @selectEntry(root) for root in @roots
 
     @selectEntryForPath(state.selectedPath) if state.selectedPath
     @focusAfterAttach = state.hasFocus
@@ -67,7 +67,7 @@ class TreeView extends View
     @resizeStopped()
 
   serialize: ->
-    directoryExpansionStates: @root?.directory.serializeExpansionStates()
+    directoryExpansionStates: (root.directory.serializeExpansionStates() for root in @roots)
     selectedPath: @selectedEntry()?.getPath()
     hasFocus: @hasFocus()
     attached: @panel?
@@ -76,7 +76,7 @@ class TreeView extends View
     width: @width()
 
   deactivate: ->
-    @root?.directory.destroy()
+    root.directory.destroy() for root in @roots
     @disposables.dispose()
     @detach() if @panel?
 
@@ -238,13 +238,13 @@ class TreeView extends View
         console.warn "Error parsing ignore pattern (#{ignoredName}): #{error.message}"
 
   updateRoot: (expandedEntries={}) ->
-    if @root?
-      @root.directory.destroy()
-      @root.remove()
+    for root in @roots
+      root.directory.destroy()
+      root.remove()
 
     @loadIgnoredPatterns()
 
-    if projectPath = atom.project.getPaths()[0]
+    @roots = for projectPath in atom.project.getPaths()
       directory = new Directory({
         name: path.basename(projectPath)
         fullPath: projectPath
@@ -254,15 +254,14 @@ class TreeView extends View
         isExpanded: true
         @ignoredPatterns
       })
-      @root = new DirectoryView()
-      @root.initialize(directory)
-      @list[0].appendChild(@root)
+      root = new DirectoryView()
+      root.initialize(directory)
+      @list[0].appendChild(root)
+      root
 
-      if @attachAfterProjectPathSet
-        @attach()
-        @attachAfterProjectPathSet = false
-    else
-      @root = null
+    if @attachAfterProjectPathSet
+      @attach()
+      @attachAfterProjectPathSet = false
 
   getActivePath: -> atom.workspace.getActivePaneItem()?.getPath?()
 
@@ -298,13 +297,17 @@ class TreeView extends View
       atom.clipboard.write(pathToCopy)
 
   entryForPath: (entryPath) ->
-    bestMatchEntry = @root
+    bestMatchEntry = null
+    bestMatchLength = 0
+
     for entry in @list[0].querySelectorAll('.entry')
       if entry.isPathEqual(entryPath)
+        return entry
+
+      entryLength = entry.getPath().length
+      if entry.directory?.contains(entryPath) and entryLength > bestMatchLength
         bestMatchEntry = entry
-        break
-      if entry.getPath().length > bestMatchEntry.getPath().length and entry.directory?.contains(entryPath)
-        bestMatchEntry = entry
+        bestMatchLength = entryLength
 
     bestMatchEntry
 
@@ -325,7 +328,7 @@ class TreeView extends View
         selectedEntry = selectedEntry.parents('.entry:first')
         break unless selectedEntry.length
     else
-      @selectEntry(@root)
+      @selectEntry(@roots[0])
 
     @scrollToEntry(@selectedEntry())
 
@@ -393,7 +396,7 @@ class TreeView extends View
   moveSelectedEntry: ->
     if @hasFocus()
       entry = @selectedEntry()
-      return unless entry and entry isnt @root
+      return if not entry? or entry in @roots
       oldPath = entry.getPath()
     else
       oldPath = @getActivePath()
@@ -469,7 +472,7 @@ class TreeView extends View
   copySelectedEntry: ->
     if @hasFocus()
       entry = @selectedEntry()
-      return if entry is @root
+      return if entry in @roots
       oldPath = entry?.getPath()
     else
       oldPath = @getActivePath()
@@ -487,19 +490,21 @@ class TreeView extends View
 
     return unless selectedPaths
 
-    if @root?.getPath() in selectedPaths
-      atom.confirm
-        message: "The root directory '#{@root.directory.name}' can't be removed."
-        buttons: ['OK']
-    else
-      atom.confirm
-        message: "Are you sure you want to delete the selected #{if selectedPaths.length > 1 then 'items' else 'item'}?"
-        detailedMessage: "You are deleting:\n#{selectedPaths.join('\n')}"
-        buttons:
-          "Move to Trash": ->
-            for selectedPath in selectedPaths
-              shell.moveItemToTrash(selectedPath)
-          "Cancel": null
+    for root in @roots
+      if root.getPath() in selectedPaths
+        atom.confirm
+          message: "The root directory '#{root.directory.name}' can't be removed."
+          buttons: ['OK']
+        return
+
+    atom.confirm
+      message: "Are you sure you want to delete the selected #{if selectedPaths.length > 1 then 'items' else 'item'}?"
+      detailedMessage: "You are deleting:\n#{selectedPaths.join('\n')}"
+      buttons:
+        "Move to Trash": ->
+          for selectedPath in selectedPaths
+            shell.moveItemToTrash(selectedPath)
+        "Cancel": null
 
   # Public: Copy the path of the selected entry element.
   #         Save the path in localStorage, so that copying from 2 different
@@ -571,7 +576,7 @@ class TreeView extends View
             fs.moveSync(initialPath, newPath)
 
   add: (isCreatingFile) ->
-    selectedEntry = @selectedEntry() ? @root
+    selectedEntry = @selectedEntry() ? @roots[0]
     selectedPath = selectedEntry?.getPath() ? ''
 
     AddDialog ?= require './add-dialog'
@@ -586,8 +591,8 @@ class TreeView extends View
     dialog.attach()
 
   addRootFolder: ->
-    atom.pickFolder (path) ->
-      atom.project.addPath(path)
+    atom.pickFolder (selectedPaths) ->
+      atom.project.addPath(selectedPath) for selectedPath in selectedPaths
 
   selectedEntry: ->
     @list[0].querySelector('.selected')
@@ -636,14 +641,12 @@ class TreeView extends View
       @scrollTop(top + offset)
 
   scrollToBottom: ->
-    return unless @root?
-
-    if lastEntry = _.last(@root?.querySelectorAll('.entry'))
+    if lastEntry = _.last(@list[0].querySelectorAll('.entry'))
       @selectEntry(lastEntry)
       @scrollToEntry(lastEntry)
 
   scrollToTop: ->
-    @selectEntry(@root) if @root?
+    @selectEntry(@roots[0]) if @roots[0]?
     @scrollTop(0)
 
   toggleSide: ->
