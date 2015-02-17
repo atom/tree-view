@@ -192,6 +192,7 @@ class TreeView extends View
     switch e.originalEvent?.detail ? 1
       when 1
         @selectEntry(entry)
+        @openSelectedEntrySplit 'horizontal', 'after' if entry instanceof FileView and e.altKey
         @openSelectedEntry(false) if entry instanceof FileView
         entry.toggleExpansion(isRecursive) if entry instanceof DirectoryView
       when 2
