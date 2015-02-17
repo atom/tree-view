@@ -327,7 +327,7 @@ describe "TreeView", ->
             expect(treeView).toBeVisible()
             expect(treeView.list).not.toMatchSelector(':focus')
 
-  describe "when tree-view:reveal-current-file is triggered on the root view", ->
+  describe "when tree-view:reveal-active-file is triggered on the root view", ->
     beforeEach ->
       treeView.detach()
       spyOn(treeView, 'focus')
