@@ -47,8 +47,8 @@ class TreeView extends View
       @disposables.add atom.styles.onDidRemoveStyleElement(onStylesheetsChanged)
       @disposables.add atom.styles.onDidUpdateStyleElement(onStylesheetsChanged)
 
-    @updateRoot(state.directoryExpansionStates)
-    @selectEntry(root) for root in @roots
+    @updateRoots(state.directoryExpansionStates)
+    @selectEntry(@roots[0])
 
     @selectEntryForPath(state.selectedPath) if state.selectedPath
     @focusAfterAttach = state.hasFocus
@@ -128,17 +128,17 @@ class TreeView extends View
     @disposables.add atom.workspace.onDidChangeActivePaneItem =>
       @selectActiveFile()
     @disposables.add atom.project.onDidChangePaths =>
-      @updateRoot()
+      @updateRoots()
     @disposables.add atom.config.onDidChange 'tree-view.hideVcsIgnoredFiles', =>
-      @updateRoot()
+      @updateRoots()
     @disposables.add atom.config.onDidChange 'tree-view.hideIgnoredNames', =>
-      @updateRoot()
+      @updateRoots()
     @disposables.add atom.config.onDidChange 'core.ignoredNames', =>
-      @updateRoot() if atom.config.get('tree-view.hideIgnoredNames')
+      @updateRoots() if atom.config.get('tree-view.hideIgnoredNames')
     @disposables.add atom.config.onDidChange 'tree-view.showOnRightSide', ({newValue}) =>
       @onSideToggled(newValue)
     @disposables.add atom.config.onDidChange 'tree-view.sortFoldersBeforeFiles', =>
-      @updateRoot()
+      @updateRoots()
 
   toggle: ->
     if @isVisible()
@@ -237,7 +237,7 @@ class TreeView extends View
       catch error
         console.warn "Error parsing ignore pattern (#{ignoredName}): #{error.message}"
 
-  updateRoot: (expandedEntries={}) ->
+  updateRoots: (expandedEntries={}) ->
     for root in @roots
       root.directory.destroy()
       root.remove()
