@@ -339,13 +339,23 @@ describe "TreeView", ->
     describe "if the current file has a path", ->
       it "shows and focuses the tree view and selects the file", ->
         waitsForPromise ->
-          atom.workspace.open(path.join('dir1', 'file1'))
+          atom.workspace.open(path.join(atom.project.getPaths()[0], 'dir1', 'file1'))
 
         runs ->
           atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
           expect(treeView.hasParent()).toBeTruthy()
           expect(treeView.focus).toHaveBeenCalled()
-          expect(treeView.selectedEntry().getPath()).toMatch new RegExp("dir1#{_.escapeRegExp(path.sep)}file1$")
+          expect(treeView.selectedEntry().getPath()).toContain(path.join("dir1", "file1"))
+
+        waitsForPromise ->
+          treeView.focus.reset()
+          atom.workspace.open(path.join(atom.project.getPaths()[1], 'dir3', 'file3'))
+
+        runs ->
+          atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
+          expect(treeView.hasParent()).toBeTruthy()
+          expect(treeView.focus).toHaveBeenCalled()
+          expect(treeView.selectedEntry().getPath()).toContain(path.join("dir3", "file3"))
 
     describe "if the current file has no path", ->
       it "shows and focuses the tree view, but does not attempt to select a specific file", ->
@@ -772,6 +782,7 @@ describe "TreeView", ->
         expect(treeView.scrollBottom()).toBe root1.outerHeight() + root2.outerHeight()
 
         treeView.roots[0].collapse()
+        treeView.roots[1].collapse()
         atom.commands.dispatch(treeView.element, 'core:move-to-bottom')
         expect(treeView.scrollTop()).toBe 0
 
