@@ -7,6 +7,7 @@ module.exports =
       type: 'boolean'
       default: false
       title: 'Hide VCS Ignored Files'
+      description: 'Applies when your project folder is the VCS root'
     hideIgnoredNames:
       type: 'boolean'
       default: false
