@@ -13,14 +13,17 @@ waitsForFileToOpen = (causeFileToOpen) ->
     causeFileToOpen()
 
 describe "TreeView", ->
-  [treeView, root, sampleJs, sampleTxt, workspaceElement] = []
+  [treeView, root1, root2, sampleJs, sampleTxt, workspaceElement] = []
 
   selectEntry = (pathToSelect) ->
     treeView.selectEntryForPath atom.project.getDirectories()[0].resolve pathToSelect
 
   beforeEach ->
     fixturesPath = atom.project.getPaths()[0]
-    atom.project.setPaths([path.join(fixturesPath, "root-dir1")])
+    atom.project.setPaths([
+      path.join(fixturesPath, "root-dir1")
+      path.join(fixturesPath, "root-dir2")
+    ])
 
     workspaceElement = atom.views.getView(atom.workspace)
 
@@ -31,7 +34,8 @@ describe "TreeView", ->
       atom.commands.dispatch(workspaceElement, 'tree-view:toggle')
       treeView = $(atom.workspace.getLeftPanels()[0].getItem()).view()
 
-      root = $(treeView.roots[0])
+      root1 = $(treeView.roots[0])
+      root2 = $(treeView.roots[1])
       sampleJs = treeView.find('.file:contains(tree-view.js)')
       sampleTxt = treeView.find('.file:contains(tree-view.txt)')
 
@@ -42,10 +46,10 @@ describe "TreeView", ->
 
   describe ".initialize(project)", ->
     it "renders the root directories of the project and their contents alphabetically with subdirectories first, in a collapsed state", ->
-      expect(root.find('> .header .disclosure-arrow')).not.toHaveClass('expanded')
-      expect(root.find('> .header .name')).toHaveText('root-dir1')
+      expect(root1.find('> .header .disclosure-arrow')).not.toHaveClass('expanded')
+      expect(root1.find('> .header .name')).toHaveText('root-dir1')
 
-      rootEntries = root.find('.entries')
+      rootEntries = root1.find('.entries')
       subdir0 = rootEntries.find('> li:eq(0)')
       expect(subdir0).not.toHaveClass('expanded')
       expect(subdir0.find('.name')).toHaveText('dir1')
@@ -134,7 +138,7 @@ describe "TreeView", ->
         runs ->
           treeView = atom.packages.getActivePackage("tree-view").mainModule.createView()
           expect(treeView.hasParent()).toBeFalsy()
-          expect(treeView.roots).toHaveLength(1)
+          expect(treeView.roots).toHaveLength(2)
 
     describe "when the root view is opened to a directory", ->
       it "attaches to the workspace", ->
@@ -144,7 +148,7 @@ describe "TreeView", ->
         runs ->
           treeView = atom.packages.getActivePackage("tree-view").mainModule.createView()
           expect(treeView.hasParent()).toBeTruthy()
-          expect(treeView.roots).toHaveLength(1)
+          expect(treeView.roots).toHaveLength(2)
 
     describe "when the project is a .git folder", ->
       it "does not create the tree view", ->
@@ -176,7 +180,7 @@ describe "TreeView", ->
         expect(atom.workspace.getLeftPanels().length).toBe(0)
 
     it "restores expanded directories and selected file when deserialized", ->
-      root.find('.directory:contains(dir1)').click()
+      root1.find('.directory:contains(dir1)').click()
 
       waitsForFileToOpen ->
         sampleJs.click()
@@ -413,7 +417,7 @@ describe "TreeView", ->
 
   describe "when a directory's disclosure arrow is clicked", ->
     it "expands / collapses the associated directory", ->
-      subdir = root.find('.entries > li:contains(dir1)')
+      subdir = root1.find('.entries > li:contains(dir1)')
 
       expect(subdir).not.toHaveClass('expanded')
 
@@ -425,24 +429,24 @@ describe "TreeView", ->
       expect(subdir).not.toHaveClass('expanded')
 
     it "restores the expansion state of descendant directories", ->
-      child = root.find('.entries > li:contains(dir1)')
+      child = root1.find('.entries > li:contains(dir1)')
       child.click()
 
       grandchild = child.find('.entries > li:contains(sub-dir1)')
       grandchild.click()
 
-      root.click()
+      root1.click()
       expect(treeView.roots[0]).not.toHaveClass('expanded')
-      root.click()
+      root1.click()
 
       # previously expanded descendants remain expanded
-      expect(root.find('> .entries > li:contains(dir1) > .entries > li:contains(sub-dir1) > .entries').length).toBe 1
+      expect(root1.find('> .entries > li:contains(dir1) > .entries > li:contains(sub-dir1) > .entries').length).toBe 1
 
       # collapsed descendants remain collapsed
-      expect(root.find('> .entries > li:contains(dir2) > .entries')).not.toHaveClass('expanded')
+      expect(root1.find('> .entries > li:contains(dir2) > .entries')).not.toHaveClass('expanded')
 
     it "when collapsing a directory, removes change subscriptions from the collapsed directory and its descendants", ->
-      child = root.find('li:contains(dir1)')
+      child = root1.find('li:contains(dir1)')
       child.click()
 
       grandchild = child.find('li:contains(sub-dir1)')
@@ -452,7 +456,7 @@ describe "TreeView", ->
       expect(child[0].directory.watchSubscription).toBeTruthy()
       expect(grandchild[0].directory.watchSubscription).toBeTruthy()
 
-      root.click()
+      root1.click()
 
       expect(treeView.roots[0].directory.watchSubscription).toBeFalsy()
       expect(child[0].directory.watchSubscription).toBeFalsy()
@@ -460,7 +464,7 @@ describe "TreeView", ->
 
   describe "when mouse down fires on a file or directory", ->
     it "selects the entry", ->
-      dir = root.find('li:contains(dir1)')
+      dir = root1.find('li:contains(dir1)')
       expect(dir).not.toHaveClass 'selected'
       dir.mousedown()
       expect(dir).toHaveClass 'selected'
@@ -513,7 +517,7 @@ describe "TreeView", ->
 
   describe "when a directory is single-clicked", ->
     it "is selected", ->
-      subdir = root.find('.directory:first')
+      subdir = root1.find('.directory:first')
       subdir.trigger clickEvent(originalEvent: { detail: 1 })
       expect(subdir).toHaveClass 'selected'
 
@@ -527,7 +531,7 @@ describe "TreeView", ->
         sampleJs.trigger clickEvent(originalEvent: { detail: 1 })
 
       runs ->
-        subdir = root.find('.directory:first')
+        subdir = root1.find('.directory:first')
         subdir.trigger clickEvent(originalEvent: { detail: 1 })
         expect(subdir).toHaveClass 'selected'
         expect(subdir).toHaveClass 'expanded'
@@ -539,14 +543,14 @@ describe "TreeView", ->
   describe "when an directory is alt-clicked", ->
     describe "when the directory is collapsed", ->
       it "recursively expands the directory", ->
-        root.click()
+        root1.click()
         treeView.roots[0].collapse()
 
         expect(treeView.roots[0]).not.toHaveClass 'expanded'
-        root.trigger clickEvent({ altKey: true })
+        root1.trigger clickEvent({ altKey: true })
         expect(treeView.roots[0]).toHaveClass 'expanded'
 
-        children = root.find('.directory')
+        children = root1.find('.directory')
         expect(children.length).toBeGreaterThan 0
         children.each (index, child) -> expect(child).toHaveClass 'expanded'
 
@@ -555,7 +559,7 @@ describe "TreeView", ->
       children  = null
 
       beforeEach ->
-        parent = root.find('> .entries > .directory').eq(2)
+        parent = root1.find('> .entries > .directory').eq(2)
         parent[0].expand()
         children = parent.find('.expanded.directory')
         children.each (index, child) ->
@@ -594,7 +598,7 @@ describe "TreeView", ->
           atom.workspace.open(path.join('dir1', 'sub-dir1', 'sub-file1'))
 
         runs ->
-          dirView = root.find('.directory:contains(dir1)')
+          dirView = root1.find('.directory:contains(dir1)')
           expect(dirView).toHaveClass 'selected'
 
     describe "when the item has no path", ->
@@ -635,14 +639,14 @@ describe "TreeView", ->
     describe "core:move-down", ->
       describe "when a collapsed directory is selected", ->
         it "skips to the next directory", ->
-          root.find('.directory:eq(0)').click()
+          root1.find('.directory:eq(0)').click()
 
           atom.commands.dispatch(treeView.element, 'core:move-down')
-          expect(root.find('.directory:eq(1)')).toHaveClass 'selected'
+          expect(root1.find('.directory:eq(1)')).toHaveClass 'selected'
 
       describe "when an expanded directory is selected", ->
         it "selects the first entry of the directory", ->
-          subdir = root.find('.directory:eq(1)')
+          subdir = root1.find('.directory:eq(1)')
           subdir.click()
 
           atom.commands.dispatch(treeView.element, 'core:move-down')
@@ -651,20 +655,20 @@ describe "TreeView", ->
 
       describe "when the last entry of an expanded directory is selected", ->
         it "selects the entry after its parent directory", ->
-          subdir1 = root.find('.directory:eq(1)')
+          subdir1 = root1.find('.directory:eq(1)')
           subdir1[0].expand()
           waitsForFileToOpen ->
             $(subdir1[0].entries).find('.entry:last').click()
 
           runs ->
             atom.commands.dispatch(treeView.element, 'core:move-down')
-            expect(root.find('.directory:eq(2)')).toHaveClass 'selected'
+            expect(root1.find('.directory:eq(2)')).toHaveClass 'selected'
 
       describe "when the last directory of another last directory is selected", ->
         [nested, nested2] = []
 
         beforeEach ->
-          nested = root.find('.directory:eq(2)')
+          nested = root1.find('.directory:eq(2)')
           expect(nested.find('.header').text()).toContain 'nested'
           nested[0].expand()
           nested2 = $(nested[0].entries).find('.entry:last')
@@ -685,7 +689,7 @@ describe "TreeView", ->
 
       describe "when the last entry of the last directory is selected", ->
         it "does not change the selection", ->
-          lastEntry = root.find('> .entries .entry:last')
+          lastEntry = root2.find('> .entries .entry:last')
           waitsForFileToOpen ->
             lastEntry.click()
 
@@ -696,7 +700,7 @@ describe "TreeView", ->
     describe "core:move-up", ->
       describe "when there is an expanded directory before the currently selected entry", ->
         it "selects the last entry in the expanded directory", ->
-          lastDir = root.find('.directory:last')
+          lastDir = root1.find('.directory:last')
           fileAfterDir = lastDir.next()
           lastDir[0].expand()
           waitsForFileToOpen ->
@@ -708,7 +712,7 @@ describe "TreeView", ->
 
       describe "when there is an entry before the currently selected entry", ->
         it "selects the previous entry", ->
-          lastEntry = root.find('.entry:last')
+          lastEntry = root1.find('.entry:last')
           waitsForFileToOpen ->
             lastEntry.click()
 
@@ -718,7 +722,7 @@ describe "TreeView", ->
 
       describe "when there is no entry before the currently selected entry, but there is a parent directory", ->
         it "selects the parent directory", ->
-          subdir = root.find('.directory:first')
+          subdir = root1.find('.directory:first')
           subdir[0].expand()
           subdir.find('> .entries > .entry:first').click()
 
@@ -728,7 +732,7 @@ describe "TreeView", ->
 
       describe "when there is no parent directory or previous entry", ->
         it "does not change the selection", ->
-          root.click()
+          root1.click()
           atom.commands.dispatch(treeView.element, 'core:move-up')
           expect(treeView.roots[0]).toHaveClass 'selected'
 
@@ -765,7 +769,7 @@ describe "TreeView", ->
 
         expect(treeView.scrollTop()).toBe 0
         atom.commands.dispatch(treeView.element, 'core:move-to-bottom')
-        expect(treeView.scrollBottom()).toBe root.outerHeight()
+        expect(treeView.scrollBottom()).toBe root1.outerHeight() + root2.outerHeight()
 
         treeView.roots[0].collapse()
         atom.commands.dispatch(treeView.element, 'core:move-to-bottom')
@@ -774,7 +778,7 @@ describe "TreeView", ->
       it "selects the last entry", ->
         expect(treeView.roots[0]).toHaveClass 'selected'
         atom.commands.dispatch(treeView.element, 'core:move-to-bottom')
-        expect(root.find('.entry:last')).toHaveClass 'selected'
+        expect(root2.find('.entry:last')).toHaveClass 'selected'
 
     describe "core:page-up", ->
       it "scrolls up a page", ->
@@ -824,7 +828,7 @@ describe "TreeView", ->
     describe "tree-view:expand-directory", ->
       describe "when a directory entry is selected", ->
         it "expands the current directory", ->
-          subdir = root.find('.directory:first')
+          subdir = root1.find('.directory:first')
           subdir.click()
           subdir[0].collapse()
 
@@ -835,7 +839,7 @@ describe "TreeView", ->
       describe "when a file entry is selected", ->
         it "does nothing", ->
           waitsForFileToOpen ->
-            root.find('.file').click()
+            root1.find('.file').click()
 
           runs ->
             atom.commands.dispatch(treeView.element, 'tree-view:expand-directory')
@@ -843,14 +847,14 @@ describe "TreeView", ->
     describe "tree-view:recursive-expand-directory", ->
       describe "when an collapsed root is recursively expanded", ->
         it "expands the root and all subdirectories", ->
-          root.click()
+          root1.click()
           treeView.roots[0].collapse()
 
           expect(treeView.roots[0]).not.toHaveClass 'expanded'
           atom.commands.dispatch(treeView.element, 'tree-view:recursive-expand-directory')
           expect(treeView.roots[0]).toHaveClass 'expanded'
 
-          children = root.find('.directory')
+          children = root1.find('.directory')
           expect(children.length).toBeGreaterThan 0
           children.each (index, child) ->
             expect(child).toHaveClass 'expanded'
@@ -859,7 +863,7 @@ describe "TreeView", ->
       subdir = null
 
       beforeEach ->
-        subdir = root.find('> .entries > .directory').eq(0)
+        subdir = root1.find('> .entries > .directory').eq(0)
         subdir[0].expand()
 
       describe "when an expanded directory is selected", ->
@@ -907,7 +911,7 @@ describe "TreeView", ->
       children  = null
 
       beforeEach ->
-        parent = root.find('> .entries > .directory').eq(2)
+        parent = root1.find('> .entries > .directory').eq(2)
         parent[0].expand()
         children = parent.find('.expanded.directory')
         children.each (index, child) ->
@@ -936,7 +940,7 @@ describe "TreeView", ->
           jasmine.attachToDOM(workspaceElement)
 
           waitsForFileToOpen ->
-            root.find('.file:contains(tree-view.js)').click()
+            root1.find('.file:contains(tree-view.js)').click()
 
           waitsForFileToOpen ->
             atom.commands.dispatch(treeView.element, 'tree-view:open-selected-entry')
@@ -948,7 +952,7 @@ describe "TreeView", ->
 
       describe "when a directory is selected", ->
         it "expands or collapses the directory", ->
-          subdir = root.find('.directory').first()
+          subdir = root1.find('.directory').first()
           subdir.click()
           subdir[0].collapse()
 
@@ -981,7 +985,7 @@ describe "TreeView", ->
               jasmine.attachToDOM(workspaceElement)
 
               waitsForFileToOpen ->
-                root.find('.file:contains(tree-view.js)').click()
+                root1.find('.file:contains(tree-view.js)').click()
 
               runs ->
                 previousPane = atom.workspace.getActivePane()
@@ -1040,17 +1044,17 @@ describe "TreeView", ->
             expect(item.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.txt')
 
   describe "adding a root folder", ->
-    [tempDirectory, initialPath] = []
+    [tempDirectory, initialPaths] = []
 
     beforeEach ->
-      [initialPath] = atom.project.getPaths()
+      initialPaths = atom.project.getPaths()
       tempDirectory = temp.mkdirSync("a-new-directory")
       spyOn(atom, "pickFolder").andCallFake (callback) ->
         callback([tempDirectory])
       atom.commands.dispatch(workspaceElement, 'tree-view:add-root-folder')
 
     it "adds a second path to the project", ->
-      expect(atom.project.getPaths()).toEqual([initialPath, tempDirectory])
+      expect(atom.project.getPaths()).toEqual(initialPaths.concat([tempDirectory]))
 
   describe "file modification", ->
     [dirView, fileView, dirView2, fileView2, fileView3, rootDirPath, dirPath, filePath, dirPath2, filePath2, filePath3] = []
@@ -1074,7 +1078,7 @@ describe "TreeView", ->
 
       atom.project.setPaths([rootDirPath])
 
-      root = $(treeView.roots[0])
+      root1 = $(treeView.roots[0])
       dirView = $(treeView.roots[0].entries).find('.directory:contains(test-dir):first')
       dirView[0].expand()
       fileView = treeView.find('.file:contains(test-file.txt)')
@@ -1480,7 +1484,7 @@ describe "TreeView", ->
       describe "when the root directory is selected", ->
         it "opens an add dialog with no path populated", ->
           addDialog.cancel()
-          root.click()
+          root1.click()
           atom.commands.dispatch(treeView.element, "tree-view:add-file")
           addDialog = $(atom.workspace.getModalPanels()[0].getItem()).view()
 
@@ -1489,8 +1493,8 @@ describe "TreeView", ->
       describe "when there is no entry selected", ->
         it "opens an add dialog with no path populated", ->
           addDialog.cancel()
-          root.click()
-          root.removeClass('selected')
+          root1.click()
+          root1.removeClass('selected')
           expect(treeView.selectedEntry()).toBeNull()
           atom.commands.dispatch(treeView.element, "tree-view:add-file")
           addDialog = $(atom.workspace.getModalPanels()[0].getItem()).view()
@@ -1627,7 +1631,7 @@ describe "TreeView", ->
               expect(atom.workspace.getModalPanels().length).toBe 0
 
               waitsFor "tree view to update", ->
-                root.find('> .entries > .file:contains(renamed-test-file.txt)').length > 0
+                root1.find('> .entries > .file:contains(renamed-test-file.txt)').length > 0
 
               runs ->
                 dirView = $(treeView.roots[0].entries).find('.directory:contains(test-dir)')
@@ -1642,7 +1646,7 @@ describe "TreeView", ->
               atom.commands.dispatch moveDialog.element, 'core:confirm'
 
               waitsFor "tree view to update", ->
-                root.find('> .entries > .directory:contains(new)').length > 0
+                root1.find('> .entries > .directory:contains(new)').length > 0
 
               runs ->
                 expect(fs.existsSync(newPath)).toBeTruthy()
@@ -1737,7 +1741,7 @@ describe "TreeView", ->
                 atom.commands.dispatch copyDialog.element, 'core:confirm'
 
               waitsFor "tree view to update", ->
-                root.find('> .entries > .file:contains(duplicated-test-file.txt)').length > 0
+                root1.find('> .entries > .file:contains(duplicated-test-file.txt)').length > 0
 
               runs ->
                 expect(fs.existsSync(newPath)).toBeTruthy()
@@ -1757,7 +1761,7 @@ describe "TreeView", ->
                 atom.commands.dispatch copyDialog.element, 'core:confirm'
 
               waitsFor "tree view to update", ->
-                root.find('> .entries > .directory:contains(new)').length > 0
+                root1.find('> .entries > .directory:contains(new)').length > 0
 
               waitsFor "new path to exist", -> fs.existsSync(newPath)
 
@@ -1847,7 +1851,7 @@ describe "TreeView", ->
         spyOn(atom, 'confirm')
         jasmine.attachToDOM(workspaceElement)
         treeView.focus()
-        root.click()
+        root1.click()
         atom.commands.dispatch(treeView.element, 'tree-view:remove')
 
         args = atom.confirm.mostRecentCall.args[0]
@@ -1981,7 +1985,7 @@ describe "TreeView", ->
       fs.writeFileSync modifiedFile, 'ch ch changes'
       atom.project.getRepositories()[0].getPathStatus(modifiedFile)
 
-      treeView.updateRoot()
+      treeView.updateRoots()
       $(treeView.roots[0].entries).find('.directory:contains(dir)')[0].expand()
 
     describe "when the project is the repository root", ->
