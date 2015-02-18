@@ -1068,10 +1068,12 @@ describe "TreeView", ->
       expect(atom.project.getPaths()).toEqual(initialPaths.concat([tempDirectory]))
 
   describe "file modification", ->
-    [dirView, fileView, dirView2, fileView2, fileView3, rootDirPath, dirPath, filePath, dirPath2, filePath2, filePath3] = []
+    [dirView, fileView, dirView2, fileView2, fileView3] = []
+    [rootDirPath, rootDirPath2, dirPath, dirPath2, filePath, filePath2, filePath3, filePath4] = []
 
     beforeEach ->
-      rootDirPath = fs.absolute(temp.mkdirSync('tree-view'))
+      rootDirPath = fs.absolute(temp.mkdirSync('tree-view-root1'))
+      rootDirPath2 = fs.absolute(temp.mkdirSync('tree-view-root2'))
 
       dirPath = path.join(rootDirPath, "test-dir")
       filePath = path.join(dirPath, "test-file.txt")
@@ -1080,14 +1082,20 @@ describe "TreeView", ->
       filePath2 = path.join(dirPath2, "test-file2.txt")
       filePath3 = path.join(dirPath2, "test-file3.txt")
 
+      dirPath3 = path.join(rootDirPath2, "test-dir3")
+      filePath4 = path.join(dirPath3, "test-file4.txt")
+
       fs.makeTreeSync(dirPath)
-      fs.writeFileSync(filePath, "doesn't matter")
+      fs.writeFileSync(filePath, "doesn't matter 1")
 
       fs.makeTreeSync(dirPath2)
-      fs.writeFileSync(filePath2, "doesn't matter")
-      fs.writeFileSync(filePath3, "doesn't matter")
+      fs.writeFileSync(filePath2, "doesn't matter 2")
+      fs.writeFileSync(filePath3, "doesn't matter 3")
 
-      atom.project.setPaths([rootDirPath])
+      fs.makeTreeSync(dirPath3)
+      fs.writeFileSync(filePath4, "doesn't matter 4")
+
+      atom.project.setPaths([rootDirPath, rootDirPath2])
 
       root1 = $(treeView.roots[0])
       dirView = $(treeView.roots[0].entries).find('.directory:contains(test-dir):first')
@@ -1264,9 +1272,16 @@ describe "TreeView", ->
               expect(fs.existsSync(numberedFileName1)).toBeTruthy()
               expect(fs.existsSync(filePath)).toBeTruthy()
 
-          describe "when nothing has been copied", ->
-            it "does not paste anything", ->
-              expect(-> atom.commands.dispatch(treeView.element, "tree-view:paste")).not.toThrow()
+        describe "when pasting into a different root directory", ->
+          it "creates the file", ->
+            LocalStorage['tree-view:copyPath'] = JSON.stringify([filePath4])
+            dirView2.click()
+            atom.commands.dispatch(treeView.element, "tree-view:paste")
+            expect(fs.existsSync(path.join(dirPath2, path.basename(filePath4)))).toBeTruthy()
+
+      describe "when nothing has been copied", ->
+        it "does not paste anything", ->
+          expect(-> atom.commands.dispatch(treeView.element, "tree-view:paste")).not.toThrow()
 
       describe "when multiple files have been copied", ->
         describe "when a file is selected", ->
@@ -1367,7 +1382,7 @@ describe "TreeView", ->
             expect(fs.existsSync(path.join(dirPath2, path.basename(filePath)))).toBeTruthy()
             expect(fs.existsSync(filePath)).toBeFalsy()
 
-    describe "tree-view:add", ->
+    describe "tree-view:add-file", ->
       [addPanel, addDialog] = []
 
       beforeEach ->

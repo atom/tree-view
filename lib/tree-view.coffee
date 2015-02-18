@@ -548,16 +548,16 @@ class TreeView extends View
   #
   # Returns `destination newPath`.
   pasteEntries: ->
-    entry = @selectedEntry()
+    selectedEntry = @selectedEntry()
     cutPaths = if LocalStorage['tree-view:cutPath'] then JSON.parse(LocalStorage['tree-view:cutPath']) else null
     copiedPaths = if LocalStorage['tree-view:copyPath'] then JSON.parse(LocalStorage['tree-view:copyPath']) else null
     initialPaths = copiedPaths or cutPaths
 
     for initialPath in initialPaths ? []
       initialPathIsDirectory = fs.isDirectorySync(initialPath)
-      if entry and initialPath and fs.existsSync(initialPath)
-        basePath = atom.project.getDirectories()[0].resolve(entry.getPath())
-        basePath = path.dirname(basePath) if entry instanceof FileView
+      if selectedEntry and initialPath and fs.existsSync(initialPath)
+        basePath = selectedEntry.getPath()
+        basePath = path.dirname(basePath) if selectedEntry instanceof FileView
         newPath = path.join(basePath, path.basename(initialPath))
 
         if copiedPaths
