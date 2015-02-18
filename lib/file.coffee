@@ -1,6 +1,7 @@
 path = require 'path'
 fs = require 'fs-plus'
 {CompositeDisposable, Emitter} = require 'event-kit'
+{repoForPath} = require './helpers'
 
 module.exports =
 class File
@@ -45,7 +46,7 @@ class File
 
   # Subscribe to the project' repo for changes to the Git status of this file.
   subscribeToRepo: ->
-    repo = atom.project.getRepositories()[0]
+    repo = repoForPath(@path)
     return unless repo?
 
     @subscriptions.add repo.onDidChangeStatus (event) =>
@@ -55,7 +56,7 @@ class File
 
   # Update the status property of this directory using the repo.
   updateStatus:  ->
-    repo = atom.project.getRepositories()[0]
+    repo = repoForPath(@path)
     return unless repo?
 
     newStatus = null

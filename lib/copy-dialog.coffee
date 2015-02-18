@@ -36,7 +36,7 @@ class CopyDialog extends Dialog
             activatePane: true
             initialLine: activeEditor?.getLastCursor().getBufferRow()
             initialColumn: activeEditor?.getLastCursor().getBufferColumn()
-      if repo = atom.project.getRepositories()[0]
+      if repo = repoForPath(newPath)
         repo.getPathStatus(@initialPath)
         repo.getPathStatus(newPath)
       @close()

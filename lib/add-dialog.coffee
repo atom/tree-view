@@ -1,6 +1,7 @@
 path = require 'path'
 fs = require 'fs-plus'
 Dialog = require './dialog'
+{repoForPath} = require './helpers'
 
 module.exports =
 class AddDialog extends Dialog
@@ -45,7 +46,7 @@ class AddDialog extends Dialog
           @showError("File names must not end with a '#{path.sep}' character.")
         else
           fs.writeFileSync(newPath, '')
-          atom.project.getRepositories()[0]?.getPathStatus(newPath)
+          repoForPath(newPath)?.getPathStatus(newPath)
           @trigger 'file-created', [newPath]
           @close()
       else
