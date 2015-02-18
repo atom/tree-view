@@ -16,6 +16,8 @@ DirectoryView = require './directory-view'
 FileView = require './file-view'
 LocalStorage = window.localStorage
 
+AdditionalFolders = require './additional-folders'
+
 toggleConfig = (keyPath) ->
   atom.config.set(keyPath, not atom.config.get(keyPath))
 
@@ -38,7 +40,19 @@ class TreeView extends View
     @selectedPath = null
     @ignoredPatterns = []
 
+    @Directory = Directory
+    @DirectoryView = DirectoryView
+
+    # current instance of treeView
+    atom.workspace.treeView = @
+    window.treeview = @
+
     @handleEvents()
+
+    # addon class for adding additional folder support
+    @addFolders = new AdditionalFolders @
+
+    if state.additionalDirectories then @addFolders.load state.additionalDirectories
 
     process.nextTick =>
       @onStylesheetsChanged()
@@ -69,6 +83,7 @@ class TreeView extends View
   serialize: ->
     directoryExpansionStates: @root?.directory.serializeExpansionStates()
     selectedPath: @selectedEntry()?.getPath()
+    additionalDirectories: @addFolders.serialize()
     hasFocus: @hasFocus()
     attached: @panel?
     scrollLeft: @scroller.scrollLeft()
@@ -77,6 +92,7 @@ class TreeView extends View
 
   deactivate: ->
     @root?.directory.destroy()
+    @addFolders.destroy()
     @disposables.dispose()
     @detach() if @panel?
 

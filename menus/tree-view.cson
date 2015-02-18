@@ -42,6 +42,9 @@
     {'label': 'Copy Full Path', 'command': 'tree-view:copy-full-path'}
     {'label': 'Copy Project Path', 'command': 'tree-view:copy-project-path'}
     {'label': 'Open In New Window', 'command': 'tree-view:open-in-new-window'}
+    {'type': 'separator'}
+
+    {'label': 'Open Another Folder', 'command': 'tree-view:open-another-folder'}
   ]
 
   '.platform-darwin .tree-view.full-menu': [
