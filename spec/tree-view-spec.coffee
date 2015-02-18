@@ -1068,8 +1068,8 @@ describe "TreeView", ->
       expect(atom.project.getPaths()).toEqual(initialPaths.concat([tempDirectory]))
 
   describe "file modification", ->
-    [dirView, fileView, dirView2, fileView2, fileView3] = []
-    [rootDirPath, rootDirPath2, dirPath, dirPath2, filePath, filePath2, filePath3, filePath4] = []
+    [dirView, dirView2, dirView3, fileView, fileView2, fileView3, fileView4] = []
+    [rootDirPath, rootDirPath2, dirPath, dirPath2, dirPath3, filePath, filePath2, filePath3, filePath4] = []
 
     beforeEach ->
       rootDirPath = fs.absolute(temp.mkdirSync('tree-view-root1'))
@@ -1105,6 +1105,9 @@ describe "TreeView", ->
       dirView2[0].expand()
       fileView2 = treeView.find('.file:contains(test-file2.txt)')
       fileView3 = treeView.find('.file:contains(test-file3.txt)')
+      dirView3 = $(treeView.roots[1].entries).find('.directory:contains(test-dir3):first')
+      dirView3[0].expand()
+      fileView4 = treeView.find('.file:contains(test-file4.txt)')
 
     describe "tree-view:copy", ->
       LocalStorage = window.localStorage
@@ -1414,9 +1417,9 @@ describe "TreeView", ->
           describe "when no file exists at that location", ->
             it "add a file, closes the dialog and selects the file in the tree-view", ->
               newPath = path.join(dirPath, "new-test-file.txt")
-              addDialog.miniEditor.getModel().insertText(path.basename(newPath))
 
               waitsForFileToOpen ->
+                addDialog.miniEditor.getModel().insertText(path.basename(newPath))
                 atom.commands.dispatch addDialog.element, 'core:confirm'
 
               runs ->
@@ -1426,6 +1429,30 @@ describe "TreeView", ->
 
               waitsFor "tree view to be updated", ->
                 $(dirView[0].entries).find("> .file").length > 1
+
+              runs ->
+                expect(treeView.find('.selected').text()).toBe path.basename(newPath)
+
+            it "adds file in any project path", ->
+              newPath = path.join(dirPath3, "new-test-file.txt")
+
+              waitsForFileToOpen ->
+                fileView4.click()
+
+              waitsForFileToOpen ->
+                atom.commands.dispatch(treeView.element, "tree-view:add-file")
+                [addPanel] = atom.workspace.getModalPanels()
+                addDialog = $(addPanel.getItem()).view()
+                addDialog.miniEditor.getModel().insertText(path.basename(newPath))
+                atom.commands.dispatch addDialog.element, 'core:confirm'
+
+              runs ->
+                expect(fs.isFileSync(newPath)).toBeTruthy()
+                expect(atom.workspace.getModalPanels().length).toBe 0
+                expect(atom.workspace.getActivePaneItem().getPath()).toBe newPath
+
+              waitsFor "tree view to be updated", ->
+                $(dirView3[0].entries).find("> .file").length > 1
 
               runs ->
                 expect(treeView.find('.selected').text()).toBe path.basename(newPath)
@@ -1514,7 +1541,7 @@ describe "TreeView", ->
           atom.commands.dispatch(treeView.element, "tree-view:add-file")
           addDialog = $(atom.workspace.getModalPanels()[0].getItem()).view()
 
-          expect(addDialog.miniEditor.getText().length).toBe 0
+          expect(addDialog.miniEditor.getText()).toBe ""
 
       describe "when there is no entry selected", ->
         it "opens an add dialog with no path populated", ->
@@ -1525,7 +1552,7 @@ describe "TreeView", ->
           atom.commands.dispatch(treeView.element, "tree-view:add-file")
           addDialog = $(atom.workspace.getModalPanels()[0].getItem()).view()
 
-          expect(addDialog.miniEditor.getText().length).toBe 0
+          expect(addDialog.miniEditor.getText()).toBe ""
 
     describe "tree-view:add-folder", ->
       [addPanel, addDialog] = []

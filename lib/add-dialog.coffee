@@ -11,7 +11,15 @@ class AddDialog extends Dialog
       directoryPath = path.dirname(initialPath)
     else
       directoryPath = initialPath
-    relativeDirectoryPath = atom.project.relativize(directoryPath)
+
+    relativeDirectoryPath = directoryPath
+    @rootProjectPath = null
+
+    for projectPath in atom.project.getPaths()
+      if directoryPath is projectPath or directoryPath.indexOf(projectPath + path.sep) is 0
+        @rootProjectPath = projectPath
+        relativeDirectoryPath = path.relative(projectPath, directoryPath)
+        break
 
     relativeDirectoryPath += path.sep if relativeDirectoryPath.length > 0
 
@@ -25,7 +33,7 @@ class AddDialog extends Dialog
     newPath = newPath.replace(/\s+$/, '') # Remove trailing whitespace
     endsWithDirectorySeparator = newPath[newPath.length - 1] is path.sep
     unless path.isAbsolute(newPath)
-      newPath = atom.project.getDirectories()[0]?.resolve(newPath)
+      newPath = path.join(@rootProjectPath, newPath)
 
     return unless newPath
 
