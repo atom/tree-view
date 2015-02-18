@@ -20,7 +20,7 @@ describe "TreeView", ->
 
   beforeEach ->
     fixturesPath = atom.project.getPaths()[0]
-    atom.project.setPaths([path.join(fixturesPath, "tree-view")])
+    atom.project.setPaths([path.join(fixturesPath, "root-dir1")])
 
     workspaceElement = atom.views.getView(atom.workspace)
 
@@ -43,7 +43,7 @@ describe "TreeView", ->
   describe ".initialize(project)", ->
     it "renders the root directories of the project and their contents alphabetically with subdirectories first, in a collapsed state", ->
       expect(root.find('> .header .disclosure-arrow')).not.toHaveClass('expanded')
-      expect(root.find('> .header .name')).toHaveText('tree-view')
+      expect(root.find('> .header .name')).toHaveText('root-dir1')
 
       rootEntries = root.find('.entries')
       subdir0 = rootEntries.find('> li:eq(0)')
@@ -1917,7 +1917,7 @@ describe "TreeView", ->
 
     describe "when the project's path is a subfolder of the repository's working directory", ->
       beforeEach ->
-        fixturePath = path.join(__dirname, 'fixtures', 'tree-view')
+        fixturePath = path.join(__dirname, 'fixtures', 'root-dir1')
         projectPath = temp.mkdirSync('tree-view-project')
         fs.copySync(fixturePath, projectPath)
         ignoreFile = path.join(projectPath, '.gitignore')
