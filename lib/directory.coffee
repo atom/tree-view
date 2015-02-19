@@ -4,6 +4,7 @@ _ = require 'underscore-plus'
 fs = require 'fs-plus'
 PathWatcher = require 'pathwatcher'
 File = require './file'
+{repoForPath} = require './helpers'
 
 realpathCache = {}
 
@@ -25,7 +26,7 @@ class Directory
     @status = null
     @entries = {}
 
-    @submodule = atom.project.getRepositories()[0]?.isSubmodule(@path)
+    @submodule = repoForPath(@path)?.isSubmodule(@path)
 
     @subscribeToRepo()
     @updateStatus()
@@ -57,7 +58,7 @@ class Directory
 
   # Subscribe to project's repo for changes to the Git status of this directory.
   subscribeToRepo: ->
-    repo = atom.project.getRepositories()[0]
+    repo = repoForPath(@path)
     return unless repo?
 
     @subscriptions.add repo.onDidChangeStatus (event) =>
@@ -67,7 +68,7 @@ class Directory
 
   # Update the status property of this directory using the repo.
   updateStatus: ->
-    repo = atom.project.getRepositories()[0]
+    repo = repoForPath(@path)
     return unless repo?
 
     newStatus = null
@@ -87,7 +88,7 @@ class Directory
   # Is the given path ignored?
   isPathIgnored: (filePath) ->
     if atom.config.get('tree-view.hideVcsIgnoredFiles')
-      repo = atom.project.getRepositories()[0]
+      repo = repoForPath(@path)
       return true if repo? and repo.isProjectAtRoot() and repo.isPathIgnored(filePath)
 
     if atom.config.get('tree-view.hideIgnoredNames')

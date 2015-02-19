@@ -21,8 +21,8 @@
 
 'context-menu':
   '.tree-view.full-menu': [
-    {'label': 'Add File', 'command': 'tree-view:add-file'}
-    {'label': 'Add Folder', 'command': 'tree-view:add-folder'}
+    {'label': 'New File', 'command': 'tree-view:add-file'}
+    {'label': 'New Folder', 'command': 'tree-view:add-folder'}
     {'type': 'separator'}
 
     {'label': 'Rename', 'command': 'tree-view:move'}
@@ -39,6 +39,7 @@
     {'label': 'Split Right', 'command': 'tree-view:open-selected-entry-right'}
     {'type': 'separator'}
 
+    {'label': 'Add Root Folder', 'command': 'tree-view:add-root-folder'}
     {'label': 'Copy Full Path', 'command': 'tree-view:copy-full-path'}
     {'label': 'Copy Project Path', 'command': 'tree-view:copy-project-path'}
     {'label': 'Open In New Window', 'command': 'tree-view:open-in-new-window'}

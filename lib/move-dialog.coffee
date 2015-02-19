@@ -1,6 +1,7 @@
 path = require 'path'
 fs = require 'fs-plus'
 Dialog = require './dialog'
+{repoForPath} = require './helpers'
 
 module.exports =
 class MoveDialog extends Dialog
@@ -34,7 +35,7 @@ class MoveDialog extends Dialog
     try
       fs.makeTreeSync(directoryPath) unless fs.existsSync(directoryPath)
       fs.moveSync(@initialPath, newPath)
-      if repo = atom.project.getRepositories()[0]
+      if repo = repoForPath(newPath)
         repo.getPathStatus(@initialPath)
         repo.getPathStatus(newPath)
       @close()

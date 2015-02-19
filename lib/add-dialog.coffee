@@ -1,6 +1,7 @@
 path = require 'path'
 fs = require 'fs-plus'
 Dialog = require './dialog'
+{repoForPath, relativizePath} = require './helpers'
 
 module.exports =
 class AddDialog extends Dialog
@@ -11,8 +12,9 @@ class AddDialog extends Dialog
       directoryPath = path.dirname(initialPath)
     else
       directoryPath = initialPath
-    relativeDirectoryPath = atom.project.relativize(directoryPath)
 
+    relativeDirectoryPath = directoryPath
+    [@rootProjectPath, relativeDirectoryPath] = relativizePath(directoryPath)
     relativeDirectoryPath += path.sep if relativeDirectoryPath.length > 0
 
     super
@@ -25,7 +27,7 @@ class AddDialog extends Dialog
     newPath = newPath.replace(/\s+$/, '') # Remove trailing whitespace
     endsWithDirectorySeparator = newPath[newPath.length - 1] is path.sep
     unless path.isAbsolute(newPath)
-      newPath = atom.project.getDirectories()[0]?.resolve(newPath)
+      newPath = path.join(@rootProjectPath, newPath)
 
     return unless newPath
 
@@ -37,7 +39,7 @@ class AddDialog extends Dialog
           @showError("File names must not end with a '#{path.sep}' character.")
         else
           fs.writeFileSync(newPath, '')
-          atom.project.getRepositories()[0]?.getPathStatus(newPath)
+          repoForPath(newPath)?.getPathStatus(newPath)
           @trigger 'file-created', [newPath]
           @close()
       else
