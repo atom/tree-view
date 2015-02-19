@@ -1055,17 +1055,20 @@ describe "TreeView", ->
             expect(item.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.txt')
 
   describe "adding a root folder", ->
-    [tempDirectory, initialPaths] = []
-
-    beforeEach ->
+    it "adds a second path to the project", ->
       initialPaths = atom.project.getPaths()
       tempDirectory = temp.mkdirSync("a-new-directory")
       spyOn(atom, "pickFolder").andCallFake (callback) ->
         callback([tempDirectory])
       atom.commands.dispatch(workspaceElement, 'tree-view:add-root-folder')
-
-    it "adds a second path to the project", ->
       expect(atom.project.getPaths()).toEqual(initialPaths.concat([tempDirectory]))
+
+    it "does nothing if the user dismisses the file picker", ->
+      initialPaths = atom.project.getPaths()
+      tempDirectory = temp.mkdirSync("a-new-directory")
+      spyOn(atom, "pickFolder").andCallFake (callback) -> callback(null)
+      atom.commands.dispatch(workspaceElement, 'tree-view:add-root-folder')
+      expect(atom.project.getPaths()).toEqual(initialPaths)
 
   describe "file modification", ->
     [dirView, dirView2, dirView3, fileView, fileView2, fileView3, fileView4] = []

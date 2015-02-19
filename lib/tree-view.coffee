@@ -600,7 +600,7 @@ class TreeView extends View
     dialog.attach()
 
   addRootFolder: ->
-    atom.pickFolder (selectedPaths) ->
+    atom.pickFolder (selectedPaths = []) ->
       atom.project.addPath(selectedPath) for selectedPath in selectedPaths
 
   selectedEntry: ->
