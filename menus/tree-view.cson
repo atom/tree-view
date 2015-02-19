@@ -40,6 +40,36 @@
     {'type': 'separator'}
 
     {'label': 'Add Root Folder', 'command': 'tree-view:add-root-folder'}
+    {'type': 'separator'}
+
+    {'label': 'Copy Full Path', 'command': 'tree-view:copy-full-path'}
+    {'label': 'Copy Project Path', 'command': 'tree-view:copy-project-path'}
+    {'label': 'Open In New Window', 'command': 'tree-view:open-in-new-window'}
+  ]
+
+  '.tree-view.full-menu .project-root > .header': [
+    {'label': 'New File', 'command': 'tree-view:add-file'}
+    {'label': 'New Folder', 'command': 'tree-view:add-folder'}
+    {'type': 'separator'}
+
+    {'label': 'Rename', 'command': 'tree-view:move'}
+    {'label': 'Duplicate', 'command': 'tree-view:duplicate'}
+    {'label': 'Delete', 'command': 'tree-view:remove'}
+    {'label': 'Copy', 'command': 'tree-view:copy'}
+    {'label': 'Cut', 'command': 'tree-view:cut'}
+    {'label': 'Paste', 'command': 'tree-view:paste'}
+    {'type': 'separator'}
+
+    {'label': 'Split Up', 'command': 'tree-view:open-selected-entry-up'}
+    {'label': 'Split Down', 'command': 'tree-view:open-selected-entry-down'}
+    {'label': 'Split Left', 'command': 'tree-view:open-selected-entry-left'}
+    {'label': 'Split Right', 'command': 'tree-view:open-selected-entry-right'}
+    {'type': 'separator'}
+
+    {'label': 'Add Root Folder', 'command': 'tree-view:add-root-folder'}
+    {'label': 'Remove Root Folder', 'command': 'tree-view:remove-root-folder'}
+    {'type': 'separator'}
+
     {'label': 'Copy Full Path', 'command': 'tree-view:copy-full-path'}
     {'label': 'Copy Project Path', 'command': 'tree-view:copy-project-path'}
     {'label': 'Open In New Window', 'command': 'tree-view:open-in-new-window'}
