@@ -1070,6 +1070,16 @@ describe "TreeView", ->
       atom.commands.dispatch(workspaceElement, 'tree-view:add-root-folder')
       expect(atom.project.getPaths()).toEqual(initialPaths)
 
+  describe "removing a root folder", ->
+    it "removes the root folder from the project", ->
+      rootHeader = treeView.roots[1].querySelector(".header")
+
+      # TODO: remove this conditional once the addition of Project::removePath
+      # is released.
+      if atom.project.removePath?
+        atom.commands.dispatch(rootHeader, "tree-view:remove-root-folder")
+        expect(atom.project.getPaths()).toHaveLength(1)
+
   describe "file modification", ->
     [dirView, dirView2, dirView3, fileView, fileView2, fileView3, fileView4] = []
     [rootDirPath, rootDirPath2, dirPath, dirPath2, dirPath3, filePath, filePath2, filePath3, filePath4] = []
