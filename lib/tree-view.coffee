@@ -606,7 +606,11 @@ class TreeView extends View
 
   removeRootFolder: (e) ->
     pathToRemove = $(e.target).closest(".project-root > .header").find(".name").data("path")
-    atom.project.removePath(pathToRemove) if pathToRemove?
+
+    # TODO: remove this conditional once the addition of Project::removePath
+    # is released.
+    if atom.project.removePath?
+      atom.project.removePath(pathToRemove) if pathToRemove?
 
   selectedEntry: ->
     @list[0].querySelector('.selected')
