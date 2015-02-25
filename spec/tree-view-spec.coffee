@@ -1688,7 +1688,7 @@ describe "TreeView", ->
           describe "when all the directories along the new path exist", ->
             it "moves the file, updates the tree view, and closes the dialog", ->
               newPath = path.join(rootDirPath, 'renamed-test-file.txt')
-              moveDialog.miniEditor.setText(newPath)
+              moveDialog.miniEditor.setText(path.basename(newPath))
 
               atom.commands.dispatch moveDialog.element, 'core:confirm'
 
@@ -1801,7 +1801,7 @@ describe "TreeView", ->
           describe "when all the directories along the new path exist", ->
             it "duplicates the file, updates the tree view, opens the new file and closes the dialog", ->
               newPath = path.join(rootDirPath, 'duplicated-test-file.txt')
-              copyDialog.miniEditor.setText(newPath)
+              copyDialog.miniEditor.setText(path.basename(newPath))
 
               waitsForFileToOpen ->
                 atom.commands.dispatch copyDialog.element, 'core:confirm'
