@@ -42,7 +42,7 @@ class DirectoryView extends HTMLElement
       @subscriptions.add @directory.onDidStatusChange => @updateStatus()
       @updateStatus()
 
-    @expand() if @directory.isExpanded
+    @expand() if @directory.expansionState.isExpanded
 
   updateStatus: ->
     @classList.remove('status-ignored', 'status-modified', 'status-added')
