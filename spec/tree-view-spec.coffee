@@ -13,17 +13,16 @@ waitsForFileToOpen = (causeFileToOpen) ->
     causeFileToOpen()
 
 describe "TreeView", ->
-  [treeView, root1, root2, sampleJs, sampleTxt, workspaceElement] = []
+  [treeView, path1, path2, root1, root2, sampleJs, sampleTxt, workspaceElement] = []
 
   selectEntry = (pathToSelect) ->
     treeView.selectEntryForPath atom.project.getDirectories()[0].resolve pathToSelect
 
   beforeEach ->
     fixturesPath = atom.project.getPaths()[0]
-    atom.project.setPaths([
-      path.join(fixturesPath, "root-dir1")
-      path.join(fixturesPath, "root-dir2")
-    ])
+    path1 = path.join(fixturesPath, "root-dir1")
+    path2 = path.join(fixturesPath, "root-dir2")
+    atom.project.setPaths([path1, path2])
 
     workspaceElement = atom.views.getView(atom.workspace)
 
@@ -195,7 +194,8 @@ describe "TreeView", ->
         treeView = $(atom.workspace.getLeftPanels()[0].getItem()).view()
         expect(treeView).toExist()
         expect(treeView.selectedEntry()).toMatchSelector(".file:contains(tree-view.js)")
-        expect(treeView.find(".directory:contains(dir1)")).toHaveClass("expanded")
+        root1 = $(treeView.roots[0])
+        expect(root1.find(".directory:contains(dir1)")).toHaveClass("expanded")
 
     it "restores the focus state of the tree view", ->
       jasmine.attachToDOM(workspaceElement)
@@ -1960,6 +1960,31 @@ describe "TreeView", ->
 
         waitsFor "directory view contents to refresh", ->
           $(treeView.roots[0].entries).find('.entry').length == entriesCountBefore
+
+  describe "project changes", ->
+    beforeEach ->
+      atom.project.setPaths([path1])
+      treeView = $(atom.workspace.getLeftPanels()[0].getItem()).view()
+      root1 = $(treeView.roots[0])
+
+    describe "when a root folder is added", ->
+      it "maintains expanded folders", ->
+        root1.find('.directory:contains(dir1)').click()
+        atom.project.setPaths([path1, path2])
+
+        treeView = $(atom.workspace.getLeftPanels()[0].getItem()).view()
+        expect(treeView).toExist()
+        root1 = $(treeView.roots[0])
+        expect(root1.find(".directory:contains(dir1)")).toHaveClass("expanded")
+
+      it "maintains collapsed (root) folders", ->
+        root1.click()
+        atom.project.setPaths([path1, path2])
+
+        treeView = $(atom.workspace.getLeftPanels()[0].getItem()).view()
+        expect(treeView).toExist()
+        root1 = $(treeView.roots[0])
+        expect(root1).toHaveClass("collapsed")
 
   describe "the hideVcsIgnoredFiles config option", ->
     describe "when the project's path is the repository's working directory", ->

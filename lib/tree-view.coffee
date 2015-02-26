@@ -67,7 +67,9 @@ class TreeView extends View
     @resizeStopped()
 
   serialize: ->
-    directoryExpansionStates: (root.directory.serializeExpansionStates() for root in @roots)
+    directoryExpansionStates: new ((roots) ->
+        @[root.directory.path] = root.directory.serializeExpansionState() for root in roots
+        this)(@roots)
     selectedPath: @selectedEntry()?.getPath()
     hasFocus: @hasFocus()
     attached: @panel?
@@ -238,8 +240,10 @@ class TreeView extends View
       catch error
         console.warn "Error parsing ignore pattern (#{ignoredName}): #{error.message}"
 
-  updateRoots: (expandedEntries={}) ->
+  updateRoots: (expansionStates={}) ->
+    oldExpansionStates = {}
     for root in @roots
+      oldExpansionStates[root.directory.path] = root.directory.serializeExpansionState()
       root.directory.destroy()
       root.remove()
 
@@ -251,8 +255,9 @@ class TreeView extends View
         fullPath: projectPath
         symlink: false
         isRoot: true
-        expandedEntries
-        isExpanded: true
+        expansionState: expansionStates[projectPath] ?
+                        oldExpansionStates[projectPath] ?
+                        {isExpanded: true}
         @ignoredPatterns
       })
       root = new DirectoryView()

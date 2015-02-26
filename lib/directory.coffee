@@ -10,7 +10,7 @@ realpathCache = {}
 
 module.exports =
 class Directory
-  constructor: ({@name, fullPath, @symlink, @expandedEntries, @isExpanded, @isRoot, @ignoredPatterns}) ->
+  constructor: ({@name, fullPath, @symlink, @expansionState, @isRoot, @ignoredPatterns}) ->
     @emitter = new Emitter()
     @subscriptions = new CompositeDisposable()
 
@@ -21,8 +21,9 @@ class Directory
       @lowerCaseRealPath = @lowerCasePath
 
     @isRoot ?= false
-    @isExpanded ?= false
-    @expandedEntries ?= {}
+    @expansionState ?= {}
+    @expansionState.isExpanded ?= false
+    @expansionState.entries ?= {}
     @status = null
     @entries = {}
 
@@ -175,9 +176,8 @@ class Directory
           # track the insertion index for the created views
           directories.push(name)
         else
-          expandedEntries = @expandedEntries[name]
-          isExpanded = expandedEntries?
-          directories.push(new Directory({name, fullPath, symlink, isExpanded, expandedEntries, @ignoredPatterns}))
+          expansionState = @expansionState.entries[name]
+          directories.push(new Directory({name, fullPath, symlink, expansionState, @ignoredPatterns}))
       else if stat.isFile?()
         if @entries.hasOwnProperty(name)
           # push a placeholder since this entry already exists but this helps
@@ -226,7 +226,7 @@ class Directory
       entriesRemoved = true
       entry.destroy()
       delete @entries[name]
-      delete @expandedEntries[name]
+      delete @expansionState[name]
     @emitter.emit('did-remove-entries', removedEntries) if entriesRemoved
 
     if newEntries.length > 0
@@ -235,19 +235,21 @@ class Directory
 
   # Public: Collapse this directory and stop watching it.
   collapse: ->
-    @isExpanded = false
-    @expandedEntries = @serializeExpansionStates()
+    @expansionState.isExpanded = false
+    @expansionState = @serializeExpansionState()
     @unwatch()
 
   # Public: Expand this directory, load its children, and start watching it for
   # changes.
   expand: ->
-    @isExpanded = true
+    @expansionState.isExpanded = true
     @reload()
     @watch()
 
-  serializeExpansionStates: ->
-    expandedEntries = {}
-    for name, entry of @entries when entry.isExpanded
-      expandedEntries[name] = entry.serializeExpansionStates()
-    expandedEntries
+  serializeExpansionState: ->
+    expansionState = {}
+    expansionState.isExpanded = @expansionState.isExpanded
+    expansionState.entries = {}
+    for name, entry of @entries when entry.expansionState?
+      expansionState.entries[name] = entry.serializeExpansionState()
+    expansionState
