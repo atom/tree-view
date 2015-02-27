@@ -1567,6 +1567,17 @@ describe "TreeView", ->
 
           expect(addDialog.miniEditor.getText()).toBe ""
 
+      describe "when the project doesn't have a root directory", ->
+        it "shows an error", ->
+          addDialog.cancel()
+          atom.project.setPaths([])
+          atom.commands.dispatch(workspaceElement, "tree-view:add-folder")
+          [addPanel] = atom.workspace.getModalPanels()
+          addDialog = $(addPanel.getItem()).view()
+          addDialog.miniEditor.getModel().insertText("a-file")
+          atom.commands.dispatch(addDialog.element, 'core:confirm')
+          expect(addDialog.text()).toContain("You must open a directory to create a file with a relative path")
+
     describe "tree-view:add-folder", ->
       [addPanel, addDialog] = []
 

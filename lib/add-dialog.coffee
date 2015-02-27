@@ -27,6 +27,10 @@ class AddDialog extends Dialog
     newPath = newPath.replace(/\s+$/, '') # Remove trailing whitespace
     endsWithDirectorySeparator = newPath[newPath.length - 1] is path.sep
     unless path.isAbsolute(newPath)
+      unless @rootProjectPath?
+        @showError("You must open a directory to create a file with a relative path")
+        return
+
       newPath = path.join(@rootProjectPath, newPath)
 
     return unless newPath
