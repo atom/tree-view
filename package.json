@@ -13,6 +13,7 @@
     "atom-space-pen-views": "^2.0.0",
     "event-kit": "^1.0.0",
     "fs-plus": "^2.3.0",
+    "javascript-natural-sort": "^0.7.1",
     "minimatch": "~0.3.0",
     "pathwatcher": "^3.0.0",
     "temp": "~0.8.1",

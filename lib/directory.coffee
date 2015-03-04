@@ -3,6 +3,7 @@ _ = require 'underscore-plus'
 {CompositeDisposable, Emitter} = require 'event-kit'
 fs = require 'fs-plus'
 PathWatcher = require 'pathwatcher'
+NaturalSort = require 'javascript-natural-sort'
 File = require './file'
 {repoForPath} = require './helpers'
 
@@ -156,8 +157,7 @@ class Directory
       names = fs.readdirSync(@path)
     catch error
       names = []
-
-    names.sort (name1, name2) -> name1.toLowerCase().localeCompare(name2.toLowerCase())
+    names.sort(natural_sort)
 
     files = []
     directories = []
