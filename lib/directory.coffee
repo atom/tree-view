@@ -157,6 +157,7 @@ class Directory
       names = fs.readdirSync(@path)
     catch error
       names = []
+    natural_sort.insensitive = true
     names.sort(natural_sort)
 
     files = []
