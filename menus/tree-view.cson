@@ -94,10 +94,10 @@
     {'label': 'Paste', 'command': 'tree-view:paste'}
   ]
 
-  'atom-pane .item-views > *:not(.settings-view)': [
+  'atom-pane atom-text-editor': [
     {'label': 'Reveal in Tree View', 'command': 'tree-view:reveal-active-file'}
   ]
 
-  'atom-pane .tab.active:not([data-type="SettingsView"])': [
+  'atom-pane .tab.active[data-type="TextEditor"]': [
     {'label': 'Reveal in Tree View', 'command': 'tree-view:reveal-active-file'}
   ]
