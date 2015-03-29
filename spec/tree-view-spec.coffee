@@ -950,9 +950,8 @@ describe "TreeView", ->
         it "opens the file in the editor and focuses it", ->
           jasmine.attachToDOM(workspaceElement)
 
-          waitsForFileToOpen ->
-            root1.find('.file:contains(tree-view.js)').click()
-
+          selectEntry 'tree-view.js'
+          
           waitsForFileToOpen ->
             atom.commands.dispatch(treeView.element, 'tree-view:open-selected-entry')
 
@@ -962,20 +961,49 @@ describe "TreeView", ->
             expect(atom.views.getView(item)).toHaveFocus()
 
       describe "when a directory is selected", ->
-        it "expands or collapses the directory", ->
-          subdir = root1.find('.directory').first()
-          subdir.click()
-          subdir[0].collapse()
-
+        it "expands the directory", ->
+          selectEntry 'dir1'
+          subdir = treeView.selectedEntry()
           expect(subdir).not.toHaveClass 'expanded'
           atom.commands.dispatch(treeView.element, 'tree-view:open-selected-entry')
           expect(subdir).toHaveClass 'expanded'
-          atom.commands.dispatch(treeView.element, 'tree-view:open-selected-entry')
-          expect(subdir).not.toHaveClass 'expanded'
 
       describe "when nothing is selected", ->
         it "does nothing", ->
           atom.commands.dispatch(treeView.element, 'tree-view:open-selected-entry')
+          expect(atom.workspace.getActivePaneItem()).toBeUndefined()
+
+    describe "tree-view:preview-selected-entry", ->
+      describe "when a file is selected", ->
+        it "opens the file in the editor without focusing it", ->
+          jasmine.attachToDOM(workspaceElement)
+
+          selectEntry 'tree-view.js'
+          
+          treeView.focus()
+          expect(treeView.list).toMatchSelector ':focus'
+          
+          waitsForFileToOpen ->
+            atom.commands.dispatch(treeView.element, 'tree-view:preview-selected-entry')
+
+          runs ->
+            item = atom.workspace.getActivePaneItem()
+            expect(item.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
+            expect(atom.views.getView(item)).not.toHaveFocus()
+            expect(treeView.list).toMatchSelector ':focus'
+
+      describe "when a directory is selected", ->
+        it "expands the directory", ->
+          selectEntry 'dir1'
+          subdir = treeView.selectedEntry()
+
+          expect(subdir).not.toHaveClass 'expanded'
+          atom.commands.dispatch(treeView.element, 'tree-view:preview-selected-entry')
+          expect(subdir).toHaveClass 'expanded'
+
+      describe "when nothing is selected", ->
+        it "does nothing", ->
+          atom.commands.dispatch(treeView.element, 'tree-view:preview-selected-entry')
           expect(atom.workspace.getActivePaneItem()).toBeUndefined()
 
     describe "opening in new split panes", ->
