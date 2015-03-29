@@ -1,6 +1,8 @@
 {CompositeDisposable} = require 'event-kit'
 path = require 'path'
 
+TreeViewService = require './service'
+
 module.exports =
   config:
     hideVcsIgnoredFiles:
@@ -23,6 +25,8 @@ module.exports =
     @disposables = new CompositeDisposable
     @state.attached ?= true if @shouldAttach()
 
+    @service = new TreeViewService()
+
     @createView() if @state.attached
 
     @disposables.add atom.commands.add('atom-workspace', {
@@ -38,11 +42,13 @@ module.exports =
       'tree-view:rename': => @createView().moveSelectedEntry()
       'tree-view:add-root-folder': => @createView().addRootFolder()
     })
-
+        
   deactivate: ->
     @disposables.dispose()
     @treeView?.deactivate()
     @treeView = null
+    @service?.deactivate()
+    @service = null
 
   serialize: ->
     if @treeView?
@@ -53,7 +59,8 @@ module.exports =
   createView: ->
     unless @treeView?
       TreeView = require './tree-view'
-      @treeView = new TreeView(@state)
+      @treeView = new TreeView(@state, @service)
+      @service.treeView = @treeView
     @treeView
 
   shouldAttach: ->
@@ -67,3 +74,5 @@ module.exports =
       projectPath is atom.getLoadSettings().pathToOpen
     else
       true
+
+  treeViewService: -> @service

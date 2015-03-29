@@ -8,6 +8,14 @@
   "engines": {
     "atom": "*"
   },
+  "providedServices": {
+    "tree-view-service": {
+      "description": "provides some methods to interact with the tree view",
+      "versions": {
+        "0.1.0": "treeViewService"
+      }
+    }
+  },
   "private": true,
   "dependencies": {
     "atom-space-pen-views": "^2.0.0",

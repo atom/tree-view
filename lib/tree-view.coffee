@@ -29,7 +29,7 @@ class TreeView extends View
         @ol class: 'tree-view full-menu list-tree has-collapsable-children focusable-panel', tabindex: -1, outlet: 'list'
       @div class: 'tree-view-resize-handle', outlet: 'resizeHandle'
 
-  initialize: (state) ->
+  initialize: (state, @service) ->
     @disposables = new CompositeDisposable
     @focusAfterAttach = false
     @roots = []
@@ -65,11 +65,16 @@ class TreeView extends View
 
   detached: ->
     @resizeStopped()
+    
+  reload: -> @updateRoots() # @directoryExpansionStates()
+    
+  directoryExpansionStates: ->
+    new ((roots) ->
+        @[root.directory.path] = root.directory.serializeExpansionState() for root in roots
+        this)(@roots)  
 
   serialize: ->
-    directoryExpansionStates: new ((roots) ->
-        @[root.directory.path] = root.directory.serializeExpansionState() for root in roots
-        this)(@roots)
+    directoryExpansionStates: @directoryExpansionStates()
     selectedPath: @selectedEntry()?.getPath()
     hasFocus: @hasFocus()
     attached: @panel?
@@ -259,6 +264,7 @@ class TreeView extends View
                         oldExpansionStates[projectPath] ?
                         {isExpanded: true}
         @ignoredPatterns
+        @service
       })
       root = new DirectoryView()
       root.initialize(directory)

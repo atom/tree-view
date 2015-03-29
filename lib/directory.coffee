@@ -11,7 +11,7 @@ realpathCache = {}
 
 module.exports =
 class Directory
-  constructor: ({@name, fullPath, @symlink, @expansionState, @isRoot, @ignoredPatterns}) ->
+  constructor: ({@name, fullPath, @symlink, @expansionState, @isRoot, @ignoredPatterns, @service}) ->
     @emitter = new Emitter()
     @subscriptions = new CompositeDisposable()
 
@@ -96,7 +96,7 @@ class Directory
     if atom.config.get('tree-view.hideIgnoredNames')
       for ignoredPattern in @ignoredPatterns
         return true if ignoredPattern.match(filePath)
-
+        
     false
 
   # Does given full path start with the given prefix?
@@ -178,8 +178,12 @@ class Directory
           directories.push(name)
         else
           expansionState = @expansionState.entries[name]
-          directories.push(new Directory({name, fullPath, symlink, expansionState, @ignoredPatterns}))
+          directories.push(new Directory({name, fullPath, symlink, expansionState, @ignoredPatterns, @service}))
       else if stat.isFile?()
+          
+        if @service.isFileNameFiltered name
+            continue
+
         if @entries.hasOwnProperty(name)
           # push a placeholder since this entry already exists but this helps
           # track the insertion index for the created views
