@@ -17,6 +17,11 @@ module.exports =
                 @fileNameFilterFunctions.push filterFunc
             @
   
+        removeFileNameFilterFunction: (filterFunc) =>
+            if filterFunc? and filterFunc in @fileNameFilterFunctions
+                @fileNameFilterFunctions.splice @fileNameFilterFunctions.indexOf(filterFunc), 1
+            @
+  
         isFileNameFiltered: (filePath) =>
             for filterFunc in @fileNameFilterFunctions
                 if filterFunc(filePath) == true
