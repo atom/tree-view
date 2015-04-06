@@ -39,7 +39,7 @@
     {'label': 'Split Right', 'command': 'tree-view:open-selected-entry-right'}
     {'type': 'separator'}
 
-    {'label': 'Add Root Folder', 'command': 'tree-view:add-root-folder'}
+    {'label': 'Add Root Folder', 'command': 'application:add-root-folder'}
     {'type': 'separator'}
 
     {'label': 'Copy Full Path', 'command': 'tree-view:copy-full-path'}
@@ -66,7 +66,7 @@
     {'label': 'Split Right', 'command': 'tree-view:open-selected-entry-right'}
     {'type': 'separator'}
 
-    {'label': 'Add Root Folder', 'command': 'tree-view:add-root-folder'}
+    {'label': 'Add Root Folder', 'command': 'application:add-root-folder'}
     {'label': 'Remove Root Folder', 'command': 'tree-view:remove-root-folder'}
     {'type': 'separator'}
 
