@@ -605,10 +605,6 @@ class TreeView extends View
       false
     dialog.attach()
 
-  addRootFolder: ->
-    atom.pickFolder (selectedPaths = []) ->
-      atom.project.addPath(selectedPath) for selectedPath in selectedPaths
-
   removeRootFolder: (e) ->
     pathToRemove = $(e.target).closest(".project-root > .header").find(".name").data("path")
 

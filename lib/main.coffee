@@ -36,7 +36,6 @@ module.exports =
       'tree-view:duplicate': => @createView().copySelectedEntry()
       'tree-view:remove': => @createView().removeSelectedEntries()
       'tree-view:rename': => @createView().moveSelectedEntry()
-      'tree-view:add-root-folder': => @createView().addRootFolder()
     })
 
   deactivate: ->
