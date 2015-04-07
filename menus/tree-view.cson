@@ -39,7 +39,7 @@
     {'label': 'Split Right', 'command': 'tree-view:open-selected-entry-right'}
     {'type': 'separator'}
 
-    {'label': 'Add Root Folder', 'command': 'application:add-root-folder'}
+    {'label': 'Add Project Folder', 'command': 'application:add-project-folder'}
     {'type': 'separator'}
 
     {'label': 'Copy Full Path', 'command': 'tree-view:copy-full-path'}
@@ -66,8 +66,8 @@
     {'label': 'Split Right', 'command': 'tree-view:open-selected-entry-right'}
     {'type': 'separator'}
 
-    {'label': 'Add Root Folder', 'command': 'application:add-root-folder'}
-    {'label': 'Remove Root Folder', 'command': 'tree-view:remove-root-folder'}
+    {'label': 'Add Project Folder', 'command': 'application:add-project-folder'}
+    {'label': 'Remove Project Folder', 'command': 'tree-view:remove-project-folder'}
     {'type': 'separator'}
 
     {'label': 'Copy Full Path', 'command': 'tree-view:copy-full-path'}
