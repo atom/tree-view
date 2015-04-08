@@ -26,6 +26,7 @@
     {'type': 'separator'}
 
     {'label': 'Rename', 'command': 'tree-view:move'}
+    {'label': 'Move', 'command': 'tree-view:move'}
     {'label': 'Duplicate', 'command': 'tree-view:duplicate'}
     {'label': 'Delete', 'command': 'tree-view:remove'}
     {'label': 'Copy', 'command': 'tree-view:copy'}
@@ -53,6 +54,7 @@
     {'type': 'separator'}
 
     {'label': 'Rename', 'command': 'tree-view:move'}
+    {'label': 'Move', 'command': 'tree-view:move'}
     {'label': 'Duplicate', 'command': 'tree-view:duplicate'}
     {'label': 'Delete', 'command': 'tree-view:remove'}
     {'label': 'Copy', 'command': 'tree-view:copy'}
