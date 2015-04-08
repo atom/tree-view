@@ -491,7 +491,7 @@ describe "TreeView", ->
       treeView.focus()
 
       waitsForFileToOpen ->
-        sampleJs.trigger clickEvent(originalEvent: { detail: 1 })
+        sampleJs.trigger clickEvent(originalEvent: {detail: 1})
 
       runs ->
         expect(sampleJs).toHaveClass 'selected'
@@ -499,7 +499,7 @@ describe "TreeView", ->
         expect(treeView.list).toHaveFocus()
 
       waitsForFileToOpen ->
-        sampleTxt.trigger clickEvent(originalEvent: { detail: 1 })
+        sampleTxt.trigger clickEvent(originalEvent: {detail: 1})
 
       runs ->
         expect(sampleTxt).toHaveClass 'selected'
@@ -515,20 +515,20 @@ describe "TreeView", ->
       treeView.focus()
 
       waitsForFileToOpen ->
-        sampleJs.trigger clickEvent(originalEvent: { detail: 1 })
+        sampleJs.trigger clickEvent(originalEvent: {detail: 1})
 
       runs ->
         expect(sampleJs).toHaveClass 'selected'
         item = atom.workspace.getActivePaneItem()
         expect(item.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
 
-        sampleJs.trigger clickEvent(originalEvent: { detail: 2 })
+        sampleJs.trigger clickEvent(originalEvent: {detail: 2})
         expect(atom.views.getView(item)).toHaveFocus()
 
   describe "when a directory is single-clicked", ->
     it "is selected", ->
       subdir = root1.find('.directory:first')
-      subdir.trigger clickEvent(originalEvent: { detail: 1 })
+      subdir.trigger clickEvent(originalEvent: {detail: 1})
       expect(subdir).toHaveClass 'selected'
 
   describe "when a directory is double-clicked", ->
@@ -538,14 +538,14 @@ describe "TreeView", ->
 
       subdir = null
       waitsForFileToOpen ->
-        sampleJs.trigger clickEvent(originalEvent: { detail: 1 })
+        sampleJs.trigger clickEvent(originalEvent: {detail: 1})
 
       runs ->
         subdir = root1.find('.directory:first')
-        subdir.trigger clickEvent(originalEvent: { detail: 1 })
+        subdir.trigger clickEvent(originalEvent: {detail: 1})
         expect(subdir).toHaveClass 'selected'
         expect(subdir).toHaveClass 'expanded'
-        subdir.trigger clickEvent(originalEvent: { detail: 2 })
+        subdir.trigger clickEvent(originalEvent: {detail: 2})
         expect(subdir).toHaveClass 'selected'
         expect(subdir).not.toHaveClass 'expanded'
         expect(treeView).toHaveFocus()
@@ -557,7 +557,7 @@ describe "TreeView", ->
         treeView.roots[0].collapse()
 
         expect(treeView.roots[0]).not.toHaveClass 'expanded'
-        root1.trigger clickEvent({ altKey: true })
+        root1.trigger clickEvent({altKey: true})
         expect(treeView.roots[0]).toHaveClass 'expanded'
 
         children = root1.find('.directory')
@@ -583,7 +583,7 @@ describe "TreeView", ->
           $(child).click().expand()
           expect($(child)).toHaveClass 'expanded'
 
-        parent.trigger clickEvent({ altKey: true })
+        parent.trigger clickEvent({altKey: true})
 
         expect(parent).not.toHaveClass 'expanded'
         children.each (index, child) ->
@@ -1942,7 +1942,7 @@ describe "TreeView", ->
           fs.writeFileSync temporaryFilePath, 'hi'
 
         waitsFor "directory view contents to refresh", ->
-          $(treeView.roots[0].entries).find('.entry').length == entriesCountBefore + 1
+          $(treeView.roots[0].entries).find('.entry').length is entriesCountBefore + 1
 
         runs ->
           expect($(treeView.roots[0].entries).find('.entry').length).toBe entriesCountBefore + 1
@@ -1950,7 +1950,7 @@ describe "TreeView", ->
           fs.removeSync(temporaryFilePath)
 
         waitsFor "directory view contents to refresh", ->
-          $(treeView.roots[0].entries).find('.entry').length == entriesCountBefore
+          $(treeView.roots[0].entries).find('.entry').length is entriesCountBefore
 
   describe "project changes", ->
     beforeEach ->
@@ -2168,11 +2168,11 @@ describe "TreeView", ->
 
         beforeEach ->
           # Stub platform.process so we can test non-darwin behavior
-          Object.defineProperty(process, "platform", {__proto__:null, value: 'win32'})
+          Object.defineProperty(process, "platform", {__proto__: null, value: 'win32'})
 
         afterEach ->
           # Ensure that process.platform is set back to it's original value
-          Object.defineProperty(process, "platform", {__proto__:null, value: originalPlatform})
+          Object.defineProperty(process, "platform", {__proto__: null, value: originalPlatform})
 
         describe 'using the ctrl key', ->
           it 'selects the ctrl clicked item in addition to the original selected item', ->
@@ -2187,11 +2187,11 @@ describe "TreeView", ->
 
         beforeEach ->
           # Stub platform.process so we can test non-darwin behavior
-          Object.defineProperty(process, "platform", {__proto__:null, value: 'darwin'})
+          Object.defineProperty(process, "platform", {__proto__: null, value: 'darwin'})
 
         afterEach ->
           # Ensure that process.platform is set back to it's original value
-          Object.defineProperty(process, "platform", {__proto__:null, value: originalPlatform})
+          Object.defineProperty(process, "platform", {__proto__: null, value: originalPlatform})
 
         describe 'using the ctrl key', ->
           describe "previous item is selected but the ctrl clicked item is not", ->
