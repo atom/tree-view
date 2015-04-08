@@ -68,8 +68,8 @@ class TreeView extends View
 
   serialize: ->
     directoryExpansionStates: new ((roots) ->
-        @[root.directory.path] = root.directory.serializeExpansionState() for root in roots
-        this)(@roots)
+      @[root.directory.path] = root.directory.serializeExpansionState() for root in roots
+      this)(@roots)
     selectedPath: @selectedEntry()?.getPath()
     hasFocus: @hasFocus()
     attached: @panel?

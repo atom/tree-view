@@ -55,7 +55,7 @@ class File
       @updateStatus(repo)
 
   # Update the status property of this directory using the repo.
-  updateStatus:  ->
+  updateStatus: ->
     repo = repoForPath(@path)
     return unless repo?
 
