@@ -67,7 +67,7 @@
     {'type': 'separator'}
 
     {'label': 'Add Project Folder', 'command': 'application:add-project-folder'}
-    {'label': 'Remove Project Folder', 'command': 'tree-view:remove-project-folder'}
+    {'label': 'Detach Project Folder', 'command': 'tree-view:detach-project-folder'}
     {'type': 'separator'}
 
     {'label': 'Copy Full Path', 'command': 'tree-view:copy-full-path'}

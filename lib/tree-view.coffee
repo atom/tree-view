@@ -122,7 +122,7 @@ class TreeView extends View
      'tool-panel:unfocus': => @unfocus()
      'tree-view:toggle-vcs-ignored-files': -> toggleConfig 'tree-view.hideVcsIgnoredFiles'
      'tree-view:toggle-ignored-names': -> toggleConfig 'tree-view.hideIgnoredNames'
-     'tree-view:remove-project-folder': (e) => @removeProjectFolder(e)
+     'tree-view:detach-project-folder': (e) => @removeProjectFolder(e)
 
     [0..8].forEach (index) =>
       atom.commands.add @element, "tree-view:open-selected-entry-in-pane-#{index + 1}", =>
