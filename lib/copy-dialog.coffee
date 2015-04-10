@@ -9,7 +9,7 @@ class CopyDialog extends Dialog
     super
       prompt: 'Enter the new path for the duplicate.'
       initialPath: atom.project.relativize(@initialPath)
-      select: true
+      placement: 'select'
       iconClass: 'icon-arrow-right'
 
   onConfirm: (newPath) ->

@@ -9,7 +9,7 @@ class Dialog extends View
       @subview 'miniEditor', new TextEditorView(mini: true)
       @div class: 'error-message', outlet: 'errorMessage'
 
-  initialize: ({initialPath, select, iconClass} = {}) ->
+  initialize: ({initialPath, placement, iconClass} = {}) ->
     @promptText.addClass(iconClass) if iconClass
     atom.commands.add @element,
       'core:confirm': => @onConfirm(@miniEditor.getText())
@@ -18,15 +18,18 @@ class Dialog extends View
     @miniEditor.getModel().onDidChange => @showError()
     @miniEditor.getModel().setText(initialPath)
 
-    if select
-      extension = path.extname(initialPath)
-      baseName = path.basename(initialPath)
+    extension = path.extname(initialPath)
+    baseName = path.basename(initialPath)
+    if placement is 'select'
       if baseName is extension
         selectionEnd = initialPath.length
       else
         selectionEnd = initialPath.length - extension.length
       range = [[0, initialPath.length - baseName.length], [0, selectionEnd]]
       @miniEditor.getModel().setSelectedBufferRange(range)
+    else if placement is 'cursor'
+      @miniEditor.getModel().setCursorBufferPosition([0, initialPath.length - baseName.length])
+      
 
   attach: ->
     @panel = atom.workspace.addModalPanel(item: this.element)

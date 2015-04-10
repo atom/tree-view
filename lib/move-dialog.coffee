@@ -5,7 +5,7 @@ Dialog = require './dialog'
 
 module.exports =
 class MoveDialog extends Dialog
-  constructor: (@initialPath) ->
+  constructor: (@initialPath, placement='select') ->
     if fs.isDirectorySync(@initialPath)
       prompt = 'Enter the new path for the directory.'
     else
@@ -14,7 +14,7 @@ class MoveDialog extends Dialog
     super
       prompt: prompt
       initialPath: atom.project.relativize(@initialPath)
-      select: true
+      placement: placement
       iconClass: 'icon-arrow-right'
 
   onConfirm: (newPath) ->
