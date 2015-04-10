@@ -1649,7 +1649,7 @@ describe "TreeView", ->
               expect(addDialog).toHaveClass('error')
               expect(atom.workspace.getModalPanels()[0]).toBe addPanel
 
-    describe "tree-view:move", ->
+    describe "tree-view:rename", ->
       describe "when a file is selected", ->
         moveDialog = null
 
@@ -1660,7 +1660,7 @@ describe "TreeView", ->
             fileView.click()
 
           runs ->
-            atom.commands.dispatch(treeView.element, "tree-view:move")
+            atom.commands.dispatch(treeView.element, "tree-view:rename")
             moveDialog = $(atom.workspace.getModalPanels()[0].getItem()).view()
 
         afterEach ->
@@ -1748,7 +1748,7 @@ describe "TreeView", ->
             dotFileView.click()
 
           runs ->
-            atom.commands.dispatch(treeView.element, "tree-view:move")
+            atom.commands.dispatch(treeView.element, "tree-view:rename")
             moveDialog = $(atom.workspace.getModalPanels()[0].getItem()).view()
 
         it "selects the entire file name", ->
@@ -1757,9 +1757,9 @@ describe "TreeView", ->
           expect(moveDialog.miniEditor.getModel().getSelectedText()).toBe '.dotfile'
 
       describe "when the project is selected", ->
-        it "doesn't display the move dialog", ->
+        it "doesn't display the move / rename dialog", ->
           treeView.roots[0].click()
-          atom.commands.dispatch(treeView.element, "tree-view:move")
+          atom.commands.dispatch(treeView.element, "tree-view:rename")
           expect(atom.workspace.getModalPanels().length).toBe(0)
 
     describe "tree-view:duplicate", ->
