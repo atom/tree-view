@@ -1734,7 +1734,7 @@ describe "TreeView", ->
             expect(atom.workspace.getModalPanels().length).toBe 0
             expect(atom.views.getView(atom.workspace.getActivePane())).toHaveFocus()
 
-      describe "when a file is selected that's name starts with a '.'", ->
+      describe "when a file is selected and its name starts with a '.'", ->
         [dotFilePath, dotFileView, moveDialog] = []
 
         beforeEach ->
@@ -1785,7 +1785,7 @@ describe "TreeView", ->
           expect(moveDialog).toExist()
           expect(moveDialog.promptText.text()).toBe "Enter the new path for the file."
           expect(moveDialog.miniEditor.getText()).toBe(atom.project.relativize(filePath))
-          expect(moveDialog.miniEditor.getModel().getCursorBufferPosition().column).toBe filePath.length - path.basename(fileNameWithoutExtension)
+          expect(moveDialog.miniEditor.getModel().getCursorBufferPosition().column).toBe(filePath.length - path.basename(fileNameWithoutExtension).length)
           expect(moveDialog.miniEditor).toHaveFocus()
 
         describe "when the path is changed and confirmed", ->
@@ -1848,7 +1848,7 @@ describe "TreeView", ->
             expect(atom.views.getView(atom.workspace.getActivePane())).toHaveFocus()
 
       describe "when a file is selected and its name starts with a '.'", ->
-        [dotFilePath, dotFileView, moveDialog] = []
+        [dotFile, dotFilePath, dotFileView, moveDialog] = []
 
         beforeEach ->
           dotFile = '.dotfile'
@@ -1966,7 +1966,7 @@ describe "TreeView", ->
             expect(atom.workspace.getModalPanels().length).toBe 0
             expect(atom.views.getView(atom.workspace.getActivePane())).toHaveFocus()
 
-      describe "when a file is selected that's name starts with a '.'", ->
+      describe "when a file is selected and its name starts with a '.'", ->
         [dotFilePath, dotFileView, copyDialog] = []
 
         beforeEach ->
