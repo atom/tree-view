@@ -94,10 +94,10 @@
     {'label': 'Paste', 'command': 'tree-view:paste'}
   ]
 
-  'atom-pane .item-views': [
+  'atom-pane[data-active-item-path] .item-views': [
     {'label': 'Reveal in Tree View', 'command': 'tree-view:reveal-active-file'}
   ]
 
-  'atom-pane .tab.active': [
+  'atom-pane[data-active-item-path] .tab.active': [
     {'label': 'Reveal in Tree View', 'command': 'tree-view:reveal-active-file'}
   ]
