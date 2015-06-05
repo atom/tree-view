@@ -375,6 +375,40 @@ describe "TreeView", ->
         expect(treeView.hasParent()).toBeTruthy()
         expect(treeView.focus).toHaveBeenCalled()
 
+    describe 'if there are more items than can be visible in the viewport', ->
+      [rootDirPath] = []
+
+      beforeEach ->
+        rootDirPath = fs.absolute(temp.mkdirSync('tree-view-root1'))
+
+        for i in [1..20]
+          filepath = path.join(rootDirPath, "file-#{i}.txt")
+          fs.writeFileSync(filepath, "doesn't matter")
+
+        atom.project.setPaths([rootDirPath])
+        treeView.height(100)
+        jasmine.attachToDOM(workspaceElement)
+
+      it 'scrolls the selected file into the visible view', ->
+        # Open file at bottom
+        waitsForPromise -> atom.workspace.open(path.join(rootDirPath, 'file-20.txt'))
+        runs ->
+          atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
+          expect(treeView.scrollTop()).toEqual 440
+
+        # Open file in the middle, should be centered in scroll
+        waitsForPromise -> atom.workspace.open(path.join(rootDirPath, 'file-10.txt'))
+        runs ->
+          atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
+          expect(treeView.scrollTop()).toEqual 220
+
+        # Open file at top
+        waitsForPromise -> atom.workspace.open(path.join(rootDirPath, 'file-1.txt'))
+        runs ->
+          atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
+          expect(treeView.scrollTop()).toEqual 0
+
+
   describe "when tool-panel:unfocus is triggered on the tree view", ->
     it "surrenders focus to the workspace but remains open", ->
       waitsForPromise ->
