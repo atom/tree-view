@@ -302,9 +302,8 @@ class TreeView extends View
       if entry instanceof DirectoryView
         entry.expand()
       else
-        centeringOffset = (@scrollBottom() - @scrollTop()) / 2
         @selectEntry(entry)
-        @scrollToEntry(entry, centeringOffset)
+        @scrollToEntry(entry)
 
   copySelectedEntryPath: (relativePath = false) ->
     if pathToCopy = @selectedPath
@@ -646,18 +645,9 @@ class TreeView extends View
     else
       @scroller.scrollBottom()
 
-  scrollToEntry: (entry, offset = 0) ->
-    if entry instanceof DirectoryView
-      displayElement = $(entry.header)
-    else
-      displayElement = $(entry)
-
-    top = displayElement.position().top
-    bottom = top + displayElement.outerHeight()
-    if bottom > @scrollBottom()
-      @scrollBottom(bottom + offset)
-    if top < @scrollTop()
-      @scrollTop(top + offset)
+  scrollToEntry: (entry) ->
+    element = if entry instanceof DirectoryView then entry.header else entry
+    element.scrollIntoViewIfNeeded(true) # true = center around item if possible
 
   scrollToBottom: ->
     if lastEntry = _.last(@list[0].querySelectorAll('.entry'))
