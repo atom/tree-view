@@ -35,6 +35,7 @@ class DirectoryView extends HTMLElement
     @directoryName.textContent = @directory.name
     @directoryName.dataset.name = @directory.name
     @directoryName.dataset.path = @directory.path
+    @directoryName.draggable = true
 
     if @directory.isRoot
       @classList.add('project-root')

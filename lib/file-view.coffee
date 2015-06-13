@@ -14,6 +14,7 @@ class FileView extends HTMLElement
     @fileName.textContent = @file.name
     @fileName.dataset.name = @file.name
     @fileName.dataset.path = @file.path
+    @fileName.draggable = true
 
     if @file.symlink
       @fileName.classList.add('icon-file-symlink-file')
