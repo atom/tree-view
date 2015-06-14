@@ -809,9 +809,7 @@ class TreeView extends View
   #
   # returns noop
   onDragStart: (e) ->
-    $target = $(e.target)
-
-    initialPath = $target.data("path")
+    initialPath = $(e.target).data("path")
 
     e.originalEvent.dataTransfer.effectAllowed = "move"
     e.originalEvent.dataTransfer.setData("initialPath", initialPath)
