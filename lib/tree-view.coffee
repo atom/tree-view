@@ -3,6 +3,7 @@ shell = require 'shell'
 
 _ = require 'underscore-plus'
 {BufferedProcess, CompositeDisposable} = require 'atom'
+{repoForPath, relativizePath} = require "./helpers"
 {$, View} = require 'atom-space-pen-views'
 fs = require 'fs-plus'
 
@@ -94,6 +95,16 @@ class TreeView extends View
       @onMouseDown(e)
 
     @on 'mousedown', '.tree-view-resize-handle', (e) => @resizeStarted(e)
+
+    @on 'dragstart', '.entry .name', (e) => @onDragStart(e)
+
+    @on 'dragenter', '.entry.directory > .header > .name', (e) => @onDragEnter(e)
+
+    @on 'dragleave', '.entry.directory > .header > .name', (e) => @onDragLeave(e)
+
+    @on 'dragover', '.entry', (e) => @onDragOver(e)
+
+    @on 'drop', '.entry', (e) => @onDrop(e)
 
     atom.commands.add @element,
      'core:move-up': @moveUp.bind(this)
@@ -661,6 +672,24 @@ class TreeView extends View
   toggleSide: ->
     toggleConfig('tree-view.showOnRightSide')
 
+  moveEntry: (initialPath, newDirectoryPath) ->
+    if initialPath is newDirectoryPath
+      return
+
+    entryName = path.basename(initialPath)
+    newPath = "#{newDirectoryPath}/#{entryName}".replace(/\s+$/, '')
+
+    try
+      fs.makeTreeSync(newDirectoryPath) unless fs.existsSync(newDirectoryPath)
+      fs.moveSync(initialPath, newPath)
+
+      if repo = repoForPath(newPath)
+        repo.getPathStatus(initialPath)
+        repo.getPathStatus(newPath)
+
+    catch error
+      console.warn("#{error.message}.")
+
   onStylesheetsChanged: =>
     return unless @isVisible()
 
@@ -755,3 +784,51 @@ class TreeView extends View
   # Returns boolean
   multiSelectEnabled: ->
     @list[0].classList.contains('multi-select')
+
+  onDragEnter: (e) ->
+    e.stopPropagation()
+
+    e.target.classList.add('dragenter')
+
+  onDragLeave: (e) ->
+    e.stopPropagation()
+
+    e.target.classList.remove('dragenter')
+
+  # Public: Handle entry name object dragstart event
+  #
+  # returns noop
+  onDragStart: (e) ->
+    $target = $(e.target)
+
+    initialPath = $target.data("path")
+
+    e.originalEvent.dataTransfer.effectAllowed = "move"
+    e.originalEvent.dataTransfer.setData("initialPath", initialPath)
+
+  # Public: Handle entry dragover event; reset default dragover actions
+  #
+  # returns noop
+  onDragOver: (e) ->
+    e.preventDefault()
+    e.stopPropagation()
+
+  # Public: Handle entry drop event
+  #
+  # returns noop
+  onDrop: (e) ->
+    e.preventDefault()
+    e.stopPropagation()
+
+    entry = e.currentTarget
+
+    if entry instanceof DirectoryView
+      initialPath = e.originalEvent.dataTransfer.getData("initialPath")
+      newDirectoryPath = $(e.target).data("path")
+
+      e.target.classList.remove('dragenter')
+
+      unless newDirectoryPath
+        return false
+
+      @moveEntry(initialPath, newDirectoryPath)
