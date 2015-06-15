@@ -45,10 +45,16 @@
   padding-right: @component-padding;
   position: relative;
 
-  // This fixes #110, see that issue for more details
-  .entry:before {
-    content: '';
-    position: absolute;
+  .entry {
+    .name.dragenter {
+      color: @text-color-selected;
+    }
+
+    // This fixes #110, see that issue for more details
+    &:before {
+      content: '';
+      position: absolute;
+    }
   }
 }
 
@@ -58,8 +64,4 @@
       cursor: ew-resize;
     }
   }
-}
-
-.name.dragenter {
-  color: #949292;
 }
