@@ -64,7 +64,7 @@ class Directory
     return unless repo?
 
     @subscriptions.add repo.onDidChangeStatus (event) =>
-      @updateStatus(repo) if event.path.indexOf("#{@path}#{path.sep}") is 0
+      @updateStatus(repo) if event.path.indexOf("#{@realPath}#{path.sep}") is 0
     @subscriptions.add repo.onDidChangeStatuses =>
       @updateStatus(repo)
 
