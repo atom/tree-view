@@ -1,6 +1,6 @@
 FileIcons = require '../lib/file-icons'
 
-fdescribe 'FileIcons', ->
+describe 'FileIcons', ->
   describe 'getService', ->
     it 'provides a default', ->
       expect(FileIcons.getService()).toBeDefined()

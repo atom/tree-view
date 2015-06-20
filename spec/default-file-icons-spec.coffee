@@ -4,7 +4,7 @@ temp = require('temp').track()
 
 DefaultFileIcons = require '../lib/default-file-icons'
 
-fdescribe 'DefaultFileIcons', ->
+describe 'DefaultFileIcons', ->
   [fileIcons] = []
 
   beforeEach ->

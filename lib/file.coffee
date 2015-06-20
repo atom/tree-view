@@ -13,20 +13,6 @@ class File
     @path = fullPath
     @realPath = @path
 
-    extension = path.extname(@path)
-    if fs.isReadmePath(@path)
-      @type = 'readme'
-    else if fs.isCompressedExtension(extension)
-      @type = 'compressed'
-    else if fs.isImageExtension(extension)
-      @type = 'image'
-    else if fs.isPdfExtension(extension)
-      @type = 'pdf'
-    else if fs.isBinaryExtension(extension)
-      @type = 'binary'
-    else
-      @type = 'text'
-
     @subscribeToRepo()
     @updateStatus()
 
