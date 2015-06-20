@@ -7,4 +7,9 @@ class FileIcons
   getService: ->
     @service
 
+  resetService: ->
+    @service = new DefaultFileIcons
+
+  setService: (@service) ->
+
 module.exports = new FileIcons

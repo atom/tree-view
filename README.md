@@ -13,6 +13,7 @@ or delete files and folders.
 
 The Tree View displays icons next to files. These icons are customizable by installing a package that provides a `file-icons` service.
 
-The `file-icons` API provides the following method:
+The `file-icons` API must provide the following methods:
 
 * `getIconForPath(path)` - Returns a CSS class name to add to the file view
+* `onWillDeactivate` - An event that lets the tree view return to its default icon strategy
