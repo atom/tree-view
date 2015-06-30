@@ -394,13 +394,13 @@ describe "TreeView", ->
         waitsForPromise -> atom.workspace.open(path.join(rootDirPath, 'file-20.txt'))
         runs ->
           atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
-          expect(treeView.scrollTop()).toEqual 440
+          expect(treeView.scrollTop()).toEqual 425
 
         # Open file in the middle, should be centered in scroll
         waitsForPromise -> atom.workspace.open(path.join(rootDirPath, 'file-10.txt'))
         runs ->
           atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
-          expect(treeView.scrollTop()).toEqual 220
+          expect(treeView.scrollTop()).toEqual 213
 
         # Open file at top
         waitsForPromise -> atom.workspace.open(path.join(rootDirPath, 'file-1.txt'))
