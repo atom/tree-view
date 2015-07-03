@@ -10,6 +10,9 @@ module.exports =
     hideIgnoredNames:
       type: 'boolean'
       default: false
+    showFileWhenSelected:
+      type: 'boolean'
+      default: false
     showOnRightSide:
       type: 'boolean'
       default: false
