@@ -519,7 +519,7 @@ describe "TreeView", ->
       expect(sampleJs).toHaveClass 'selected'
 
   describe "when a file is selected", ->
-    fit "it shows the file if the option is set, without changing focus", ->
+    it "it shows the file if the option is set, without changing focus", ->
       atom.config.set("tree-view.showFileWhenSelected", true)
       treeView.focus()
       file = path.join(atom.project.getPaths()[0], 'dir1', 'file1')
