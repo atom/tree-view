@@ -368,17 +368,6 @@ describe "TreeView", ->
           expect(treeView.hasParent()).toBeTruthy()
           expect(treeView.focus).toHaveBeenCalled()
 
-    describe "if the file is selected", ->
-      it "opens selected file", ->
-        file = path.join(atom.project.getPaths()[0], 'dir1', 'file1')
-
-        waitsForPromise ->
-          atom.workspace.open(file)
-
-        runs ->
-          atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
-          expect(atom.workspace.getActivePaneItem().getPath()).toBe file
-
     describe "if there is no editor open", ->
       it "shows and focuses the tree view, but does not attempt to select a specific file", ->
         expect(atom.workspace.getActivePaneItem()).toBeUndefined()
@@ -528,6 +517,19 @@ describe "TreeView", ->
       expect(sampleJs).not.toHaveClass 'selected'
       sampleJs.mousedown()
       expect(sampleJs).toHaveClass 'selected'
+
+  describe "when a file is selected", ->
+    fit "it shows the file if the option is set, without changing focus", ->
+      atom.config.set("tree-view.showFileWhenSelected", true)
+      treeView.focus()
+      file = path.join(atom.project.getPaths()[0], 'dir1', 'file1')
+
+      waitsForPromise ->
+        atom.workspace.open(file)
+
+      runs ->
+        atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
+        expect(atom.workspace.getActivePaneItem().getPath()).toBe file
 
   describe "when a file is single-clicked", ->
     beforeEach ->
