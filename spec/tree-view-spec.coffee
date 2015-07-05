@@ -23,6 +23,7 @@ describe "TreeView", ->
     path1 = path.join(fixturesPath, "root-dir1")
     path2 = path.join(fixturesPath, "root-dir2")
     atom.project.setPaths([path1, path2])
+    atom.config.set("tree-view.showFileWhenSelected", true)
 
     workspaceElement = atom.views.getView(atom.workspace)
 

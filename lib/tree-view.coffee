@@ -201,7 +201,7 @@ class TreeView extends View
       when 2
         if entry instanceof FileView
           if not atom.config.get('tree-view.showFileWhenSelected')
-            @openSelectedEntry(false) if entry instanceof FileView
+            @openSelectedEntry(false)
           @unfocus()
         else if DirectoryView
           entry.toggleExpansion(isRecursive)
@@ -384,7 +384,7 @@ class TreeView extends View
     if selectedEntry instanceof DirectoryView
       selectedEntry.toggleExpansion()
     else if selectedEntry instanceof FileView
-      atom.workspace.open(selectedEntry.getPath(), {activatePane}).done (editor) =>
+      atom.workspace.open(selectedEntry.getPath(), {activatePane}).then (editor) =>
         @clearPreview(editor) if not atom.config.get('tree-view.showFileWhenSelected')
 
   openSelectedEntrySplit: (orientation, side) ->
