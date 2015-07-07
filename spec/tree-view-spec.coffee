@@ -2405,4 +2405,7 @@ describe "TreeView", ->
       treeView.showSelectedEntryInFileManager()
 
       waitsFor ->
-        atom.confirm.callCount is 1
+        atom.notifications.getNotifications().length is 1
+
+      runs ->
+        expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Opening folder in Finder failed'

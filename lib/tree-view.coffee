@@ -462,10 +462,9 @@ class TreeView extends View
     {command, args, label} = @fileManagerCommandForPath(entry.getPath(), isFile)
 
     handleError = (error) ->
-      atom.confirm
-        message: "Opening #{if isFile then 'file' else 'folder'} in #{label} failed"
-        detailedMessage: error
-        buttons: ['OK']
+      atom.notifications.addError "Opening #{if isFile then 'file' else 'folder'} in #{label} failed",
+        detail: error.message
+        dismissable: true
 
     errorLines = []
     stderr = (lines) -> errorLines.push(lines)
