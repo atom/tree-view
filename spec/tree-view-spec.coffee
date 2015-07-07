@@ -2422,7 +2422,8 @@ describe "TreeView", ->
         atom.notifications.getNotifications().length is 1
 
       runs ->
-        expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Opening folder in Finder failed'
+        expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Opening folder'
+        expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'failed'
         expect(atom.notifications.getNotifications()[0].getDetail()).toContain 'bad process'
 
     it "handle errors thrown when spawning the OS file manager", ->
