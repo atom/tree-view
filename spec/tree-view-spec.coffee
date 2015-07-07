@@ -2396,7 +2396,6 @@ describe "TreeView", ->
 
   describe "showSelectedEntryInFileManager()", ->
     it "handle errors thrown when spawning the OS file manager", ->
-      spyOn(atom, 'confirm')
       spyOn(treeView, 'fileManagerCommandForPath').andReturn
         command: '/this/command/does/not/exist'
         label: 'Finder'
