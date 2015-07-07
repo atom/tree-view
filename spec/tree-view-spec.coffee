@@ -2393,3 +2393,14 @@ describe "TreeView", ->
         element.innerText
 
       expect(gammaEntries).toEqual(["delta.txt", "epsilon.txt", "theta"])
+
+  describe "showSelectedEntryInFileManager()", ->
+    it "spawns a command to show the file in the OS file manager", ->
+      spyOn(atom, 'confirm')
+      spyOn(treeView, 'fileManagerCommandForPath').andReturn
+        command: '/this/command/does/not/exist'
+        label: 'Finder'
+        args: ['foo']
+
+      treeView.showSelectedEntryInFileManager()
+      expect(atom.confirm.callCount).toBe 1
