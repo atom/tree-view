@@ -461,23 +461,27 @@ class TreeView extends View
     isFile = entry instanceof FileView
     {command, args, label} = @fileManagerCommandForPath(entry.getPath(), isFile)
 
+    handleError = (errorMessage) ->
+      atom.notifications.addError "Opening #{if isFile then 'file' else 'folder'} in #{label} failed",
+        detail: errorMessage
+        dismissable: true
+
     errorLines = []
     stderr = (lines) -> errorLines.push(lines)
     exit = (code) ->
       failed = code isnt 0
-      error = errorLines.join('\n')
+      errorMessage = errorLines.join('\n')
 
       # Windows 8 seems to return a 1 with no error output even on success
       if process.platform is 'win32' and code is 1 and not error
         failed = false
 
-      if failed
-        atom.confirm
-          message: "Opening #{if isFile then 'file' else 'folder'} in #{label} failed"
-          detailedMessage: error
-          buttons: ['OK']
+      handleError(errorMessage) if failed
 
-    new BufferedProcess({command, args, stderr, exit})
+    showProcess = new BufferedProcess({command, args, stderr, exit})
+    showProcess.onWillThrowError ({error, handle}) ->
+      handle()
+      handleError(error?.message)
 
   openSelectedEntryInNewWindow: ->
     if pathToOpen = @selectedEntry()?.getPath()
