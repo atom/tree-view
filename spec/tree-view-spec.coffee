@@ -2395,7 +2395,7 @@ describe "TreeView", ->
       expect(gammaEntries).toEqual(["delta.txt", "epsilon.txt", "theta"])
 
   describe "showSelectedEntryInFileManager()", ->
-    it "spawns a command to show the file in the OS file manager", ->
+    it "handle errors throw when spawning the OS file manager", ->
       spyOn(atom, 'confirm')
       spyOn(treeView, 'fileManagerCommandForPath').andReturn
         command: '/this/command/does/not/exist'
