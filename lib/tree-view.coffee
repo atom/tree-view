@@ -461,6 +461,12 @@ class TreeView extends View
     isFile = entry instanceof FileView
     {command, args, label} = @fileManagerCommandForPath(entry.getPath(), isFile)
 
+    handleError = (error) ->
+      atom.confirm
+        message: "Opening #{if isFile then 'file' else 'folder'} in #{label} failed"
+        detailedMessage: error
+        buttons: ['OK']
+
     errorLines = []
     stderr = (lines) -> errorLines.push(lines)
     exit = (code) ->
@@ -471,13 +477,12 @@ class TreeView extends View
       if process.platform is 'win32' and code is 1 and not error
         failed = false
 
-      if failed
-        atom.confirm
-          message: "Opening #{if isFile then 'file' else 'folder'} in #{label} failed"
-          detailedMessage: error
-          buttons: ['OK']
+      handleError(error) if failed
 
-    new BufferedProcess({command, args, stderr, exit})
+    showProcess = new BufferedProcess({command, args, stderr, exit})
+    showProcess.onWillThrowError ({error, handle}) ->
+      handle()
+      handleError(error)
 
   openSelectedEntryInNewWindow: ->
     if pathToOpen = @selectedEntry()?.getPath()

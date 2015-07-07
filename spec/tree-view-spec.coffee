@@ -2403,4 +2403,6 @@ describe "TreeView", ->
         args: ['foo']
 
       treeView.showSelectedEntryInFileManager()
-      expect(atom.confirm.callCount).toBe 1
+
+      waitsFor ->
+        atom.confirm.callCount is 1
