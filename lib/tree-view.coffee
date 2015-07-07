@@ -476,7 +476,7 @@ class TreeView extends View
       if process.platform is 'win32' and code is 1 and not error
         failed = false
 
-      handleError(error) if failed
+      handleError(message: error) if failed
 
     showProcess = new BufferedProcess({command, args, stderr, exit})
     showProcess.onWillThrowError ({error, handle}) ->

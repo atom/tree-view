@@ -2395,6 +2395,36 @@ describe "TreeView", ->
       expect(gammaEntries).toEqual(["delta.txt", "epsilon.txt", "theta"])
 
   describe "showSelectedEntryInFileManager()", ->
+    beforeEach ->
+      atom.notifications.clear()
+
+    it "displays the standard error output when the process fails", ->
+      {BufferedProcess} = require 'atom'
+      spyOn(BufferedProcess.prototype, 'spawn').andCallFake ->
+        EventEmitter = require 'events'
+        fakeProcess = new EventEmitter()
+        fakeProcess.send = ->
+        fakeProcess.kill = ->
+        fakeProcess.stdout = new EventEmitter()
+        fakeProcess.stdout.setEncoding = ->
+        fakeProcess.stderr = new EventEmitter()
+        fakeProcess.stderr.setEncoding = ->
+        @process = fakeProcess
+        process.nextTick ->
+          fakeProcess.stderr.emit('data', 'bad process')
+          fakeProcess.stderr.emit('close')
+          fakeProcess.stdout.emit('close')
+          fakeProcess.emit('exit')
+
+      treeView.showSelectedEntryInFileManager()
+
+      waitsFor ->
+        atom.notifications.getNotifications().length is 1
+
+      runs ->
+        expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Opening folder in Finder failed'
+        expect(atom.notifications.getNotifications()[0].getDetail()).toContain 'bad process'
+
     it "handle errors thrown when spawning the OS file manager", ->
       spyOn(treeView, 'fileManagerCommandForPath').andReturn
         command: '/this/command/does/not/exist'
@@ -2408,3 +2438,4 @@ describe "TreeView", ->
 
       runs ->
         expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Opening folder in Finder failed'
+        expect(atom.notifications.getNotifications()[0].getDetail()).toContain 'ENOENT'
