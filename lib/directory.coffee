@@ -12,6 +12,7 @@ realpathCache = {}
 module.exports =
 class Directory
   constructor: ({@name, fullPath, @symlink, @expansionState, @isRoot, @ignoredPatterns}) ->
+    @destroyed = false
     @emitter = new Emitter()
     @subscriptions = new CompositeDisposable()
 
@@ -35,6 +36,7 @@ class Directory
     @loadRealPath()
 
   destroy: ->
+    @destroyed = true
     @unwatch()
     @subscriptions.dispose()
     @emitter.emit('did-destroy')
@@ -53,6 +55,7 @@ class Directory
 
   loadRealPath: ->
     fs.realpath @path, realpathCache, (error, realPath) =>
+      return if @destroyed
       if realPath and realPath isnt @path
         @realPath = realPath
         @lowerCaseRealPath = @realPath.toLowerCase() if fs.isCaseInsensitive()
