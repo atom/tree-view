@@ -1414,7 +1414,7 @@ describe "TreeView", ->
             expect(fs.existsSync(filePath)).toBeFalsy()
 
       describe "when pasting the files fails", ->
-        it "shows a notification", ->
+        fit "shows a notification", ->
           spyOn(fs, 'writeFileSync').andCallFake ->
             writeError = new Error("ENOENT: no such file or directory, open '#{filePath}'")
             writeError.code = 'ENOENT'
@@ -1428,7 +1428,7 @@ describe "TreeView", ->
           atom.commands.dispatch(treeView.element, "tree-view:paste")
 
           expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Unable to paste paths'
-          expect(atom.notifications.getNotifications()[0].getDetails()).toContain 'ENOENT: no such file or directory'
+          expect(atom.notifications.getNotifications()[0].getDetail()).toContain 'ENOENT: no such file or directory'
 
     describe "tree-view:add-file", ->
       [addPanel, addDialog] = []
