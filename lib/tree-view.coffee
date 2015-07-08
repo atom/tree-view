@@ -473,7 +473,7 @@ class TreeView extends View
       errorMessage = errorLines.join('\n')
 
       # Windows 8 seems to return a 1 with no error output even on success
-      if process.platform is 'win32' and code is 1 and not error
+      if process.platform is 'win32' and code is 1 and not errorMessage
         failed = false
 
       handleError(errorMessage) if failed
