@@ -562,39 +562,42 @@ class TreeView extends View
     copiedPaths = if LocalStorage['tree-view:copyPath'] then JSON.parse(LocalStorage['tree-view:copyPath']) else null
     initialPaths = copiedPaths or cutPaths
 
-    try
-      for initialPath in initialPaths ? []
-        initialPathIsDirectory = fs.isDirectorySync(initialPath)
-        if selectedEntry and initialPath and fs.existsSync(initialPath)
-          basePath = selectedEntry.getPath()
-          basePath = path.dirname(basePath) if selectedEntry instanceof FileView
-          newPath = path.join(basePath, path.basename(initialPath))
+    showNotificationForFileErrors = (operation) ->
+      try
+        operation()
+      catch error
+        atom.notifications.addWarning("Unable to paste paths: #{initialPaths}", detail: error.message)
 
-          if copiedPaths
-            # append a number to the file if an item with the same name exists
-            fileCounter = 0
-            originalNewPath = newPath
-            while fs.existsSync(newPath)
-              if initialPathIsDirectory
-                newPath = "#{originalNewPath}#{fileCounter.toString()}"
-              else
-                fileArr = originalNewPath.split('.')
-                newPath = "#{fileArr[0]}#{fileCounter.toString()}.#{fileArr[1]}"
-              fileCounter += 1
+    for initialPath in initialPaths ? []
+      initialPathIsDirectory = fs.isDirectorySync(initialPath)
+      if selectedEntry and initialPath and fs.existsSync(initialPath)
+        basePath = selectedEntry.getPath()
+        basePath = path.dirname(basePath) if selectedEntry instanceof FileView
+        newPath = path.join(basePath, path.basename(initialPath))
 
-            if fs.isDirectorySync(initialPath)
-              # use fs.copy to copy directories since read/write will fail for directories
-              fs.copySync(initialPath, newPath)
+        if copiedPaths
+          # append a number to the file if an item with the same name exists
+          fileCounter = 0
+          originalNewPath = newPath
+          while fs.existsSync(newPath)
+            if initialPathIsDirectory
+              newPath = "#{originalNewPath}#{fileCounter.toString()}"
             else
-              # read the old file and write a new one at target location
-              fs.writeFileSync(newPath, fs.readFileSync(initialPath))
-          else if cutPaths
-            # Only move the target if the cut target doesn't exists and if the newPath
-            # is not within the initial path
-            unless fs.existsSync(newPath) or !!newPath.match(new RegExp("^#{initialPath}"))
-              fs.moveSync(initialPath, newPath)
-    catch error
-      atom.notifications.addWarning("Unable to paste paths: #{initialPaths}", detail: error.message)
+              fileArr = originalNewPath.split('.')
+              newPath = "#{fileArr[0]}#{fileCounter.toString()}.#{fileArr[1]}"
+            fileCounter += 1
+
+          if fs.isDirectorySync(initialPath)
+            # use fs.copy to copy directories since read/write will fail for directories
+            showNotificationForFileErrors -> fs.copySync(initialPath, newPath)
+          else
+            # read the old file and write a new one at target location
+            showNotificationForFileErrors -> fs.writeFileSync(newPath, fs.readFileSync(initialPath))
+        else if cutPaths
+          # Only move the target if the cut target doesn't exists and if the newPath
+          # is not within the initial path
+          unless fs.existsSync(newPath) or !!newPath.match(new RegExp("^#{initialPath}"))
+            showNotificationForFileErrors -> fs.moveSync(initialPath, newPath)
 
   add: (isCreatingFile) ->
     selectedEntry = @selectedEntry() ? @roots[0]
