@@ -562,7 +562,7 @@ class TreeView extends View
     copiedPaths = if LocalStorage['tree-view:copyPath'] then JSON.parse(LocalStorage['tree-view:copyPath']) else null
     initialPaths = copiedPaths or cutPaths
 
-    showNotificationForFileErrors = (operation) ->
+    catchAndShowFileErrors = (operation) ->
       try
         operation()
       catch error
@@ -589,15 +589,15 @@ class TreeView extends View
 
           if fs.isDirectorySync(initialPath)
             # use fs.copy to copy directories since read/write will fail for directories
-            showNotificationForFileErrors -> fs.copySync(initialPath, newPath)
+            catchAndShowFileErrors -> fs.copySync(initialPath, newPath)
           else
             # read the old file and write a new one at target location
-            showNotificationForFileErrors -> fs.writeFileSync(newPath, fs.readFileSync(initialPath))
+            catchAndShowFileErrors -> fs.writeFileSync(newPath, fs.readFileSync(initialPath))
         else if cutPaths
           # Only move the target if the cut target doesn't exists and if the newPath
           # is not within the initial path
           unless fs.existsSync(newPath) or !!newPath.match(new RegExp("^#{initialPath}"))
-            showNotificationForFileErrors -> fs.moveSync(initialPath, newPath)
+            catchAndShowFileErrors -> fs.moveSync(initialPath, newPath)
 
   add: (isCreatingFile) ->
     selectedEntry = @selectedEntry() ? @roots[0]
