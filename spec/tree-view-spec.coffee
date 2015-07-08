@@ -1413,8 +1413,8 @@ describe "TreeView", ->
             expect(fs.existsSync(path.join(dirPath2, path.basename(filePath)))).toBeTruthy()
             expect(fs.existsSync(filePath)).toBeFalsy()
 
-      describe "when pasting the files fails", ->
-        fit "shows a notification", ->
+      describe "when pasting the file fails due to a filesystem error", ->
+        it "shows a notification", ->
           spyOn(fs, 'writeFileSync').andCallFake ->
             writeError = new Error("ENOENT: no such file or directory, open '#{filePath}'")
             writeError.code = 'ENOENT'
