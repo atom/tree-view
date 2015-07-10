@@ -195,10 +195,13 @@ class TreeView extends View
     switch e.originalEvent?.detail ? 1
       when 1
         @selectEntry(entry)
-        @openSelectedEntry(false) if entry instanceof FileView
+        if atom.config.get('tree-view.showFileWhenSelected')
+          @openSelectedEntry(false) if entry instanceof FileView
         entry.toggleExpansion(isRecursive) if entry instanceof DirectoryView
       when 2
         if entry instanceof FileView
+          if not atom.config.get('tree-view.showFileWhenSelected')
+            @openSelectedEntry(false)
           @unfocus()
         else if DirectoryView
           entry.toggleExpansion(isRecursive)
@@ -372,12 +375,17 @@ class TreeView extends View
       directory.collapse(isRecursive)
       @selectEntry(directory)
 
+  clearPreview: (editor) ->
+    editorElement = atom.views.getView(editor)
+    atom.commands.dispatch(editorElement, 'tabs:keep-preview-tab')
+
   openSelectedEntry: (activatePane) ->
     selectedEntry = @selectedEntry()
     if selectedEntry instanceof DirectoryView
       selectedEntry.toggleExpansion()
     else if selectedEntry instanceof FileView
-      atom.workspace.open(selectedEntry.getPath(), {activatePane})
+      atom.workspace.open(selectedEntry.getPath(), {activatePane}).then (editor) =>
+        @clearPreview(editor) if not atom.config.get('tree-view.showFileWhenSelected')
 
   openSelectedEntrySplit: (orientation, side) ->
     selectedEntry = @selectedEntry()
@@ -658,6 +666,8 @@ class TreeView extends View
   scrollToEntry: (entry) ->
     element = if entry instanceof DirectoryView then entry.header else entry
     element.scrollIntoViewIfNeeded(true) # true = center around item if possible
+    if atom.config.get('tree-view.showFileWhenSelected')
+      @openSelectedEntry(false) if entry instanceof FileView
 
   scrollToBottom: ->
     if lastEntry = _.last(@list[0].querySelectorAll('.entry'))

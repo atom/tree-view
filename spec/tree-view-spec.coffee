@@ -23,6 +23,7 @@ describe "TreeView", ->
     path1 = path.join(fixturesPath, "root-dir1")
     path2 = path.join(fixturesPath, "root-dir2")
     atom.project.setPaths([path1, path2])
+    atom.config.set("tree-view.showFileWhenSelected", true)
 
     workspaceElement = atom.views.getView(atom.workspace)
 
@@ -517,6 +518,19 @@ describe "TreeView", ->
       expect(sampleJs).not.toHaveClass 'selected'
       sampleJs.mousedown()
       expect(sampleJs).toHaveClass 'selected'
+
+  describe "when a file is selected", ->
+    it "it shows the file if the option is set, without changing focus", ->
+      atom.config.set("tree-view.showFileWhenSelected", true)
+      treeView.focus()
+      file = path.join(atom.project.getPaths()[0], 'dir1', 'file1')
+
+      waitsForPromise ->
+        atom.workspace.open(file)
+
+      runs ->
+        atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
+        expect(atom.workspace.getActivePaneItem().getPath()).toBe file
 
   describe "when a file is single-clicked", ->
     beforeEach ->
