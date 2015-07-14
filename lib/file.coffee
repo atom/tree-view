@@ -6,6 +6,7 @@ fs = require 'fs-plus'
 module.exports =
 class File
   constructor: ({@name, fullPath, @symlink, realpathCache}) ->
+    @destroyed = false
     @emitter = new Emitter()
     @subscriptions = new CompositeDisposable()
 
@@ -30,11 +31,13 @@ class File
     @updateStatus()
 
     fs.realpath @path, realpathCache, (error, realPath) =>
+      return if @destroyed
       if realPath and realPath isnt @path
         @realPath = realPath
         @updateStatus()
 
   destroy: ->
+    @destroyed = true
     @subscriptions.dispose()
     @emitter.emit('did-destroy')
 
