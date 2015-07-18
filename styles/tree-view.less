@@ -40,6 +40,10 @@
   }
 }
 
+.project-root-header {
+  -webkit-user-drag: element;
+}
+
 .tree-view-scroller {
   display: flex;
   flex-direction: column;
@@ -70,6 +74,33 @@
     &:before {
       content: '';
       position: absolute;
+    }
+  }
+
+  /* Drag and Drop */
+  .placeholder {
+    position: absolute;
+    left: @component-icon-padding;
+    z-index: 999;
+    display: inline-block;
+    height: 2px;
+    margin: -1px; padding: 0;
+
+    width: 100%;
+    background: @background-color-info;
+
+    list-style: none;
+
+    &:after {
+      content: "";
+      position: absolute;
+      left: 0;
+      margin: -1px;
+      width: 4px;
+      height: 4px;
+      background: @background-color-info;
+      border-radius: 4px;
+      border: 1px solid transparent;
     }
   }
 }
