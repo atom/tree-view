@@ -43,6 +43,8 @@ describe "TreeView", ->
   afterEach ->
     temp.cleanup()
 
+  ###
+
   describe ".initialize(project)", ->
     it "renders the root directories of the project and their contents alphabetically with subdirectories first, in a collapsed state", ->
       expect(root1.find('> .header .disclosure-arrow')).not.toHaveClass('expanded')
@@ -2457,3 +2459,76 @@ describe "TreeView", ->
       runs ->
         expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Opening folder in Finder failed'
         expect(atom.notifications.getNotifications()[0].getDetail()).toContain 'ENOENT'
+
+  ###
+
+  describe '.toggleShortcuts()', ->
+    it 'calls the enableShortcuts method if they\'re not enabled', ->
+      spyOn(treeView, 'enableShortcuts')
+      treeView.toggleShortcuts()
+      expect(treeView.enableShortcuts).toHaveBeenCalled()
+
+    it 'calls the disableShortcuts', ->
+      treeView.element.classList.add 'shortcuts'
+      spyOn(treeView, 'disableShortcuts')
+      treeView.toggleShortcuts()
+      expect(treeView.disableShortcuts).toHaveBeenCalled()
+
+  describe '.enableShortcuts()', ->
+    it 'listens to directory toggling', ->
+      spyOn(treeView.emitter, 'on')
+      treeView.enableShortcuts()
+      expect(treeView.emitter.on).toHaveBeenCalledWith('did-toggle-directory', treeView.updateAllTreeStartIndexes)
+
+    it 'calls the updateAllTreeStartIndexes() method', ->
+      spyOn(treeView, 'updateAllTreeStartIndexes')
+      treeView.enableShortcuts()
+      expect(treeView.updateAllTreeStartIndexes).toHaveBeenCalled()
+
+    it 'adds the shortcuts class', ->
+      treeView.enableShortcuts()
+      expect(treeView.element.classList.contains('shortcuts')).toBe(yes)
+
+  describe '.disableShortcuts()', ->
+    it 'removes listens to directory toggling', ->
+      spyOn(treeView.emitter, 'off')
+      treeView.disableShortcuts()
+      expect(treeView.emitter.off).toHaveBeenCalledWith('did-toggle-directory', treeView.updateAllTreeStartIndexes)
+
+    it 'calls the removesShortcuts() method', ->
+      spyOn(treeView, 'removeShortcuts')
+      treeView.disableShortcuts()
+      expect(treeView.removeShortcuts).toHaveBeenCalled()
+
+    it 'removes the shortcuts class', ->
+      treeView.disableShortcuts()
+      expect(treeView.element.classList.contains('shortcuts')).toBe(no)
+
+  describe 'updateAllTreeStartIndexes()', ->
+    it 'first removes all shortcuts', ->
+      spyOn(treeView, 'removeShortcuts')
+      treeView.updateAllTreeStartIndexes()
+      expect(treeView.removeShortcuts).toHaveBeenCalled()
+
+    it 'then updates all the start indexes', ->
+      spyOn(treeView, 'setStartIndexesWithin')
+      treeView.updateAllTreeStartIndexes()
+      expect(treeView.setStartIndexesWithin).toHaveBeenCalledWith(0, treeView.element.querySelector('.tree-view-scroller'))
+
+  describe 'setStartIndexesWithin()', ->
+    beforeEach ->
+      treeView.element.classList.add('shortcuts')
+      scroller = treeView.element.querySelector('.tree-view-scroller')
+      treeView.setStartIndexesWithin(0, scroller)
+
+    it 'updates all start indexes of tree lists', ->
+      dir1 = selectEntry(path.join(path1, 'dir1')).querySelector('ol')
+      expect(dir1.getAttribute('start')).toBe '7'
+
+    it 'adds a bunch of shortcut commands', ->
+      spyOn(treeView, 'addShortcutTo')
+      expect(treeView.addShortcutTo).toHaveBeenCalled()
+
+    it 'returns the amount of child nodes the given element contains'
+
+    it 'adds a shortcut to each entry'
