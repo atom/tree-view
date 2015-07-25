@@ -2171,6 +2171,51 @@ describe "TreeView", ->
       treeView.find('.tree-view-resize-handle').trigger 'dblclick'
       expect(treeView.width()).toBeLessThan 1000
 
+  describe "when other panels are added", ->
+    beforeEach ->
+      jasmine.attachToDOM(workspaceElement)
+
+    it "should resize normally", ->
+      expect(treeView).toBeVisible()
+      expect(atom.workspace.getLeftPanels().length).toBe(1)
+
+      treeView.width(100)
+
+      expect(treeView.width()).toBe(100)
+
+      panel = document.createElement('div')
+      panel.style.width = '100px'
+      atom.workspace.addLeftPanel({item: panel, priority: 10})
+
+      expect(atom.workspace.getLeftPanels().length).toBe(2)
+      expect(treeView.width()).toBe(100)
+
+      treeView.resizeTreeView({pageX: 250, which: 1})
+
+      expect(treeView.width()).toBe(150)
+
+    it "should resize normally on the right side", ->
+      atom.commands.dispatch(workspaceElement, 'tree-view:toggle-side')
+      expect(treeView).toMatchSelector('[data-show-on-right-side="true"]')
+
+      expect(treeView).toBeVisible()
+      expect(atom.workspace.getRightPanels().length).toBe(1)
+
+      treeView.width(100)
+
+      expect(treeView.width()).toBe(100)
+
+      panel = document.createElement('div')
+      panel.style.width = '100px'
+      atom.workspace.addRightPanel({item: panel, priority: 10})
+
+      expect(atom.workspace.getRightPanels().length).toBe(2)
+      expect(treeView.width()).toBe(100)
+
+      treeView.resizeTreeView({pageX: $(document.body).width() - 250, which: 1})
+
+      expect(treeView.width()).toBe(150)
+
   describe "selecting items", ->
     [dirView, fileView1, fileView2, fileView3, treeView, rootDirPath, dirPath, filePath1, filePath2, filePath3] = []
 
