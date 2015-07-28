@@ -663,7 +663,7 @@ class TreeView extends View
 
   scrollToEntry: (entry) ->
     element = if entry instanceof DirectoryView then entry.header else entry
-    element.scrollIntoViewIfNeeded(true) # true = center around item if possible
+    element?.scrollIntoViewIfNeeded(true) # true = center around item if possible
 
   scrollToBottom: ->
     if lastEntry = _.last(@list[0].querySelectorAll('.entry'))

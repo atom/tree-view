@@ -781,6 +781,16 @@ describe "TreeView", ->
           atom.commands.dispatch(treeView.element, 'core:move-up')
           expect(treeView.roots[0]).toHaveClass 'selected'
 
+      describe "when the tree view is empty", ->
+        it "does nothing", ->
+          atom.commands.dispatch(treeView.roots[0].querySelector(".header"), "tree-view:remove-project-folder")
+          atom.commands.dispatch(treeView.roots[0].querySelector(".header"), "tree-view:remove-project-folder")
+          expect(atom.project.getPaths()).toHaveLength(0)
+          expect(treeView.element.querySelectorAll('.selected').length).toBe 0
+
+          atom.commands.dispatch(treeView.element, 'core:move-up')
+          expect(treeView.element.querySelectorAll('.selected').length).toBe 0
+
     describe "core:move-to-top", ->
       it "scrolls to the top", ->
         treeView.height(100)
