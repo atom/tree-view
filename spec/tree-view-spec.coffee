@@ -43,8 +43,6 @@ describe "TreeView", ->
   afterEach ->
     temp.cleanup()
 
-  ###
-
   describe ".initialize(project)", ->
     it "renders the root directories of the project and their contents alphabetically with subdirectories first, in a collapsed state", ->
       expect(root1.find('> .header .disclosure-arrow')).not.toHaveClass('expanded')
@@ -2460,8 +2458,6 @@ describe "TreeView", ->
         expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Opening folder in Finder failed'
         expect(atom.notifications.getNotifications()[0].getDetail()).toContain 'ENOENT'
 
-  ###
-
   describe '.toggleShortcuts()', ->
     it 'calls the enableShortcuts method if they\'re not enabled', ->
       spyOn(treeView, 'enableShortcuts')
@@ -2511,24 +2507,56 @@ describe "TreeView", ->
       expect(treeView.removeShortcuts).toHaveBeenCalled()
 
     it 'then updates all the start indexes', ->
-      spyOn(treeView, 'setStartIndexesWithin')
+      spyOn(treeView, 'addShortcutsToListTrees')
       treeView.updateAllTreeStartIndexes()
-      expect(treeView.setStartIndexesWithin).toHaveBeenCalledWith(0, treeView.element.querySelector('.tree-view-scroller'))
+      expect(treeView.addShortcutsToListTrees).toHaveBeenCalledWith(0, treeView.element.querySelector('.tree-view-scroller'))
 
-  describe 'setStartIndexesWithin()', ->
+  describe '.addShortcutsToListTrees()', ->
+    addShortcutsToListTrees = ->
+
     beforeEach ->
       treeView.element.classList.add('shortcuts')
       scroller = treeView.element.querySelector('.tree-view-scroller')
-      treeView.setStartIndexesWithin(0, scroller)
+      addShortcutsToListTrees = -> treeView.addShortcutsToListTrees(0, scroller)
 
     it 'updates all start indexes of tree lists', ->
       dir1 = selectEntry(path.join(path1, 'dir1')).querySelector('ol')
+      addShortcutsToListTrees()
       expect(dir1.getAttribute('start')).toBe '7'
 
     it 'adds a bunch of shortcut commands', ->
       spyOn(treeView, 'addShortcutTo')
-      expect(treeView.addShortcutTo).toHaveBeenCalled()
+      addShortcutsToListTrees()
+      expect(treeView.addShortcutTo.calls.length).toEqual(9)
 
-    it 'returns the amount of child nodes the given element contains'
+    it 'returns the amount of child nodes the given element contains', ->
+      expect(addShortcutsToListTrees()).toEqual(9)
 
-    it 'adds a shortcut to each entry'
+  describe 'addShortcutTo()', ->
+    el = null
+
+    beforeEach ->
+      el = selectEntry(path.join(path1, 'dir1')).querySelector('ol li')
+
+    it 'adds a new command', ->
+      spyOn(atom.commands, 'add')
+      treeView.addShortcutTo(45, el)
+      {args} = atom.commands.add.calls[0]
+      expect(args[0]).toEqual treeView.element
+      expect(args[1]).toEqual "tree-view:open-entry-shortcut-45"
+      expect(typeof args[2]).toEqual 'function'
+
+    it 'adds new keymaps', ->
+      spyOn(atom.keymaps, 'add')
+      treeView.addShortcutTo(45, el)
+      {args} = atom.keymaps.add.calls[0]
+      expect(args[0]).toEqual 'tree-view shortcuts'
+      expect(args[1]).toEqual
+        '.tree-view-resizer.shortcuts .tree-view':
+          '4 5': 'tree-view:open-entry-shortcut-45'
+
+  describe 'removeShortcuts', ->
+    it 'removes all the shortcuts', ->
+      spyOn atom.keymaps, 'removeBindingsFromSource'
+      treeView.removeShortcuts()
+      expect(atom.keymaps.removeBindingsFromSource).toHaveBeenCalledWith 'tree-view shortcuts'

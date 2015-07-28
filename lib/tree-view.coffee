@@ -695,9 +695,9 @@ class TreeView extends View
 
   updateAllTreeStartIndexes: =>
     @removeShortcuts()
-    @setStartIndexesWithin 0, @element.querySelector('.tree-view-scroller')
+    @addShortcutsToListTrees 0, @element.querySelector('.tree-view-scroller')
 
-  setStartIndexesWithin: (index, el) ->
+  addShortcutsToListTrees: (index, el) ->
     count = 0
     for list in el.querySelectorAll ':scope > .list-tree'
       list.setAttribute 'start', index
@@ -708,7 +708,7 @@ class TreeView extends View
         @addShortcutTo index, entry
         index++
         if entry.classList.contains 'directory'
-          childCount = @setStartIndexesWithin nextStart, entry
+          childCount = @addShortcutsToListTrees nextStart, entry
           count += childCount
           nextStart += childCount
     count
