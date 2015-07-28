@@ -79,6 +79,8 @@
   'k': 'core:move-up'
   'j': 'core:move-down'
   'i': 'tree-view:toggle-vcs-ignored-files'
+  'home': 'core:move-to-top'
+  'end': 'core:move-to-bottom'
 
 '.tree-view-dialog atom-text-editor[mini]':
   'enter': 'core:confirm'
