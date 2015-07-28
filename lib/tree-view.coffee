@@ -217,8 +217,7 @@ class TreeView extends View
     return @resizeStopped() unless which is 1
 
     if atom.config.get('tree-view.showOnRightSide')
-      docWidth = $(document.body).width()
-      width = docWidth - pageX - (docWidth - @outerWidth() - @offset().left)
+      width = @outerWidth() + @offset().left - pageX
     else
       width = pageX - @offset().left
     @width(width)
