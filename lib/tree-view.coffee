@@ -826,7 +826,7 @@ class TreeView extends View
     initialPath = e.originalEvent.dataTransfer.getData("initialPath")
     newDirectoryPath = $(entry).find(".name").data("path")
 
-    entry.classList.remove('dragenter')
+    entry.classList.remove('selected')
 
     return false unless newDirectoryPath
 
