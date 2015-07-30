@@ -2160,7 +2160,7 @@ describe "TreeView", ->
       it "adds a custom style", ->
         expect(treeView.find('.file:contains(ignored.txt)')).toHaveClass 'status-ignored'
 
-    describe "when the projects is a symbolic link to the repository root", ->
+    describe "when the project is a symbolic link to the repository root", ->
       beforeEach ->
         symlinkPath = temp.path('tree-view-project')
         fs.symlinkSync(projectPath, symlinkPath)
@@ -2173,12 +2173,12 @@ describe "TreeView", ->
             done()
 
       describe "when a file is modified", ->
-        it "adds custom style to it and its parent directories", ->
+        it "updates its and its parent directories' styles", ->
           expect(treeView.find('.file:contains(b.txt)')).toHaveClass 'status-modified'
           expect(treeView.find('.directory:contains(dir)')).toHaveClass 'status-modified'
 
-      describe "when a file looses its modified status", ->
-        it "updates custom style for it and its parent directories", ->
+      describe "when a file loses its modified status", ->
+        it "updates its and its parent directories' styles", ->
           fs.writeFileSync(modifiedFile, originalFileContent)
           atom.project.getRepositories()[0].getPathStatus(modifiedFile)
 
