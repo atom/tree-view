@@ -775,16 +775,12 @@ class TreeView extends View
 
   # Public: Toggle full-menu class on the main list element to display the full context
   #         menu.
-  #
-  # Returns noop
   showFullMenu: ->
     @list[0].classList.remove('multi-select')
     @list[0].classList.add('full-menu')
 
   # Public: Toggle multi-select class on the main list element to display the the
   #         menu with only items that make sense for multi select functionality
-  #
-  # Returns noop
   showMultiSelectMenu: ->
     @list[0].classList.remove('full-menu')
     @list[0].classList.add('multi-select')
@@ -806,8 +802,6 @@ class TreeView extends View
     e.currentTarget.parentNode.classList.remove('selected')
 
   # Public: Handle entry name object dragstart event
-  #
-  # returns noop
   onDragStart: (e) ->
     e.stopPropagation()
 
@@ -817,15 +811,11 @@ class TreeView extends View
     e.originalEvent.dataTransfer.setData("initialPath", initialPath)
 
   # Public: Handle entry dragover event; reset default dragover actions
-  #
-  # returns noop
   onDragOver: (e) ->
     e.preventDefault()
     e.stopPropagation()
 
   # Public: Handle entry drop event
-  #
-  # returns noop
   onDrop: (e) ->
     e.preventDefault()
     e.stopPropagation()
