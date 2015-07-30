@@ -96,11 +96,11 @@ class TreeView extends View
 
     @on 'mousedown', '.tree-view-resize-handle', (e) => @resizeStarted(e)
 
-    @on 'dragstart', '.entry .name', (e) => @onDragStart(e)
+    @on 'dragstart', '.entry', (e) => @onDragStart(e)
 
-    @on 'dragenter', '.entry.directory > .header > .name', (e) => @onDragEnter(e)
+    @on 'dragenter', '.entry.directory > .header', (e) => @onDragEnter(e)
 
-    @on 'dragleave', '.entry.directory > .header > .name', (e) => @onDragLeave(e)
+    @on 'dragleave', '.entry.directory > .header', (e) => @onDragLeave(e)
 
     @on 'dragover', '.entry', (e) => @onDragOver(e)
 
@@ -798,18 +798,20 @@ class TreeView extends View
   onDragEnter: (e) ->
     e.stopPropagation()
 
-    e.target.classList.add('dragenter')
+    e.currentTarget.parentNode.classList.add('selected')
 
   onDragLeave: (e) ->
     e.stopPropagation()
 
-    e.target.classList.remove('dragenter')
+    e.currentTarget.parentNode.classList.remove('selected')
 
   # Public: Handle entry name object dragstart event
   #
   # returns noop
   onDragStart: (e) ->
-    initialPath = $(e.target).data("path")
+    e.stopPropagation()
+
+    initialPath = $(e.currentTarget).find(".name").data("path")
 
     e.originalEvent.dataTransfer.effectAllowed = "move"
     e.originalEvent.dataTransfer.setData("initialPath", initialPath)
@@ -829,14 +831,13 @@ class TreeView extends View
     e.stopPropagation()
 
     entry = e.currentTarget
+    return unless entry instanceof DirectoryView
 
-    if entry instanceof DirectoryView
-      initialPath = e.originalEvent.dataTransfer.getData("initialPath")
-      newDirectoryPath = $(e.target).data("path")
+    initialPath = e.originalEvent.dataTransfer.getData("initialPath")
+    newDirectoryPath = $(entry).find(".name").data("path")
 
-      e.target.classList.remove('dragenter')
+    entry.classList.remove('dragenter')
 
-      unless newDirectoryPath
-        return false
+    return false unless newDirectoryPath
 
-      @moveEntry(initialPath, newDirectoryPath)
+    @moveEntry(initialPath, newDirectoryPath)
