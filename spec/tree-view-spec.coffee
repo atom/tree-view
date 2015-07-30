@@ -2541,7 +2541,7 @@ describe "TreeView", ->
         expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Opening folder in Finder failed'
         expect(atom.notifications.getNotifications()[0].getDetail()).toContain 'ENOENT'
 
-  fdescribe "Dragging and dropping files", ->
+  describe "Dragging and dropping files", ->
     beforeEach ->
       rootDirPath = fs.absolute(temp.mkdirSync('tree-view'))
 
