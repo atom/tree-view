@@ -12,3 +12,12 @@ module.exports =
       if goalPath is projectPath or goalPath.indexOf(projectPath + path.sep) is 0
         return [projectPath, path.relative(projectPath, goalPath)]
     [null, goalPath]
+
+  getStyleObject: (el) ->
+    styleProperties = window.getComputedStyle(el)
+    styleObject = {}
+    for property of styleProperties
+      value = styleProperties.getPropertyValue property
+      camelizedAttr = property.replace /\-([a-z])/g, (a, b) -> b.toUpperCase()
+      styleObject[camelizedAttr] = value
+    styleObject

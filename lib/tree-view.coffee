@@ -3,7 +3,7 @@ shell = require 'shell'
 
 _ = require 'underscore-plus'
 {BufferedProcess, CompositeDisposable} = require 'atom'
-{repoForPath, relativizePath} = require "./helpers"
+{repoForPath, relativizePath, getStyleObject} = require "./helpers"
 {$, View} = require 'atom-space-pen-views'
 fs = require 'fs-plus'
 
@@ -805,10 +805,26 @@ class TreeView extends View
   onDragStart: (e) ->
     e.stopPropagation()
 
-    initialPath = $(e.currentTarget).find(".name").data("path")
+    target = $(e.currentTarget).find(".name")
+    initialPath = target.data("path")
+
+    style = getStyleObject(target[0])
+
+    fileNameElement = target.clone()
+      .css(style)
+      .css(
+        position: 'absolute'
+        top: 0
+        left: 0
+      )
+    fileNameElement.appendTo(document.body)
 
     e.originalEvent.dataTransfer.effectAllowed = "move"
+    e.originalEvent.dataTransfer.setDragImage(fileNameElement[0], 0, 0)
     e.originalEvent.dataTransfer.setData("initialPath", initialPath)
+
+    window.requestAnimationFrame =>
+      fileNameElement.remove()
 
   # Public: Handle entry dragover event; reset default dragover actions
   onDragOver: (e) ->
