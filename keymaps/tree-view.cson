@@ -8,7 +8,7 @@
   'ctrl-\\': 'tree-view:toggle'
   'ctrl-k ctrl-b': 'tree-view:toggle'
   'ctrl-|': 'tree-view:reveal-active-file'
-  'alt-0': 'tree-view:toggle-focus'
+  'alt-\\': 'tree-view:toggle-focus'
 
 '.platform-darwin .tree-view':
   'cmd-c': 'tree-view:copy'
