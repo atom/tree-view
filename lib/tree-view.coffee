@@ -93,17 +93,11 @@ class TreeView extends View
       @entryClicked(e) unless e.shiftKey or e.metaKey or e.ctrlKey
     @on 'mousedown', '.entry', (e) =>
       @onMouseDown(e)
-
     @on 'mousedown', '.tree-view-resize-handle', (e) => @resizeStarted(e)
-
     @on 'dragstart', '.entry', (e) => @onDragStart(e)
-
     @on 'dragenter', '.entry.directory > .header', (e) => @onDragEnter(e)
-
     @on 'dragleave', '.entry.directory > .header', (e) => @onDragLeave(e)
-
     @on 'dragover', '.entry', (e) => @onDragOver(e)
-
     @on 'drop', '.entry', (e) => @onDrop(e)
 
     atom.commands.add @element,
