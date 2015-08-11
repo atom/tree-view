@@ -243,7 +243,7 @@ class TreeView extends View
       try
         @ignoredPatterns.push(new Minimatch(ignoredName, matchBase: true, dot: true))
       catch error
-        console.warn "Error parsing ignore pattern (#{ignoredName}): #{error.message}"
+        atom.notifications.addWarning("Error parsing ignore pattern (#{ignoredName})", detail: error.message)
 
   updateRoots: (expansionStates={}) ->
     oldExpansionStates = {}
@@ -692,7 +692,7 @@ class TreeView extends View
         repo.getPathStatus(newPath)
 
     catch error
-      console.warn("#{error.message}.")
+      atom.notifications.addWarning("Failed to move entry #{initialPath} to #{newDirectoryPath}", detail: error.message)
 
   onStylesheetsChanged: =>
     return unless @isVisible()
