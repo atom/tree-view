@@ -5,6 +5,7 @@ module.exports.buildDragEvents = (dragged, enterTarget, dropTarget) ->
     data: {}
     setData: (key, value) -> @data[key] = "#{value}" # Drag events stringify data values
     getData: (key) -> @data[key]
+    setDragImage: (@image) -> return
 
   dragStartEvent = $.Event()
   dragStartEvent.target = dragged
