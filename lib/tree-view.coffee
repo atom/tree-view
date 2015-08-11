@@ -795,7 +795,7 @@ class TreeView extends View
 
     e.currentTarget.parentNode.classList.remove('selected')
 
-  # Public: Handle entry name object dragstart event
+  # Handle entry name object dragstart event
   onDragStart: (e) ->
     e.stopPropagation()
 
@@ -820,12 +820,12 @@ class TreeView extends View
     window.requestAnimationFrame =>
       fileNameElement.remove()
 
-  # Public: Handle entry dragover event; reset default dragover actions
+  # Handle entry dragover event; reset default dragover actions
   onDragOver: (e) ->
     e.preventDefault()
     e.stopPropagation()
 
-  # Public: Handle entry drop event
+  # Handle entry drop event
   onDrop: (e) ->
     e.preventDefault()
     e.stopPropagation()
