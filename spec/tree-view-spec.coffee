@@ -4,6 +4,7 @@ fs = require 'fs-plus'
 path = require 'path'
 temp = require('temp').track()
 os = require 'os'
+{buildDragEvents} = require "./event-helpers"
 
 waitsForFileToOpen = (causeFileToOpen) ->
   waitsFor (done) ->
@@ -2539,3 +2540,93 @@ describe "TreeView", ->
       runs ->
         expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Opening folder in Finder failed'
         expect(atom.notifications.getNotifications()[0].getDetail()).toContain 'ENOENT'
+
+  describe "Dragging and dropping files", ->
+    beforeEach ->
+      rootDirPath = fs.absolute(temp.mkdirSync('tree-view'))
+
+      alphaFilePath = path.join(rootDirPath, "alpha.txt")
+      zetaFilePath = path.join(rootDirPath, "zeta.txt")
+
+      alphaDirPath = path.join(rootDirPath, "alpha")
+      betaFilePath = path.join(alphaDirPath, "beta.txt")
+      etaDirPath = path.join(alphaDirPath, "eta")
+
+      gammaDirPath = path.join(rootDirPath, "gamma")
+      deltaFilePath = path.join(gammaDirPath, "delta.txt")
+      epsilonFilePath = path.join(gammaDirPath, "epsilon.txt")
+      thetaDirPath = path.join(gammaDirPath, "theta")
+
+      fs.writeFileSync(alphaFilePath, "doesn't matter")
+      fs.writeFileSync(zetaFilePath, "doesn't matter")
+
+      fs.makeTreeSync(alphaDirPath)
+      fs.writeFileSync(betaFilePath, "doesn't matter")
+      fs.makeTreeSync(etaDirPath)
+
+      fs.makeTreeSync(gammaDirPath)
+      fs.writeFileSync(deltaFilePath, "doesn't matter")
+      fs.writeFileSync(epsilonFilePath, "doesn't matter")
+      fs.makeTreeSync(thetaDirPath)
+
+      atom.project.setPaths([rootDirPath])
+
+    describe "when dragging a FileView onto a DirectoryView's header", ->
+      it "should add the selected class to the DirectoryView", ->
+        # Dragging theta onto alphaDir
+        alphaDir = $(treeView.roots[0].entries).find('.directory:contains(alpha):first')
+
+        gammaDir = $(treeView.roots[0].entries).find('.directory:contains(gamma):first')
+        gammaDir[0].expand()
+        deltaFile = gammaDir[0].entries.children[2]
+
+        [dragStartEvent, dragEnterEvent, dropEvent] = buildDragEvents(deltaFile, alphaDir.find('.header')[0])
+        treeView.onDragStart(dragStartEvent)
+        treeView.onDragEnter(dragEnterEvent)
+        expect(alphaDir).toHaveClass('selected')
+
+    describe "when dropping a FileView onto a DirectoryView's header", ->
+      it "should move the file to the hovered directory", ->
+        # Dragging delta.txt onto alphaDir
+        alphaDir = $(treeView.roots[0].entries).find('.directory:contains(alpha):first')
+        alphaDir[0].expand()
+
+        gammaDir = $(treeView.roots[0].entries).find('.directory:contains(gamma):first')
+        gammaDir[0].expand()
+        deltaFile = gammaDir[0].entries.children[2]
+
+        [dragStartEvent, dragEnterEvent, dropEvent] = buildDragEvents(deltaFile, alphaDir.find('.header')[0], alphaDir[0])
+
+        runs ->
+          treeView.onDragStart(dragStartEvent)
+          treeView.onDrop(dropEvent)
+          expect(alphaDir[0].children.length).toBe 2
+
+        waitsFor "directory view contents to refresh", ->
+          $(treeView.roots[0].entries).find('.directory:contains(alpha):first .entry').length > 2
+
+        runs ->
+          expect($(treeView.roots[0].entries).find('.directory:contains(alpha):first .entry').length).toBe 3
+
+    describe "when dropping a DirectoryView onto a DirectoryView's header", ->
+      it "should move the directory to the hovered directory", ->
+        # Dragging delta.txt onto alphaDir
+        alphaDir = $(treeView.roots[0].entries).find('.directory:contains(alpha):first')
+        alphaDir[0].expand()
+
+        gammaDir = $(treeView.roots[0].entries).find('.directory:contains(gamma):first')
+        gammaDir[0].expand()
+        thetaDir = gammaDir[0].entries.children[0]
+
+        [dragStartEvent, dragEnterEvent, dropEvent] = buildDragEvents(thetaDir, alphaDir.find('.header')[0], alphaDir[0])
+
+        runs ->
+          treeView.onDragStart(dragStartEvent)
+          treeView.onDrop(dropEvent)
+          expect(alphaDir[0].children.length).toBe 2
+
+        waitsFor "directory view contents to refresh", ->
+          $(treeView.roots[0].entries).find('.directory:contains(alpha):first .entry').length > 2
+
+        runs ->
+          expect($(treeView.roots[0].entries).find('.directory:contains(alpha):first .entry').length).toBe 3

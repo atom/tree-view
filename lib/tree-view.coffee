@@ -3,6 +3,7 @@ shell = require 'shell'
 
 _ = require 'underscore-plus'
 {BufferedProcess, CompositeDisposable} = require 'atom'
+{repoForPath, relativizePath, getStyleObject} = require "./helpers"
 {$, View} = require 'atom-space-pen-views'
 fs = require 'fs-plus'
 
@@ -92,8 +93,12 @@ class TreeView extends View
       @entryClicked(e) unless e.shiftKey or e.metaKey or e.ctrlKey
     @on 'mousedown', '.entry', (e) =>
       @onMouseDown(e)
-
     @on 'mousedown', '.tree-view-resize-handle', (e) => @resizeStarted(e)
+    @on 'dragstart', '.entry', (e) => @onDragStart(e)
+    @on 'dragenter', '.entry.directory > .header', (e) => @onDragEnter(e)
+    @on 'dragleave', '.entry.directory > .header', (e) => @onDragLeave(e)
+    @on 'dragover', '.entry', (e) => @onDragOver(e)
+    @on 'drop', '.entry', (e) => @onDrop(e)
 
     atom.commands.add @element,
      'core:move-up': @moveUp.bind(this)
@@ -238,7 +243,7 @@ class TreeView extends View
       try
         @ignoredPatterns.push(new Minimatch(ignoredName, matchBase: true, dot: true))
       catch error
-        console.warn "Error parsing ignore pattern (#{ignoredName}): #{error.message}"
+        atom.notifications.addWarning("Error parsing ignore pattern (#{ignoredName})", detail: error.message)
 
   updateRoots: (expansionStates={}) ->
     oldExpansionStates = {}
@@ -671,6 +676,24 @@ class TreeView extends View
   toggleSide: ->
     toggleConfig('tree-view.showOnRightSide')
 
+  moveEntry: (initialPath, newDirectoryPath) ->
+    if initialPath is newDirectoryPath
+      return
+
+    entryName = path.basename(initialPath)
+    newPath = "#{newDirectoryPath}/#{entryName}".replace(/\s+$/, '')
+
+    try
+      fs.makeTreeSync(newDirectoryPath) unless fs.existsSync(newDirectoryPath)
+      fs.moveSync(initialPath, newPath)
+
+      if repo = repoForPath(newPath)
+        repo.getPathStatus(initialPath)
+        repo.getPathStatus(newPath)
+
+    catch error
+      atom.notifications.addWarning("Failed to move entry #{initialPath} to #{newDirectoryPath}", detail: error.message)
+
   onStylesheetsChanged: =>
     return unless @isVisible()
 
@@ -746,16 +769,12 @@ class TreeView extends View
 
   # Public: Toggle full-menu class on the main list element to display the full context
   #         menu.
-  #
-  # Returns noop
   showFullMenu: ->
     @list[0].classList.remove('multi-select')
     @list[0].classList.add('full-menu')
 
   # Public: Toggle multi-select class on the main list element to display the the
   #         menu with only items that make sense for multi select functionality
-  #
-  # Returns noop
   showMultiSelectMenu: ->
     @list[0].classList.remove('full-menu')
     @list[0].classList.add('multi-select')
@@ -765,3 +784,60 @@ class TreeView extends View
   # Returns boolean
   multiSelectEnabled: ->
     @list[0].classList.contains('multi-select')
+
+  onDragEnter: (e) ->
+    e.stopPropagation()
+
+    e.currentTarget.parentNode.classList.add('selected')
+
+  onDragLeave: (e) ->
+    e.stopPropagation()
+
+    e.currentTarget.parentNode.classList.remove('selected')
+
+  # Handle entry name object dragstart event
+  onDragStart: (e) ->
+    e.stopPropagation()
+
+    target = $(e.currentTarget).find(".name")
+    initialPath = target.data("path")
+
+    style = getStyleObject(target[0])
+
+    fileNameElement = target.clone()
+      .css(style)
+      .css(
+        position: 'absolute'
+        top: 0
+        left: 0
+      )
+    fileNameElement.appendTo(document.body)
+
+    e.originalEvent.dataTransfer.effectAllowed = "move"
+    e.originalEvent.dataTransfer.setDragImage(fileNameElement[0], 0, 0)
+    e.originalEvent.dataTransfer.setData("initialPath", initialPath)
+
+    window.requestAnimationFrame =>
+      fileNameElement.remove()
+
+  # Handle entry dragover event; reset default dragover actions
+  onDragOver: (e) ->
+    e.preventDefault()
+    e.stopPropagation()
+
+  # Handle entry drop event
+  onDrop: (e) ->
+    e.preventDefault()
+    e.stopPropagation()
+
+    entry = e.currentTarget
+    return unless entry instanceof DirectoryView
+
+    initialPath = e.originalEvent.dataTransfer.getData("initialPath")
+    newDirectoryPath = $(entry).find(".name").data("path")
+
+    entry.classList.remove('selected')
+
+    return false unless newDirectoryPath
+
+    @moveEntry(initialPath, newDirectoryPath)

@@ -6,6 +6,8 @@ class FileView extends HTMLElement
     @subscriptions = new CompositeDisposable()
     @subscriptions.add @file.onDidDestroy => @subscriptions.dispose()
 
+    @draggable = true
+
     @classList.add('file', 'entry', 'list-item')
 
     @fileName = document.createElement('span')
