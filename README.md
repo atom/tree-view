@@ -2,7 +2,7 @@
 
 Explore and open files in the current project.
 
-Press `cmd-\` to open/close the Tree view and `ctrl-0` to focus it.
+Press <kbd>ctrl-\\</kbd> or <kbd>cmd-\\</kbd> to open/close the Tree view and <kbd>alt-\\</kbd> or <kbd>ctrl-0</kbd> to focus it.
 
 When the Tree view has focus you can press `a`, `shift-a`, `m`, or `delete` to add, move
 or delete files and folders.
