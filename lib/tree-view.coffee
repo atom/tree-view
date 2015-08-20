@@ -39,6 +39,8 @@ class TreeView extends View
     @selectedPath = null
     @ignoredPatterns = []
 
+    @dragEventCounts = {}
+
     @handleEvents()
 
     process.nextTick =>
@@ -785,15 +787,26 @@ class TreeView extends View
   multiSelectEnabled: ->
     @list[0].classList.contains('multi-select')
 
-  onDragEnter: (e) ->
+  onDragEnter: (e) =>
     e.stopPropagation()
 
-    e.currentTarget.parentNode.classList.add('selected')
+    entry = e.currentTarget.parentNode
+    identifier = "#{entry.constructor.name}:#{entry.getPath()}"
 
-  onDragLeave: (e) ->
+    @dragEventCounts[identifier] ?= 0
+    @dragEventCounts[identifier]++
+
+    entry.classList.add('selected')
+
+  onDragLeave: (e) =>
     e.stopPropagation()
 
-    e.currentTarget.parentNode.classList.remove('selected')
+    entry = e.currentTarget.parentNode
+    identifier = "#{entry.constructor.name}:#{entry.getPath()}"
+
+    @dragEventCounts[identifier]--
+    if @dragEventCounts[identifier] is 0
+      entry.classList.remove('selected')
 
   # Handle entry name object dragstart event
   onDragStart: (e) ->
