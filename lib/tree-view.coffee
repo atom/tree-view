@@ -39,6 +39,8 @@ class TreeView extends View
     @selectedPath = null
     @ignoredPatterns = []
 
+    @dragEventCounts = new WeakMap
+
     @handleEvents()
 
     process.nextTick =>
@@ -785,15 +787,18 @@ class TreeView extends View
   multiSelectEnabled: ->
     @list[0].classList.contains('multi-select')
 
-  onDragEnter: (e) ->
+  onDragEnter: (e) =>
     e.stopPropagation()
+    entry = e.currentTarget.parentNode
+    @dragEventCounts.set(entry, 0) unless @dragEventCounts.get(entry)
+    entry.classList.add('selected') if @dragEventCounts.get(entry) is 0
+    @dragEventCounts.set(entry, @dragEventCounts.get(entry) + 1)
 
-    e.currentTarget.parentNode.classList.add('selected')
-
-  onDragLeave: (e) ->
+  onDragLeave: (e) =>
     e.stopPropagation()
-
-    e.currentTarget.parentNode.classList.remove('selected')
+    entry = e.currentTarget.parentNode
+    @dragEventCounts.set(entry, @dragEventCounts.get(entry) - 1)
+    entry.classList.remove('selected') if @dragEventCounts.get(entry) is 0
 
   # Handle entry name object dragstart event
   onDragStart: (e) ->
