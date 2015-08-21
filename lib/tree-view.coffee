@@ -39,7 +39,7 @@ class TreeView extends View
     @selectedPath = null
     @ignoredPatterns = []
 
-    @dragEventCounts = {}
+    @dragEventCounts = new WeakMap
 
     @handleEvents()
 
@@ -789,24 +789,16 @@ class TreeView extends View
 
   onDragEnter: (e) =>
     e.stopPropagation()
-
     entry = e.currentTarget.parentNode
-    identifier = "#{entry.constructor.name}:#{entry.getPath()}"
-
-    @dragEventCounts[identifier] ?= 0
-    @dragEventCounts[identifier]++
-
-    entry.classList.add('selected')
+    @dragEventCounts.set(entry, 0) unless @dragEventCounts.get(entry)
+    entry.classList.add('selected') if @dragEventCounts.get(entry) is 0
+    @dragEventCounts.set(entry, @dragEventCounts.get(entry) + 1)
 
   onDragLeave: (e) =>
     e.stopPropagation()
-
     entry = e.currentTarget.parentNode
-    identifier = "#{entry.constructor.name}:#{entry.getPath()}"
-
-    @dragEventCounts[identifier]--
-    if @dragEventCounts[identifier] is 0
-      entry.classList.remove('selected')
+    @dragEventCounts.set(entry, @dragEventCounts.get(entry) - 1)
+    entry.classList.remove('selected') if @dragEventCounts.get(entry) is 0
 
   # Handle entry name object dragstart event
   onDragStart: (e) ->
