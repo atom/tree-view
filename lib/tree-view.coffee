@@ -292,14 +292,8 @@ class TreeView extends View
 
     return unless activeFilePath = @getActivePath()
 
-    relativePath = null
-    rootPath = null
-    for directory in atom.project.getDirectories()
-      if directory.contains(activeFilePath)
-        rootPath = directory.getPath()
-        relativePath = directory.relativize(activeFilePath)
-        break
-    return unless relativePath?
+    [rootPath, relativePath] = atom.project.relativizePath(activeFilePath)
+    return unless rootPath?
 
     activePathComponents = relativePath.split(path.sep)
     currentPath = rootPath
