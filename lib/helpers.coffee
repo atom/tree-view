@@ -7,12 +7,6 @@ module.exports =
         return atom.project.getRepositories()[i]
     null
 
-  relativizePath: (goalPath) ->
-    for projectPath in atom.project.getPaths()
-      if goalPath is projectPath or goalPath.indexOf(projectPath + path.sep) is 0
-        return [projectPath, path.relative(projectPath, goalPath)]
-    [null, goalPath]
-
   getStyleObject: (el) ->
     styleProperties = window.getComputedStyle(el)
     styleObject = {}

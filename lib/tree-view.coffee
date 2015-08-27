@@ -3,7 +3,7 @@ shell = require 'shell'
 
 _ = require 'underscore-plus'
 {BufferedProcess, CompositeDisposable} = require 'atom'
-{repoForPath, relativizePath, getStyleObject} = require "./helpers"
+{repoForPath, getStyleObject} = require "./helpers"
 {$, View} = require 'atom-space-pen-views'
 fs = require 'fs-plus'
 

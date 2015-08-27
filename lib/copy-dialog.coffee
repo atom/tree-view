@@ -1,7 +1,7 @@
 path = require 'path'
 fs = require 'fs-plus'
 Dialog = require './dialog'
-{repoForPath, relativizePath} = require "./helpers"
+{repoForPath} = require "./helpers"
 
 module.exports =
 class CopyDialog extends Dialog
@@ -15,7 +15,7 @@ class CopyDialog extends Dialog
   onConfirm: (newPath) ->
     newPath = newPath.replace(/\s+$/, '') # Remove trailing whitespace
     unless path.isAbsolute(newPath)
-      [rootPath] = relativizePath(@initialPath)
+      [rootPath] = atom.project.relativizePath(@initialPath)
       newPath = path.join(rootPath, newPath)
       return unless newPath
 
