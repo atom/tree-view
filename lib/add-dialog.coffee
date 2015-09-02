@@ -1,7 +1,7 @@
 path = require 'path'
 fs = require 'fs-plus'
 Dialog = require './dialog'
-{repoForPath, relativizePath} = require './helpers'
+{repoForPath} = require './helpers'
 
 module.exports =
 class AddDialog extends Dialog
@@ -14,7 +14,7 @@ class AddDialog extends Dialog
       directoryPath = initialPath
 
     relativeDirectoryPath = directoryPath
-    [@rootProjectPath, relativeDirectoryPath] = relativizePath(directoryPath)
+    [@rootProjectPath, relativeDirectoryPath] = atom.project.relativizePath(directoryPath)
     relativeDirectoryPath += path.sep if relativeDirectoryPath.length > 0
 
     super

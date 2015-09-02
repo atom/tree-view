@@ -4,7 +4,7 @@ shell = require 'shell'
 
 _ = require 'underscore-plus'
 {BufferedProcess, CompositeDisposable} = require 'atom'
-{repoForPath, relativizePath, getStyleObject} = require "./helpers"
+{repoForPath, getStyleObject} = require "./helpers"
 {$, View} = require 'atom-space-pen-views'
 fs = require 'fs-plus'
 
@@ -40,6 +40,8 @@ class TreeView extends View
     @selectedPath = null
     @ignoredPatterns = []
     @emitter = new Emitter()
+
+    @dragEventCounts = new WeakMap
 
     @handleEvents()
 
@@ -295,14 +297,8 @@ class TreeView extends View
 
     return unless activeFilePath = @getActivePath()
 
-    relativePath = null
-    rootPath = null
-    for directory in atom.project.getDirectories()
-      if directory.contains(activeFilePath)
-        rootPath = directory.getPath()
-        relativePath = directory.relativize(activeFilePath)
-        break
-    return unless relativePath?
+    [rootPath, relativePath] = atom.project.relativizePath(activeFilePath)
+    return unless rootPath?
 
     activePathComponents = relativePath.split(path.sep)
     currentPath = rootPath
@@ -839,15 +835,18 @@ class TreeView extends View
   multiSelectEnabled: ->
     @list[0].classList.contains('multi-select')
 
-  onDragEnter: (e) ->
+  onDragEnter: (e) =>
     e.stopPropagation()
+    entry = e.currentTarget.parentNode
+    @dragEventCounts.set(entry, 0) unless @dragEventCounts.get(entry)
+    entry.classList.add('selected') if @dragEventCounts.get(entry) is 0
+    @dragEventCounts.set(entry, @dragEventCounts.get(entry) + 1)
 
-    e.currentTarget.parentNode.classList.add('selected')
-
-  onDragLeave: (e) ->
+  onDragLeave: (e) =>
     e.stopPropagation()
-
-    e.currentTarget.parentNode.classList.remove('selected')
+    entry = e.currentTarget.parentNode
+    @dragEventCounts.set(entry, @dragEventCounts.get(entry) - 1)
+    entry.classList.remove('selected') if @dragEventCounts.get(entry) is 0
 
   # Handle entry name object dragstart event
   onDragStart: (e) ->

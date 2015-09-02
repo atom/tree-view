@@ -2688,6 +2688,14 @@ describe "TreeView", ->
         treeView.onDragEnter(dragEnterEvent)
         expect(alphaDir).toHaveClass('selected')
 
+        # Remains selected when dragging to a child of the heading entry
+        treeView.onDragEnter(dragEnterEvent)
+        treeView.onDragLeave(dragEnterEvent)
+        expect(alphaDir).toHaveClass('selected')
+
+        treeView.onDragLeave(dragEnterEvent)
+        expect(alphaDir).not.toHaveClass('selected')
+
     describe "when dropping a FileView onto a DirectoryView's header", ->
       it "should move the file to the hovered directory", ->
         # Dragging delta.txt onto alphaDir
