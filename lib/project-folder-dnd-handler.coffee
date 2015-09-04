@@ -7,11 +7,7 @@ _ = require 'underscore-plus'
 module.exports =
 class ProjectFolderDragAndDropHandler
   constructor: (@treeView) ->
-    @treeView.on 'dragstart', '.project-root-header', @onDragStart
     @treeView.on 'dragend', '.project-root-header', @onDragEnd
-    @treeView.on 'dragleave', @onDragLeave
-    @treeView.on 'dragover', @onDragOver
-    @treeView.on 'drop', @onDrop
 
     RendererIpc.on('tree-view:project-folder-dropped', @onDropOnOtherWindow)
 
@@ -20,11 +16,11 @@ class ProjectFolderDragAndDropHandler
     RendererIpc.removeListener('tree-view:project-folder-dropped', @onDropOnOtherWindow)
 
   onDragStart: (event) =>
-    event.originalEvent.dataTransfer.setData 'atom-event', 'true'
+    unless $(event.target).closest('.project-root-header').size()
+      return
 
-    element = $(event.target).closest('.project-root-header')
+    event.originalEvent.dataTransfer.setData 'atom-event', 'true'
     projectRoot = $(event.target).closest('.project-root')
-    event.originalEvent.dataTransfer.setDragImage(projectRoot[0], 0, 0)
     directory = projectRoot[0].directory
 
     event.originalEvent.dataTransfer.setData 'project-root-index', projectRoot.index()
@@ -56,12 +52,13 @@ class ProjectFolderDragAndDropHandler
 
   onDragOver: (event) =>
     unless event.originalEvent.dataTransfer.getData('atom-event') is 'true'
-      event.preventDefault()
-      event.stopPropagation()
       return
 
-    event.preventDefault()
-    event.stopPropagation()
+    entry = event.currentTarget
+    if entry.classList.contains('selected')
+      @clearDropTarget()
+      return
+
     newDropTargetIndex = @getDropTargetIndex(event)
     return unless newDropTargetIndex?
 
@@ -148,6 +145,17 @@ class ProjectFolderDragAndDropHandler
     else
       projectRoots.index(element) + 1
 
+  isMovingProjectFolders: (event) ->
+    target = $(event.target)
+    return null if @isPlaceholder(target)
+
+    element = target.closest('.project-root-header')
+    return false unless element.length
+
+    elementCenter = element.offset().top + element.height() / 2
+    return true if event.originalEvent.pageY < elementCenter
+
+    false
 
   getPlaceholder: ->
     @placeholderEl ?= $('<li/>', class: 'placeholder')

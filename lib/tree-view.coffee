@@ -41,7 +41,6 @@ class TreeView extends View
     @ignoredPatterns = []
 
     @dragEventCounts = new WeakMap
-    // TODO: use dragEventCounts & existing drag handlers
     @projectFolderDragAndDropHandler = new ProjectFolderDragAndDropHandler(this)
 
     @handleEvents()
@@ -812,6 +811,7 @@ class TreeView extends View
     entry = e.currentTarget.parentNode
     @dragEventCounts.set(entry, @dragEventCounts.get(entry) - 1)
     entry.classList.remove('selected') if @dragEventCounts.get(entry) is 0
+    @projectFolderDragAndDropHandler.onDragLeave(e)
 
   # Handle entry name object dragstart event
   onDragStart: (e) ->
@@ -838,10 +838,20 @@ class TreeView extends View
     window.requestAnimationFrame ->
       fileNameElement.remove()
 
+    @projectFolderDragAndDropHandler.onDragStart(e)
+
   # Handle entry dragover event; reset default dragover actions
   onDragOver: (e) ->
     e.preventDefault()
     e.stopPropagation()
+
+    entry = e.currentTarget
+    if @projectFolderDragAndDropHandler.isMovingProjectFolders(e)
+      entry.classList.remove('selected')
+    else if @dragEventCounts.get(entry) > 0 and not entry.classList.contains('selected')
+      entry.classList.add('selected')
+
+    @projectFolderDragAndDropHandler.onDragOver(e)
 
   # Handle entry drop event
   onDrop: (e) ->
@@ -849,9 +859,15 @@ class TreeView extends View
     e.stopPropagation()
 
     entry = e.currentTarget
-    return unless entry instanceof DirectoryView
+    unless entry instanceof DirectoryView
+      @projectFolderDragAndDropHandler.onDrop(e)
+      return
 
     entry.classList.remove('selected')
+
+    if @projectFolderDragAndDropHandler.isMovingProjectFolders(e)
+      @projectFolderDragAndDropHandler.onDrop(e)
+      return
 
     newDirectoryPath = $(entry).find(".name").data("path")
     return false unless newDirectoryPath
