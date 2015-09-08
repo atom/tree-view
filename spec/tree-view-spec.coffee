@@ -13,6 +13,11 @@ waitsForFileToOpen = (causeFileToOpen) ->
       done()
     causeFileToOpen()
 
+clickEvent = (properties) ->
+  event = $.Event('click')
+  _.extend(event, properties) if properties?
+  event
+
 describe "TreeView", ->
   [treeView, path1, path2, root1, root2, sampleJs, sampleTxt, workspaceElement] = []
 
@@ -194,7 +199,7 @@ describe "TreeView", ->
       runs ->
         treeView = $(atom.workspace.getLeftPanels()[0].getItem()).view()
         expect(treeView).toExist()
-        expect(treeView.selectedEntry()).toMatchSelector(".file:contains(tree-view.js)")
+        expect($(treeView.selectedEntry())).toMatchSelector(".file:contains(tree-view.js)")
         root1 = $(treeView.roots[0])
         expect(root1.find(".directory:contains(dir1)")).toHaveClass("expanded")
 
