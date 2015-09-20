@@ -29,8 +29,7 @@ class ProjectFolderDragAndDropHandler
     _.find(@treeView.roots, (root, index) -> root.directory is directory and ((rootIndex = index) or true))
     event.originalEvent.dataTransfer.setData 'from-root-index', rootIndex
     event.originalEvent.dataTransfer.setData 'from-root-path', directory.path
-    event.originalEvent.dataTransfer.setData 'from-process-id', @getProcessId()
-    event.originalEvent.dataTransfer.setData 'from-routing-id', @getRoutingId()
+    event.originalEvent.dataTransfer.setData 'from-window-id', @getWindowId()
 
     event.originalEvent.dataTransfer.setData 'text/plain', directory.path
 
@@ -93,8 +92,7 @@ class ProjectFolderDragAndDropHandler
 
     return unless dataTransfer.getData('atom-event') is 'true'
 
-    fromProcessId = parseInt(dataTransfer.getData('from-process-id'))
-    fromRoutingId = parseInt(dataTransfer.getData('from-routing-id'))
+    fromWindowId = parseInt(dataTransfer.getData('from-window-id'))
     fromRootPath  = dataTransfer.getData('from-root-path')
     fromIndex     = parseInt(dataTransfer.getData('project-root-index'))
     fromRootIndex = parseInt(dataTransfer.getData('from-root-index'))
@@ -103,7 +101,7 @@ class ProjectFolderDragAndDropHandler
 
     @clearDropTarget()
 
-    if fromProcessId is @getProcessId()
+    if fromWindowId is @getWindowId()
       unless fromIndex is toIndex
         projectPaths = atom.project.getPaths()
         projectPaths.splice(fromIndex, 1)
@@ -115,9 +113,9 @@ class ProjectFolderDragAndDropHandler
       projectPaths.splice(toIndex, 0, fromRootPath)
       atom.project.setPaths(projectPaths)
 
-      if not isNaN(fromProcessId) and not isNaN(fromRoutingId)
+      if not isNaN(fromWindowId)
         # Let the window where the drag started know that the tab was dropped
-        browserWindow = @browserWindowForProcessIdAndRoutingId(fromProcessId, fromRoutingId)
+        browserWindow = @browserWindowForId(fromWindowId)
         browserWindow?.webContents.send('tree-view:project-folder-dropped', fromIndex)
 
   removeDropTargetClasses: ->
@@ -167,16 +165,9 @@ class ProjectFolderDragAndDropHandler
   isPlaceholder: (element) ->
     element.is('.placeholder')
 
-  getProcessId: ->
-    @processId ?= atom.getCurrentWindow().getProcessId()
+  getWindowId: ->
+    @processId ?= atom.getCurrentWindow().id
 
-  getRoutingId: ->
-    @routingId ?= atom.getCurrentWindow().getRoutingId()
-
-  browserWindowForProcessIdAndRoutingId: (processId, routingId) ->
+  browserWindowForId: (id) ->
     BrowserWindow ?= require('remote').require('browser-window')
-    for browserWindow in BrowserWindow.getAllWindows()
-      if browserWindow.getProcessId() is processId and browserWindow.getRoutingId() is routingId
-        return browserWindow
-
-    return
+    BrowserWindow.fromId id
