@@ -15,7 +15,7 @@
     "fs-plus": "^2.3.0",
     "javascript-natural-sort": "^0.7.1",
     "minimatch": "~0.3.0",
-    "pathwatcher": "^5.0.0",
+    "pathwatcher": "^6.2",
     "temp": "~0.8.1",
     "underscore-plus": "^1.0.0"
   },
