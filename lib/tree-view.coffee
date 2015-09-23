@@ -696,7 +696,7 @@ class TreeView extends View
     # Force a redraw so the scrollbars are styled correctly based on the theme
     @element.style.display = 'none'
     @element.offsetWidth
-    @element.style.display = 'block'
+    @element.style.display = ''
 
   onMouseDown: (e) ->
     e.stopPropagation()
