@@ -65,6 +65,10 @@
       "type": "boolean",
       "default": true,
       "description": "Focus the tree view when revealing entries."
+    },
+    "alwaysOpenExisting": {
+      "type": "boolean",
+      "default": false
     }
   }
 }

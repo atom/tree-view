@@ -396,6 +396,11 @@ class TreeView extends View
       item = activePane?.itemForURI(uri)
       if item? and not options.pending
         activePane.clearPendingItem() if activePane.getPendingItem() is item
+
+      if atom.config.get('tree-view.alwaysOpenExisting')
+        options.activatePane = true
+        options.searchAllPanes = true
+
       atom.workspace.open(uri, options)
 
   openSelectedEntrySplit: (orientation, side) ->
