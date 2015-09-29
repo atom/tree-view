@@ -398,7 +398,6 @@ class TreeView extends View
         activePane.clearPendingItem() if activePane.getPendingItem() is item
 
       if atom.config.get('tree-view.alwaysOpenExisting')
-        options.activatePane = true
         options.searchAllPanes = true
 
       atom.workspace.open(uri, options)
