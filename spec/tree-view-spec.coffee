@@ -1296,7 +1296,7 @@ describe "TreeView", ->
             expect(atom.views.getView(pane)).toHaveFocus()
             expect(item.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.txt')
 
-  xdescribe "opening existing opened files in existing split panes", ->
+  describe "opening existing opened files in existing split panes", ->
     beforeEach ->
       projectPath = setupPaneFiles()
       atom.project.setPaths([projectPath])
