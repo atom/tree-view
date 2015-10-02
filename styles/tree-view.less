@@ -12,6 +12,12 @@
   display: flex;
   flex-direction: column;
 
+  // use these classes to re-order
+  // using a value in-between is fine too, e.g. order: -3;
+  & > .order--start  { order: -10; }
+  & > .order--center { order:   0; }
+  & > .order--end    { order:  10; }
+
   .tree-view-resize-handle {
     position: absolute;
     top: 0;

@@ -26,7 +26,7 @@ class TreeView extends View
 
   @content: ->
     @div class: 'tree-view-resizer tool-panel', 'data-show-on-right-side': atom.config.get('tree-view.showOnRightSide'), =>
-      @div class: 'tree-view-scroller', outlet: 'scroller', =>
+      @div class: 'tree-view-scroller order--center', outlet: 'scroller', =>
         @ol class: 'tree-view full-menu list-tree has-collapsable-children focusable-panel', tabindex: -1, outlet: 'list'
       @div class: 'tree-view-resize-handle', outlet: 'resizeHandle'
 
