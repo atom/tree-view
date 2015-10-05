@@ -129,19 +129,21 @@ class ProjectFolderDragAndDropHandler
     return if @isPlaceholder(target)
 
     projectRoots = $(@treeView.roots)
-    element = target.closest('.project-root')
-    element = projectRoots.last() if element.length is 0
+    projectRoot = target.closest('.project-root')
+    projectRoot = projectRoots.last() if projectRoot.length is 0
 
-    return 0 unless element.length
+    return 0 unless projectRoot.length
+
+    element = projectRoot.find('.project-root-header')
 
     elementCenter = element.offset().top + element.height() / 2
 
     if event.originalEvent.pageY < elementCenter
-      projectRoots.index(element)
-    else if element.next('.project-root').length > 0
-      projectRoots.index(element.next('.project-root'))
+      projectRoots.index(projectRoot)
+    else if projectRoot.next('.project-root').length > 0
+      projectRoots.index(projectRoot.next('.project-root'))
     else
-      projectRoots.index(element) + 1
+      projectRoots.index(projectRoot) + 1
 
   isMovingProjectFolders: (event) ->
     target = $(event.target)
@@ -150,8 +152,10 @@ class ProjectFolderDragAndDropHandler
     element = target.closest('.project-root-header')
     return false unless element.length
 
-    elementCenter = element.offset().top + element.height() / 2
-    return true if event.originalEvent.pageY < elementCenter
+    elementTop30 = element.offset().top + element.height() * 0.3
+    return true if event.originalEvent.pageY < elementTop30
+    elementBottom30 = element.offset().top + element.height() * 0.7
+    return true if event.originalEvent.pageY > elementBottom30
 
     false
 
