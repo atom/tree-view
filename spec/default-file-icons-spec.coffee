@@ -11,22 +11,22 @@ describe 'DefaultFileIcons', ->
     fileIcons = new DefaultFileIcons
 
   it 'defaults to text', ->
-    expect(fileIcons.getIconForPath('foo.bar')).toEqual('icon-file-text')
+    expect(fileIcons.iconClassForPath('foo.bar')).toEqual('icon-file-text')
 
   it 'recognizes READMEs', ->
-    expect(fileIcons.getIconForPath('README.md')).toEqual('icon-book')
+    expect(fileIcons.iconClassForPath('README.md')).toEqual('icon-book')
 
   it 'recognizes compressed files', ->
-    expect(fileIcons.getIconForPath('foo.zip')).toEqual('icon-file-zip')
+    expect(fileIcons.iconClassForPath('foo.zip')).toEqual('icon-file-zip')
 
   it 'recognizes image files', ->
-    expect(fileIcons.getIconForPath('foo.png')).toEqual('icon-file-media')
+    expect(fileIcons.iconClassForPath('foo.png')).toEqual('icon-file-media')
 
   it 'recognizes PDF files', ->
-    expect(fileIcons.getIconForPath('foo.pdf')).toEqual('icon-file-pdf')
+    expect(fileIcons.iconClassForPath('foo.pdf')).toEqual('icon-file-pdf')
 
   it 'recognizes binary files', ->
-    expect(fileIcons.getIconForPath('foo.exe')).toEqual('icon-file-binary')
+    expect(fileIcons.iconClassForPath('foo.exe')).toEqual('icon-file-binary')
 
   describe 'symlinks', ->
     [tempDir] = []
@@ -43,7 +43,7 @@ describe 'DefaultFileIcons', ->
       fs.writeFileSync(filePath, '')
       fs.symlinkSync(filePath, linkPath)
 
-      expect(fileIcons.getIconForPath(linkPath)).toEqual('icon-file-symlink-file')
+      expect(fileIcons.iconClassForPath(linkPath)).toEqual('icon-file-symlink-file')
 
     it 'recognizes as symlink instead of other types', ->
       filePath = path.join(tempDir, 'foo.zip')
@@ -51,4 +51,4 @@ describe 'DefaultFileIcons', ->
       fs.writeFileSync(filePath, '')
       fs.symlinkSync(filePath, linkPath)
 
-      expect(fileIcons.getIconForPath(linkPath)).toEqual('icon-file-symlink-file')
+      expect(fileIcons.iconClassForPath(linkPath)).toEqual('icon-file-symlink-file')

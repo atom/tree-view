@@ -18,7 +18,7 @@ class FileView extends HTMLElement
     @fileName.dataset.name = @file.name
     @fileName.dataset.path = @file.path
 
-    @fileName.classList.add(FileIcons.getService().getIconForPath(@file.path))
+    @fileName.classList.add(FileIcons.getService().iconClassForPath(@file.path))
 
     @subscriptions.add @file.onDidStatusChange => @updateStatus()
     @updateStatus()
