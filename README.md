@@ -11,9 +11,9 @@ or delete files and folders.
 
 ## API
 
-The Tree View displays icons next to files. These icons are customizable by installing a package that provides a `tree-view.file-icons` service.
+The Tree View displays icons next to files. These icons are customizable by installing a package that provides an `atom.file-icons` service.
 
-The `tree-view.file-icons` API must provide the following methods:
+The `atom.file-icons` service must provide the following methods:
 
 * `iconClassForPath(path)` - Returns a CSS class name to add to the file view
 * `onWillDeactivate` - An event that lets the tree view return to its default icon strategy

@@ -23,7 +23,7 @@
     "coffeelint": "^1.9.7"
   },
   "consumedServices": {
-    "tree-view.file-icons": {
+    "atom.file-icons": {
       "versions": {
         "1.0.0": "consumeFileIcons"
       }
