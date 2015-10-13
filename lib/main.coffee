@@ -1,6 +1,8 @@
 {CompositeDisposable} = require 'event-kit'
 path = require 'path'
 
+FileIcons = require './file-icons'
+
 module.exports =
   config:
     hideVcsIgnoredFiles:
@@ -40,8 +42,13 @@ module.exports =
 
   deactivate: ->
     @disposables.dispose()
+    @fileIconsDisposable?.dispose()
     @treeView?.deactivate()
     @treeView = null
+
+  consumeFileIcons: (service) ->
+    FileIcons.setService(service)
+    @fileIconsDisposable = service.onWillDeactivate -> FileIcons.resetService()
 
   serialize: ->
     if @treeView?

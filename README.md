@@ -8,3 +8,12 @@ When the Tree view has focus you can press <kbd>a</kbd>, <kbd>shift-a</kbd>, <kb
 or delete files and folders.
 
 ![](https://f.cloud.github.com/assets/671378/2241932/6d9cface-9ceb-11e3-9026-31d5011d889d.png)
+
+## API
+
+The Tree View displays icons next to files. These icons are customizable by installing a package that provides an `atom.file-icons` service.
+
+The `atom.file-icons` service must provide the following methods:
+
+* `iconClassForPath(path)` - Returns a CSS class name to add to the file view
+* `onWillDeactivate` - An event that lets the tree view return to its default icon strategy

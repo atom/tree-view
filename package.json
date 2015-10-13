@@ -21,5 +21,12 @@
   },
   "devDependencies": {
     "coffeelint": "^1.9.7"
+  },
+  "consumedServices": {
+    "atom.file-icons": {
+      "versions": {
+        "1.0.0": "consumeFileIcons"
+      }
+    }
   }
 }
