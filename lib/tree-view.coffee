@@ -585,7 +585,7 @@ class TreeView extends View
               newPath = "#{originalNewPath}#{fileCounter.toString()}"
             else
               fileArr = originalNewPath.split('.')
-              newPath = "#{fileArr[0]}#{fileCounter.toString()}.#{fileArr[1]}"
+              newPath = "#{fileArr[0]}#{fileCounter.toString()}.#{fileArr[1..-1].join('.')}"
             fileCounter += 1
 
           if fs.isDirectorySync(initialPath)
