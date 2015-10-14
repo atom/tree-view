@@ -36,6 +36,11 @@
     {'label': 'Add Project Folder', 'command': 'application:add-project-folder'}
     {'type': 'separator'}
 
+    {'label': 'Sort by name', 'command': 'tree-view:sort-by-name'}
+    {'label': 'Sort by mtime', 'command': 'tree-view:sort-by-modified'}
+    {'label': 'Hand down sort mode to children', 'command': 'tree-view:sort-clear-children'}
+    {'type': 'separator'}
+
     {'label': 'Copy Full Path', 'command': 'tree-view:copy-full-path'}
     {'label': 'Copy Project Path', 'command': 'tree-view:copy-project-path'}
     {'label': 'Open In New Window', 'command': 'tree-view:open-in-new-window'}

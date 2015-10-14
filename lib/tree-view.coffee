@@ -130,6 +130,9 @@ class TreeView extends View
      'tree-view:toggle-vcs-ignored-files': -> toggleConfig 'tree-view.hideVcsIgnoredFiles'
      'tree-view:toggle-ignored-names': -> toggleConfig 'tree-view.hideIgnoredNames'
      'tree-view:remove-project-folder': (e) => @removeProjectFolder(e)
+     'tree-view:sort-by-name': => @toggleSortByName()
+     'tree-view:sort-by-modified': => @toggleSortByModified()
+     'tree-view:sort-clear-children': => @clearChildrenSortSettings()
 
     [0..8].forEach (index) =>
       atom.commands.add @element, "tree-view:open-selected-entry-in-pane-#{index + 1}", =>
@@ -840,3 +843,47 @@ class TreeView extends View
     return false unless newDirectoryPath
 
     @moveEntry(initialPath, newDirectoryPath)
+
+  toggleSortByName: () ->
+    # get current sort mode from localstorage
+    key = "tree-view:sort:" + @selectedPath
+    value = localStorage.getItem(key)
+    # swap between asc/desc if needed
+    sortmode = if value == "name_asc" then "name_desc" else "name_asc"
+    # save sort mode for this folder
+    localStorage.setItem(key, sortmode)
+
+    # refresh directory
+    @collapseDirectory()
+    @expandDirectory()
+
+  toggleSortByModified: () ->
+    # get current sort mode from localstorage
+    key = "tree-view:sort:" + @selectedPath
+    value = localStorage.getItem(key)
+    # swap between asc/desc if needed
+    sortmode = if value == "modified_desc" then "modified_asc" else "modified_desc"
+    # save sort mode for this folder
+    localStorage.setItem(key, sortmode)
+
+    # refresh directory
+    @collapseDirectory()
+    @expandDirectory()
+
+  clearChildrenSortSettings: () ->
+    path = @selectedPath
+    if fs.isDirectorySync(path) == false
+      path = path.substring(0, path.lastIndexOf('/'))
+    prefix = "tree-view:sort:" + path + '/'
+
+    remove = []
+    for i in [0...localStorage.length] by 1
+      key = localStorage.key(i)
+
+      if key.indexOf(prefix) == 0
+        remove.push(key)
+    for key in remove
+      localStorage.removeItem(key)
+
+    @collapseDirectory()
+    @expandDirectory()
