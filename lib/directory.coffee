@@ -155,11 +155,37 @@ class Directory
           when 'change' then @reload()
           when 'delete' then @destroy()
 
-  getEntries: ->
+  getChilds: ->
     try
       names = fs.readdirSync(@path)
     catch error
       names = []
+    return names
+
+  hasNonIngoredChilds: ->
+    for name in @getChilds()
+      fullPath = path.join(@path, name)
+
+      stat = fs.lstatSyncNoException(fullPath)
+      symlink = stat.isSymbolicLink?()
+      stat = fs.statSyncNoException(fullPath) if symlink
+
+      isIgnored = @isPathIgnored(fullPath)
+      if not isIgnored
+        return true
+
+      if @isPathIgnored(fullPath) and stat.isDirectory?()
+        # If the path is ignored but it's also a directory we need to check there is no child which is not ignored.
+        expansionState = @expansionState.entries[name]
+        directory = new Directory({name, fullPath, symlink, expansionState, @ignoredPatterns})
+        return true if directory.hasNonIngoredChilds()
+
+    return false
+
+
+  getEntries: ->
+    names = @getChilds()
+
     NaturalSort.insensitive = true
     names.sort(NaturalSort)
 
@@ -168,11 +194,20 @@ class Directory
 
     for name in names
       fullPath = path.join(@path, name)
-      continue if @isPathIgnored(fullPath)
 
       stat = fs.lstatSyncNoException(fullPath)
       symlink = stat.isSymbolicLink?()
       stat = fs.statSyncNoException(fullPath) if symlink
+
+      isIgnored = @isPathIgnored(fullPath)
+
+      if isIgnored and stat.isDirectory?()
+        # If the path is ignored but it's also a directory we need to check there is no child which is not ignored.
+        expansionState = @expansionState.entries[name]
+        directory = new Directory({name, fullPath, symlink, expansionState, @ignoredPatterns})
+        continue if not directory.hasNonIngoredChilds()
+      else if isIgnored
+        continue
 
       if stat.isDirectory?()
         if @entries.hasOwnProperty(name)
