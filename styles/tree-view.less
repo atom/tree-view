@@ -41,14 +41,16 @@
 }
 
 .tree-view-scroller {
+  display: flex;
+  flex-direction: column;
   flex: 1;
   width: 100%;
   overflow: auto;
 }
 
 .tree-view {
+  flex: 1;
   min-width: -webkit-min-content;
-  min-height: 100%;
   padding-left: @component-icon-padding;
   padding-right: @component-padding;
   position: relative;
