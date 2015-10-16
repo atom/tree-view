@@ -160,8 +160,9 @@ class Directory
       names = fs.readdirSync(@path)
     catch error
       names = []
-    NaturalSort.insensitive = true
-    names.sort(NaturalSort)
+
+    # NaturalSort.insensitive = true
+    # names.sort(NaturalSort)
 
     files = []
     directories = []
@@ -175,22 +176,31 @@ class Directory
       stat = fs.statSyncNoException(fullPath) if symlink
 
       if stat.isDirectory?()
+        dir = null
+
         if @entries.hasOwnProperty(name)
           # push a placeholder since this entry already exists but this helps
           # track the insertion index for the created views
-          directories.push(name)
+          dir = name
         else
           expansionState = @expansionState.entries[name]
-          directories.push(new Directory({name, fullPath, symlink, expansionState, @ignoredPatterns}))
+          dir = new Directory({name, fullPath, symlink, expansionState, @ignoredPatterns})
+
+        directories.push({ 'element': dir, 'stat': stat });
+
       else if stat.isFile?()
+        file = null
+
         if @entries.hasOwnProperty(name)
           # push a placeholder since this entry already exists but this helps
           # track the insertion index for the created views
-          files.push(name)
+          file = name
         else
-          files.push(new File({name, fullPath, symlink, realpathCache}))
+          file = new File({name, fullPath, symlink, realpathCache})
 
-    @sortEntries(directories.concat(files))
+        files.push({ 'element': file, 'stat': stat });
+
+    return _.pluck(@sortEntries(directories, files), 'element')
 
   normalizeEntryName: (value) ->
     normalizedValue = value.name
@@ -200,14 +210,63 @@ class Directory
       normalizedValue = normalizedValue.toLowerCase()
     normalizedValue
 
-  sortEntries: (combinedEntries) ->
+  sortEntries: (directories, files) ->
+
+    # find sort mode of closest ancestor with a sort mode
+    sortMode = localStorage.getItem("tree-view:sort:" + @path)
+    if sortMode == null
+      pathParts = @path.split('/')
+      i = pathParts.length
+      while sortMode == null and i > 0
+        joinedpath = pathParts.slice(0,i).join('/')
+        if joinedpath == ''
+          joinedpath = '/'
+        sortMode = localStorage.getItem("tree-view:sort:" + joinedpath)
+        i--
+    # no ancestor has a user-specified sort mode, default to default sort
+    if sortMode == null
+      sortMode = "name_asc"
+
+    console.log("sortmode", @path, sortMode)
+
+    combinedEntries = []
     if atom.config.get('tree-view.sortFoldersBeforeFiles')
-      combinedEntries
+      @sortPathElements(directories, sortMode)
+      @sortPathElements(files, sortMode)
+      combinedEntries = directories.concat(files)
     else
-      combinedEntries.sort (first, second) =>
-        firstName = @normalizeEntryName(first)
-        secondName = @normalizeEntryName(second)
-        firstName.localeCompare(secondName)
+      combinedEntries = directories.concat(files)
+      @sortPathElements(combinedEntries, sortMode)
+
+    combinedEntries
+
+  sortPathElements: (elements, sortBy) ->
+    if sortBy == "name_asc"
+      elements.sort (first, second) =>
+          firstName = @normalizeEntryName(first.element)
+          secondName = @normalizeEntryName(second.element)
+          return firstName.localeCompare(secondName)
+    else if sortBy == "name_desc"
+      elements.sort (first, second) =>
+          firstName = @normalizeEntryName(first.element)
+          secondName = @normalizeEntryName(second.element)
+          return secondName.localeCompare(firstName)
+    else if sortBy == "modified_asc"
+      elements.sort (first, second) =>
+          if first.stat.mtime == second.stat.mtime
+            firstName = @normalizeEntryName(first.element)
+            secondName = @normalizeEntryName(second.element)
+            return firstName.localeCompare(secondName)
+          else
+            return if first.stat.mtime < second.stat.mtime then 1 else -1
+    else if sortBy == "modified_desc"
+      elements.sort (first, second) =>
+          if first.stat.mtime == second.stat.mtime
+            firstName = @normalizeEntryName(first.element)
+            secondName = @normalizeEntryName(second.element)
+            return firstName.localeCompare(secondName)
+          else
+            return if first.stat.mtime > second.stat.mtime then 1 else -1
 
   # Public: Perform a synchronous reload of the directory.
   reload: ->
