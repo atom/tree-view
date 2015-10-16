@@ -816,7 +816,7 @@ class TreeView extends View
     e.originalEvent.dataTransfer.setDragImage(fileNameElement[0], 0, 0)
     e.originalEvent.dataTransfer.setData("initialPath", initialPath)
 
-    window.requestAnimationFrame =>
+    window.requestAnimationFrame ->
       fileNameElement.remove()
 
   # Handle entry dragover event; reset default dragover actions
