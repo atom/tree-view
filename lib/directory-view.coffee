@@ -9,7 +9,7 @@ class DirectoryView extends HTMLElement
     @subscriptions.add @directory.onDidDestroy => @subscriptions.dispose()
     @subscribeToDirectory()
 
-    @draggable = true
+    @draggable = not @directory.isRoot
 
     @classList.add('directory', 'entry',  'list-nested-item',  'collapsed')
 
