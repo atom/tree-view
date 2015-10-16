@@ -2419,6 +2419,39 @@ describe "TreeView", ->
               expect(treeView.list).toHaveClass('full-menu')
               expect(treeView.list).not.toHaveClass('multi-select')
 
+  describe "the enableDragAndDrop config option", ->
+    beforeEach ->
+      rootDirPath = fs.absolute(temp.mkdirSync('tree-view'))
+      alphaFilePath = path.join(rootDirPath, "alpha.txt")
+      alphaDirPath = path.join(rootDirPath, "alpha")
+
+      fs.writeFileSync(alphaFilePath, "doesn't matter")
+      fs.makeTreeSync(alphaDirPath)
+      atom.project.setPaths([rootDirPath])
+
+    it "defaults to set", ->
+      expect(atom.config.get("tree-view.enableDragAndDrop")).toBeTruthy()
+
+    describe "when enabled", ->
+      beforeEach ->
+        atom.config.set("tree-view.enableDragAndDrop", true)
+
+      it "makes FileView draggable", ->
+        expect(treeView.roots[0].entries.children[0].getAttribute('draggable')).toBe("true")
+
+      it "makes DirectoryView draggable", ->
+        expect(treeView.roots[0].entries.children[1].getAttribute('draggable')).toBe("true")
+
+    describe "when disabled", ->
+      beforeEach ->
+        atom.config.set("tree-view.enableDragAndDrop", false)
+
+      it "makes FileView non-draggable", ->
+        expect(treeView.roots[0].entries.children[0].getAttribute('draggable')).toBe('false')
+
+      it "makes DirectoryView non-draggable", ->
+        expect(treeView.roots[0].entries.children[1].getAttribute('draggable')).toBe('false')
+
   describe "the sortFoldersBeforeFiles config option", ->
     [dirView, fileView, dirView2, fileView2, fileView3, rootDirPath, dirPath, filePath, dirPath2, filePath2, filePath3] = []
 

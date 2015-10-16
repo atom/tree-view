@@ -9,7 +9,7 @@ class DirectoryView extends HTMLElement
     @subscriptions.add @directory.onDidDestroy => @subscriptions.dispose()
     @subscribeToDirectory()
 
-    @draggable = true
+    @draggable = atom.config.get('tree-view.enableDragAndDrop')
 
     @classList.add('directory', 'entry',  'list-nested-item',  'collapsed')
 
