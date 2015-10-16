@@ -76,7 +76,7 @@ describe "TreeView", ->
       expect(treeView.selectedEntry()).toEqual(treeView.roots[0])
 
     it "makes the root folder non-draggable", ->
-      expect(treeView.roots[0]).not.toHaveClass('draggable')
+      expect(treeView.roots[0].hasAttribute('draggable')).toBe(true)
 
     describe "when the project has no path", ->
       beforeEach ->
