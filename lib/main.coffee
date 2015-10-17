@@ -8,7 +8,8 @@ module.exports =
     squashDirectoryNames:
       type: 'boolean'
       default: false
-      title: 'Collapse directories that contain only a single directory'
+      title: 'Collapse directories'
+      description: 'Collapse directories that only contain a single directory.'
     hideVcsIgnoredFiles:
       type: 'boolean'
       default: false
