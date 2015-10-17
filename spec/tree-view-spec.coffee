@@ -1330,7 +1330,7 @@ describe "TreeView", ->
         describe "when pasting a file with an asterisk char '*' in to different directory", ->
           it "should successfully move the file", ->
             # Files cannot contain asterisks on Windows
-            return if process.platform.startsWith("win")
+            return if process.platform is "win32"
             asteriskFilePath = path.join(dirPath, "test-file-**.txt")
             fs.writeFileSync(asteriskFilePath, "doesn't matter *")
             LocalStorage['tree-view:copyPath'] = JSON.stringify([asteriskFilePath])
