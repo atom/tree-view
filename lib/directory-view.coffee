@@ -14,15 +14,12 @@ class DirectoryView extends HTMLElement
     @classList.add('directory', 'entry',  'list-nested-item',  'collapsed')
 
     @header = document.createElement('div')
-    @appendChild(@header)
     @header.classList.add('header', 'list-item')
 
     @directoryName = document.createElement('span')
-    @header.appendChild(@directoryName)
     @directoryName.classList.add('name', 'icon')
 
     @entries = document.createElement('ol')
-    @appendChild(@entries)
     @entries.classList.add('entries', 'list-tree')
 
     if @directory.symlink
@@ -34,9 +31,22 @@ class DirectoryView extends HTMLElement
       else
         iconClass = 'icon-file-submodule' if @directory.submodule
     @directoryName.classList.add(iconClass)
-    @directoryName.textContent = @directory.name
     @directoryName.dataset.name = @directory.name
     @directoryName.dataset.path = @directory.path
+
+    if @directory.squashedName?
+      @squashedDirectoryName = document.createElement('span')
+      @squashedDirectoryName.classList.add('squashed-dir')
+      @squashedDirectoryName.textContent = @directory.squashedName
+
+    directoryNameTextNode = document.createTextNode(@directory.name)
+
+    @appendChild(@header)
+    if @squashedDirectoryName?
+      @directoryName.appendChild(@squashedDirectoryName)
+    @directoryName.appendChild(directoryNameTextNode)
+    @header.appendChild(@directoryName)
+    @appendChild(@entries)
 
     if @directory.isRoot
       @classList.add('project-root')

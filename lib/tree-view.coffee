@@ -149,6 +149,8 @@ class TreeView extends View
       @onSideToggled(newValue)
     @disposables.add atom.config.onDidChange 'tree-view.sortFoldersBeforeFiles', =>
       @updateRoots()
+    @disposables.add atom.config.onDidChange 'tree-view.squashDirectoryNames', =>
+      @updateRoots()
 
   toggle: ->
     if @isVisible()
