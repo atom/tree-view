@@ -2,6 +2,7 @@ _ = require 'underscore-plus'
 {$, $$} = require 'atom-space-pen-views'
 fs = require 'fs-plus'
 path = require 'path'
+process = require 'process'
 temp = require('temp').track()
 os = require 'os'
 {buildDragEvents} = require "./event-helpers"
@@ -1325,6 +1326,17 @@ describe "TreeView", ->
             dirView2.click()
             atom.commands.dispatch(treeView.element, "tree-view:paste")
             expect(fs.existsSync(path.join(dirPath2, path.basename(filePath4)))).toBeTruthy()
+
+        describe "when pasting a file with an asterisk char '*' in to different directory", ->
+          it "should successfully move the file", ->
+            # Files cannot contain asterisks on Windows
+            return if process.platform.startsWith("win")
+            asteriskFilePath = path.join(dirPath, "test-file-**.txt")
+            fs.writeFileSync(asteriskFilePath, "doesn't matter *")
+            LocalStorage['tree-view:copyPath'] = JSON.stringify([asteriskFilePath])
+            dirView2.click()
+            atom.commands.dispatch(treeView.element, "tree-view:paste")
+            expect(fs.existsSync(path.join(dirPath2, path.basename(asteriskFilePath)))).toBeTruthy()
 
       describe "when nothing has been copied", ->
         it "does not paste anything", ->
