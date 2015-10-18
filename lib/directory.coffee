@@ -86,6 +86,10 @@ class Directory
       else if repo.isStatusNew(status)
         newStatus = 'added'
 
+    if (not newStatus?) and @isRoot
+      newStatus = 'modified' if (status for apath, status of repo.statuses).some (s) ->
+        repo.isStatusModified(s) or repo.isStatusNew(s)
+
     if newStatus isnt @status
       @status = newStatus
       @emitter.emit('did-status-change', newStatus)
