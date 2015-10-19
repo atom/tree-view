@@ -368,7 +368,10 @@ class TreeView extends View
     @scrollToEntry(@selectedEntry())
 
   expandDirectory: (isRecursive=false) ->
-    @selectedEntry()?.expand?(isRecursive)
+    selectedEntry = @selectedEntry()
+    if (selectedEntry)
+      setTimeout => @emitter.emit 'did-toggle-directory', selectedEntry
+      selectedEntry.expand?(isRecursive)
 
   collapseDirectory: (isRecursive=false) ->
     selectedEntry = @selectedEntry()
@@ -376,6 +379,7 @@ class TreeView extends View
 
     if directory = $(selectedEntry).closest('.expanded.directory')[0]
       directory.collapse(isRecursive)
+      setTimeout => @emitter.emit 'did-toggle-directory', directory
       @selectEntry(directory)
 
   openSelectedEntry: (activatePane) ->
@@ -725,7 +729,7 @@ class TreeView extends View
 
   removeShortcuts: ->
     atom.keymaps.removeBindingsFromSource 'tree-view shortcuts'
-    
+
   moveEntry: (initialPath, newDirectoryPath) ->
     if initialPath is newDirectoryPath
       return
