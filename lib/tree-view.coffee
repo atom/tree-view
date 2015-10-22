@@ -410,15 +410,18 @@ class TreeView extends View
 
   moveSelectedEntry: ->
     if @hasFocus()
-      entry = @selectedEntry()
-      return if not entry? or entry in @roots
-      oldPath = entry.getPath()
+      entries = @getSelectedEntries()
+      return unless entries.length > 0
+      oldPaths = _.map(entries, (entry) =>
+        entry.getPath() unless entry is @root
+      )
     else
-      oldPath = @getActivePath()
+      oldPaths = []
+      oldPaths.push(@getActivePath()) if @getActivePath()?
 
-    if oldPath
+    if oldPaths and oldPaths.length > 0
       MoveDialog ?= require './move-dialog'
-      dialog = new MoveDialog(oldPath)
+      dialog = new MoveDialog(oldPaths)
       dialog.attach()
 
   # Get the outline of a system call to the current platform's file manager.
