@@ -216,9 +216,10 @@ class TreeView extends View
     filePath = e.currentTarget.getPath()
     detail = e.originalEvent?.detail ? 1
     alwaysOpenExisting = atom.config.get('tree-view.alwaysOpenExisting')
+    activateOnClick = atom.config.get('tree-view.clickFocusesEditor')
     if detail is 1
       if atom.config.get('core.allowPendingPaneItems')
-        openPromise = atom.workspace.open(filePath, pending: true, activatePane: false, searchAllPanes: alwaysOpenExisting)
+        openPromise = atom.workspace.open(filePath, pending: true, activatePane: activateOnClick, searchAllPanes: alwaysOpenExisting)
         @currentlyOpening.set(filePath, openPromise)
         openPromise.then => @currentlyOpening.delete(filePath)
     else if detail is 2
