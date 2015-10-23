@@ -2150,24 +2150,39 @@ describe "TreeView", ->
     describe "when a file is modified", ->
       it "adds a custom style", ->
         $(treeView.roots[0].entries).find('.directory:contains(dir)')[0].expand()
-        expect(treeView.find('.file:contains(b.txt)')).toHaveClass 'status-modified'
+        waitsFor ->
+          treeView.find('.file:contains(b.txt)').hasClass('status-modified')
+        runs ->
+          expect(treeView.find('.file:contains(b.txt)')).toHaveClass 'status-modified'
 
-    describe "when a directory if modified", ->
+    describe "when a directory is modified", ->
       it "adds a custom style", ->
-        expect(treeView.find('.directory:contains(dir)')).toHaveClass 'status-modified'
+        waitsFor ->
+          treeView.find('.directory:contains(dir)').hasClass('status-modified')
+        runs ->
+          expect(treeView.find('.directory:contains(dir)')).toHaveClass 'status-modified'
 
     describe "when a file is new", ->
       it "adds a custom style", ->
         $(treeView.roots[0].entries).find('.directory:contains(dir2)')[0].expand()
-        expect(treeView.find('.file:contains(new2)')).toHaveClass 'status-added'
+        waitsFor ->
+          treeView.find('.file:contains(new2)').hasClass('status-added')
+        runs ->
+          expect(treeView.find('.file:contains(new2)')).toHaveClass 'status-added'
 
     describe "when a directory is new", ->
       it "adds a custom style", ->
-        expect(treeView.find('.directory:contains(dir2)')).toHaveClass 'status-added'
+        waitsFor ->
+          treeView.find('.directory:contains(dir2)').hasClass 'status-added'
+        runs ->
+          expect(treeView.find('.directory:contains(dir2)')).toHaveClass 'status-added'
 
     describe "when a file is ignored", ->
       it "adds a custom style", ->
-        expect(treeView.find('.file:contains(ignored.txt)')).toHaveClass 'status-ignored'
+        waitsFor ->
+          treeView.find('.file:contains(ignored.txt)').hasClass 'status-ignored'
+        runs ->
+          expect(treeView.find('.file:contains(ignored.txt)')).toHaveClass 'status-ignored'
 
     describe "when the project is a symbolic link to the repository root", ->
       beforeEach ->
