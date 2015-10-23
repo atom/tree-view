@@ -70,7 +70,7 @@ class Directory
   # Update the status property of this directory using the repo.
   updateStatus: ->
     repo = repoForPath(@path)
-    repo.isPathIgnored(@path).then (isIgnored) =>
+    repo?.isPathIgnored(@path).then (isIgnored) =>
       if isIgnored
         return repo.Git.Status.STATUS.IGNORED
       else
