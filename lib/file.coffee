@@ -44,7 +44,7 @@ class File
   # Update the status property of this directory using the repo.
   updateStatus: ->
     repo = repoForPath(@path)
-    repo.isPathIgnored(@path).then (isIgnored) =>
+    repo?.isPathIgnored(@path).then (isIgnored) =>
       newStatus = null
       if isIgnored
         newStatus = 'ignored'
