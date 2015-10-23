@@ -30,9 +30,12 @@ class DirectoryView extends HTMLElement
     else
       iconClass = 'icon-file-directory'
       if @directory.isRoot
-        iconClass = 'icon-repo' if repoForPath(@directory.path)?.isProjectAtRoot()
+        repoForPath(@directory.path)?.isProjectAtRoot().then (projectAtRoot) =>
+          @directoryName.classList.add('icon-repo') if projectAtRoot
       else
-        iconClass = 'icon-file-submodule' if @directory.submodule
+        repoForPath(@directory.path)?.isSubmodule(@directory.path).then (isSubmodule) =>
+          @directoryName.classList.add('icon-file-submodule') if isSubmodule
+
     @directoryName.classList.add(iconClass)
     @directoryName.textContent = @directory.name
     @directoryName.dataset.name = @directory.name

@@ -29,8 +29,6 @@ class Directory
     @status = null
     @entries = {}
 
-    @submodule = repoForPath(@path)?.isSubmodule(@path)
-
     @subscribeToRepo()
     @updateStatus()
     @loadRealPath()
@@ -63,32 +61,32 @@ class Directory
 
   # Subscribe to project's repo for changes to the Git status of this directory.
   subscribeToRepo: ->
-    repo = repoForPath(@path)
-    return unless repo?
-
-    @subscriptions.add repo.onDidChangeStatus (event) =>
-      @updateStatus(repo) if @contains(event.path)
-    @subscriptions.add repo.onDidChangeStatuses =>
-      @updateStatus(repo)
+    if repo = repoForPath(@path)
+      @subscriptions.add repo.onDidChangeStatus (event) =>
+        @updateStatus() if @contains(event.path)
+      @subscriptions.add repo.onDidChangeStatuses =>
+        @updateStatus()
 
   # Update the status property of this directory using the repo.
   updateStatus: ->
     repo = repoForPath(@path)
-    return unless repo?
-
-    newStatus = null
-    if repo.isPathIgnored(@path)
-      newStatus = 'ignored'
-    else
-      status = repo.getDirectoryStatus(@path)
-      if repo.isStatusModified(status)
+    repo.isPathIgnored(@path).then (isIgnored) =>
+      if isIgnored
+        return repo.Git.Status.STATUS.IGNORED
+      else
+        return repo.getDirectoryStatus(@path)
+    .then (status) =>
+      newStatus = null
+      if status is repo.Git.Status.STATUS.IGNORED
+        newStatus = 'ignored'
+      else if repo.isStatusModified(status)
         newStatus = 'modified'
       else if repo.isStatusNew(status)
         newStatus = 'added'
 
-    if newStatus isnt @status
-      @status = newStatus
-      @emitter.emit('did-status-change', newStatus)
+      if newStatus isnt @status
+        @status = newStatus
+        @emitter.emit('did-status-change', newStatus)
 
   # Is the given path ignored?
   isPathIgnored: (filePath) ->
