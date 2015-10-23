@@ -684,6 +684,8 @@ class TreeView extends View
       fs.moveSync(initialPath, newPath)
 
       if repo = repoForPath(newPath)
+        # The return values of this are thrown away, they are called for emiiter
+        # side effects only.
         repo.getPathStatus(initialPath)
         repo.getPathStatus(newPath)
 
