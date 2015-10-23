@@ -2142,7 +2142,10 @@ describe "TreeView", ->
 
     describe "when the project is the repository root", ->
       it "adds a custom style", ->
-        expect(treeView.find('.icon-repo').length).toBe 1
+        waitsFor ->
+          treeView.find('.icon-repo').length == 1
+        runs ->
+          expect(treeView.find('.icon-repo').length).toBe 1
 
     describe "when a file is modified", ->
       it "adds a custom style", ->
