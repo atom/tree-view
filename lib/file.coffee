@@ -35,32 +35,31 @@ class File
 
   # Subscribe to the project' repo for changes to the Git status of this file.
   subscribeToRepo: ->
-    repo = repoForPath(@path)
-    return unless repo?
-
-    @subscriptions.add repo.onDidChangeStatus (event) =>
-      @updateStatus(repo) if @isPathEqual(event.path)
-    @subscriptions.add repo.onDidChangeStatuses =>
-      @updateStatus(repo)
+    if repo = repoForPath(@path)
+      @subscriptions.add repo.onDidChangeStatus (event) =>
+        @updateStatus(repo) if @isPathEqual(event.path)
+      @subscriptions.add repo.onDidChangeStatuses =>
+        @updateStatus(repo)
 
   # Update the status property of this directory using the repo.
   updateStatus: ->
     repo = repoForPath(@path)
-    return unless repo?
+    repo.isPathIgnored(@path).then (isIgnored) =>
+      newStatus = null
+      if isIgnored
+        newStatus = 'ignored'
+      else
+        # These are all sync methods
+        status = repo.getCachedPathStatus(@path)
+        if repo.isStatusModified(status)
+          newStatus = 'modified'
+        else if repo.isStatusNew(status)
+          newStatus = 'added'
 
-    newStatus = null
-    if repo.isPathIgnored(@path)
-      newStatus = 'ignored'
-    else
-      status = repo.getCachedPathStatus(@path)
-      if repo.isStatusModified(status)
-        newStatus = 'modified'
-      else if repo.isStatusNew(status)
-        newStatus = 'added'
+      if newStatus isnt @status
+        @status = newStatus
+        @emitter.emit('did-status-change', newStatus)
 
-    if newStatus isnt @status
-      @status = newStatus
-      @emitter.emit('did-status-change', newStatus)
 
   isPathEqual: (pathToCompare) ->
     @path is pathToCompare or @realPath is pathToCompare
