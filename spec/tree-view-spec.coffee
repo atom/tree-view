@@ -2164,7 +2164,7 @@ describe "TreeView", ->
         expect(zetaEntries).toEqual(["zeta.txt"])
 
       it "squashes two dir names when the first only contains a single dir", ->
-        betaDir = $(treeView.roots[0].entries).find('.directory:contains(alpha/beta):first')
+        betaDir = $(treeView.roots[0].entries).find(".directory:contains(alpha#{path.sep}beta):first")
         betaDir[0].expand()
         betaEntries = [].slice.call(betaDir[0].children[1].children).map (element) ->
           element.innerText
@@ -2172,7 +2172,7 @@ describe "TreeView", ->
         expect(betaEntries).toEqual(["beta.txt"])
 
       it "squashes three dir names when the first and second only contain single dirs", ->
-        epsilonDir = $(treeView.roots[0].entries).find('.directory:contains(gamma/delta/epsilon):first')
+        epsilonDir = $(treeView.roots[0].entries).find(".directory:contains(gamma#{path.sep}delta#{path.sep}epsilon):first")
         epsilonDir[0].expand()
         epsilonEntries = [].slice.call(epsilonDir[0].children[1].children).map (element) ->
           element.innerText
