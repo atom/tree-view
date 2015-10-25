@@ -337,7 +337,7 @@ class TreeView extends View
     @selectEntry(@entryForPath(entryPath))
 
   moveDown: (event) ->
-    event.stopImmediatePropagation()
+    event?.stopImmediatePropagation()
     selectedEntry = @selectedEntry()
     if selectedEntry?
       if selectedEntry instanceof DirectoryView
@@ -372,7 +372,10 @@ class TreeView extends View
   expandDirectory: (isRecursive=false) ->
     selectedEntry = @selectedEntry()
     if selectedEntry instanceof DirectoryView
-      selectedEntry.expand(isRecursive)
+      if isRecursive is false and selectedEntry.isExpanded
+        @moveDown() if selectedEntry.directory.getEntries().length > 0
+      else
+        selectedEntry.expand(isRecursive)
 
   collapseDirectory: (isRecursive=false) ->
     selectedEntry = @selectedEntry()
