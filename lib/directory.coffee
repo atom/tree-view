@@ -5,7 +5,7 @@ fs = require 'fs-plus'
 PathWatcher = require 'pathwatcher'
 File = require './file'
 {repoForPath} = require './helpers'
-
+naturalCompare = require 'natural-compare-lite'
 realpathCache = {}
 
 module.exports =
@@ -159,8 +159,9 @@ class Directory
       names = fs.readdirSync(@path)
     catch error
       names = []
-    names.sort (name1, name2) -> name1.toLowerCase().localeCompare(name2.toLowerCase())
-    
+
+    names.sort(naturalCompare)
+
     files = []
     directories = []
 
