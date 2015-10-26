@@ -2204,10 +2204,12 @@ describe "TreeView", ->
       describe "when a file loses its modified status", ->
         it "updates its and its parent directories' styles", ->
           fs.writeFileSync(modifiedFile, originalFileContent)
-          atom.project.getRepositories()[0].getPathStatus(modifiedFile)
-
-          expect(treeView.find('.file:contains(b.txt)')).not.toHaveClass 'status-modified'
-          expect(treeView.find('.directory:contains(dir)')).not.toHaveClass 'status-modified'
+          atom.project.getRepositories()[0].async.getPathStatus(modifiedFile)
+          waitsFor ->
+            not treeView.find('.file:contains(b.txt)').hasClass('status-modified')
+          runs ->
+            expect(treeView.find('.file:contains(b.txt)')).not.toHaveClass 'status-modified'
+            expect(treeView.find('.directory:contains(dir)')).not.toHaveClass 'status-modified'
 
   describe "when the resize handle is double clicked", ->
     beforeEach ->
