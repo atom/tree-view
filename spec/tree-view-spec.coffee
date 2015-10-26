@@ -2143,7 +2143,7 @@ describe "TreeView", ->
     describe "when the project is the repository root", ->
       it "adds a custom style", ->
         waitsFor ->
-          treeView.find('.icon-repo').length == 1
+          treeView.find('.icon-repo').length is 1
         runs ->
           expect(treeView.find('.icon-repo').length).toBe 1
 
