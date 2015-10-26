@@ -7,7 +7,7 @@ class FileView extends HTMLElement
     @subscriptions = new CompositeDisposable()
     @subscriptions.add @file.onDidDestroy => @subscriptions.dispose()
 
-    @draggable = true
+    @draggable = atom.config.get('tree-view.enableDragAndDrop')
 
     @classList.add('file', 'entry', 'list-item')
 

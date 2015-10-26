@@ -5,6 +5,10 @@ FileIcons = require './file-icons'
 
 module.exports =
   config:
+    enableDragAndDrop:
+      type: 'boolean'
+      default: true
+      description: 'Enable dragging and dropping of files and directories within the tree view.'
     hideVcsIgnoredFiles:
       type: 'boolean'
       default: false
