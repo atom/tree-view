@@ -6,6 +6,7 @@ PathWatcher = require 'pathwatcher'
 NaturalSort = require 'javascript-natural-sort'
 File = require './file'
 {repoForPath} = require './helpers'
+{GitRepositoryAsync} = require 'atom'
 
 realpathCache = {}
 
@@ -72,12 +73,12 @@ class Directory
     repo = repoForPath(@path)
     repo?.isPathIgnored(@path).then (isIgnored) =>
       if isIgnored
-        return repo.Git.Status.STATUS.IGNORED
+        return GitRepositoryAsync.Git.Status.STATUS.IGNORED
       else
         return repo.getDirectoryStatus(@path)
     .then (status) =>
       newStatus = null
-      if status is repo.Git.Status.STATUS.IGNORED
+      if status is GitRepositoryAsync.Git.Status.STATUS.IGNORED
         newStatus = 'ignored'
       else if repo.isStatusModified(status)
         newStatus = 'modified'
@@ -87,6 +88,7 @@ class Directory
       if newStatus isnt @status
         @status = newStatus
         @emitter.emit('did-status-change', newStatus)
+      newStatus
 
   # Is the given path ignored?
   isPathIgnored: (filePath) ->
