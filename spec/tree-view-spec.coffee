@@ -2429,7 +2429,7 @@ describe "TreeView", ->
       fs.makeTreeSync(alphaDirPath)
       atom.project.setPaths([rootDirPath])
 
-    it "defaults to set", ->
+    it "defaults to true", ->
       expect(atom.config.get("tree-view.enableDragAndDrop")).toBeTruthy()
 
     describe "when enabled", ->
