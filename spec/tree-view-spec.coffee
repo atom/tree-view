@@ -2110,6 +2110,83 @@ describe "TreeView", ->
       expect(treeView.find('.directory .name:contains(test.js)').length).toBe 1
       expect(treeView.find('.directory .name:contains(test.txt)').length).toBe 1
 
+  describe "the squashedDirectoryName config option", ->
+    beforeEach ->
+      rootDirPath = fs.absolute(temp.mkdirSync('tree-view'))
+
+      zetaDirPath = path.join(rootDirPath, "zeta")
+      zetaFilePath = path.join(zetaDirPath, "zeta.txt")
+
+      alphaDirPath = path.join(rootDirPath, "alpha")
+      betaDirPath = path.join(alphaDirPath, "beta")
+      betaFilePath = path.join(betaDirPath, "beta.txt")
+
+      gammaDirPath = path.join(rootDirPath, "gamma")
+      deltaDirPath = path.join(gammaDirPath, "delta")
+      epsilonDirPath = path.join(deltaDirPath, "epsilon")
+      thetaFilePath = path.join(epsilonDirPath, "theta.txt")
+
+      lambdaDirPath = path.join(rootDirPath, "lambda")
+      iotaDirPath = path.join(lambdaDirPath, "iota")
+      kappaDirPath = path.join(lambdaDirPath, "kappa")
+
+      fs.makeTreeSync(zetaDirPath)
+      fs.writeFileSync(zetaFilePath, "doesn't matter")
+
+      fs.makeTreeSync(alphaDirPath)
+      fs.makeTreeSync(betaDirPath)
+      fs.writeFileSync(betaFilePath, "doesn't matter")
+
+      fs.makeTreeSync(gammaDirPath)
+      fs.makeTreeSync(deltaDirPath)
+      fs.makeTreeSync(epsilonDirPath)
+      fs.writeFileSync(thetaFilePath, "doesn't matter")
+
+      fs.makeTreeSync(lambdaDirPath)
+      fs.makeTreeSync(iotaDirPath)
+      fs.makeTreeSync(kappaDirPath)
+
+      atom.project.setPaths([rootDirPath])
+
+    it "defaults to disabled", ->
+      expect(atom.config.get("tree-view.squashDirectoryNames")).toBeFalsy()
+
+    describe "when enabled", ->
+      beforeEach ->
+        atom.config.set('tree-view.squashDirectoryNames', true)
+
+      it "does not squash a file in to a DirectoryViews", ->
+        zetaDir = $(treeView.roots[0].entries).find('.directory:contains(zeta):first')
+        zetaDir[0].expand()
+        zetaEntries = [].slice.call(zetaDir[0].children[1].children).map (element) ->
+          element.innerText
+
+        expect(zetaEntries).toEqual(["zeta.txt"])
+
+      it "squashes two dir names when the first only contains a single dir", ->
+        betaDir = $(treeView.roots[0].entries).find(".directory:contains(alpha#{path.sep}beta):first")
+        betaDir[0].expand()
+        betaEntries = [].slice.call(betaDir[0].children[1].children).map (element) ->
+          element.innerText
+
+        expect(betaEntries).toEqual(["beta.txt"])
+
+      it "squashes three dir names when the first and second only contain single dirs", ->
+        epsilonDir = $(treeView.roots[0].entries).find(".directory:contains(gamma#{path.sep}delta#{path.sep}epsilon):first")
+        epsilonDir[0].expand()
+        epsilonEntries = [].slice.call(epsilonDir[0].children[1].children).map (element) ->
+          element.innerText
+
+        expect(epsilonEntries).toEqual(["theta.txt"])
+
+      it "does not squash a dir name when there are two child dirs ", ->
+        lambdaDir = $(treeView.roots[0].entries).find('.directory:contains(lambda):first')
+        lambdaDir[0].expand()
+        lambdaEntries = [].slice.call(lambdaDir[0].children[1].children).map (element) ->
+          element.innerText
+
+        expect(lambdaEntries).toEqual(["iota", "kappa"])
+
   describe "Git status decorations", ->
     [projectPath, modifiedFile, originalFileContent] = []
 
