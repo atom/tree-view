@@ -1295,6 +1295,7 @@ describe "TreeView", ->
 
               fileView.click()
               atom.commands.dispatch(treeView.element, "tree-view:paste")
+              fileView.click()
               atom.commands.dispatch(treeView.element, "tree-view:paste")
 
               fileArr = filePath.split(path.sep).pop().split('.')
@@ -1320,6 +1321,7 @@ describe "TreeView", ->
 
               dirView.click()
               atom.commands.dispatch(treeView.element, "tree-view:paste")
+              dirView.click()
               atom.commands.dispatch(treeView.element, "tree-view:paste")
 
               fileArr = filePath.split(path.sep).pop().split('.')
