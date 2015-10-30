@@ -604,7 +604,7 @@ class TreeView extends View
             if repo = repoForPath(initialPath)
               repo.getPathStatus(initialPath) # for side effect; cut may result in status change of parent dir
     if newPaths.length > 0
-      @deselect(@getSelectedEntries)
+      @deselect(@getSelectedEntries())
       @selectOnCreate(newPaths)
 
   # For new paths that have been created, select each entry if it exists or
