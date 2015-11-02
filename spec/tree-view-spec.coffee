@@ -397,13 +397,13 @@ describe "TreeView", ->
 
       it 'scrolls the selected file into the visible view', ->
         # Open file at bottom
-        waitsForPromise -> atom.workspace.open(path.join(rootDirPath, 'file-9.txt'))
+        waitsForPromise -> atom.workspace.open(path.join(rootDirPath, 'file-20.txt'))
         runs ->
           atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
           expect(treeView.scrollTop()).toBeGreaterThan 400
 
         # Open file in the middle, should be centered in scroll
-        waitsForPromise -> atom.workspace.open(path.join(rootDirPath, 'file-19.txt'))
+        waitsForPromise -> atom.workspace.open(path.join(rootDirPath, 'file-10.txt'))
         runs ->
           atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
           expect(treeView.scrollTop()).toBeLessThan 400
@@ -414,7 +414,6 @@ describe "TreeView", ->
         runs ->
           atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
           expect(treeView.scrollTop()).toEqual 0
-
 
   describe "when tool-panel:unfocus is triggered on the tree view", ->
     it "surrenders focus to the workspace but remains open", ->
