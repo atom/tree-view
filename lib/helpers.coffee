@@ -26,9 +26,9 @@ module.exports =
     splits = ((elt for elt in thePath.split(path.sep) when elt) for thePath in basePaths)
 
     # compute the maximum depth we have to check as the shortest path length
-    max_depth = Math.min.apply(null, split.length for split in splits) - 1
+    maxDepth = Math.min.apply(null, split.length for split in splits) - 1
 
-    for depth in [0..max_depth]
+    for depth in [0..maxDepth]
       level = (split[depth] for split in splits)
       # is every path component on this level the same?
       break unless level.reduce((prev, curr) -> if prev is curr then curr else false)
