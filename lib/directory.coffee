@@ -5,7 +5,6 @@ fs = require 'fs-plus'
 PathWatcher = require 'pathwatcher'
 File = require './file'
 {repoForPath} = require './helpers'
-naturalCompare = require 'natural-compare-lite'
 realpathCache = {}
 
 module.exports =
@@ -162,8 +161,7 @@ class Directory
       names = fs.readdirSync(@path)
     catch error
       names = []
-
-    names.sort(naturalCompare)
+    names.sort(new Intl.Collator(undefined, {numeric: true, sensitivity: "base"}).compare)
 
     files = []
     directories = []
