@@ -50,9 +50,8 @@ class DirectoryView extends HTMLElement
 
     if @directory.isRoot
       @classList.add('project-root')
-    else
-      @subscriptions.add @directory.onDidStatusChange => @updateStatus()
-      @updateStatus()
+    @subscriptions.add @directory.onDidStatusChange => @updateStatus()
+    @updateStatus()
 
     @expand() if @directory.expansionState.isExpanded
 
