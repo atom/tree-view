@@ -15,6 +15,7 @@ class FileView extends HTMLElement
     @fileName.classList.add('name', 'icon')
     @appendChild(@fileName)
     @fileName.textContent = @file.name
+    @fileName.title = @file.name
     @fileName.dataset.name = @file.name
     @fileName.dataset.path = @file.path
 

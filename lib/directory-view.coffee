@@ -32,6 +32,7 @@ class DirectoryView extends HTMLElement
         iconClass = 'icon-file-submodule' if @directory.submodule
     @directoryName.classList.add(iconClass)
     @directoryName.dataset.name = @directory.name
+    @directoryName.title = @directory.name
     @directoryName.dataset.path = @directory.path
 
     if @directory.squashedName?
