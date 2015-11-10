@@ -2657,6 +2657,21 @@ describe "TreeView", ->
         expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Opening folder in Finder failed'
         expect(atom.notifications.getNotifications()[0].getDetail()).toContain 'ENOENT'
 
+  describe "when reloading a directory with deletions and additions", ->
+    it "does not throw an error (regression)", ->
+      projectPath = temp.mkdirSync('atom-project')
+      entriesPath = path.join(projectPath, 'entries')
+
+      fs.mkdirSync(entriesPath)
+      atom.project.setPaths([projectPath])
+      treeView.roots[0].expand()
+
+      fs.removeSync(entriesPath)
+      treeView.roots[0].reload()
+
+      fs.mkdirSync(path.join(projectPath, 'other'))
+      treeView.roots[0].reload()
+
   describe "Dragging and dropping files", ->
     beforeEach ->
       rootDirPath = fs.absolute(temp.mkdirSync('tree-view'))
