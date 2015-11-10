@@ -209,7 +209,7 @@ class TreeView extends View
       when 2
         if entry instanceof FileView
           @unfocus()
-        else if DirectoryView
+        else if entry instanceof DirectoryView
           entry.toggleExpansion(isRecursive)
 
     false
