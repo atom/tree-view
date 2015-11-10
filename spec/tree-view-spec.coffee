@@ -2257,6 +2257,26 @@ describe "TreeView", ->
       it "adds a custom style", ->
         expect(treeView.find('.file:contains(ignored.txt)')).toHaveClass 'status-ignored'
 
+    describe "when a file is selected in a directory", ->
+      beforeEach ->
+        jasmine.attachToDOM(workspaceElement)
+        treeView.focus()
+        element.expand() for element in treeView.find('.directory')
+        fileView = treeView.find('.file:contains(new2)')
+        expect(fileView).not.toBeNull()
+        fileView.click()
+
+      describe "when the file is deleted", ->
+        it "updates the style of the directory", ->
+          expect(treeView.selectedEntry().getPath()).toContain(path.join('dir2', 'new2'))
+          dirView = $(treeView.roots[0].entries).find('.directory:contains(dir2)')
+          expect(dirView).not.toBeNull()
+          spyOn(dirView[0].directory, 'updateStatus')
+          spyOn(atom, 'confirm').andCallFake (dialog) ->
+            dialog.buttons["Move to Trash"]()
+          atom.commands.dispatch(treeView.element, 'tree-view:remove')
+          expect(dirView[0].directory.updateStatus).toHaveBeenCalled()
+
     describe "when the project is a symbolic link to the repository root", ->
       beforeEach ->
         symlinkPath = temp.path('tree-view-project')

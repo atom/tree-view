@@ -525,6 +525,8 @@ class TreeView extends View
         "Move to Trash": ->
           for selectedPath in selectedPaths
             shell.moveItemToTrash(selectedPath)
+            if repo = repoForPath(selectedPath)
+              repo.getPathStatus(selectedPath)
         "Cancel": null
 
   # Public: Copy the path of the selected entry element.
