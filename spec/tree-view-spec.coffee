@@ -2,7 +2,6 @@ _ = require 'underscore-plus'
 {$, $$} = require 'atom-space-pen-views'
 fs = require 'fs-plus'
 path = require 'path'
-process = require 'process'
 temp = require('temp').track()
 os = require 'os'
 {buildDragEvents} = require "./event-helpers"
@@ -1333,6 +1332,7 @@ describe "TreeView", ->
           it "should successfully move the file", ->
             # Files cannot contain asterisks on Windows
             return if process.platform is "win32"
+
             asteriskFilePath = path.join(dirPath, "test-file-**.txt")
             fs.writeFileSync(asteriskFilePath, "doesn't matter *")
             LocalStorage['tree-view:copyPath'] = JSON.stringify([asteriskFilePath])
