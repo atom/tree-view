@@ -2665,17 +2665,21 @@ describe "TreeView", ->
       fs.mkdirSync(entriesPath)
       atom.project.setPaths([projectPath])
       treeView.roots[0].expand()
+      expect(treeView.roots[0].directory.serializeExpansionState()).toEqual
+        isExpanded: true
+        entries:
+          entries:
+            isExpanded: false
+            entries: {}
 
       fs.removeSync(entriesPath)
       treeView.roots[0].reload()
-
       expect(treeView.roots[0].directory.serializeExpansionState()).toEqual
         isExpanded: true
         entries: {}
 
       fs.mkdirSync(path.join(projectPath, 'other'))
       treeView.roots[0].reload()
-
       expect(treeView.roots[0].directory.serializeExpansionState()).toEqual
         isExpanded: true
         entries:
