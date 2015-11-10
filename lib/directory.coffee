@@ -229,8 +229,13 @@ class Directory
     for name, entry of removedEntries
       entriesRemoved = true
       entry.destroy()
-      delete @entries[name]
-      delete @expansionState[name]
+
+      if @entries.hasOwnProperty(entry)
+        delete @entries[name]
+
+      if @expansionState.entries.hasOwnProperty(entry)
+        delete @expansionState.entries[name]
+
     @emitter.emit('did-remove-entries', removedEntries) if entriesRemoved
 
     if newEntries.length > 0
