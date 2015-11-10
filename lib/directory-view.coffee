@@ -9,8 +9,6 @@ class DirectoryView extends HTMLElement
     @subscriptions.add @directory.onDidDestroy => @subscriptions.dispose()
     @subscribeToDirectory()
 
-    @draggable = true
-
     @classList.add('directory', 'entry',  'list-nested-item',  'collapsed')
 
     @header = document.createElement('div')
@@ -52,6 +50,7 @@ class DirectoryView extends HTMLElement
     if @directory.isRoot
       @classList.add('project-root')
     else
+      @draggable = true
       @subscriptions.add @directory.onDidStatusChange => @updateStatus()
       @updateStatus()
 

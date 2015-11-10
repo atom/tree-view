@@ -75,6 +75,9 @@ describe "TreeView", ->
     it "selects the root folder", ->
       expect(treeView.selectedEntry()).toEqual(treeView.roots[0])
 
+    it "makes the root folder non-draggable", ->
+      expect(treeView.roots[0].hasAttribute('draggable')).toBe(false)
+
     describe "when the project has no path", ->
       beforeEach ->
         atom.project.setPaths([])
