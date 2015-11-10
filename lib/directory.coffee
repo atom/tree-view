@@ -230,10 +230,10 @@ class Directory
       entriesRemoved = true
       entry.destroy()
 
-      if @entries.hasOwnProperty(entry)
+      if @entries.hasOwnProperty(name)
         delete @entries[name]
 
-      if @expansionState.entries.hasOwnProperty(entry)
+      if @expansionState.entries.hasOwnProperty(name)
         delete @expansionState.entries[name]
 
     @emitter.emit('did-remove-entries', removedEntries) if entriesRemoved
