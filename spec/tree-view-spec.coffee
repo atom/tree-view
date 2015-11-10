@@ -2669,8 +2669,19 @@ describe "TreeView", ->
       fs.removeSync(entriesPath)
       treeView.roots[0].reload()
 
+      expect(treeView.roots[0].directory.serializeExpansionState()).toEqual
+        isExpanded: true
+        entries: {}
+
       fs.mkdirSync(path.join(projectPath, 'other'))
       treeView.roots[0].reload()
+
+      expect(treeView.roots[0].directory.serializeExpansionState()).toEqual
+        isExpanded: true
+        entries:
+          other:
+            isExpanded: false
+            entries: {}
 
   describe "Dragging and dropping files", ->
     beforeEach ->
