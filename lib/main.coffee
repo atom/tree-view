@@ -5,6 +5,11 @@ FileIcons = require './file-icons'
 
 module.exports =
   config:
+    squashDirectoryNames:
+      type: 'boolean'
+      default: false
+      title: 'Collapse directories'
+      description: 'Collapse directories that only contain a single directory.'
     hideVcsIgnoredFiles:
       type: 'boolean'
       default: false
