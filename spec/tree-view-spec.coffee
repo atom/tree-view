@@ -75,6 +75,9 @@ describe "TreeView", ->
     it "selects the root folder", ->
       expect(treeView.selectedEntry()).toEqual(treeView.roots[0])
 
+    it "makes the root folder non-draggable", ->
+      expect(treeView.roots[0].hasAttribute('draggable')).toBe(false)
+
     describe "when the project has no path", ->
       beforeEach ->
         atom.project.setPaths([])
@@ -1325,6 +1328,18 @@ describe "TreeView", ->
             atom.commands.dispatch(treeView.element, "tree-view:paste")
             expect(fs.existsSync(path.join(dirPath2, path.basename(filePath4)))).toBeTruthy()
 
+        describe "when pasting a file with an asterisk char '*' in to different directory", ->
+          it "should successfully move the file", ->
+            # Files cannot contain asterisks on Windows
+            return if process.platform is "win32"
+
+            asteriskFilePath = path.join(dirPath, "test-file-**.txt")
+            fs.writeFileSync(asteriskFilePath, "doesn't matter *")
+            LocalStorage['tree-view:copyPath'] = JSON.stringify([asteriskFilePath])
+            dirView2.click()
+            atom.commands.dispatch(treeView.element, "tree-view:paste")
+            expect(fs.existsSync(path.join(dirPath2, path.basename(asteriskFilePath)))).toBeTruthy()
+
       describe "when nothing has been copied", ->
         it "does not paste anything", ->
           expect(-> atom.commands.dispatch(treeView.element, "tree-view:paste")).not.toThrow()
@@ -2242,6 +2257,26 @@ describe "TreeView", ->
       it "adds a custom style", ->
         expect(treeView.find('.file:contains(ignored.txt)')).toHaveClass 'status-ignored'
 
+    describe "when a file is selected in a directory", ->
+      beforeEach ->
+        jasmine.attachToDOM(workspaceElement)
+        treeView.focus()
+        element.expand() for element in treeView.find('.directory')
+        fileView = treeView.find('.file:contains(new2)')
+        expect(fileView).not.toBeNull()
+        fileView.click()
+
+      describe "when the file is deleted", ->
+        it "updates the style of the directory", ->
+          expect(treeView.selectedEntry().getPath()).toContain(path.join('dir2', 'new2'))
+          dirView = $(treeView.roots[0].entries).find('.directory:contains(dir2)')
+          expect(dirView).not.toBeNull()
+          spyOn(dirView[0].directory, 'updateStatus')
+          spyOn(atom, 'confirm').andCallFake (dialog) ->
+            dialog.buttons["Move to Trash"]()
+          atom.commands.dispatch(treeView.element, 'tree-view:remove')
+          expect(dirView[0].directory.updateStatus).toHaveBeenCalled()
+
     describe "when the project is a symbolic link to the repository root", ->
       beforeEach ->
         symlinkPath = temp.path('tree-view-project')
@@ -2724,7 +2759,37 @@ describe "TreeView", ->
       spyOn atom.keymaps, 'removeBindingsFromSource'
       treeView.removeShortcuts()
       expect(atom.keymaps.removeBindingsFromSource).toHaveBeenCalledWith 'tree-view shortcuts'
-      
+
+  describe "when reloading a directory with deletions and additions", ->
+    it "does not throw an error (regression)", ->
+      projectPath = temp.mkdirSync('atom-project')
+      entriesPath = path.join(projectPath, 'entries')
+
+      fs.mkdirSync(entriesPath)
+      atom.project.setPaths([projectPath])
+      treeView.roots[0].expand()
+      expect(treeView.roots[0].directory.serializeExpansionState()).toEqual
+        isExpanded: true
+        entries:
+          entries:
+            isExpanded: false
+            entries: {}
+
+      fs.removeSync(entriesPath)
+      treeView.roots[0].reload()
+      expect(treeView.roots[0].directory.serializeExpansionState()).toEqual
+        isExpanded: true
+        entries: {}
+
+      fs.mkdirSync(path.join(projectPath, 'other'))
+      treeView.roots[0].reload()
+      expect(treeView.roots[0].directory.serializeExpansionState()).toEqual
+        isExpanded: true
+        entries:
+          other:
+            isExpanded: false
+            entries: {}
+
   describe "Dragging and dropping files", ->
     beforeEach ->
       rootDirPath = fs.absolute(temp.mkdirSync('tree-view'))

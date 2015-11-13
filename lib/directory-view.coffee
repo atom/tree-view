@@ -9,8 +9,6 @@ class DirectoryView extends HTMLElement
     @subscriptions.add @directory.onDidDestroy => @subscriptions.dispose()
     @subscribeToDirectory()
 
-    @draggable = true
-
     @classList.add('directory', 'entry',  'list-nested-item',  'collapsed')
 
     @header = document.createElement('div')
@@ -32,6 +30,7 @@ class DirectoryView extends HTMLElement
         iconClass = 'icon-file-submodule' if @directory.submodule
     @directoryName.classList.add(iconClass)
     @directoryName.dataset.name = @directory.name
+    @directoryName.title = @directory.name
     @directoryName.dataset.path = @directory.path
 
     if @directory.squashedName?
@@ -51,6 +50,7 @@ class DirectoryView extends HTMLElement
     if @directory.isRoot
       @classList.add('project-root')
     else
+      @draggable = true
       @subscriptions.add @directory.onDidStatusChange => @updateStatus()
       @updateStatus()
 

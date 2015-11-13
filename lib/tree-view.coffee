@@ -214,7 +214,7 @@ class TreeView extends View
       when 2
         if entry instanceof FileView
           @unfocus()
-        else if DirectoryView
+        else if entry instanceof DirectoryView
           entry.toggleExpansion(isRecursive)
 
     false
@@ -535,6 +535,8 @@ class TreeView extends View
         "Move to Trash": ->
           for selectedPath in selectedPaths
             shell.moveItemToTrash(selectedPath)
+            if repo = repoForPath(selectedPath)
+              repo.getPathStatus(selectedPath)
         "Cancel": null
 
   # Public: Copy the path of the selected entry element.
@@ -609,7 +611,7 @@ class TreeView extends View
         else if cutPaths
           # Only move the target if the cut target doesn't exists and if the newPath
           # is not within the initial path
-          unless fs.existsSync(newPath) or !!newPath.match(new RegExp("^#{initialPath}"))
+          unless fs.existsSync(newPath) or newPath.startsWith(initialPath)
             catchAndShowFileErrors -> fs.moveSync(initialPath, newPath)
 
   add: (isCreatingFile) ->
