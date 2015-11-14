@@ -588,8 +588,15 @@ class TreeView extends View
             if initialPathIsDirectory
               newPath = "#{originalNewPath}#{fileCounter.toString()}"
             else
-              fileArr = originalNewPath.split('.')
-              newPath = "#{fileArr[0]}#{fileCounter.toString()}.#{fileArr[1]}"
+              if process.platform is 'win32'
+                fileArr = /(.+)\.(?!.*\\)(.+)/.exec(originalNewPath)
+              else
+                fileArr = /(.+)\.(?!.*\/)(.+)/.exec(originalNewPath)
+
+              if fileArr?
+                newPath = "#{fileArr[1]}#{fileCounter.toString()}.#{fileArr[2]}"
+              else # File didn't have an extension so don't attempt to append a nonexistent one
+                newPath = "#{originalNewPath}#{fileCounter.toString()}"
             fileCounter += 1
 
           if fs.isDirectorySync(initialPath)
