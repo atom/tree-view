@@ -3042,8 +3042,8 @@ describe "TreeView", ->
           treeView.onDragStart(dragStartEvent)
           treeView.onDrop(dragDropEvents.top)
           projectPaths = atom.project.getPaths()
-          expect(projectPaths[0]).toEqual(gammaDirPath);
-          expect(projectPaths[1]).toEqual(alphaDirPath);
+          expect(projectPaths[0]).toEqual(gammaDirPath)
+          expect(projectPaths[1]).toEqual(alphaDirPath)
 
           # Is removed when drag ends
           expect('.placeholder').not.toExist()
@@ -3059,9 +3059,9 @@ describe "TreeView", ->
           treeView.onDragStart(dragStartEvent)
           treeView.onDrop(dragDropEvents.bottom)
           projectPaths = atom.project.getPaths()
-          expect(projectPaths[0]).toEqual(alphaDirPath);
-          expect(projectPaths[1]).toEqual(thetaDirPath);
-          expect(projectPaths[2]).toEqual(gammaDirPath);
+          expect(projectPaths[0]).toEqual(alphaDirPath)
+          expect(projectPaths[1]).toEqual(thetaDirPath)
+          expect(projectPaths[2]).toEqual(gammaDirPath)
 
           # Is removed when drag ends
           expect('.placeholder').not.toExist()
