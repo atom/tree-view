@@ -48,17 +48,17 @@ buildElementPositionalDragEvents = (el, dataTransfer) ->
   topEvent = $.Event()
   topEvent.target = el
   topEvent.currentTarget = el
-  topEvent.originalEvent = {dataTransfer, "atom-event": true, pageY: $el.offset().top}
+  topEvent.originalEvent = {dataTransfer, pageY: $el.offset().top}
 
   middleEvent = $.Event()
   middleEvent.target = el
   middleEvent.currentTarget = el
-  middleEvent.originalEvent = {dataTransfer, "atom-event": true, pageY: $el.offset().top + $el.height() * 0.5}
+  middleEvent.originalEvent = {dataTransfer, pageY: $el.offset().top + $el.height() * 0.5}
 
   bottomEvent = $.Event()
   bottomEvent.target = el
   bottomEvent.currentTarget = el
-  bottomEvent.originalEvent = {dataTransfer, "atom-event": true, pageY: $el.offset().bottom}
+  bottomEvent.originalEvent = {dataTransfer, pageY: $el.offset().bottom}
 
   {top: topEvent, middle: middleEvent, bottom: bottomEvent}
 
@@ -73,6 +73,6 @@ module.exports.buildPositionalDragEvents = (dragged, target) ->
   dragStartEvent = $.Event()
   dragStartEvent.target = dragged
   dragStartEvent.currentTarget = dragged
-  dragStartEvent.originalEvent = {dataTransfer, "atom-event": true}
+  dragStartEvent.originalEvent = {dataTransfer}
 
   [dragStartEvent, buildElementPositionalDragEvents(target, dataTransfer)]
