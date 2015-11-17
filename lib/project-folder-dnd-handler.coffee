@@ -26,7 +26,8 @@ class ProjectFolderDragAndDropHandler
     event.originalEvent.dataTransfer.setData 'project-root-index', projectRoot.index()
 
     rootIndex = -1
-    _.find(@treeView.roots, (root, index) -> root.directory is directory and ((rootIndex = index) or true))
+    (rootIndex = index; break) for root, index in @treeView.roots when root.directory is directory
+
     event.originalEvent.dataTransfer.setData 'from-root-index', rootIndex
     event.originalEvent.dataTransfer.setData 'from-root-path', directory.path
     event.originalEvent.dataTransfer.setData 'from-window-id', @getWindowId()
