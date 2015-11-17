@@ -2941,3 +2941,130 @@ describe "TreeView", ->
 
         runs ->
           expect($(treeView.roots[0].entries).find('.directory:contains(alpha):first .entry').length).toBe 4
+
+  describe "Dragging and dropping root folders", ->
+    [alphaDirPath, gammaDirPath, thetaDirPath] = []
+    beforeEach ->
+      rootDirPath = fs.absolute(temp.mkdirSync('tree-view'))
+
+      alphaFilePath = path.join(rootDirPath, "alpha.txt")
+      zetaFilePath = path.join(rootDirPath, "zeta.txt")
+
+      alphaDirPath = path.join(rootDirPath, "alpha")
+      betaFilePath = path.join(alphaDirPath, "beta.txt")
+
+      gammaDirPath = path.join(rootDirPath, "gamma")
+      deltaFilePath = path.join(gammaDirPath, "delta.txt")
+      epsilonFilePath = path.join(gammaDirPath, "epsilon.txt")
+      thetaDirPath = path.join(rootDirPath, "theta")
+
+      fs.writeFileSync(alphaFilePath, "doesn't matter")
+      fs.writeFileSync(zetaFilePath, "doesn't matter")
+
+      fs.makeTreeSync(alphaDirPath)
+      fs.writeFileSync(betaFilePath, "doesn't matter")
+
+      fs.makeTreeSync(gammaDirPath)
+      fs.writeFileSync(deltaFilePath, "doesn't matter")
+      fs.writeFileSync(epsilonFilePath, "doesn't matter")
+      fs.makeTreeSync(thetaDirPath)
+
+      atom.project.setPaths([alphaDirPath, gammaDirPath, thetaDirPath])
+
+      jasmine.attachToDOM(workspaceElement)
+
+    afterEach ->
+      [alphaDirPath, gammaDirPath, thetaDirPath] = []
+
+    describe "when dragging a project root's header onto a different project root's header", ->
+      describe "when dragging on the top part of the header", ->
+        it "should add the placeholder above the directory", ->
+          # Dragging gammaDir onto alphaDir
+          alphaDir = $(treeView).find('.project-root:contains(alpha):first')
+          gammaDir = $(treeView).find('.project-root:contains(gamma):first')
+          [dragStartEvent, dragOverEvents] =
+            eventHelpers.buildPositionalDragEvents(gammaDir.find('.project-root-header')[0], alphaDir.find('.project-root-header')[0])
+
+          treeView.onDragStart(dragStartEvent)
+          treeView.onDragOver(dragOverEvents.top)
+          expect(alphaDir[0].previousSibling).toHaveClass('placeholder')
+
+          # Is removed when drag ends
+          treeView.projectFolderDragAndDropHandler.onDragEnd()
+          expect('.placeholder').not.toExist()
+
+      describe "when dragging on the middle part of the header", ->
+        it "should not add the placeholder", ->
+          # Dragging gammaDir onto alphaDir
+          alphaDir = $(treeView).find('.project-root:contains(alpha):first')
+          gammaDir = $(treeView).find('.project-root:contains(gamma):first')
+          [dragStartEvent, dragOverEvents] =
+            eventHelpers.buildPositionalDragEvents(gammaDir.find('.project-root-header')[0], alphaDir.find('.project-root-header')[0])
+
+          treeView.onDragStart(dragStartEvent)
+          treeView.onDragEnter(dragOverEvents.middle)
+          treeView.onDragOver(dragOverEvents.middle)
+          expect(alphaDir).toHaveClass('selected')
+          expect('.placeholder').not.toExist()
+
+          # Is removed when drag ends
+          treeView.projectFolderDragAndDropHandler.onDragEnd()
+          expect('.placeholder').not.toExist()
+
+      describe "when dragging on the bottom part of the header", ->
+        it "should add the placeholder below the directory", ->
+          # Dragging gammaDir onto alphaDir
+          alphaDir = $(treeView).find('.project-root:contains(alpha):first')
+          gammaDir = $(treeView).find('.project-root:contains(gamma):first')
+          [dragStartEvent, dragOverEvents] =
+            eventHelpers.buildPositionalDragEvents(gammaDir.find('.project-root-header')[0], alphaDir.find('.project-root-header')[0])
+
+          treeView.onDragStart(dragStartEvent)
+          treeView.onDragOver(dragOverEvents.bottom)
+          expect(alphaDir[0].nextSibling).toHaveClass('placeholder')
+
+          # Is removed when drag ends
+          treeView.projectFolderDragAndDropHandler.onDragEnd()
+          expect('.placeholder').not.toExist()
+
+    describe "when dropping a project root's header onto a different project root's header", ->
+      describe "when dropping on the top part of the header", ->
+        it "should add the placeholder above the directory", ->
+          # dropping gammaDir above alphaDir
+          alphaDir = $(treeView).find('.project-root:contains(alpha):first')
+          gammaDir = $(treeView).find('.project-root:contains(gamma):first')
+          [dragStartEvent, dragDropEvents] =
+            eventHelpers.buildPositionalDragEvents(gammaDir.find('.project-root-header')[0], alphaDir.find('.project-root-header')[0])
+
+          treeView.onDragStart(dragStartEvent)
+          treeView.onDrop(dragDropEvents.top)
+          projectPaths = atom.project.getPaths()
+          expect(projectPaths[0]).toEqual(gammaDirPath);
+          expect(projectPaths[1]).toEqual(alphaDirPath);
+
+          # Is removed when drag ends
+          expect('.placeholder').not.toExist()
+
+      describe "when dropping on the bottom part of the header", ->
+        it "should add the placeholder below the directory", ->
+          # dropping thetaDir below alphaDir
+          alphaDir = $(treeView).find('.project-root:contains(alpha):first')
+          thetaDir = $(treeView).find('.project-root:contains(theta):first')
+          [dragStartEvent, dragDropEvents] =
+            eventHelpers.buildPositionalDragEvents(thetaDir.find('.project-root-header')[0], alphaDir.find('.project-root-header')[0])
+
+          treeView.onDragStart(dragStartEvent)
+          treeView.onDrop(dragDropEvents.bottom)
+          projectPaths = atom.project.getPaths()
+          expect(projectPaths[0]).toEqual(alphaDirPath);
+          expect(projectPaths[1]).toEqual(thetaDirPath);
+          expect(projectPaths[2]).toEqual(gammaDirPath);
+
+          # Is removed when drag ends
+          expect('.placeholder').not.toExist()
+
+    describe "when dropped from another window", ->
+      # TODO
+
+    describe "when dropped to another window", ->
+      # TODO

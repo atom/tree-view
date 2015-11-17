@@ -33,7 +33,7 @@ class ProjectFolderDragAndDropHandler
 
     event.originalEvent.dataTransfer.setData 'text/plain', directory.path
 
-    if process.platform is 'darwin'
+    if process.platform in ['darwin', 'linux']
       pathUri = "file://#{directory.path}" unless @uriHasProtocol(directory.path)
       event.originalEvent.dataTransfer.setData 'text/uri-list', pathUri
 
@@ -90,6 +90,7 @@ class ProjectFolderDragAndDropHandler
     event.preventDefault()
     {dataTransfer} = event.originalEvent
 
+    # TODO: support dragging folders from the filesystem -- electron needs to add support first
     return unless dataTransfer.getData('atom-event') is 'true'
 
     fromWindowId = parseInt(dataTransfer.getData('from-window-id'))
