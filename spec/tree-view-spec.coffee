@@ -1281,20 +1281,61 @@ describe "TreeView", ->
             expect(fs.existsSync(path.join(dirPath2, path.basename(filePath)))).toBeTruthy()
             expect(fs.existsSync(filePath)).toBeTruthy()
 
-          describe 'when target already exists', ->
-            it 'appends a number to the destination name', ->
+          describe "when the target already exists", ->
+            it "appends a number to the destination name", ->
               LocalStorage['tree-view:copyPath'] = JSON.stringify([filePath])
 
               fileView.click()
               atom.commands.dispatch(treeView.element, "tree-view:paste")
               atom.commands.dispatch(treeView.element, "tree-view:paste")
 
-              fileArr = filePath.split(path.sep).pop().split('.')
-              numberedFileName0 = path.join(dirPath, "#{fileArr[0]}0.#{fileArr[1]}")
-              numberedFileName1 = path.join(dirPath, "#{fileArr[0]}1.#{fileArr[1]}")
+              if process.platform is 'win32'
+                fileArr = /(.+)\.(?!.*\\)(.+)/.exec(filePath)
+              else
+                fileArr = /(.+)\.(?!.*\/)(.+)/.exec(filePath)
+
+              numberedFileName0 = "#{fileArr[1]}0.#{fileArr[2]}"
+              numberedFileName1 = "#{fileArr[1]}1.#{fileArr[2]}"
               expect(fs.existsSync(numberedFileName0)).toBeTruthy()
               expect(fs.existsSync(numberedFileName1)).toBeTruthy()
               expect(fs.existsSync(filePath)).toBeTruthy()
+
+        xdescribe "when a file containing two or more periods is selected", ->
+          describe "when a file is selected", ->
+            it "creates a copy of the original file in the selected file's parent directory", ->
+              dotFilePath = path.join(dirPath, "test.file.txt")
+              fs.writeFileSync(dotFilePath, "doesn't matter .")
+              LocalStorage['tree-view:copyPath'] = JSON.stringify([dotFilePath])
+
+              treeView.find('.file:contains(test.file.txt)').click()
+              atom.commands.dispatch(treeView.element, "tree-view:paste")
+
+              fileView2.click()
+              atom.commands.dispatch(treeView.element, "tree-view:paste")
+              expect(fs.existsSync(path.join(dirPath, path.basename(dotFilePath)))).toBeTruthy()
+              expect(fs.existsSync(dotFilePath)).toBeTruthy()
+
+            describe "when the target already exists", ->
+              it "appends a number to the destination name", ->
+                dotFilePath = path.join(dirPath, "test.file.txt")
+                fs.writeFileSync(dotFilePath, "doesn't matter .")
+                LocalStorage['tree-view:copyPath'] = JSON.stringify([dotFilePath])
+
+                dotFileView = treeView.find('.file:contains(test.file.txt)')
+                dotFileView.click()
+                atom.commands.dispatch(treeView.element, "tree-view:paste")
+                atom.commands.dispatch(treeView.element, "tree-view:paste")
+
+                if process.platform is 'win32'
+                  fileArr = /(.+)\.(?!.*\\)(.+)/.exec(dotFilePath)
+                else
+                  fileArr = /(.+)\.(?!.*\/)(.+)/.exec(dotFilePath)
+
+                numberedFileName0 = "#{fileArr[1]}0.#{fileArr[2]}"
+                numberedFileName1 = "#{fileArr[1]}1.#{fileArr[2]}"
+                expect(fs.existsSync(numberedFileName0)).toBeTruthy()
+                expect(fs.existsSync(numberedFileName1)).toBeTruthy()
+                expect(fs.existsSync(dotFilePath)).toBeTruthy()
 
         describe "when a directory is selected", ->
           it "creates a copy of the original file in the selected directory", ->
@@ -1306,20 +1347,58 @@ describe "TreeView", ->
             expect(fs.existsSync(path.join(dirPath2, path.basename(filePath)))).toBeTruthy()
             expect(fs.existsSync(filePath)).toBeTruthy()
 
-          describe 'when target already exists', ->
-            it 'appends a number to the destination directory name', ->
+          describe "when the target already exists", ->
+            it "appends a number to the destination directory name", ->
               LocalStorage['tree-view:copyPath'] = JSON.stringify([filePath])
 
               dirView.click()
               atom.commands.dispatch(treeView.element, "tree-view:paste")
               atom.commands.dispatch(treeView.element, "tree-view:paste")
 
-              fileArr = filePath.split(path.sep).pop().split('.')
-              numberedFileName0 = path.join(dirPath, "#{fileArr[0]}0.#{fileArr[1]}")
-              numberedFileName1 = path.join(dirPath, "#{fileArr[0]}1.#{fileArr[1]}")
+              if process.platform is 'win32'
+                fileArr = /(.+)\.(?!.*\\)(.+)/.exec(filePath)
+              else
+                fileArr = /(.+)\.(?!.*\/)(.+)/.exec(filePath)
+
+              numberedFileName0 = "#{fileArr[0]}0.#{fileArr[1]}"
+              numberedFileName1 = "#{fileArr[0]}1.#{fileArr[1]}"
               expect(fs.existsSync(numberedFileName0)).toBeTruthy()
               expect(fs.existsSync(numberedFileName1)).toBeTruthy()
               expect(fs.existsSync(filePath)).toBeTruthy()
+
+        xdescribe "when a directory with a period is selected", ->
+          it "creates a copy of the original file in the selected directory", ->
+            dotFilePath = path.join(dirPath, "test.file.txt")
+            fs.writeFileSync(dotFilePath, "doesn't matter .")
+            LocalStorage['tree-view:copyPath'] = JSON.stringify([dotFilePath])
+
+            dirView2.click()
+            atom.commands.dispatch(treeView.element, "tree-view:paste")
+
+            expect(fs.existsSync(path.join(dirPath2, path.basename(dotFilePath)))).toBeTruthy()
+            expect(fs.existsSync(dotFilePath)).toBeTruthy()
+
+          describe "when the target already exists", ->
+            it "appends a number to the destination directory name", ->
+              dotFilePath = path.join(dirPath, "test.file.txt")
+              fs.writeFileSync(dotFilePath, "doesn't matter .")
+              LocalStorage['tree-view:copyPath'] = JSON.stringify([dotFilePath])
+
+              dirView.click()
+              atom.commands.dispatch(treeView.element, "tree-view:paste")
+              atom.commands.dispatch(treeView.element, "tree-view:paste")
+
+              if process.platform is 'win32'
+                fileArr = /(.+)\.(?!.*\\)(.+)/.exec(dotFilePath)
+              else
+                fileArr = /(.+)\.(?!.*\/)(.+)/.exec(dotFilePath)
+
+              numberedFileName0 = "#{fileArr[0]}0.#{fileArr[1]}"
+              numberedFileName1 = "#{fileArr[0]}1.#{fileArr[1]}"
+              expect(fs.existsSync(numberedFileName0)).toBeTruthy()
+              expect(fs.existsSync(numberedFileName1)).toBeTruthy()
+              expect(fs.existsSync(dotFilePath)).toBeTruthy()
+
 
         describe "when pasting into a different root directory", ->
           it "creates the file", ->
