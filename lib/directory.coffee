@@ -201,7 +201,12 @@ class Directory
               # track the insertion index for the created views
               return [localName, 'file']
             else
-              return [localName, new File({localName, fullPath, symlink, realpathCache})]
+              return [localName, new File({
+                name: localName,
+                fullPath: fullPath,
+                symlink: symlink,
+                realpathCache: realpathCache
+                })]
       namePromises.push f()
 
     success = (values) =>
