@@ -209,7 +209,7 @@ class Directory
                 })]
       namePromises.push f()
 
-    success = (values) =>
+    Promise.all(namePromises).then (values) =>
       console.log 'all success'
       directories = []
       files = []
@@ -221,10 +221,6 @@ class Directory
         else if value[1] instanceof Directory
           directories.push value[1]
       @sortEntries(directories.concat(files))
-
-    failure = (reason) =>
-      console.log reasons
-    Promise.all(namePromises).then(success, failure).catch(() -> console.log arguments)
 
   normalizeEntryName: (value) ->
     normalizedValue = value.name
