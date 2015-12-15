@@ -180,7 +180,6 @@ class Directory
           stat = fs.lstatSyncNoException(fullPath)
           symlink = stat.isSymbolicLink?()
           stat = fs.statSyncNoException(fullPath) if symlink
-          console.log 'in promise', fullPath
           if stat.isDirectory?()
             if @entries.hasOwnProperty(localName)
               # push a placeholder since this entry already exists but this helps
@@ -210,11 +209,9 @@ class Directory
       namePromises.push f()
 
     Promise.all(namePromises).then (values) =>
-      console.log 'all success'
       directories = []
       files = []
       values = values.filter (v) -> v isnt undefined
-      console.log values
       for value in values
         if value[1] instanceof File
           files.push value[1]
@@ -244,9 +241,7 @@ class Directory
     newEntries = []
     removedEntries = _.clone(@entries)
     index = 0
-    console.log 'reloading'
     @getEntries().then (entries) =>
-      console.log 'got entries in reload', entries
       for entry in entries
         if @entries.hasOwnProperty(entry)
           delete removedEntries[entry]
