@@ -96,13 +96,14 @@ class Directory
   isPathIgnored: (filePath) ->
     if atom.config.get('tree-view.hideVcsIgnoredFiles')
       repo = repoForPath(@path)
-      return true if repo? and repo.isProjectAtRoot() and repo.isPathIgnored(filePath)
-
-    if atom.config.get('tree-view.hideIgnoredNames')
-      for ignoredPattern in @ignoredPatterns
-        return true if ignoredPattern.match(filePath)
-
-    false
+      if repo? and repo.isProjectAtRoot()
+        # repo.isPathIgnored also returns a promise that resolves to a Boolean
+        return repo.isPathIgnored(filePath)
+      else if atom.config.get('tree-view.hideIgnoredNames')
+        for ignoredPattern in @ignoredPatterns
+          return Promise.resolve(true) if ignoredPattern.match(filePath)
+      else
+        return Promise.resolve(false)
 
   # Does given full path start with the given prefix?
   isPathPrefixOf: (prefix, fullPath) ->
@@ -164,34 +165,55 @@ class Directory
       names = []
     names.sort(new Intl.Collator(undefined, {numeric: true, sensitivity: "base"}).compare)
 
-    files = []
-    directories = []
-
+    namePromises = []
     for name in names
-      fullPath = path.join(@path, name)
-      continue if @isPathIgnored(fullPath)
+      # throw this in a closure so we don't have scoping issues
+      # async/await would make this more pleasant when this is
+      # inevitably ported to ES6
+      f = =>
+        localName = name
+        fullPath = path.join(@path, localName)
 
-      stat = fs.lstatSyncNoException(fullPath)
-      symlink = stat.isSymbolicLink?()
-      stat = fs.statSyncNoException(fullPath) if symlink
+        return @isPathIgnored(fullPath).then (isIgnored) =>
+          return if isIgnored
 
-      if stat.isDirectory?()
-        if @entries.hasOwnProperty(name)
-          # push a placeholder since this entry already exists but this helps
-          # track the insertion index for the created views
-          directories.push(name)
-        else
-          expansionState = @expansionState.entries[name]
-          directories.push(new Directory({name, fullPath, symlink, expansionState, @ignoredPatterns}))
-      else if stat.isFile?()
-        if @entries.hasOwnProperty(name)
-          # push a placeholder since this entry already exists but this helps
-          # track the insertion index for the created views
-          files.push(name)
-        else
-          files.push(new File({name, fullPath, symlink, realpathCache}))
+          stat = fs.lstatSyncNoException(fullPath)
+          symlink = stat.isSymbolicLink?()
+          stat = fs.statSyncNoException(fullPath) if symlink
+          console.log 'in promise', fullPath
+          if stat.isDirectory?()
+            if @entries.hasOwnProperty(localName)
+              # push a placeholder since this entry already exists but this helps
+              # track the insertion index for the created views
+              return [localName, 'directory']
+            else
+              expansionState = @expansionState.entries[localName]
+              return [localName, new Directory({localName, fullPath, symlink, expansionState, @ignoredPatterns})]
+          else if stat.isFile?()
+            if @entries.hasOwnProperty(localName)
+              # push a placeholder since this entry already exists but this helps
+              # track the insertion index for the created views
+              return [localName, 'file']
+            else
+              return [localName, new File({localName, fullPath, symlink, realpathCache})]
+      namePromises.push f()
 
-    @sortEntries(directories.concat(files))
+    success = (values) =>
+      console.log 'all success'
+      directories = []
+      files = []
+      values = values.filter (v) -> v isnt undefined
+      console.log values
+      for value in values
+        if value[1] instanceof File
+          files.push value[0]
+        else if value[1] instanceof Directory
+          directories.push value[0]
+      @sortEntries(directories.concat(files))
+
+    failure = (reason) =>
+      console.log reasons
+    Promise.all(namePromises).then(success, failure).catch(() -> console.log arguments)
 
   normalizeEntryName: (value) ->
     normalizedValue = value.name
@@ -210,38 +232,41 @@ class Directory
         secondName = @normalizeEntryName(second)
         firstName.localeCompare(secondName)
 
-  # Public: Perform a synchronous reload of the directory.
+  # Public: Perform an asynchronous reload of the directory.
   reload: ->
     newEntries = []
     removedEntries = _.clone(@entries)
     index = 0
+    console.log 'reloading'
+    @getEntries().then (entries) =>
+      console.log 'got entries in reload', entries
+      for entry in entries
+        if @entries.hasOwnProperty(entry)
+          delete removedEntries[entry]
+          index++
+          continue
 
-    for entry in @getEntries()
-      if @entries.hasOwnProperty(entry)
-        delete removedEntries[entry]
+        entry.indexInParentDirectory = index
         index++
-        continue
+        newEntries.push(entry)
 
-      entry.indexInParentDirectory = index
-      index++
-      newEntries.push(entry)
+      entriesRemoved = false
+      for name, entry of removedEntries
+        entriesRemoved = true
+        entry.destroy()
 
-    entriesRemoved = false
-    for name, entry of removedEntries
-      entriesRemoved = true
-      entry.destroy()
+        if @entries.hasOwnProperty(name)
+          delete @entries[name]
 
-      if @entries.hasOwnProperty(name)
-        delete @entries[name]
+        if @expansionState.entries.hasOwnProperty(name)
+          delete @expansionState.entries[name]
 
-      if @expansionState.entries.hasOwnProperty(name)
-        delete @expansionState.entries[name]
+      @emitter.emit('did-remove-entries', removedEntries) if entriesRemoved
 
-    @emitter.emit('did-remove-entries', removedEntries) if entriesRemoved
+      if newEntries.length > 0
+        @entries[entry.name] = entry for entry in newEntries
+        @emitter.emit('did-add-entries', newEntries)
 
-    if newEntries.length > 0
-      @entries[entry.name] = entry for entry in newEntries
-      @emitter.emit('did-add-entries', newEntries)
 
   # Public: Collapse this directory and stop watching it.
   collapse: ->
