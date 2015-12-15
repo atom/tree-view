@@ -188,7 +188,13 @@ class Directory
               return [localName, 'directory']
             else
               expansionState = @expansionState.entries[localName]
-              return [localName, new Directory({localName, fullPath, symlink, expansionState, @ignoredPatterns})]
+              return [localName, new Directory({
+                  name: localName,
+                  fullPath: fullPath,
+                  symlink: symlink,
+                  expansionState: expansionState,
+                  ignoredPatterns: @ignoredPatterns
+                  })]
           else if stat.isFile?()
             if @entries.hasOwnProperty(localName)
               # push a placeholder since this entry already exists but this helps
@@ -206,9 +212,9 @@ class Directory
       console.log values
       for value in values
         if value[1] instanceof File
-          files.push value[0]
+          files.push value[1]
         else if value[1] instanceof Directory
-          directories.push value[0]
+          directories.push value[1]
       @sortEntries(directories.concat(files))
 
     failure = (reason) =>
