@@ -500,20 +500,24 @@ describe "TreeView", ->
 
     it "when collapsing a directory, removes change subscriptions from the collapsed directory and its descendants", ->
       child = root1.find('li:contains(dir1)')
+      grandchild = null
       child.click()
 
-      grandchild = child.find('li:contains(sub-dir1)')
-      grandchild.click()
+      waitsFor ->
+        child.find('li:contains(sub-dir1)').length > 0
+      runs ->
+        grandchild = child.find('li:contains(sub-dir1)')
+        grandchild.click()
 
-      expect(treeView.roots[0].directory.watchSubscription).toBeTruthy()
-      expect(child[0].directory.watchSubscription).toBeTruthy()
-      expect(grandchild[0].directory.watchSubscription).toBeTruthy()
+      runs ->
+        expect(treeView.roots[0].directory.watchSubscription).toBeTruthy()
+        expect(child[0].directory.watchSubscription).toBeTruthy()
+        expect(grandchild[0].directory.watchSubscription).toBeTruthy()
+        root1.click()
 
-      root1.click()
-
-      expect(treeView.roots[0].directory.watchSubscription).toBeFalsy()
-      expect(child[0].directory.watchSubscription).toBeFalsy()
-      expect(grandchild[0].directory.watchSubscription).toBeFalsy()
+        expect(treeView.roots[0].directory.watchSubscription).toBeFalsy()
+        expect(child[0].directory.watchSubscription).toBeFalsy()
+        expect(grandchild[0].directory.watchSubscription).toBeFalsy()
 
   describe "when mouse down fires on a file or directory", ->
     it "selects the entry", ->
