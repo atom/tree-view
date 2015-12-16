@@ -99,11 +99,11 @@ class Directory
       if repo? and repo.isProjectAtRoot()
         # repo.isPathIgnored also returns a promise that resolves to a Boolean
         return repo.isPathIgnored(filePath)
-      else if atom.config.get('tree-view.hideIgnoredNames')
-        for ignoredPattern in @ignoredPatterns
-          return Promise.resolve(true) if ignoredPattern.match(filePath)
-      else
-        return Promise.resolve(false)
+    else if atom.config.get('tree-view.hideIgnoredNames')
+      for ignoredPattern in @ignoredPatterns
+        return Promise.resolve(true) if ignoredPattern.match(filePath)
+
+    return Promise.resolve(false)
 
   # Does given full path start with the given prefix?
   isPathPrefixOf: (prefix, fullPath) ->
