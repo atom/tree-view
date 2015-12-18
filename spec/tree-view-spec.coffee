@@ -924,17 +924,21 @@ describe "TreeView", ->
     describe "tree-view:recursive-expand-directory", ->
       describe "when an collapsed root is recursively expanded", ->
         it "expands the root and all subdirectories", ->
+          children = null
           root1.click()
           treeView.roots[0].collapse()
 
           expect(treeView.roots[0]).not.toHaveClass 'expanded'
           atom.commands.dispatch(treeView.element, 'tree-view:recursive-expand-directory')
-          expect(treeView.roots[0]).toHaveClass 'expanded'
+          waitsFor ->
+            root1.find('.directory').length > 0 and treeView.roots[0].classList.contains('expanded')
+          runs ->
+            expect(treeView.roots[0]).toHaveClass 'expanded'
 
-          children = root1.find('.directory')
-          expect(children.length).toBeGreaterThan 0
-          children.each (index, child) ->
-            expect(child).toHaveClass 'expanded'
+            children = root1.find('.directory')
+            expect(children.length).toBeGreaterThan 0
+            children.each (index, child) ->
+              expect(child).toHaveClass 'expanded'
 
     describe "tree-view:collapse-directory", ->
       subdir = null

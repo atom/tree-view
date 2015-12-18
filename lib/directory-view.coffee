@@ -113,26 +113,46 @@ class DirectoryView extends HTMLElement
     if @isExpanded then @collapse(isRecursive) else @expand(isRecursive)
 
   expand: (isRecursive=false) ->
+    expansionPromise = null
     unless @isExpanded
       @isExpanded = true
       @classList.add('expanded')
       @classList.remove('collapsed')
-      @directory.expand()
+      expansionPromise = @directory.expand()
 
     if isRecursive
-      for entry in @entries.children when entry instanceof DirectoryView
-        entry.expand(true)
+      children = (entry for entry in @entries.children when entry instanceof DirectoryView)
+      firstEntry = children.shift()
+      if firstEntry
+        initial = if expansionPromise
+          expansionPromise.then => first.expandAsync()
+        else
+          first.expandAsync()
+        reducer = (curr, next) =>
+          curr.then =>
+            next.expand(true)
+        children.reduce reducer, initial
+      else
+        initial = if expansionPromise
+          expansionPromise.then => @expandAsync()
+        else
+          @expandAsync()
 
+        initial.then (children) =>
+          for child in children when child instanceof DirectoryView
+            child.expand(true)
     false
 
   # Non-recursive ::expand that returns the promise from the model, for use in
   # recursively revealing the active file
   expandAsync: ->
-    unless @isExpanded
+    if @isExpanded
+      return Promise.resolve(@entries.children)
+    else
       @isExpanded = true
       @classList.add('expanded')
       @classList.remove('collapsed')
-      return @directory.expand()
+      return @directory.expand().then => @entries.children
 
   collapse: (isRecursive=false) ->
     @isExpanded = false
