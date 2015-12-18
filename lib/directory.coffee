@@ -280,8 +280,8 @@ class Directory
   # changes.
   expand: ->
     @expansionState.isExpanded = true
-    @reload()
-    @watch()
+    @reload().then =>
+      @watch()
 
   serializeExpansionState: ->
     expansionState = {}

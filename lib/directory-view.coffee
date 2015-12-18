@@ -125,6 +125,15 @@ class DirectoryView extends HTMLElement
 
     false
 
+  # Non-recursive ::expand that returns the promise from the model, for use in
+  # recursively revealing the active file
+  expandAsync: ->
+    unless @isExpanded
+      @isExpanded = true
+      @classList.add('expanded')
+      @classList.remove('collapsed')
+      return @directory.expand()
+
   collapse: (isRecursive=false) ->
     @isExpanded = false
 
