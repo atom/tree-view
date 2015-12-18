@@ -298,15 +298,29 @@ class TreeView extends View
     return unless rootPath?
 
     activePathComponents = relativePath.split(path.sep)
-    currentPath = rootPath
-    for pathComponent in activePathComponents
+
+    processPathComponent = (pathComponent, currentPath) =>
+      return currentPath unless pathComponent
       currentPath += path.sep + pathComponent
       entry = @entryForPath(currentPath)
+
       if entry instanceof DirectoryView
-        entry.expand()
+        return entry.expandAsync().then -> currentPath
       else
         @selectEntry(entry)
         @scrollToEntry(entry)
+        return currentPath
+
+    reducer = (currentItemPromise, nextItem) =>
+      return currentItemPromise.then (currentPath) =>
+        processPathComponent(nextItem, currentPath)
+
+    # Porting git status to async means that some of the internal tree-view APIs
+    # needed to go async as well. However, certain parts of the codebase (including
+    # this function) iterate over lists of values - generally we can just use
+    # Promise.all in those cases, but this one works its way sequentially through
+    # the list, so we use Array::reduce to serialize the promises.
+    activePathComponents.reduce reducer, Promise.resolve(rootPath)
 
   copySelectedEntryPath: (relativePath = false) ->
     if pathToCopy = @selectedPath

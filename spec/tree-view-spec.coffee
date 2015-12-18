@@ -352,6 +352,10 @@ describe "TreeView", ->
 
         runs ->
           atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
+
+        waitsFor ->
+          !!treeView.selectedEntry().getPath().match(/file1/)
+        runs ->
           expect(treeView.hasParent()).toBeTruthy()
           expect(treeView.focus).toHaveBeenCalled()
           expect(treeView.selectedEntry().getPath()).toContain(path.join("dir1", "file1"))
@@ -362,6 +366,11 @@ describe "TreeView", ->
 
         runs ->
           atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
+
+        waitsFor ->
+          !!treeView.selectedEntry().getPath().match(/file3/)
+
+        runs ->
           expect(treeView.hasParent()).toBeTruthy()
           expect(treeView.focus).toHaveBeenCalled()
           expect(treeView.selectedEntry().getPath()).toContain(path.join("dir3", "file3"))
