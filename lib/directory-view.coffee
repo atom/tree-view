@@ -113,32 +113,26 @@ class DirectoryView extends HTMLElement
     if @isExpanded then @collapse(isRecursive) else @expand(isRecursive)
 
   expand: (isRecursive=false) ->
-    expansionPromise = null
+    initial = Promise.resolve(true)
     unless @isExpanded
       @isExpanded = true
       @classList.add('expanded')
       @classList.remove('collapsed')
-      expansionPromise = @directory.expand()
+      initial = initial.then => @directory.expand()
 
     if isRecursive
       children = (entry for entry in @entries.children when entry instanceof DirectoryView)
       firstEntry = children.shift()
       if firstEntry
-        initial = if expansionPromise
-          expansionPromise.then => first.expandAsync()
-        else
-          first.expandAsync()
+        initial.then => first.expandAsync()
         reducer = (curr, next) =>
           curr.then =>
             next.expand(true)
         children.reduce reducer, initial
       else
-        initial = if expansionPromise
-          expansionPromise.then => @expandAsync()
-        else
+        initial.then =>
           @expandAsync()
-
-        initial.then (children) =>
+        .then (children) =>
           for child in children when child instanceof DirectoryView
             child.expand(true)
     false
