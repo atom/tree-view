@@ -533,11 +533,16 @@ describe "TreeView", ->
       dir = root1.find('li:contains(dir1)')
       expect(dir).not.toHaveClass 'selected'
       dir.mousedown()
-      expect(dir).toHaveClass 'selected'
-
-      expect(sampleJs).not.toHaveClass 'selected'
-      sampleJs.mousedown()
-      expect(sampleJs).toHaveClass 'selected'
+      waitsFor ->
+        dir.hasClass('selected')
+      runs ->
+        expect(dir).toHaveClass 'selected'
+        expect(sampleJs).not.toHaveClass 'selected'
+        sampleJs.mousedown()
+      waitsFor ->
+        sampleJs.hasClass('selected')
+      runs ->
+        expect(sampleJs).toHaveClass 'selected'
 
   describe "when a file is single-clicked", ->
     beforeEach ->
