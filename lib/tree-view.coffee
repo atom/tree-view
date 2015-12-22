@@ -137,6 +137,7 @@ class TreeView
      'core:move-to-top': => @scrollToTop()
      'core:move-to-bottom': => @scrollToBottom()
      'tree-view:expand-item': => @openSelectedEntry(pending: true, true)
+     'tree-view:search-selected-entry': => @searchSelectedEntry()
      'tree-view:recursive-expand-directory': => @expandDirectory(true)
      'tree-view:collapse-directory': => @collapseDirectory()
      'tree-view:recursive-collapse-directory': => @collapseDirectory(true)
@@ -425,6 +426,7 @@ class TreeView
 
     @scrollToEntry(@selectedEntry())
 
+
   nextEntry: (entry) ->
     currentEntry = entry
     while currentEntry?
@@ -444,6 +446,11 @@ class TreeView
       if currentEntry?.matches('.entry')
         return currentEntry
     return null
+
+  searchSelectedEntry: ->
+    selectedEntry = @selectedEntry()
+    command = if selectedEntry.directory then 'project-find:show-in-current-directory' else 'find-and-replace:show'
+    atom.commands.dispatch(selectedEntry, command)
 
   expandDirectory: (isRecursive=false) ->
     selectedEntry = @selectedEntry()
