@@ -53,7 +53,35 @@ class TreeView extends View
     @updateRoots(state.directoryExpansionStates)
     @selectEntry(@roots[0])
 
-    @selectEntryForPath(state.selectedPath) if state.selectedPath
+    # Now that directory expansion is done asyncly combining 2 different
+    # asynchronous code paths(1), there doesn't seem to be a good way to know
+    # that the tree view has been fully expanded from its initial tree of
+    # expansion states. So, we could make the expansion state construct know
+    # about when it's been fully walked, or we could just watch the DOM for the
+    # item in question to appear. I'm still a little concerned about hitting an
+    # edge case where this doesn't get ::disconnected() though.
+    #
+    # 1: Directories were expanded synchronously, but this was changed to work
+    #    with the new async git repo interaction. However, we also use event
+    #    subscription with Directory::onDidAddEntries to build up a tree view as
+    #    well, meaning we can't just tag on to the end of the Directory::expand()
+    #    promise chain :/
+
+    if state.selectedPath
+      @initialSelectionMutationObserver = new MutationObserver (mutationRecords, observer) =>
+        nodeLists = mutationRecords.map((m) -> m.addedNodes)
+        for nodeList in nodeLists
+          for entry in nodeList
+            console.log entry.getPath() if entry.getPath
+            if entry.getPath() is state.selectedPath
+              @selectEntry(entry)
+              @initialSelectionMutationObserver.disconnect()
+      @initialSelectionMutationObserver.observe(@[0], {childList: true, subtree: true})
+
+    else
+      @selectEntry(@roots[0])
+
+
     @focusAfterAttach = state.hasFocus
     @scrollTopAfterAttach = state.scrollTop if state.scrollTop
     @scrollLeftAfterAttach = state.scrollLeft if state.scrollLeft

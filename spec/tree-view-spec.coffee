@@ -202,6 +202,10 @@ describe "TreeView", ->
       runs ->
         treeView = $(atom.workspace.getLeftPanels()[0].getItem()).view()
         expect(treeView).toExist()
+
+      waitsFor ->
+        treeView.selectedEntry()?.getPath().match(/tree-view.js/)
+      runs ->
         expect($(treeView.selectedEntry())).toMatchSelector(".file:contains(tree-view.js)")
         root1 = $(treeView.roots[0])
         expect(root1.find(".directory:contains(dir1)")).toHaveClass("expanded")
