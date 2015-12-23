@@ -498,18 +498,25 @@ describe "TreeView", ->
       child = root1.find('.entries > li:contains(dir1)')
       child.click()
 
-      grandchild = child.find('.entries > li:contains(sub-dir1)')
-      grandchild.click()
+      grandchild = null
+      waitsFor ->
+        child.find('.entries > li:contains(sub-dir1)').length > 0
+      runs ->
+        child.find('.entries > li:contains(sub-dir1)').click()
+        root1.click()
+      waitsFor ->
+        !treeView.roots[0].classList.contains('expanded')
+      runs ->
+        root1.click()
 
-      root1.click()
-      expect(treeView.roots[0]).not.toHaveClass('expanded')
-      root1.click()
+      waitsFor ->
+        root1.find('> .entries > li:contains(dir1) > .entries > li:contains(sub-dir1) > .entries').length > 0
+      runs ->
+        # previously expanded descendants remain expanded
+        expect(root1.find('> .entries > li:contains(dir1) > .entries > li:contains(sub-dir1) > .entries').length).toBe 1
 
-      # previously expanded descendants remain expanded
-      expect(root1.find('> .entries > li:contains(dir1) > .entries > li:contains(sub-dir1) > .entries').length).toBe 1
-
-      # collapsed descendants remain collapsed
-      expect(root1.find('> .entries > li:contains(dir2) > .entries')).not.toHaveClass('expanded')
+        # collapsed descendants remain collapsed
+        expect(root1.find('> .entries > li:contains(dir2) > .entries')).not.toHaveClass('expanded')
 
     it "when collapsing a directory, removes change subscriptions from the collapsed directory and its descendants", ->
       child = root1.find('li:contains(dir1)')
@@ -525,9 +532,14 @@ describe "TreeView", ->
       runs ->
         expect(treeView.roots[0].directory.watchSubscription).toBeTruthy()
         expect(child[0].directory.watchSubscription).toBeTruthy()
+      waitsFor ->
+        grandchild[0].directory.watchSubscription
+      runs ->
         expect(grandchild[0].directory.watchSubscription).toBeTruthy()
         root1.click()
-
+      waitsFor ->
+        !treeView.roots[0].directory.watchSubscription
+      runs ->
         expect(treeView.roots[0].directory.watchSubscription).toBeFalsy()
         expect(child[0].directory.watchSubscription).toBeFalsy()
         expect(grandchild[0].directory.watchSubscription).toBeFalsy()
