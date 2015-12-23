@@ -632,14 +632,14 @@ describe "TreeView", ->
       it "recursively expands the directory", ->
         root1.click()
         treeView.roots[0].collapse()
-
-        expect(treeView.roots[0]).not.toHaveClass 'expanded'
-        root1.trigger clickEvent({altKey: true})
-        expect(treeView.roots[0]).toHaveClass 'expanded'
-
-        children = root1.find('.directory')
-        expect(children.length).toBeGreaterThan 0
-        children.each (index, child) -> expect(child).toHaveClass 'expanded'
+        waitsFor ->
+          !treeView.roots[0].classList.contains('expanded')
+        runs ->
+          root1.trigger clickEvent({altKey: true})
+        waitsFor ->
+          treeView.roots[0].classList.contains('expanded') and root1.find('.directory').length > 0
+        runs ->
+          root1.find('.directory').each (index, child) -> expect(child).toHaveClass 'expanded'
 
     describe "when the directory is expanded", ->
       parent    = null
@@ -735,21 +735,25 @@ describe "TreeView", ->
         it "selects the first entry of the directory", ->
           subdir = root1.find('.directory:eq(1)')
           subdir.click()
-
-          atom.commands.dispatch(treeView.element, 'core:move-down')
-
-          expect($(subdir[0].entries).find('.entry:first')).toHaveClass 'selected'
+          waitsFor ->
+            subdir[0].entries.childNodes.length > 0
+          runs ->
+            atom.commands.dispatch(treeView.element, 'core:move-down')
+            expect($(subdir[0].entries).find('.entry:first')).toHaveClass 'selected'
 
       describe "when the last entry of an expanded directory is selected", ->
         it "selects the entry after its parent directory", ->
           subdir1 = root1.find('.directory:eq(1)')
           subdir1[0].expand()
-          waitsForFileToOpen ->
-            $(subdir1[0].entries).find('.entry:last').click()
-
+          waitsFor ->
+            subdir1[0].entries.childNodes.length > 0
           runs ->
-            atom.commands.dispatch(treeView.element, 'core:move-down')
-            expect(root1.find('.directory:eq(2)')).toHaveClass 'selected'
+            waitsForFileToOpen ->
+              $(subdir1[0].entries).find('.entry:last').click()
+
+            runs ->
+              atom.commands.dispatch(treeView.element, 'core:move-down')
+              expect(root1.find('.directory:eq(2)')).toHaveClass 'selected'
 
       describe "when the last directory of another last directory is selected", ->
         [nested, nested2] = []
@@ -758,9 +762,15 @@ describe "TreeView", ->
           nested = root1.find('.directory:eq(2)')
           expect(nested.find('.header').text()).toContain 'nested'
           nested[0].expand()
-          nested2 = $(nested[0].entries).find('.entry:last')
-          nested2.click()
-          nested2[0].collapse()
+          waitsFor ->
+            nested[0].entries.childNodes.length > 0
+          runs ->
+            nested2 = $(nested[0].entries).find('.entry:last')
+            nested2.click()
+          waitsFor ->
+            nested2[0].entries.childNodes.length > 0
+          runs ->
+            nested2[0].collapse()
 
         describe "when the directory is collapsed", ->
           it "selects the entry after its grandparent directory", ->
