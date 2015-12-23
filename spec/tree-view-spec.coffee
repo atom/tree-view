@@ -530,31 +530,7 @@ describe "TreeView", ->
     beforeEach ->
       jasmine.attachToDOM(workspaceElement)
 
-    it "selects the files and opens it in the active editor, without changing focus", ->
-      treeView.focus()
-
-      waitsForFileToOpen ->
-        sampleJs.trigger clickEvent(originalEvent: {detail: 1})
-
-      runs ->
-        expect(sampleJs).toHaveClass 'selected'
-        expect(atom.workspace.getActivePaneItem().getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
-        expect(treeView.list).toHaveFocus()
-
-      waitsForFileToOpen ->
-        sampleTxt.trigger clickEvent(originalEvent: {detail: 1})
-
-      runs ->
-        expect(sampleTxt).toHaveClass 'selected'
-        expect(treeView.find('.selected').length).toBe 1
-        expect(atom.workspace.getActivePaneItem().getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.txt')
-        expect(treeView.list).toHaveFocus()
-
-  describe "when a file is double-clicked", ->
-    beforeEach ->
-      jasmine.attachToDOM(workspaceElement)
-
-    it "selects the file and opens it in the active editor on the first click, then changes focus to the active editor on the second", ->
+    it "selects the file and opens it in the active editor in pending state and changes focus to file", ->
       treeView.focus()
 
       waitsForFileToOpen ->
@@ -564,9 +540,42 @@ describe "TreeView", ->
         expect(sampleJs).toHaveClass 'selected'
         item = atom.workspace.getActivePaneItem()
         expect(item.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
+        expect(atom.views.getView(item)).toHaveFocus()
+        expect(atom.workspace.getActivePane().isActiveItemPending()).toBe true
+
+      waitsForFileToOpen ->
+        sampleTxt.trigger clickEvent(originalEvent: {detail: 1})
+
+      runs ->
+        expect(sampleTxt).toHaveClass 'selected'
+        expect(treeView.find('.selected').length).toBe 1
+        item = atom.workspace.getActivePaneItem()
+        expect(item.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.txt')
+        expect(atom.views.getView(item)).toHaveFocus()
+        expect(atom.workspace.getActivePane().isActiveItemPending()).toBe true
+
+  describe "when a file is double-clicked", ->
+    beforeEach ->
+      jasmine.attachToDOM(workspaceElement)
+
+    it "selects the file and opens it in the active editor as pending and changes focus on the first click, then confirms pending item on the second click", ->
+      treeView.focus()
+
+      waitsForFileToOpen ->
+        sampleJs.trigger clickEvent(originalEvent: {detail: 1})
+
+      runs ->
+        expect(sampleJs).toHaveClass 'selected'
+        item = atom.workspace.getActivePaneItem()
+        expect(item.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
+        expect(atom.views.getView(item)).toHaveFocus()
+        expect(atom.workspace.getActivePane().isActiveItemPending()).toBe true
 
         sampleJs.trigger clickEvent(originalEvent: {detail: 2})
+        item = atom.workspace.getActivePaneItem()
+        expect(item.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
         expect(atom.views.getView(item)).toHaveFocus()
+        expect(atom.workspace.getActivePane().isActiveItemPending()).toBe false
 
   describe "when a directory is single-clicked", ->
     it "is selected", ->
