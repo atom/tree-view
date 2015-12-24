@@ -72,7 +72,6 @@ class TreeView extends View
         nodeLists = mutationRecords.map((m) -> m.addedNodes)
         for nodeList in nodeLists
           for entry in nodeList
-            console.log entry.getPath() if entry.getPath
             if entry.getPath() is state.selectedPath
               @selectEntry(entry)
               @initialSelectionMutationObserver.disconnect()
