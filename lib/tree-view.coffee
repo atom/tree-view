@@ -113,7 +113,7 @@ class TreeView extends View
      'tree-view:recursive-expand-directory': => @expandDirectory(true)
      'tree-view:collapse-directory': => @collapseDirectory()
      'tree-view:recursive-collapse-directory': => @collapseDirectory(true)
-     'tree-view:open-selected-entry': => @openSelectedEntry(true)
+     'tree-view:open-selected-entry': => @openSelectedEntry()
      'tree-view:open-selected-entry-right': => @openSelectedEntryRight()
      'tree-view:open-selected-entry-left': => @openSelectedEntryLeft()
      'tree-view:open-selected-entry-up': => @openSelectedEntryUp()
@@ -204,11 +204,13 @@ class TreeView extends View
     switch e.originalEvent?.detail ? 1
       when 1
         @selectEntry(entry)
-        @openSelectedEntry(false) if entry instanceof FileView
-        entry.toggleExpansion(isRecursive) if entry instanceof DirectoryView
+        if entry instanceof FileView
+          @openSelectedEntry(pending: true)
+        else if entry instanceof DirectoryView
+          entry.toggleExpansion(isRecursive)
       when 2
         if entry instanceof FileView
-          @unfocus()
+          atom.workspace.getActivePaneItem().confirmPendingState?()
         else if entry instanceof DirectoryView
           entry.toggleExpansion(isRecursive)
 
@@ -375,12 +377,12 @@ class TreeView extends View
       directory.collapse(isRecursive)
       @selectEntry(directory)
 
-  openSelectedEntry: (activatePane) ->
+  openSelectedEntry: (options) ->
     selectedEntry = @selectedEntry()
     if selectedEntry instanceof DirectoryView
       selectedEntry.toggleExpansion()
     else if selectedEntry instanceof FileView
-      atom.workspace.open(selectedEntry.getPath(), {activatePane})
+      atom.workspace.open(selectedEntry.getPath(), options)
 
   openSelectedEntrySplit: (orientation, side) ->
     selectedEntry = @selectedEntry()
