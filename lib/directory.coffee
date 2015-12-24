@@ -217,6 +217,10 @@ class Directory
           files.push value[1]
         else if value[1] instanceof Directory
           directories.push value[1]
+        else if value[1] is 'file'
+          files.push value[0]
+        else if value[1] is 'directory'
+          directories.push value[0]
       @sortEntries(directories.concat(files))
 
   normalizeEntryName: (value) ->
