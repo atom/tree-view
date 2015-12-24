@@ -530,7 +530,7 @@ describe "TreeView", ->
     beforeEach ->
       jasmine.attachToDOM(workspaceElement)
 
-    it "selects the files and opens it in the active editor, without changing focus", ->
+    it "selects the files and opens it in the active editor, and changes focus to the file", ->
       treeView.focus()
 
       waitsForFileToOpen ->
@@ -538,8 +538,9 @@ describe "TreeView", ->
 
       runs ->
         expect(sampleJs).toHaveClass 'selected'
-        expect(atom.workspace.getActivePaneItem().getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
-        expect(treeView.list).toHaveFocus()
+        activePaneItem = atom.workspace.getActivePaneItem()
+        expect(activePaneItem.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
+        expect(atom.views.getView(activePaneItem)).toHaveFocus()
 
       waitsForFileToOpen ->
         sampleTxt.trigger clickEvent(originalEvent: {detail: 1})
@@ -547,8 +548,9 @@ describe "TreeView", ->
       runs ->
         expect(sampleTxt).toHaveClass 'selected'
         expect(treeView.find('.selected').length).toBe 1
-        expect(atom.workspace.getActivePaneItem().getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.txt')
-        expect(treeView.list).toHaveFocus()
+        activePaneItem = atom.workspace.getActivePaneItem()
+        expect(activePaneItem.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.txt')
+        expect(atom.views.getView(activePaneItem)).toHaveFocus()
 
   describe "when a file is double-clicked", ->
     beforeEach ->
