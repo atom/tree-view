@@ -652,8 +652,7 @@ class TreeView extends View
     AddDialog ?= require './add-dialog'
     dialog = new AddDialog(selectedPath, isCreatingFile)
     dialog.on 'directory-created', (event, createdPath) =>
-      @entryForPath(createdPath)?.reload()
-      @selectEntryForPath(createdPath)
+      @entryForPath(createdPath)?.reload().then => @selectEntryForPath(createdPath)
       false
     dialog.on 'file-created', (event, createdPath) ->
       atom.workspace.open(createdPath)
