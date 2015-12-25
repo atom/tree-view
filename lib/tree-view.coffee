@@ -210,7 +210,7 @@ class TreeView extends View
           entry.toggleExpansion(isRecursive)
       when 2
         if entry instanceof FileView
-          atom.workspace.getActivePaneItem().confirmPendingState?()
+          atom.workspace.getActivePaneItem().terminatePendingState?()
         else if entry instanceof DirectoryView
           entry.toggleExpansion(isRecursive)
 
