@@ -47,6 +47,7 @@ describe "TreeView", ->
       expect(treeView.roots[0].directory.watchSubscription).toBeTruthy()
 
   afterEach ->
+    waits 10 # The async nature of specs causes uncaught exceptions, so wait a little bit before we cleanup
     temp.cleanup()
 
   describe ".initialize(project)", ->
