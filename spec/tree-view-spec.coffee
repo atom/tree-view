@@ -2019,8 +2019,11 @@ describe "TreeView", ->
           dotFilePath = path.join(dirPath, ".dotfile")
           fs.writeFileSync(dotFilePath, "dot")
           dirView[0].collapse()
-          dirView[0].expand()
-          dotFileView = treeView.find('.file:contains(.dotfile)')
+          dotFileView = null
+          waitsForPromise ->
+            dirView[0].expandAsync()
+          runs ->
+            dotFileView = treeView.find('.file:contains(.dotfile)')
 
           waitsForFileToOpen ->
             dotFileView.click()
@@ -2120,13 +2123,15 @@ describe "TreeView", ->
 
     describe "when a root folder is added", ->
       it "maintains expanded folders", ->
-        root1.find('.directory:contains(dir1)').click()
-        atom.project.setPaths([path1, path2])
-
-        treeView = $(atom.workspace.getLeftPanels()[0].getItem()).view()
-        expect(treeView).toExist()
-        root1 = $(treeView.roots[0])
-        expect(root1.find(".directory:contains(dir1)")).toHaveClass("expanded")
+        waitsFor 'dir1 to exist', ->
+          root1.find('.directory:contains(dir1)').length > 0
+        runs ->
+          root1.find('.directory:contains(dir1)').click()
+        waitsFor 'dir1 to expand', ->
+          root1.find(".directory:contains(dir1)").hasClass('expanded')
+        runs ->
+          atom.project.setPaths([path1, path2])
+          expect(root1.find(".directory:contains(dir1)")).toHaveClass("expanded")
 
       it "maintains collapsed (root) folders", ->
         root1.click()
@@ -2153,13 +2158,17 @@ describe "TreeView", ->
         atom.config.set "tree-view.hideVcsIgnoredFiles", false
 
       it "hides git-ignored files if the option is set, but otherwise shows them", ->
-        expect(treeView.find('.file:contains(ignored.txt)').length).toBe 1
+        waitsFor ->
+          treeView.find('.file:contains(ignored.txt)').length > 0
+        runs ->
+          atom.config.set("tree-view.hideVcsIgnoredFiles", true)
+          expect(treeView.find('.file:contains(ignored.txt)').length).toBe 0
 
-        atom.config.set("tree-view.hideVcsIgnoredFiles", true)
-        expect(treeView.find('.file:contains(ignored.txt)').length).toBe 0
-
-        atom.config.set("tree-view.hideVcsIgnoredFiles", false)
-        expect(treeView.find('.file:contains(ignored.txt)').length).toBe 1
+          atom.config.set("tree-view.hideVcsIgnoredFiles", false)
+        waitsFor ->
+          treeView.find('.file:contains(ignored.txt)').length > 0
+        runs ->
+          expect(treeView.find('.file:contains(ignored.txt)').length).toBe 1
 
     describe "when the project's path is a subfolder of the repository's working directory", ->
       beforeEach ->
@@ -2173,7 +2182,10 @@ describe "TreeView", ->
         atom.config.set("tree-view.hideVcsIgnoredFiles", true)
 
       it "does not hide git ignored files", ->
-        expect(treeView.find('.file:contains(tree-view.js)').length).toBe 1
+        waitsFor ->
+          treeView.find('.file:contains(tree-view.js)').length > 0
+        runs ->
+          expect(treeView.find('.file:contains(tree-view.js)').length).toBe 1
 
   describe "the hideIgnoredNames config option", ->
     beforeEach ->
@@ -2188,19 +2200,27 @@ describe "TreeView", ->
       atom.config.set "tree-view.hideIgnoredNames", false
 
     it "hides ignored files if the option is set, but otherwise shows them", ->
-      expect(treeView.find('.directory .name:contains(.git)').length).toBe 1
-      expect(treeView.find('.directory .name:contains(test.js)').length).toBe 1
-      expect(treeView.find('.directory .name:contains(test.txt)').length).toBe 1
+      waitsFor ->
+        treeView.find('.directory .name:contains(.git)').length > 0
+      runs ->
+        expect(treeView.find('.directory .name:contains(.git)').length).toBe 1
+        expect(treeView.find('.directory .name:contains(test.js)').length).toBe 1
+        expect(treeView.find('.directory .name:contains(test.txt)').length).toBe 1
+        atom.config.set("tree-view.hideIgnoredNames", true)
 
-      atom.config.set("tree-view.hideIgnoredNames", true)
-      expect(treeView.find('.directory .name:contains(.git)').length).toBe 0
-      expect(treeView.find('.directory .name:contains(test.js)').length).toBe 0
-      expect(treeView.find('.directory .name:contains(test.txt)').length).toBe 1
-
-      atom.config.set("core.ignoredNames", [])
-      expect(treeView.find('.directory .name:contains(.git)').length).toBe 1
-      expect(treeView.find('.directory .name:contains(test.js)').length).toBe 1
-      expect(treeView.find('.directory .name:contains(test.txt)').length).toBe 1
+      waitsFor ->
+        treeView.find('.directory .name:contains(.git)').length < 1 and treeView.find('.directory .name:contains(test.txt)').length > 0
+      runs ->
+        expect(treeView.find('.directory .name:contains(.git)').length).toBe 0
+        expect(treeView.find('.directory .name:contains(test.js)').length).toBe 0
+        expect(treeView.find('.directory .name:contains(test.txt)').length).toBe 1
+        atom.config.set("core.ignoredNames", [])
+      waitsFor ->
+        treeView.find('.directory .name:contains(.git)').length > 0
+      runs ->
+        expect(treeView.find('.directory .name:contains(.git)').length).toBe 1
+        expect(treeView.find('.directory .name:contains(test.js)').length).toBe 1
+        expect(treeView.find('.directory .name:contains(test.txt)').length).toBe 1
 
   describe "the squashedDirectoryName config option", ->
     beforeEach ->
@@ -2248,36 +2268,52 @@ describe "TreeView", ->
         atom.config.set('tree-view.squashDirectoryNames', true)
 
       it "does not squash a file in to a DirectoryViews", ->
-        zetaDir = $(treeView.roots[0].entries).find('.directory:contains(zeta):first')
-        zetaDir[0].expand()
-        zetaEntries = [].slice.call(zetaDir[0].children[1].children).map (element) ->
-          element.innerText
-
-        expect(zetaEntries).toEqual(["zeta.txt"])
+        zetaDir = null
+        waitsFor ->
+          zetaDir = $(treeView.roots[0].entries).find('.directory:contains(zeta):first')
+          zetaDir.length > 0
+        waitsForPromise ->
+          zetaDir[0].expandAsync()
+        runs ->
+          zetaEntries = [].slice.call(zetaDir[0].children[1].children).map (element) ->
+            element.innerText
+          expect(zetaEntries).toEqual(["zeta.txt"])
 
       it "squashes two dir names when the first only contains a single dir", ->
-        betaDir = $(treeView.roots[0].entries).find(".directory:contains(alpha#{path.sep}beta):first")
-        betaDir[0].expand()
-        betaEntries = [].slice.call(betaDir[0].children[1].children).map (element) ->
-          element.innerText
-
-        expect(betaEntries).toEqual(["beta.txt"])
+        betaDir = null
+        waitsFor ->
+          betaDir = $(treeView.roots[0].entries).find(".directory:contains(alpha#{path.sep}beta):first")
+          betaDir.length > 0
+        waitsForPromise ->
+          betaDir[0].expandAsync()
+        runs ->
+          betaEntries = [].slice.call(betaDir[0].children[1].children).map (element) ->
+            element.innerText
+          expect(betaEntries).toEqual(["beta.txt"])
 
       it "squashes three dir names when the first and second only contain single dirs", ->
-        epsilonDir = $(treeView.roots[0].entries).find(".directory:contains(gamma#{path.sep}delta#{path.sep}epsilon):first")
-        epsilonDir[0].expand()
-        epsilonEntries = [].slice.call(epsilonDir[0].children[1].children).map (element) ->
-          element.innerText
-
-        expect(epsilonEntries).toEqual(["theta.txt"])
+        epsilonDir = null
+        waitsFor ->
+          epsilonDir = $(treeView.roots[0].entries).find(".directory:contains(gamma#{path.sep}delta#{path.sep}epsilon):first")
+          epsilonDir.length > 0
+        waitsForPromise ->
+          epsilonDir[0].expandAsync()
+        runs ->
+          epsilonEntries = [].slice.call(epsilonDir[0].children[1].children).map (element) ->
+            element.innerText
+          expect(epsilonEntries).toEqual(["theta.txt"])
 
       it "does not squash a dir name when there are two child dirs ", ->
-        lambdaDir = $(treeView.roots[0].entries).find('.directory:contains(lambda):first')
-        lambdaDir[0].expand()
-        lambdaEntries = [].slice.call(lambdaDir[0].children[1].children).map (element) ->
-          element.innerText
-
-        expect(lambdaEntries).toEqual(["iota", "kappa"])
+        lambdaDir = null
+        waitsFor ->
+          lambdaDir = $(treeView.roots[0].entries).find('.directory:contains(lambda):first')
+          lambdaDir.length > 0
+        waitsForPromise ->
+          lambdaDir[0].expandAsync()
+        runs ->
+          lambdaEntries = [].slice.call(lambdaDir[0].children[1].children).map (element) ->
+            element.innerText
+          expect(lambdaEntries).toEqual(["iota", "kappa"])
 
   describe "Git status decorations", ->
     [projectPath, modifiedFile, originalFileContent] = []
@@ -2307,7 +2343,12 @@ describe "TreeView", ->
       atom.project.getRepositories()[0].getPathStatus(modifiedFile)
 
       treeView.updateRoots()
-      $(treeView.roots[0].entries).find('.directory:contains(dir)')[0].expand()
+      dir = null
+      waitsFor ->
+        dir = $(treeView.roots[0].entries).find('.directory:contains(dir)')
+        dir.length > 0
+      waitsForPromise ->
+        dir[0].expandAsync()
 
     describe "when the project is the repository root", ->
       it "adds a custom style", ->
@@ -2318,8 +2359,9 @@ describe "TreeView", ->
 
     describe "when a file is modified", ->
       it "adds a custom style", ->
-        $(treeView.roots[0].entries).find('.directory:contains(dir)')[0].expand()
-        waitsFor ->
+        waitsForPromise ->
+          $(treeView.roots[0].entries).find('.directory:contains(dir)')[0].expandAsync()
+        waitsFor 'the class to be applied asynchronously', ->
           treeView.find('.file:contains(b.txt)').hasClass('status-modified')
         runs ->
           expect(treeView.find('.file:contains(b.txt)')).toHaveClass 'status-modified'
@@ -2476,11 +2518,16 @@ describe "TreeView", ->
 
       atom.project.setPaths([rootDirPath])
 
-      dirView = $(treeView.roots[0].entries).find('.directory:contains(test-dir)')
-      dirView[0].expand()
-      fileView1 = treeView.find('.file:contains(test-file1.txt)')
-      fileView2 = treeView.find('.file:contains(test-file2.txt)')
-      fileView3 = treeView.find('.file:contains(test-file3.txt)')
+      [fileView1, fileView2, fileView3, dirView] = [null, null, null, null]
+      waitsFor ->
+        dirView = $(treeView.roots[0].entries).find('.directory:contains(test-dir)')
+        dirView.length > 0
+      waitsForPromise ->
+        dirView[0].expandAsync()
+      runs ->
+        fileView1 = treeView.find('.file:contains(test-file1.txt)')
+        fileView2 = treeView.find('.file:contains(test-file2.txt)')
+        fileView3 = treeView.find('.file:contains(test-file3.txt)')
 
     describe 'selecting multiple items', ->
       it 'switches the contextual menu to muli-select mode', ->
