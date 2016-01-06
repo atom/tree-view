@@ -617,13 +617,13 @@ describe "TreeView", ->
   describe "when a directory is double-clicked", ->
     it "toggles the directory expansion state and does not change the focus to the editor", ->
       jasmine.attachToDOM(workspaceElement)
-      treeView.focus()
 
       subdir = null
       waitsForFileToOpen ->
         sampleJs.trigger clickEvent(originalEvent: {detail: 1})
 
       runs ->
+        treeView.focus()
         subdir = root1.find('.directory:first')
         subdir.trigger clickEvent(originalEvent: {detail: 1})
         expect(subdir).toHaveClass 'selected'
