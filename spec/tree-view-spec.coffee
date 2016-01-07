@@ -2714,46 +2714,70 @@ describe "TreeView", ->
     it "lists folders first if the option is set", ->
       atom.config.set "tree-view.sortFoldersBeforeFiles", true
 
-      topLevelEntries = [].slice.call(treeView.roots[0].entries.children).map (element) ->
-        element.innerText
+      waitsFor 'all 4 entries of the first treeView root to be shown', ->
+        treeView.roots[0].entries.children.length is 4
+      runs ->
+        topLevelEntries = [].slice.call(treeView.roots[0].entries.children).map (element) ->
+          element.innerText
 
-      expect(topLevelEntries).toEqual(["alpha", "gamma", "alpha.txt", "zeta.txt"])
+        expect(topLevelEntries).toEqual(["alpha", "gamma", "alpha.txt", "zeta.txt"])
 
-      alphaDir = $(treeView.roots[0].entries).find('.directory:contains(alpha):first')
-      alphaDir[0].expand()
-      alphaEntries = [].slice.call(alphaDir[0].children[1].children).map (element) ->
-        element.innerText
+      [alphaDir, gammaDir] = [null, null]
 
-      expect(alphaEntries).toEqual(["eta", "beta.txt"])
+      waitsFor 'alphaDir to be shown', ->
+        alphaDir = $(treeView.roots[0].entries).find('.directory:contains(alpha):first')
+        alphaDir.length > 0
+      waitsForPromise ->
+        alphaDir[0].expandAsync()
+      runs ->
+        alphaEntries = [].slice.call(alphaDir[0].children[1].children).map (element) ->
+          element.innerText
 
-      gammaDir = $(treeView.roots[0].entries).find('.directory:contains(gamma):first')
-      gammaDir[0].expand()
-      gammaEntries = [].slice.call(gammaDir[0].children[1].children).map (element) ->
-        element.innerText
+        expect(alphaEntries).toEqual(["eta", "beta.txt"])
 
-      expect(gammaEntries).toEqual(["theta", "delta.txt", "epsilon.txt"])
+      waitsFor 'gammaDir to be shown', ->
+        gammaDir = $(treeView.roots[0].entries).find('.directory:contains(gamma):first')
+        gammaDir.length > 0
+      waitsForPromise ->
+        gammaDir[0].expandAsync()
+      runs ->
+        gammaEntries = [].slice.call(gammaDir[0].children[1].children).map (element) ->
+          element.innerText
+
+        expect(gammaEntries).toEqual(["theta", "delta.txt", "epsilon.txt"])
 
     it "sorts folders as files if the option is not set", ->
       atom.config.set "tree-view.sortFoldersBeforeFiles", false
+      waitsFor 'all 4 entries of the first treeView root to be shown', ->
+        treeView.roots[0].entries.children.length is 4
+      runs ->
+        topLevelEntries = [].slice.call(treeView.roots[0].entries.children).map (element) ->
+          element.innerText
 
-      topLevelEntries = [].slice.call(treeView.roots[0].entries.children).map (element) ->
-        element.innerText
+        expect(topLevelEntries).toEqual(["alpha", "alpha.txt", "gamma", "zeta.txt"])
 
-      expect(topLevelEntries).toEqual(["alpha", "alpha.txt", "gamma", "zeta.txt"])
+      [alphaDir, gammaDir] = [null, null]
+      waitsFor ->
+        alphaDir = $(treeView.roots[0].entries).find('.directory:contains(alpha):first')
+        alphaDir.length > 0
+      waitsForPromise ->
+        alphaDir[0].expandAsync()
+      runs ->
+        alphaEntries = [].slice.call(alphaDir[0].children[1].children).map (element) ->
+          element.innerText
 
-      alphaDir = $(treeView.roots[0].entries).find('.directory:contains(alpha):first')
-      alphaDir[0].expand()
-      alphaEntries = [].slice.call(alphaDir[0].children[1].children).map (element) ->
-        element.innerText
+        expect(alphaEntries).toEqual(["beta.txt", "eta"])
 
-      expect(alphaEntries).toEqual(["beta.txt", "eta"])
+      waitsFor ->
+        gammaDir = $(treeView.roots[0].entries).find('.directory:contains(gamma):first')
+        gammaDir.length > 0
+      waitsForPromise ->
+        gammaDir[0].expandAsync()
+      runs ->
+        gammaEntries = [].slice.call(gammaDir[0].children[1].children).map (element) ->
+          element.innerText
 
-      gammaDir = $(treeView.roots[0].entries).find('.directory:contains(gamma):first')
-      gammaDir[0].expand()
-      gammaEntries = [].slice.call(gammaDir[0].children[1].children).map (element) ->
-        element.innerText
-
-      expect(gammaEntries).toEqual(["delta.txt", "epsilon.txt", "theta"])
+        expect(gammaEntries).toEqual(["delta.txt", "epsilon.txt", "theta"])
 
   describe "showSelectedEntryInFileManager()", ->
     beforeEach ->
@@ -2809,28 +2833,38 @@ describe "TreeView", ->
 
       fs.mkdirSync(entriesPath)
       atom.project.setPaths([projectPath])
-      treeView.roots[0].expand()
-      expect(treeView.roots[0].directory.serializeExpansionState()).toEqual
-        isExpanded: true
-        entries:
+      waitsForPromise ->
+        treeView.roots[0].expandAsync()
+      waitsFor ->
+        # Items to be added from the did-add-entries event
+        treeView.roots[0].directory.serializeExpansionState().entries.entries
+      runs ->
+        expect(treeView.roots[0].directory.serializeExpansionState()).toEqual
+          isExpanded: true
           entries:
-            isExpanded: false
-            entries: {}
+            entries:
+              isExpanded: false
+              entries: {}
 
-      fs.removeSync(entriesPath)
-      treeView.roots[0].reload()
-      expect(treeView.roots[0].directory.serializeExpansionState()).toEqual
-        isExpanded: true
-        entries: {}
+        fs.removeSync(entriesPath)
 
-      fs.mkdirSync(path.join(projectPath, 'other'))
-      treeView.roots[0].reload()
-      expect(treeView.roots[0].directory.serializeExpansionState()).toEqual
-        isExpanded: true
-        entries:
-          other:
-            isExpanded: false
-            entries: {}
+      waitsForPromise ->
+        treeView.roots[0].reload()
+      runs ->
+        expect(treeView.roots[0].directory.serializeExpansionState()).toEqual
+          isExpanded: true
+          entries: {}
+
+        fs.mkdirSync(path.join(projectPath, 'other'))
+      waitsForPromise ->
+        treeView.roots[0].reload()
+      runs ->
+        expect(treeView.roots[0].directory.serializeExpansionState()).toEqual
+          isExpanded: true
+          entries:
+            other:
+              isExpanded: false
+              entries: {}
 
   describe "Dragging and dropping files", ->
     beforeEach ->
@@ -2865,38 +2899,53 @@ describe "TreeView", ->
     describe "when dragging a FileView onto a DirectoryView's header", ->
       it "should add the selected class to the DirectoryView", ->
         # Dragging theta onto alphaDir
-        alphaDir = $(treeView.roots[0].entries).find('.directory:contains(alpha):first')
 
-        gammaDir = $(treeView.roots[0].entries).find('.directory:contains(gamma):first')
-        gammaDir[0].expand()
-        deltaFile = gammaDir[0].entries.children[2]
+        [alphaDir, gammaDir] = [null, null]
+        waitsFor ->
+          gammaDir = $(treeView.roots[0].entries).find('.directory:contains(gamma):first')
+          alphaDir = $(treeView.roots[0].entries).find('.directory:contains(alpha):first')
+          gammaDir.length > 0 and alphaDir.length > 0
 
-        [dragStartEvent, dragEnterEvent, dropEvent] = buildDragEvents(deltaFile, alphaDir.find('.header')[0])
-        treeView.onDragStart(dragStartEvent)
-        treeView.onDragEnter(dragEnterEvent)
-        expect(alphaDir).toHaveClass('selected')
+        waitsForPromise ->
+          gammaDir[0].expandAsync()
+        deltaFile = null
+        waitsFor "deltaFile and alphaDir's header to exist", ->
+          deltaFile = gammaDir[0].entries.children[2]
+          alphaDirHeader = alphaDir.find('.header')[0]
+          deltaFile and alphaDirHeader
 
-        # Remains selected when dragging to a child of the heading entry
-        treeView.onDragEnter(dragEnterEvent)
-        treeView.onDragLeave(dragEnterEvent)
-        expect(alphaDir).toHaveClass('selected')
+        runs ->
+          [dragStartEvent, dragEnterEvent, dropEvent] = buildDragEvents(deltaFile, alphaDir.find('.header')[0])
+          treeView.onDragStart(dragStartEvent)
+          treeView.onDragEnter(dragEnterEvent)
+          expect(alphaDir).toHaveClass('selected')
 
-        treeView.onDragLeave(dragEnterEvent)
-        expect(alphaDir).not.toHaveClass('selected')
+          # Remains selected when dragging to a child of the heading entry
+          treeView.onDragEnter(dragEnterEvent)
+          treeView.onDragLeave(dragEnterEvent)
+          expect(alphaDir).toHaveClass('selected')
+
+          treeView.onDragLeave(dragEnterEvent)
+          expect(alphaDir).not.toHaveClass('selected')
 
     describe "when dropping a FileView onto a DirectoryView's header", ->
       it "should move the file to the hovered directory", ->
         # Dragging delta.txt onto alphaDir
-        alphaDir = $(treeView.roots[0].entries).find('.directory:contains(alpha):first')
-        alphaDir[0].expand()
-
-        gammaDir = $(treeView.roots[0].entries).find('.directory:contains(gamma):first')
-        gammaDir[0].expand()
-        deltaFile = gammaDir[0].entries.children[2]
-
-        [dragStartEvent, dragEnterEvent, dropEvent] = buildDragEvents(deltaFile, alphaDir.find('.header')[0], alphaDir[0])
-
+        [alphaDir, gammaDir] = [null, null]
+        waitsFor ->
+          alphaDir = $(treeView.roots[0].entries).find('.directory:contains(alpha):first')
+          alphaDir.length > 0
+        waitsForPromise ->
+          alphaDir[0].expandAsync()
+        waitsFor ->
+          gammaDir = $(treeView.roots[0].entries).find('.directory:contains(gamma):first')
+          gammaDir.length > 0
+        waitsForPromise ->
+          gammaDir[0].expandAsync()
         runs ->
+          deltaFile = gammaDir[0].entries.children[2]
+
+          [dragStartEvent, dragEnterEvent, dropEvent] = buildDragEvents(deltaFile, alphaDir.find('.header')[0], alphaDir[0])
           treeView.onDragStart(dragStartEvent)
           treeView.onDrop(dropEvent)
           expect(alphaDir[0].children.length).toBe 2
@@ -2910,16 +2959,21 @@ describe "TreeView", ->
     describe "when dropping a DirectoryView onto a DirectoryView's header", ->
       it "should move the directory to the hovered directory", ->
         # Dragging delta.txt onto alphaDir
-        alphaDir = $(treeView.roots[0].entries).find('.directory:contains(alpha):first')
-        alphaDir[0].expand()
-
-        gammaDir = $(treeView.roots[0].entries).find('.directory:contains(gamma):first')
-        gammaDir[0].expand()
-        thetaDir = gammaDir[0].entries.children[0]
-
-        [dragStartEvent, dragEnterEvent, dropEvent] = buildDragEvents(thetaDir, alphaDir.find('.header')[0], alphaDir[0])
-
+        [alphaDir, gammaDir, thetaDir] = [null, null, null]
+        waitsFor ->
+          alphaDir = $(treeView.roots[0].entries).find('.directory:contains(alpha):first')
+          alphaDir.length > 0
+        waitsForPromise ->
+          alphaDir[0].expandAsync()
+        waitsFor ->
+          gammaDir = $(treeView.roots[0].entries).find('.directory:contains(gamma):first')
+          gammaDir.length > 0
+        waitsForPromise ->
+          gammaDir[0].expandAsync()
         runs ->
+          thetaDir = gammaDir[0].entries.children[0]
+
+          [dragStartEvent, dragEnterEvent, dropEvent] = buildDragEvents(thetaDir, alphaDir.find('.header')[0], alphaDir[0])
           treeView.onDragStart(dragStartEvent)
           treeView.onDrop(dropEvent)
           expect(alphaDir[0].children.length).toBe 2
