@@ -49,12 +49,14 @@ class File
       if isIgnored
         newStatus = 'ignored'
       else
-        # These are all sync methods
-        status = repo.getCachedPathStatus(@path)
-        if repo.isStatusModified(status)
-          newStatus = 'modified'
-        else if repo.isStatusNew(status)
-          newStatus = 'added'
+        return repo.getCachedPathStatus(@path)
+    .then (status) =>
+      if status is 'ignored'
+        newStatus = 'ignored'
+      else if repo.isStatusModified(status)
+        newStatus = 'modified'
+      else if repo.isStatusNew(status)
+        newStatus = 'added'
 
       if newStatus isnt @status
         @status = newStatus

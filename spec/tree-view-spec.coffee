@@ -2330,7 +2330,9 @@ describe "TreeView", ->
 
       newFile = path.join(newDir, 'new2')
       fs.writeFileSync(newFile, '')
-      atom.project.getRepositories()[0].getPathStatus(newFile)
+
+      waitsForPromise ->
+        atom.project.getRepositories()[0].async.getPathStatus(newFile)
 
       ignoreFile = path.join(projectPath, '.gitignore')
       fs.writeFileSync(ignoreFile, 'ignored.txt')
@@ -2340,7 +2342,9 @@ describe "TreeView", ->
       modifiedFile = path.join(projectPath, 'dir', 'b.txt')
       originalFileContent = fs.readFileSync(modifiedFile, 'utf8')
       fs.writeFileSync modifiedFile, 'ch ch changes'
-      atom.project.getRepositories()[0].getPathStatus(modifiedFile)
+
+      waitsForPromise ->
+        atom.project.getRepositories()[0].async.getPathStatus(modifiedFile)
 
       treeView.updateRoots()
       dir = null
