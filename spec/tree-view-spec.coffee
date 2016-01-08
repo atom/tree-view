@@ -2404,9 +2404,12 @@ describe "TreeView", ->
         jasmine.attachToDOM(workspaceElement)
         treeView.focus()
         element.expand() for element in treeView.find('.directory')
-        fileView = treeView.find('.file:contains(new2)')
-        expect(fileView).not.toBeNull()
-        fileView.click()
+        fileView = null
+        waitsFor 'fileView to be displayed', ->
+          fileView = treeView.find('.file:contains(new2)')
+          fileView.length > 0
+        runs ->
+          fileView.click()
 
       describe "when the file is deleted", ->
         it "updates the style of the directory", ->
@@ -2417,7 +2420,10 @@ describe "TreeView", ->
           spyOn(atom, 'confirm').andCallFake (dialog) ->
             dialog.buttons["Move to Trash"]()
           atom.commands.dispatch(treeView.element, 'tree-view:remove')
-          expect(dirView[0].directory.updateStatus).toHaveBeenCalled()
+          waitsFor ->
+            dirView[0].directory.updateStatus.callCount > 0
+          runs ->
+            expect(dirView[0].directory.updateStatus).toHaveBeenCalled()
 
     describe "when the project is a symbolic link to the repository root", ->
       beforeEach ->
