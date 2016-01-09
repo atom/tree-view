@@ -799,13 +799,14 @@ describe "TreeView", ->
         it "selects the last entry in the expanded directory", ->
           lastDir = root1.find('.directory:last')
           fileAfterDir = lastDir.next()
-          lastDir[0].expand()
-          waitsForFileToOpen ->
-            fileAfterDir.click()
-
+          waitsForPromise ->
+            lastDir[0].expandAsync()
           runs ->
-            atom.commands.dispatch(treeView.element, 'core:move-up')
-            expect(lastDir.find('.entry:last')).toHaveClass 'selected'
+            waitsForFileToOpen ->
+              fileAfterDir.click()
+            runs ->
+              atom.commands.dispatch(treeView.element, 'core:move-up')
+              expect(lastDir.find('.entry:last')).toHaveClass 'selected'
 
       describe "when there is an entry before the currently selected entry", ->
         it "selects the previous entry", ->
