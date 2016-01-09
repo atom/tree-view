@@ -2427,10 +2427,13 @@ describe "TreeView", ->
 
     describe "when the project is a symbolic link to the repository root", ->
       beforeEach ->
-        symlinkPath = temp.path('tree-view-project')
+        symlinkPath = temp.path('tree-view-project-symlink')
         fs.symlinkSync(projectPath, symlinkPath)
         atom.project.setPaths([symlinkPath])
-        $(treeView.roots[0].entries).find('.directory:contains(dir)')[0].expand()
+        waitsFor ->
+          $(treeView.roots[0].entries).find('.directory:contains(dir)').length > 0
+        waitsForPromise ->
+          $(treeView.roots[0].entries).find('.directory:contains(dir)')[0].expandAsync()
 
         waitsFor (done) ->
           disposable = atom.project.getRepositories()[0].onDidChangeStatuses ->
@@ -2439,8 +2442,11 @@ describe "TreeView", ->
 
       describe "when a file is modified", ->
         it "updates its and its parent directories' styles", ->
-          expect(treeView.find('.file:contains(b.txt)')).toHaveClass 'status-modified'
-          expect(treeView.find('.directory:contains(dir)')).toHaveClass 'status-modified'
+          waitsFor 'the directory status to update', ->
+            treeView.find('.directory:contains(dir)').hasClass('status-modified')
+          runs ->
+            expect(treeView.find('.file:contains(b.txt)')).toHaveClass 'status-modified'
+            expect(treeView.find('.directory:contains(dir)')).toHaveClass 'status-modified'
 
       describe "when a file loses its modified status", ->
         it "updates its and its parent directories' styles", ->
