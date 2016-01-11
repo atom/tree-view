@@ -15,7 +15,10 @@ waitsForFileToOpen = (causeFileToOpen) ->
 
 clickEvent = (properties) ->
   event = $.Event('click')
-  _.extend(event, properties) if properties?
+  if properties?
+    properties.originalEvent?.preventDefault ?= ->
+    properties.originalEvent?.stopPropagation ?= ->
+    _.extend(event, properties)
   event
 
 describe "TreeView", ->

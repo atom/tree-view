@@ -10,16 +10,28 @@ module.exports.buildDragEvents = (dragged, enterTarget, dropTarget) ->
   dragStartEvent = $.Event()
   dragStartEvent.target = dragged
   dragStartEvent.currentTarget = dragged
-  dragStartEvent.originalEvent = {dataTransfer}
+  dragStartEvent.originalEvent = {
+    dataTransfer,
+    preventDefault: ->
+    stopPropagation: ->
+  }
 
   dropEvent = $.Event()
   dropEvent.target = dropTarget
   dropEvent.currentTarget = dropTarget
-  dropEvent.originalEvent = {dataTransfer}
+  dropEvent.originalEvent = {
+    dataTransfer,
+    preventDefault: ->
+    stopPropagation: ->
+  }
 
   dragEnterEvent = $.Event()
   dragEnterEvent.target = enterTarget
   dragEnterEvent.currentTarget = enterTarget
-  dragEnterEvent.originalEvent = {dataTransfer}
+  dragEnterEvent.originalEvent = {
+    dataTransfer,
+    preventDefault: ->
+    stopPropagation: ->
+  }
 
   [dragStartEvent, dragEnterEvent, dropEvent]
