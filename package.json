@@ -10,7 +10,7 @@
   },
   "private": true,
   "dependencies": {
-    "atom-space-pen-views": "^2.0.0",
+    "atom-space-pen-views": "^2.1.1",
     "event-kit": "^1.0.0",
     "fs-plus": "^2.3.0",
     "minimatch": "~0.3.0",
