@@ -509,7 +509,7 @@ class TreeView extends View
     else if activePath = @getActivePath()
       selectedPaths = [activePath]
 
-    return unless selectedPaths
+    return unless selectedPaths and selectedPaths.length > 0
 
     for root in @roots
       if root.getPath() in selectedPaths
@@ -524,7 +524,10 @@ class TreeView extends View
       buttons:
         "Move to Trash": ->
           for selectedPath in selectedPaths
-            shell.moveItemToTrash(selectedPath)
+            if not shell.moveItemToTrash(selectedPath)
+              atom.notifications.addError "The file couldn't be removed#{if process.platform is 'linux' then " (is `gvfs-trash` installed?)" else ""}",
+                detail: "Error while moving '#{selectedPath}' to trash"
+                dismissable: true
             if repo = repoForPath(selectedPath)
               repo.getPathStatus(selectedPath)
         "Cancel": null

@@ -1154,6 +1154,7 @@ describe "TreeView", ->
       dirView3 = $(treeView.roots[1].entries).find('.directory:contains(test-dir3):first')
       dirView3[0].expand()
       fileView4 = treeView.find('.file:contains(test-file4.txt)')
+      fileView5 = treeView.find('.file:contains(test-file5.txt)')
 
     describe "tree-view:copy", ->
       LocalStorage = window.localStorage
@@ -2006,6 +2007,41 @@ describe "TreeView", ->
           atom.commands.dispatch(treeView.element, 'tree-view:remove')
           args = atom.confirm.mostRecentCall.args[0]
           expect(Object.keys(args.buttons)).toEqual ['Move to Trash', 'Cancel']
+
+      it "shows a notification on failure", ->
+        atom.notifications.clear()
+
+        spyOn(atom, 'confirm')
+
+        waitsForFileToOpen ->
+          fileView.click()
+
+        runs ->
+          repeat = 2
+          while (repeat > 0)
+            atom.commands.dispatch(treeView.element, 'tree-view:remove')
+            args = atom.confirm.mostRecentCall.args[0]
+            args.buttons["Move to Trash"]()
+            --repeat
+
+          notificationsNumber = atom.notifications.getNotifications().length
+          expect(notificationsNumber).toBe 1
+          if notificationsNumber is 1
+            notification = atom.notifications.getNotifications()[0]
+            expect(notification.getMessage()).toContain 'The file couldn\'t be removed'
+            expect(notification.getDetail()).toContain 'Error while moving'
+            expect(notification.getDetail()).toContain 'to trash'
+
+      it "does nothing when no file is selected", ->
+        atom.notifications.clear()
+
+        jasmine.attachToDOM(workspaceElement)
+        treeView.focus()
+        treeView.deselect()
+        atom.commands.dispatch(treeView.element, 'tree-view:remove')
+
+        expect(atom.confirm.mostRecentCall).not.toExist
+        expect(atom.notifications.getNotifications().length).toBe 0
 
   describe "file system events", ->
     temporaryFilePath = null
