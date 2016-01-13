@@ -9,6 +9,11 @@ or delete files and folders.
 
 ![](https://f.cloud.github.com/assets/671378/2241932/6d9cface-9ceb-11e3-9026-31d5011d889d.png)
 
+This package uses both the `core.ignoredNames` and `tree-view.ignoredNames`
+config settings to filter out files and folders that will not be shown.
+Both of those config settings are interpreted as arrays of
+[minimatch](https://github.com/isaacs/minimatch) glob patterns.
+
 ## API
 
 The Tree View displays icons next to files. These icons are customizable by installing a package that provides an `atom.file-icons` service.

@@ -2124,6 +2124,11 @@ describe "TreeView", ->
       expect(treeView.find('.directory .name:contains(test.js)').length).toBe 1
       expect(treeView.find('.directory .name:contains(test.txt)').length).toBe 1
 
+    it "ignores paths that match entries in config.tree-view.ignoredNames"
+      atom.config.set("tree-view.ignoredNames", ["sample.js", "*.txt"])
+      expect(treeView.find('.directory .name:contains(sample.js)').length).toBe 0
+      expect(treeView.find('.directory .name:contains(test.txt)').length).toBe 0
+
   describe "the squashedDirectoryName config option", ->
     beforeEach ->
       rootDirPath = fs.absolute(temp.mkdirSync('tree-view'))

@@ -19,6 +19,10 @@ module.exports =
       type: 'boolean'
       default: false
       description: 'Don\'t show items matched by the `Ignored Names` core config setting.'
+    ignoredNames:
+      type: 'array'
+      default: []
+      description: 'List of string glob patterns. Files and directories matching these patterns will be ignored. This list is merged with the list defined by the core `Ignored Names` config setting, if the `Hide Ignored Names` setting is on. Example: `.git, ._*, Thumbs.db`.'
     showOnRightSide:
       type: 'boolean'
       default: false
