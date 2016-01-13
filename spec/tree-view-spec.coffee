@@ -2126,12 +2126,14 @@ describe "TreeView", ->
       expect(treeView.find('.directory .name:contains(test.txt)').length).toBe 1
 
     it "ignores paths that match entries in config.tree-view.ignoredNames", ->
+      atom.config.set("core.ignoredNames", [])
       atom.config.set("tree-view.ignoredNames", ["*.txt"])
       expect(treeView.find('.directory .name:contains(test.js)').length).toBe 1
       expect(treeView.find('.directory .name:contains(test.txt)').length).toBe 0
 
     it "does not ignore paths that match entries from config.core.ignoredNames if the setting to merge them is off, otherwise it does ignore them", ->
       atom.config.set("tree-view.hideIgnoredNames", true)
+      atom.config.set("core.ignoredNames", ["*.js"])
       atom.config.set("tree-view.ignoredNames", ["*.txt"])
       atom.config.set("tree-view.mergeIgnoredNames", true)
       expect(treeView.find('.directory .name:contains(test.js)').length).toBe 0
