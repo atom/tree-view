@@ -143,6 +143,8 @@ class TreeView extends View
       @updateRoots()
     @disposables.add atom.config.onDidChange 'tree-view.hideIgnoredNames', =>
       @updateRoots()
+    @disposables.add atom.config.onDidChange 'tree-view.mergeIgnoredNames', =>
+      @updateRoots() if atom.config.get('tree-view.hideIgnoredNames')
     @disposables.add atom.config.onDidChange 'tree-view.ignoredNames', =>
       @updateRoots() if atom.config.get('tree-view.hideIgnoredNames')
     @disposables.add atom.config.onDidChange 'core.ignoredNames', =>
@@ -244,7 +246,8 @@ class TreeView extends View
     Minimatch ?= require('minimatch').Minimatch
 
     ignoredNames = atom.config.get('tree-view.ignoredNames') ? []
-    ignoredNames = ignoredNames.concat(atom.config.get('core.ignoredNames') ? [])
+    if atom.config.get('tree-view.mergeIgnoredNames')
+      ignoredNames = ignoredNames.concat(atom.config.get('core.ignoredNames') ? [])
 
     for ignoredName in ignoredNames when ignoredName
       try

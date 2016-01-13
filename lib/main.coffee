@@ -18,11 +18,15 @@ module.exports =
     hideIgnoredNames:
       type: 'boolean'
       default: false
-      description: 'Don\'t show items matched by the `Ignored Names` core config setting.'
+      description: 'Don\'t show items matched by the `Ignored Names` config setting.'
+    mergeIgnoredNames:
+      type: 'boolean'
+      default: true
+      description: 'Merge the `Ignored Names` of this package with the `Ignored Names` from the core configuration setting.'
     ignoredNames:
       type: 'array'
       default: []
-      description: 'List of string glob patterns. Files and directories matching these patterns will be ignored. This list is merged with the list defined by the core `Ignored Names` config setting, if the `Hide Ignored Names` setting is on. Example: `.git, ._*, Thumbs.db`.'
+      description: 'List of string glob patterns. Files and directories matching these patterns will be ignored. This list is merged with the list defined by the core `Ignored Names` config setting, if the `Merge Ignored Names` setting is on. Example: `.git, ._*, Thumbs.db`.'
     showOnRightSide:
       type: 'boolean'
       default: false
