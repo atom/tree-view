@@ -728,10 +728,8 @@ class TreeView extends View
       fs.moveSync(initialPath, newPath)
 
       if repo = repoForPath(newPath)
-        # The return values of this are thrown away, they are called for emiiter
-        # side effects only.
-        repo.getPathStatus(initialPath)
-        repo.getPathStatus(newPath)
+        repo.refreshStatusForPath(initialPath)
+        repo.refreshStatusForPath(newPath)
 
     catch error
       atom.notifications.addWarning("Failed to move entry #{initialPath} to #{newDirectoryPath}", detail: error.message)
