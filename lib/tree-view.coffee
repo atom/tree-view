@@ -113,6 +113,7 @@ class TreeView extends View
      'tree-view:recursive-expand-directory': => @expandDirectory(true)
      'tree-view:collapse-directory': => @collapseDirectory()
      'tree-view:recursive-collapse-directory': => @collapseDirectory(true)
+     'tree-view:preview-selected-entry': => @openSelectedEntry(false)
      'tree-view:open-selected-entry': => @openSelectedEntry(true)
      'tree-view:open-selected-entry-right': => @openSelectedEntryRight()
      'tree-view:open-selected-entry-left': => @openSelectedEntryLeft()
@@ -378,7 +379,7 @@ class TreeView extends View
   openSelectedEntry: (activatePane) ->
     selectedEntry = @selectedEntry()
     if selectedEntry instanceof DirectoryView
-      selectedEntry.toggleExpansion()
+      selectedEntry.expand()
     else if selectedEntry instanceof FileView
       atom.workspace.open(selectedEntry.getPath(), {activatePane})
 
