@@ -75,6 +75,9 @@ describe "TreeView", ->
     it "selects the root folder", ->
       expect(treeView.selectedEntry()).toEqual(treeView.roots[0])
 
+    it "makes the root folder non-draggable", ->
+      expect(treeView.roots[0].hasAttribute('draggable')).toBe(false)
+
     describe "when the project has no path", ->
       beforeEach ->
         atom.project.setPaths([])
@@ -414,7 +417,6 @@ describe "TreeView", ->
         runs ->
           atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
           expect(treeView.scrollTop()).toEqual 0
-
 
   describe "when tool-panel:unfocus is triggered on the tree view", ->
     it "surrenders focus to the workspace but remains open", ->
@@ -1326,6 +1328,18 @@ describe "TreeView", ->
             atom.commands.dispatch(treeView.element, "tree-view:paste")
             expect(fs.existsSync(path.join(dirPath2, path.basename(filePath4)))).toBeTruthy()
 
+        describe "when pasting a file with an asterisk char '*' in to different directory", ->
+          it "should successfully move the file", ->
+            # Files cannot contain asterisks on Windows
+            return if process.platform is "win32"
+
+            asteriskFilePath = path.join(dirPath, "test-file-**.txt")
+            fs.writeFileSync(asteriskFilePath, "doesn't matter *")
+            LocalStorage['tree-view:copyPath'] = JSON.stringify([asteriskFilePath])
+            dirView2.click()
+            atom.commands.dispatch(treeView.element, "tree-view:paste")
+            expect(fs.existsSync(path.join(dirPath2, path.basename(asteriskFilePath)))).toBeTruthy()
+
       describe "when nothing has been copied", ->
         it "does not paste anything", ->
           expect(-> atom.commands.dispatch(treeView.element, "tree-view:paste")).not.toThrow()
@@ -2110,6 +2124,83 @@ describe "TreeView", ->
       expect(treeView.find('.directory .name:contains(test.js)').length).toBe 1
       expect(treeView.find('.directory .name:contains(test.txt)').length).toBe 1
 
+  describe "the squashedDirectoryName config option", ->
+    beforeEach ->
+      rootDirPath = fs.absolute(temp.mkdirSync('tree-view'))
+
+      zetaDirPath = path.join(rootDirPath, "zeta")
+      zetaFilePath = path.join(zetaDirPath, "zeta.txt")
+
+      alphaDirPath = path.join(rootDirPath, "alpha")
+      betaDirPath = path.join(alphaDirPath, "beta")
+      betaFilePath = path.join(betaDirPath, "beta.txt")
+
+      gammaDirPath = path.join(rootDirPath, "gamma")
+      deltaDirPath = path.join(gammaDirPath, "delta")
+      epsilonDirPath = path.join(deltaDirPath, "epsilon")
+      thetaFilePath = path.join(epsilonDirPath, "theta.txt")
+
+      lambdaDirPath = path.join(rootDirPath, "lambda")
+      iotaDirPath = path.join(lambdaDirPath, "iota")
+      kappaDirPath = path.join(lambdaDirPath, "kappa")
+
+      fs.makeTreeSync(zetaDirPath)
+      fs.writeFileSync(zetaFilePath, "doesn't matter")
+
+      fs.makeTreeSync(alphaDirPath)
+      fs.makeTreeSync(betaDirPath)
+      fs.writeFileSync(betaFilePath, "doesn't matter")
+
+      fs.makeTreeSync(gammaDirPath)
+      fs.makeTreeSync(deltaDirPath)
+      fs.makeTreeSync(epsilonDirPath)
+      fs.writeFileSync(thetaFilePath, "doesn't matter")
+
+      fs.makeTreeSync(lambdaDirPath)
+      fs.makeTreeSync(iotaDirPath)
+      fs.makeTreeSync(kappaDirPath)
+
+      atom.project.setPaths([rootDirPath])
+
+    it "defaults to disabled", ->
+      expect(atom.config.get("tree-view.squashDirectoryNames")).toBeFalsy()
+
+    describe "when enabled", ->
+      beforeEach ->
+        atom.config.set('tree-view.squashDirectoryNames', true)
+
+      it "does not squash a file in to a DirectoryViews", ->
+        zetaDir = $(treeView.roots[0].entries).find('.directory:contains(zeta):first')
+        zetaDir[0].expand()
+        zetaEntries = [].slice.call(zetaDir[0].children[1].children).map (element) ->
+          element.innerText
+
+        expect(zetaEntries).toEqual(["zeta.txt"])
+
+      it "squashes two dir names when the first only contains a single dir", ->
+        betaDir = $(treeView.roots[0].entries).find(".directory:contains(alpha#{path.sep}beta):first")
+        betaDir[0].expand()
+        betaEntries = [].slice.call(betaDir[0].children[1].children).map (element) ->
+          element.innerText
+
+        expect(betaEntries).toEqual(["beta.txt"])
+
+      it "squashes three dir names when the first and second only contain single dirs", ->
+        epsilonDir = $(treeView.roots[0].entries).find(".directory:contains(gamma#{path.sep}delta#{path.sep}epsilon):first")
+        epsilonDir[0].expand()
+        epsilonEntries = [].slice.call(epsilonDir[0].children[1].children).map (element) ->
+          element.innerText
+
+        expect(epsilonEntries).toEqual(["theta.txt"])
+
+      it "does not squash a dir name when there are two child dirs ", ->
+        lambdaDir = $(treeView.roots[0].entries).find('.directory:contains(lambda):first')
+        lambdaDir[0].expand()
+        lambdaEntries = [].slice.call(lambdaDir[0].children[1].children).map (element) ->
+          element.innerText
+
+        expect(lambdaEntries).toEqual(["iota", "kappa"])
+
   describe "Git status decorations", ->
     [projectPath, modifiedFile, originalFileContent] = []
 
@@ -2165,6 +2256,26 @@ describe "TreeView", ->
     describe "when a file is ignored", ->
       it "adds a custom style", ->
         expect(treeView.find('.file:contains(ignored.txt)')).toHaveClass 'status-ignored'
+
+    describe "when a file is selected in a directory", ->
+      beforeEach ->
+        jasmine.attachToDOM(workspaceElement)
+        treeView.focus()
+        element.expand() for element in treeView.find('.directory')
+        fileView = treeView.find('.file:contains(new2)')
+        expect(fileView).not.toBeNull()
+        fileView.click()
+
+      describe "when the file is deleted", ->
+        it "updates the style of the directory", ->
+          expect(treeView.selectedEntry().getPath()).toContain(path.join('dir2', 'new2'))
+          dirView = $(treeView.roots[0].entries).find('.directory:contains(dir2)')
+          expect(dirView).not.toBeNull()
+          spyOn(dirView[0].directory, 'updateStatus')
+          spyOn(atom, 'confirm').andCallFake (dialog) ->
+            dialog.buttons["Move to Trash"]()
+          atom.commands.dispatch(treeView.element, 'tree-view:remove')
+          expect(dirView[0].directory.updateStatus).toHaveBeenCalled()
 
     describe "when the project is a symbolic link to the repository root", ->
       beforeEach ->
@@ -2545,6 +2656,36 @@ describe "TreeView", ->
       runs ->
         expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Opening folder in Finder failed'
         expect(atom.notifications.getNotifications()[0].getDetail()).toContain 'ENOENT'
+
+  describe "when reloading a directory with deletions and additions", ->
+    it "does not throw an error (regression)", ->
+      projectPath = temp.mkdirSync('atom-project')
+      entriesPath = path.join(projectPath, 'entries')
+
+      fs.mkdirSync(entriesPath)
+      atom.project.setPaths([projectPath])
+      treeView.roots[0].expand()
+      expect(treeView.roots[0].directory.serializeExpansionState()).toEqual
+        isExpanded: true
+        entries:
+          entries:
+            isExpanded: false
+            entries: {}
+
+      fs.removeSync(entriesPath)
+      treeView.roots[0].reload()
+      expect(treeView.roots[0].directory.serializeExpansionState()).toEqual
+        isExpanded: true
+        entries: {}
+
+      fs.mkdirSync(path.join(projectPath, 'other'))
+      treeView.roots[0].reload()
+      expect(treeView.roots[0].directory.serializeExpansionState()).toEqual
+        isExpanded: true
+        entries:
+          other:
+            isExpanded: false
+            entries: {}
 
   describe "Dragging and dropping files", ->
     deltaFilePath = null
