@@ -2028,9 +2028,8 @@ describe "TreeView", ->
           expect(notificationsNumber).toBe 1
           if notificationsNumber is 1
             notification = atom.notifications.getNotifications()[0]
-            expect(notification.getMessage()).toContain 'The file couldn\'t be removed'
-            expect(notification.getDetail()).toContain 'Error while moving'
-            expect(notification.getDetail()).toContain 'to trash'
+            expect(notification.getMessage()).toContain 'The following file couldn\'t be moved to trash'
+            expect(notification.getDetail()).toContain 'test-file.txt'
 
       it "does nothing when no file is selected", ->
         atom.notifications.clear()
