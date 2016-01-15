@@ -839,11 +839,17 @@ class TreeView extends View
     entry = e.currentTarget
     return unless entry instanceof DirectoryView
 
-    initialPath = e.originalEvent.dataTransfer.getData("initialPath")
-    newDirectoryPath = $(entry).find(".name").data("path")
-
     entry.classList.remove('selected')
 
+    newDirectoryPath = $(entry).find(".name").data("path")
     return false unless newDirectoryPath
 
-    @moveEntry(initialPath, newDirectoryPath)
+    initialPath = e.originalEvent.dataTransfer.getData("initialPath")
+
+    if initialPath
+      # Drop event from Atom
+      @moveEntry(initialPath, newDirectoryPath)
+    else
+      # Drop event from OS
+      for file in e.originalEvent.dataTransfer.files
+        @moveEntry(file.path, newDirectoryPath)
