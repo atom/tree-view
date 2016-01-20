@@ -512,7 +512,7 @@ class TreeView extends View
     else if activePath = @getActivePath()
       selectedPaths = [activePath]
 
-    return unless selectedPaths
+    return unless selectedPaths and selectedPaths.length > 0
 
     for root in @roots
       if root.getPath() in selectedPaths
