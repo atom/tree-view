@@ -57,7 +57,6 @@
   'ctrl-9': 'tree-view:open-selected-entry-in-pane-9'
 
 '.tree-view':
-  'right': 'tree-view:expand-directory'
   'ctrl-]': 'tree-view:expand-directory'
   'l': 'tree-view:expand-directory'
   'left': 'tree-view:collapse-directory'
@@ -81,6 +80,12 @@
   'i': 'tree-view:toggle-vcs-ignored-files'
   'home': 'core:move-to-top'
   'end': 'core:move-to-bottom'
+
+'.tree-view .directory':
+  'right': 'tree-view:expand-directory'
+
+'.tree-view .file':
+  'right': 'tree-view:open-pending-file'
 
 '.tree-view-dialog atom-text-editor[mini]':
   'enter': 'core:confirm'
