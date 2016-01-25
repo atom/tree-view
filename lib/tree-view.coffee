@@ -110,6 +110,7 @@ class TreeView extends View
      'core:move-to-top': => @scrollToTop()
      'core:move-to-bottom': => @scrollToBottom()
      'tree-view:expand-directory': => @expandDirectory()
+     'tree-view:open-pending-file': => @openSelectedEntry(pending: true)
      'tree-view:recursive-expand-directory': => @expandDirectory(true)
      'tree-view:collapse-directory': => @collapseDirectory()
      'tree-view:recursive-collapse-directory': => @collapseDirectory(true)
