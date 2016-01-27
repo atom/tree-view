@@ -514,7 +514,7 @@ describe "TreeView", ->
         child.find('.entries > li:contains(sub-dir1)').click()
         root1.click()
       waitsFor ->
-        !treeView.roots[0].classList.contains('expanded')
+        not treeView.roots[0].classList.contains('expanded')
       runs ->
         root1.click()
 
@@ -547,7 +547,7 @@ describe "TreeView", ->
         expect(grandchild[0].directory.watchSubscription).toBeTruthy()
         root1.click()
       waitsFor ->
-        !treeView.roots[0].directory.watchSubscription
+        not treeView.roots[0].directory.watchSubscription
       runs ->
         expect(treeView.roots[0].directory.watchSubscription).toBeFalsy()
         expect(child[0].directory.watchSubscription).toBeFalsy()
@@ -695,7 +695,7 @@ describe "TreeView", ->
         root1.click()
         treeView.roots[0].collapse()
         waitsFor ->
-          !treeView.roots[0].classList.contains('expanded')
+          not treeView.roots[0].classList.contains('expanded')
         runs ->
           root1.trigger clickEvent({altKey: true})
         waitsFor ->
