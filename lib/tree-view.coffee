@@ -109,7 +109,6 @@ class TreeView extends View
      'core:page-down': => @pageDown()
      'core:move-to-top': => @scrollToTop()
      'core:move-to-bottom': => @scrollToBottom()
-     'tree-view:activate-item': => @activateItem()
      'tree-view:expand-directory': => @expandDirectory()
      'tree-view:recursive-expand-directory': => @expandDirectory(true)
      'tree-view:collapse-directory': => @collapseDirectory()
@@ -367,13 +366,6 @@ class TreeView extends View
       @selectEntry(@list.find('.entry').last()?[0])
 
     @scrollToEntry(@selectedEntry())
-
-  activateItem: ->
-    classList = @selectedEntry().classList
-    if classList.contains('directory')
-      @expandDirectory()
-    else if classList.contains('file')
-      @openSelectedEntry(pending: true)
 
   expandDirectory: (isRecursive=false) ->
     @selectedEntry()?.expand?(isRecursive)
