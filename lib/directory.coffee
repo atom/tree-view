@@ -165,48 +165,44 @@ class Directory
       names = []
     names.sort(new Intl.Collator(undefined, {numeric: true, sensitivity: "base"}).compare)
 
-    namePromises = []
-    for name in names
-      # throw this in a closure so we don't have scoping issues
-      # async/await would make this more pleasant when this is
-      # inevitably ported to ES6
-      f = =>
-        localName = name
-        fullPath = path.join(@path, localName)
+    # async/await will make this more pleasant when this is
+    # inevitably ported to ES6
+    namePromises = names.map (name) =>
+      localName = name
+      fullPath = path.join(@path, localName)
 
-        return @isPathIgnored(fullPath).then (isIgnored) =>
-          return if isIgnored
+      return @isPathIgnored(fullPath).then (isIgnored) =>
+        return if isIgnored
 
-          stat = fs.lstatSyncNoException(fullPath)
-          symlink = stat.isSymbolicLink?()
-          stat = fs.statSyncNoException(fullPath) if symlink
-          if stat.isDirectory?()
-            if @entries.hasOwnProperty(localName)
-              # push a placeholder since this entry already exists but this helps
-              # track the insertion index for the created views
-              return [localName, 'directory']
-            else
-              expansionState = @expansionState.entries[localName]
-              return [localName, new Directory({
-                  name: localName,
-                  fullPath: fullPath,
-                  symlink: symlink,
-                  expansionState: expansionState,
-                  ignoredPatterns: @ignoredPatterns
-                  })]
-          else if stat.isFile?()
-            if @entries.hasOwnProperty(localName)
-              # push a placeholder since this entry already exists but this helps
-              # track the insertion index for the created views
-              return [localName, 'file']
-            else
-              return [localName, new File({
+        stat = fs.lstatSyncNoException(fullPath)
+        symlink = stat.isSymbolicLink?()
+        stat = fs.statSyncNoException(fullPath) if symlink
+        if stat.isDirectory?()
+          if @entries.hasOwnProperty(localName)
+            # push a placeholder since this entry already exists but this helps
+            # track the insertion index for the created views
+            return [localName, 'directory']
+          else
+            expansionState = @expansionState.entries[localName]
+            return [localName, new Directory({
                 name: localName,
                 fullPath: fullPath,
                 symlink: symlink,
-                realpathCache: realpathCache
+                expansionState: expansionState,
+                ignoredPatterns: @ignoredPatterns
                 })]
-      namePromises.push f()
+        else if stat.isFile?()
+          if @entries.hasOwnProperty(localName)
+            # push a placeholder since this entry already exists but this helps
+            # track the insertion index for the created views
+            return [localName, 'file']
+          else
+            return [localName, new File({
+              name: localName,
+              fullPath: fullPath,
+              symlink: symlink,
+              realpathCache: realpathCache
+              })]
 
     Promise.all(namePromises).then (values) =>
       directories = []
