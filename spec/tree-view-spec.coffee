@@ -2710,6 +2710,109 @@ describe "TreeView", ->
         expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Opening folder in Finder failed'
         expect(atom.notifications.getNotifications()[0].getDetail()).toContain 'ENOENT'
 
+  describe '.toggleShortcuts()', ->
+    it 'calls the enableShortcuts method if they\'re not enabled', ->
+      spyOn(treeView, 'enableShortcuts')
+      treeView.toggleShortcuts()
+      expect(treeView.enableShortcuts).toHaveBeenCalled()
+
+    it 'calls the disableShortcuts', ->
+      treeView.element.classList.add 'shortcuts'
+      spyOn(treeView, 'disableShortcuts')
+      treeView.toggleShortcuts()
+      expect(treeView.disableShortcuts).toHaveBeenCalled()
+
+  describe '.enableShortcuts()', ->
+    it 'listens to directory toggling', ->
+      spyOn(treeView.emitter, 'on')
+      treeView.enableShortcuts()
+      expect(treeView.emitter.on).toHaveBeenCalledWith('did-toggle-directory', treeView.updateAllTreeStartIndexes)
+
+    it 'calls the updateAllTreeStartIndexes() method', ->
+      spyOn(treeView, 'updateAllTreeStartIndexes')
+      treeView.enableShortcuts()
+      expect(treeView.updateAllTreeStartIndexes).toHaveBeenCalled()
+
+    it 'adds the shortcuts class', ->
+      treeView.enableShortcuts()
+      expect(treeView.element.classList.contains('shortcuts')).toBe(yes)
+
+  describe '.disableShortcuts()', ->
+    it 'removes listens to directory toggling', ->
+      spyOn(treeView.emitter, 'off')
+      treeView.disableShortcuts()
+      expect(treeView.emitter.off).toHaveBeenCalledWith('did-toggle-directory', treeView.updateAllTreeStartIndexes)
+
+    it 'calls the removesShortcuts() method', ->
+      spyOn(treeView, 'removeShortcuts')
+      treeView.disableShortcuts()
+      expect(treeView.removeShortcuts).toHaveBeenCalled()
+
+    it 'removes the shortcuts class', ->
+      treeView.disableShortcuts()
+      expect(treeView.element.classList.contains('shortcuts')).toBe(no)
+
+  describe 'updateAllTreeStartIndexes()', ->
+    it 'first removes all shortcuts', ->
+      spyOn(treeView, 'removeShortcuts')
+      treeView.updateAllTreeStartIndexes()
+      expect(treeView.removeShortcuts).toHaveBeenCalled()
+
+    it 'then updates all the start indexes', ->
+      spyOn(treeView, 'addShortcutsToListTrees')
+      treeView.updateAllTreeStartIndexes()
+      expect(treeView.addShortcutsToListTrees).toHaveBeenCalledWith(0, treeView.element.querySelector('.tree-view-scroller'))
+
+  describe '.addShortcutsToListTrees()', ->
+    addShortcutsToListTrees = ->
+
+    beforeEach ->
+      treeView.element.classList.add('shortcuts')
+      scroller = treeView.element.querySelector('.tree-view-scroller')
+      addShortcutsToListTrees = -> treeView.addShortcutsToListTrees(0, scroller)
+
+    it 'updates all start indexes of tree lists', ->
+      dir1 = selectEntry(path.join(path1, 'dir1')).querySelector('ol')
+      addShortcutsToListTrees()
+      expect(dir1.getAttribute('start')).toBe '7'
+
+    it 'adds a bunch of shortcut commands', ->
+      spyOn(treeView, 'addShortcutTo')
+      addShortcutsToListTrees()
+      expect(treeView.addShortcutTo.calls.length).toEqual(9)
+
+    it 'returns the amount of child nodes the given element contains', ->
+      expect(addShortcutsToListTrees()).toEqual(9)
+
+  describe 'addShortcutTo()', ->
+    el = null
+
+    beforeEach ->
+      el = selectEntry(path.join(path1, 'dir1')).querySelector('ol li')
+
+    it 'adds a new command', ->
+      spyOn(atom.commands, 'add')
+      treeView.addShortcutTo(45, el)
+      {args} = atom.commands.add.calls[0]
+      expect(args[0]).toEqual treeView.element
+      expect(args[1]).toEqual "tree-view:open-entry-shortcut-45"
+      expect(typeof args[2]).toEqual 'function'
+
+    it 'adds new keymaps', ->
+      spyOn(atom.keymaps, 'add')
+      treeView.addShortcutTo(45, el)
+      {args} = atom.keymaps.add.calls[0]
+      expect(args[0]).toEqual 'tree-view shortcuts'
+      expect(args[1]).toEqual
+        '.tree-view-resizer.shortcuts .tree-view':
+          '4 5': 'tree-view:open-entry-shortcut-45'
+
+  describe 'removeShortcuts', ->
+    it 'removes all the shortcuts', ->
+      spyOn atom.keymaps, 'removeBindingsFromSource'
+      treeView.removeShortcuts()
+      expect(atom.keymaps.removeBindingsFromSource).toHaveBeenCalledWith 'tree-view shortcuts'
+
   describe "when reloading a directory with deletions and additions", ->
     it "does not throw an error (regression)", ->
       projectPath = temp.mkdirSync('atom-project')

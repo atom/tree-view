@@ -1,5 +1,6 @@
 path = require 'path'
 shell = require 'shell'
+{Emitter} = require 'event-kit'
 
 _ = require 'underscore-plus'
 {BufferedProcess, CompositeDisposable} = require 'atom'
@@ -38,6 +39,7 @@ class TreeView extends View
     @scrollTopAfterAttach = -1
     @selectedPath = null
     @ignoredPatterns = []
+    @emitter = new Emitter()
 
     @dragEventCounts = new WeakMap
 
@@ -93,6 +95,8 @@ class TreeView extends View
       return if e.target.classList.contains('entries')
 
       @entryClicked(e) unless e.shiftKey or e.metaKey or e.ctrlKey
+    @on 'click', '.entry.directory', (e) =>
+      @emitter.emit 'did-toggle-directory', e.target
     @on 'mousedown', '.entry', (e) =>
       @onMouseDown(e)
     @on 'mousedown', '.tree-view-resize-handle', (e) => @resizeStarted(e)
@@ -130,6 +134,7 @@ class TreeView extends View
      'tree-view:toggle-vcs-ignored-files': -> toggleConfig 'tree-view.hideVcsIgnoredFiles'
      'tree-view:toggle-ignored-names': -> toggleConfig 'tree-view.hideIgnoredNames'
      'tree-view:remove-project-folder': (e) => @removeProjectFolder(e)
+     'tree-view:toggle-shortcuts': => @toggleShortcuts()
 
     [0..8].forEach (index) =>
       atom.commands.add @element, "tree-view:open-selected-entry-in-pane-#{index + 1}", =>
@@ -368,7 +373,10 @@ class TreeView extends View
     @scrollToEntry(@selectedEntry())
 
   expandDirectory: (isRecursive=false) ->
-    @selectedEntry()?.expand?(isRecursive)
+    selectedEntry = @selectedEntry()
+    if (selectedEntry)
+      setTimeout => @emitter.emit 'did-toggle-directory', selectedEntry
+      selectedEntry.expand?(isRecursive)
 
   collapseDirectory: (isRecursive=false) ->
     selectedEntry = @selectedEntry()
@@ -376,12 +384,14 @@ class TreeView extends View
 
     if directory = $(selectedEntry).closest('.expanded.directory')[0]
       directory.collapse(isRecursive)
+      setTimeout => @emitter.emit 'did-toggle-directory', directory
       @selectEntry(directory)
 
   openSelectedEntry: (options) ->
     selectedEntry = @selectedEntry()
     if selectedEntry instanceof DirectoryView
       selectedEntry.toggleExpansion()
+      @emitter.emit 'did-toggle-directory', selectedEntry
     else if selectedEntry instanceof FileView
       atom.workspace.open(selectedEntry.getPath(), options)
 
@@ -678,6 +688,54 @@ class TreeView extends View
 
   toggleSide: ->
     toggleConfig('tree-view.showOnRightSide')
+
+  toggleShortcuts: ->
+    if @element.classList.contains 'shortcuts'
+      @disableShortcuts()
+    else
+      @enableShortcuts()
+
+  disableShortcuts: ->
+    @removeShortcuts()
+    @emitter.off 'did-toggle-directory', @updateAllTreeStartIndexes
+    @element.classList.remove 'shortcuts'
+
+  enableShortcuts: ->
+    @emitter.on 'did-toggle-directory', @updateAllTreeStartIndexes
+    @updateAllTreeStartIndexes()
+    @element.classList.add 'shortcuts'
+
+  updateAllTreeStartIndexes: =>
+    @removeShortcuts()
+    @addShortcutsToListTrees 0, @element.querySelector('.tree-view-scroller')
+
+  addShortcutsToListTrees: (index, el) ->
+    count = 0
+    for list in el.querySelectorAll ':scope > .list-tree'
+      list.setAttribute 'start', index
+      entries = list.querySelectorAll ':scope > .entry'
+      nextStart = index + entries.length
+      count += entries.length
+      for entry in entries
+        @addShortcutTo index, entry
+        index++
+        if entry.classList.contains 'directory'
+          childCount = @addShortcutsToListTrees nextStart, entry
+          count += childCount
+          nextStart += childCount
+    count
+
+  addShortcutTo: (shortcut, el) ->
+    keys = shortcut.toString().split('').join(' ')
+    commandName = "tree-view:open-entry-shortcut-#{shortcut}"
+    atom.commands.add @element, commandName, => @selectEntry(el)
+    keymap = {}
+    keymap[keys] = commandName
+    atom.keymaps.add 'tree-view shortcuts',
+      '.tree-view-resizer.shortcuts .tree-view': keymap
+
+  removeShortcuts: ->
+    atom.keymaps.removeBindingsFromSource 'tree-view shortcuts'
 
   moveEntry: (initialPath, newDirectoryPath) ->
     if initialPath is newDirectoryPath
