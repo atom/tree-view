@@ -193,9 +193,7 @@ class Directory
                 })]
         else if stat.isFile?()
           if @entries.hasOwnProperty(localName)
-            # push a placeholder since this entry already exists but this helps
-            # track the insertion index for the created views
-            return [localName, 'file']
+            return [localName, @entries[localName]]
           else
             return [localName, new File({
               name: localName,
