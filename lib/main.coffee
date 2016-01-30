@@ -27,6 +27,14 @@ module.exports =
       type: 'boolean'
       default: true
       description: 'When listing directory items, list subdirectories before listing files.'
+    focusOnReveal:
+      type: 'boolean'
+      default: true
+      description: 'When a file is revealed in the sidebar, switch the focus to the sidebar'
+    autoReveal:
+      type: 'boolean'
+      default: false
+      description: 'Reveal files as they are opened or switched-to in the editor panes'
 
   treeView: null
 
