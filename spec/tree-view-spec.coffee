@@ -953,6 +953,33 @@ describe "TreeView", ->
           atom.commands.dispatch(treeView.element, 'tree-view:expand-directory')
           expect(subdir).toHaveClass 'expanded'
 
+        describe "when the directory is already expanded", ->
+          describe "when the directory is empty", ->
+            it "does nothing", ->
+              rootDirPath = fs.absolute(temp.mkdirSync('tree-view-root1'))
+              fs.mkdirSync(path.join(rootDirPath, "empty-dir"))
+              atom.project.setPaths([rootDirPath])
+              rootView = $(treeView.roots[0])
+
+              subdir = rootView.find('.directory:first')
+              subdir.click()
+              subdir[0].expand()
+              expect(subdir).toHaveClass('expanded')
+              expect(subdir).toHaveClass('selected')
+
+              atom.commands.dispatch(treeView.element, 'tree-view:expand-directory')
+              expect(subdir).toHaveClass('expanded')
+              expect(subdir).toHaveClass('selected')
+
+          describe "when the directory has entries", ->
+            it "moves the cursor down to the first sub-entry", ->
+              subdir = root1.find('.directory:first')
+              subdir.click()
+              subdir[0].expand()
+
+              atom.commands.dispatch(treeView.element, 'tree-view:expand-directory')
+              expect(subdir.find('.entry:first')).toHaveClass('selected')
+
       describe "when a file entry is selected", ->
         it "does nothing", ->
           waitsForFileToOpen ->
