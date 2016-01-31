@@ -2663,7 +2663,7 @@ describe "TreeView", ->
 
       expect(gammaEntries).toEqual(["delta.txt", "epsilon.txt", "theta"])
 
-  fdescribe "the focusOnReveal config option", ->
+  describe "the focusOnReveal config option", ->
     beforeEach ->
       treeView.detach()
       spyOn(treeView, 'focus')
