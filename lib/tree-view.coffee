@@ -109,7 +109,7 @@ class TreeView extends View
      'core:page-down': => @pageDown()
      'core:move-to-top': => @scrollToTop()
      'core:move-to-bottom': => @scrollToBottom()
-     'tree-view:expand-directory': => @expandDirectory()
+     'tree-view:expand-item': => @openSelectedEntry(pending: true, true)
      'tree-view:recursive-expand-directory': => @expandDirectory(true)
      'tree-view:collapse-directory': => @collapseDirectory()
      'tree-view:recursive-collapse-directory': => @collapseDirectory(true)
@@ -205,7 +205,7 @@ class TreeView extends View
       when 1
         @selectEntry(entry)
         if entry instanceof FileView
-          @openSelectedEntry(pending: true)
+          atom.workspace.open(entry.getPath(), pending: true)
         else if entry instanceof DirectoryView
           entry.toggleExpansion(isRecursive)
       when 2
@@ -368,7 +368,9 @@ class TreeView extends View
     @scrollToEntry(@selectedEntry())
 
   expandDirectory: (isRecursive=false) ->
-    @selectedEntry()?.expand?(isRecursive)
+    selectedEntry = @selectedEntry()
+    if selectedEntry instanceof DirectoryView
+      selectedEntry.expand(isRecursive)
 
   collapseDirectory: (isRecursive=false) ->
     selectedEntry = @selectedEntry()
@@ -378,12 +380,19 @@ class TreeView extends View
       directory.collapse(isRecursive)
       @selectEntry(directory)
 
-  openSelectedEntry: (options) ->
+  openSelectedEntry: (options={}, expandDirectory=false) ->
     selectedEntry = @selectedEntry()
     if selectedEntry instanceof DirectoryView
-      selectedEntry.toggleExpansion()
+      if expandDirectory
+        selectedEntry.expand()
+      else
+        selectedEntry.toggleExpansion()
     else if selectedEntry instanceof FileView
-      atom.workspace.open(selectedEntry.getPath(), options)
+      uri = selectedEntry.getPath()
+      item = atom.workspace.getActivePane()?.itemForURI(uri)
+      if item? and not options.pending
+        item.terminatePendingState?()
+      atom.workspace.open(uri, options)
 
   openSelectedEntrySplit: (orientation, side) ->
     selectedEntry = @selectedEntry()
