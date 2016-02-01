@@ -942,25 +942,6 @@ describe "TreeView", ->
         _.times entryCount, -> atom.commands.dispatch(treeView.element, 'core:move-up')
         expect(treeView.scrollTop()).toBe 0
 
-    describe "tree-view:expand-directory", ->
-      describe "when a directory entry is selected", ->
-        it "expands the current directory", ->
-          subdir = root1.find('.directory:first')
-          subdir.click()
-          subdir[0].collapse()
-
-          expect(subdir).not.toHaveClass 'expanded'
-          atom.commands.dispatch(treeView.element, 'tree-view:expand-directory')
-          expect(subdir).toHaveClass 'expanded'
-
-      describe "when a file entry is selected", ->
-        it "does nothing", ->
-          waitsForFileToOpen ->
-            root1.find('.file').click()
-
-          runs ->
-            atom.commands.dispatch(treeView.element, 'tree-view:expand-directory')
-
     describe "tree-view:recursive-expand-directory", ->
       describe "when an collapsed root is recursively expanded", ->
         it "expands the root and all subdirectories", ->

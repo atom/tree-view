@@ -14,7 +14,7 @@
   'cmd-c': 'tree-view:copy'
   'cmd-x': 'tree-view:cut'
   'cmd-v': 'tree-view:paste'
-  'ctrl-f': 'tree-view:expand-directory'
+  'ctrl-f': 'tree-view:expand-item'
   'ctrl-b': 'tree-view:collapse-directory'
   'cmd-k right': 'tree-view:open-selected-entry-right'
   'cmd-k l': 'tree-view:open-selected-entry-right'
@@ -58,8 +58,8 @@
 
 '.tree-view':
   'right': 'tree-view:expand-item'
-  'ctrl-]': 'tree-view:expand-directory'
-  'l': 'tree-view:expand-directory'
+  'ctrl-]': 'tree-view:expand-item'
+  'l': 'tree-view:expand-item'
   'left': 'tree-view:collapse-directory'
   'ctrl-[': 'tree-view:collapse-directory'
   'alt-ctrl-]': 'tree-view:recursive-expand-directory'
