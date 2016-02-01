@@ -1353,7 +1353,7 @@ describe "TreeView", ->
               expect(fs.existsSync(numberedFileName1)).toBeTruthy()
               expect(fs.existsSync(filePath)).toBeTruthy()
 
-        xdescribe "when a file containing two or more periods is selected", ->
+        describe "when a file containing two or more periods has been copied", ->
           describe "when a file is selected", ->
             it "creates a copy of the original file in the selected file's parent directory", ->
               dotFilePath = path.join(dirPath, "test.file.txt")
@@ -1374,8 +1374,7 @@ describe "TreeView", ->
                 fs.writeFileSync(dotFilePath, "doesn't matter .")
                 LocalStorage['tree-view:copyPath'] = JSON.stringify([dotFilePath])
 
-                dotFileView = treeView.find('.file:contains(test.file.txt)')
-                dotFileView.click()
+                fileView.click()
                 atom.commands.dispatch(treeView.element, "tree-view:paste")
                 atom.commands.dispatch(treeView.element, "tree-view:paste")
 
@@ -1413,31 +1412,36 @@ describe "TreeView", ->
               else
                 fileArr = /(.+)\.(?!.*\/)(.+)/.exec(filePath)
 
-              numberedFileName0 = "#{fileArr[0]}0.#{fileArr[1]}"
-              numberedFileName1 = "#{fileArr[0]}1.#{fileArr[1]}"
+              numberedFileName0 = "#{fileArr[1]}0.#{fileArr[2]}"
+              numberedFileName1 = "#{fileArr[1]}1.#{fileArr[2]}"
               expect(fs.existsSync(numberedFileName0)).toBeTruthy()
               expect(fs.existsSync(numberedFileName1)).toBeTruthy()
               expect(fs.existsSync(filePath)).toBeTruthy()
 
         xdescribe "when a directory with a period is selected", ->
           it "creates a copy of the original file in the selected directory", ->
-            dotFilePath = path.join(dirPath, "test.file.txt")
-            fs.writeFileSync(dotFilePath, "doesn't matter .")
-            LocalStorage['tree-view:copyPath'] = JSON.stringify([dotFilePath])
+            dotDirPath = path.join(rootDirPath, "test.dir")
+            fs.makeTreeSync(dotDirPath)
+            LocalStorage['tree-view:copyPath'] = JSON.stringify([filePath])
 
-            dirView2.click()
+            dotDirView = $(treeView.roots[0].entries).find('.directory:contains(test\\.dir):first')
+            dotDirView.click()
+            console.log dotDirView
             atom.commands.dispatch(treeView.element, "tree-view:paste")
 
-            expect(fs.existsSync(path.join(dirPath2, path.basename(dotFilePath)))).toBeTruthy()
-            expect(fs.existsSync(dotFilePath)).toBeTruthy()
+            expect(fs.existsSync(path.join(dotDirPath, path.basename(filePath)))).toBeTruthy()
+            expect(fs.existsSync(filePath)).toBeTruthy()
 
           describe "when the target already exists", ->
             it "appends a number to the destination directory name", ->
-              dotFilePath = path.join(dirPath, "test.file.txt")
+              dotDirPath = path.join(rootDirPath, "test.dir")
+              dotFilePath = path.join(dotDirPath, "test.file.txt")
+              fs.makeTreeSync(dotDirPath)
               fs.writeFileSync(dotFilePath, "doesn't matter .")
               LocalStorage['tree-view:copyPath'] = JSON.stringify([dotFilePath])
 
-              dirView.click()
+              dotDirView = $(treeView.roots[0].entries).find('.directory:contains(test\\.dir):last')
+              dotDirView.click()
               atom.commands.dispatch(treeView.element, "tree-view:paste")
               atom.commands.dispatch(treeView.element, "tree-view:paste")
 
@@ -1446,12 +1450,11 @@ describe "TreeView", ->
               else
                 fileArr = /(.+)\.(?!.*\/)(.+)/.exec(dotFilePath)
 
-              numberedFileName0 = "#{fileArr[0]}0.#{fileArr[1]}"
-              numberedFileName1 = "#{fileArr[0]}1.#{fileArr[1]}"
+              numberedFileName0 = "#{fileArr[1]}0.#{fileArr[2]}"
+              numberedFileName1 = "#{fileArr[1]}1.#{fileArr[2]}"
               expect(fs.existsSync(numberedFileName0)).toBeTruthy()
               expect(fs.existsSync(numberedFileName1)).toBeTruthy()
               expect(fs.existsSync(dotFilePath)).toBeTruthy()
-
 
         describe "when pasting into a different root directory", ->
           it "creates the file", ->
