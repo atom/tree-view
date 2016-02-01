@@ -1069,6 +1069,34 @@ describe "TreeView", ->
             if atom.workspace.buildTextEditor().isPending?
               expect(item.isPending()).toBe false
 
+        if atom.workspace.buildTextEditor().isPending?
+          it "terminates pending state for items that are pending", ->
+            jasmine.attachToDOM(workspaceElement)
+
+            file = root1.find('.file:contains(tree-view.js)')[0]
+            treeView.selectEntry(file)
+
+            waitsForFileToOpen ->
+              atom.commands.dispatch(treeView.element, 'tree-view:expand-item')
+
+            runs ->
+              item = atom.workspace.getActivePaneItem()
+              expect(item.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
+              expect(item.isPending()).toBe true
+              expect(atom.views.getView(item)).toHaveFocus()
+
+              file = root1.find('.file:contains(tree-view.js)')[0]
+              treeView.selectEntry(file)
+
+            waitsForFileToOpen ->
+              atom.commands.dispatch(treeView.element, 'tree-view:open-selected-entry')
+
+            runs ->
+              item = atom.workspace.getActivePaneItem()
+              expect(item.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
+              expect(atom.views.getView(item)).toHaveFocus()
+              expect(item.isPending()).toBe false
+
       describe "when a directory is selected", ->
         it "expands or collapses the directory", ->
           subdir = root1.find('.directory').first()

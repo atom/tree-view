@@ -379,7 +379,7 @@ class TreeView extends View
       directory.collapse(isRecursive)
       @selectEntry(directory)
 
-  openSelectedEntry: (options, expandDirectory) ->
+  openSelectedEntry: (options={}, expandDirectory=false) ->
     selectedEntry = @selectedEntry()
     if selectedEntry instanceof DirectoryView
       if expandDirectory
@@ -387,7 +387,11 @@ class TreeView extends View
       else
         selectedEntry.toggleExpansion()
     else if selectedEntry instanceof FileView
-      atom.workspace.open(selectedEntry.getPath(), options)
+      uri = selectedEntry.getPath()
+      item = atom.workspace.getActivePane()?.itemForURI(uri)
+      if item? and not options.pending
+        item.terminatePendingState?()
+      atom.workspace.open(uri, options)
 
   openSelectedEntrySplit: (orientation, side) ->
     selectedEntry = @selectedEntry()
