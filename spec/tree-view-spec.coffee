@@ -1424,7 +1424,7 @@ describe "TreeView", ->
             fs.makeTreeSync(dotDirPath)
             LocalStorage['tree-view:copyPath'] = JSON.stringify([filePath])
 
-            dotDirView = $(treeView.roots[0].entries).find('.directory:contains(test\\.dir):first')
+            dotDirView = $(treeView.roots[0].entries).find('.directory:contains(test\\.dir)')
             dotDirView.click()
             console.log dotDirView
             atom.commands.dispatch(treeView.element, "tree-view:paste")
@@ -1440,7 +1440,7 @@ describe "TreeView", ->
               fs.writeFileSync(dotFilePath, "doesn't matter .")
               LocalStorage['tree-view:copyPath'] = JSON.stringify([dotFilePath])
 
-              dotDirView = $(treeView.roots[0].entries).find('.directory:contains(test\\.dir):last')
+              dotDirView = $(treeView.roots[0].entries).find('.directory:contains(test\\.dir)')
               dotDirView.click()
               atom.commands.dispatch(treeView.element, "tree-view:paste")
               atom.commands.dispatch(treeView.element, "tree-view:paste")
