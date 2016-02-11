@@ -137,6 +137,9 @@ class TreeView extends View
 
     @disposables.add atom.workspace.onDidChangeActivePaneItem =>
       @selectActiveFile()
+      if atom.config.get('tree-view.autoReveal')
+        @revealActiveFile()
+
     @disposables.add atom.project.onDidChangePaths =>
       @updateRoots()
     @disposables.add atom.config.onDidChange 'tree-view.hideVcsIgnoredFiles', =>
@@ -293,7 +296,8 @@ class TreeView extends View
     return if _.isEmpty(atom.project.getPaths())
 
     @attach()
-    @focus()
+    if atom.config.get('tree-view.focusOnReveal')
+      @focus()
 
     return unless activeFilePath = @getActivePath()
 

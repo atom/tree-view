@@ -2706,6 +2706,78 @@ describe "TreeView", ->
 
       expect(gammaEntries).toEqual(["delta.txt", "epsilon.txt", "theta"])
 
+  describe "the focusOnReveal config option", ->
+    beforeEach ->
+      treeView.detach()
+      spyOn(treeView, 'focus')
+
+    it "switches focus to sidebar on changing files when focusOnReveal option is set", ->
+      atom.config.set "tree-view.focusOnReveal", true
+
+      waitsForPromise ->
+        atom.workspace.open(path.join(atom.project.getPaths()[0], 'dir1', 'file1'))
+
+      runs ->
+        atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
+        expect(treeView.hasParent()).toBeTruthy()
+        expect(treeView.focus).toHaveBeenCalled()
+
+      waitsForPromise ->
+        treeView.focus.reset()
+        atom.workspace.open(path.join(atom.project.getPaths()[1], 'dir3', 'file3'))
+
+      runs ->
+        atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
+        expect(treeView.hasParent()).toBeTruthy()
+        expect(treeView.focus).toHaveBeenCalled()
+
+    it "does not switch focus to sidebar on changing files when focusOnReveal option is unset", ->
+      atom.config.set "tree-view.focusOnReveal", false
+
+      waitsForPromise ->
+        atom.workspace.open(path.join(atom.project.getPaths()[0], 'dir1', 'file1'))
+
+      runs ->
+        atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
+        expect(treeView.hasParent()).toBeTruthy()
+        expect(treeView.focus).not.toHaveBeenCalled()
+
+      waitsForPromise ->
+        treeView.focus.reset()
+        atom.workspace.open(path.join(atom.project.getPaths()[1], 'dir3', 'file3'))
+
+      runs ->
+        atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
+        expect(treeView.hasParent()).toBeTruthy()
+        expect(treeView.focus).not.toHaveBeenCalled()
+
+  describe "the autoReveal config option", ->
+    beforeEach ->
+      atom.config.set "tree-view.autoReveal", true
+
+    describe "when the item has a path", ->
+      it "selects the entry with that path in the tree view if it is visible", ->
+        waitsForFileToOpen ->
+          sampleJs.click()
+
+        waitsForPromise ->
+          atom.workspace.open(atom.project.getDirectories()[0].resolve('tree-view.txt'))
+
+        runs ->
+          expect(sampleTxt).toHaveClass 'selected'
+          expect(treeView.find('.selected').length).toBe 1
+
+      it "selects the entry with that path in the tree view if it is not visible", ->
+        waitsForPromise ->
+          atom.workspace.open(path.join('dir1', 'sub-dir1', 'sub-file1'))
+
+        runs ->
+          dirView = root1.find('.directory:contains(dir1)')
+          fileView = root1.find('.file:contains(sub-file1)')
+          expect(dirView).not.toHaveClass 'selected'
+          expect(fileView).toHaveClass 'selected'
+          expect(treeView.find('.selected').length).toBe 1
+
   describe "showSelectedEntryInFileManager()", ->
     beforeEach ->
       atom.notifications.clear()
