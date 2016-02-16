@@ -72,6 +72,7 @@
   'm': 'tree-view:move'
   'f2': 'tree-view:move'
   'a': 'tree-view:add-file'
+  'n': 'tree-view:advanced-add'
   'shift-a': 'tree-view:add-folder'
   'd': 'tree-view:duplicate'
   'delete': 'tree-view:remove'

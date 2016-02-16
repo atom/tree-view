@@ -620,12 +620,12 @@ class TreeView extends View
           unless fs.existsSync(newPath) or newPath.startsWith(initialPath)
             catchAndShowFileErrors -> fs.moveSync(initialPath, newPath)
 
-  add: (isCreatingFile) ->
+  add: (mode) ->
     selectedEntry = @selectedEntry() ? @roots[0]
     selectedPath = selectedEntry?.getPath() ? ''
 
     AddDialog ?= require './add-dialog'
-    dialog = new AddDialog(selectedPath, isCreatingFile)
+    dialog = new AddDialog(selectedPath, mode)
     dialog.on 'directory-created', (event, createdPath) =>
       @entryForPath(createdPath)?.reload()
       @selectEntryForPath(createdPath)
