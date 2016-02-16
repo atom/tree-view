@@ -622,13 +622,15 @@ class TreeView extends View
 
     AddDialog ?= require './add-dialog'
     dialog = new AddDialog(selectedPath, mode)
-    dialog.on 'directory-created', (event, createdPath) =>
-      @entryForPath(createdPath)?.reload()
-      @selectEntryForPath(createdPath)
-      false
-    dialog.on 'file-created', (event, createdPath) ->
-      atom.workspace.open(createdPath)
-      false
+    dialog.on 'directory-created', (event, createdPath, triggerSelect) =>
+      if triggerSelect
+        @entryForPath(createdPath)?.reload()
+        @selectEntryForPath(createdPath)
+        false
+    dialog.on 'file-created', (event, createdPath, triggerOpen) ->
+      if triggerOpen
+        atom.workspace.open(createdPath)
+        false
     dialog.attach()
 
   removeProjectFolder: (e) ->

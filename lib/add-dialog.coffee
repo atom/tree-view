@@ -18,8 +18,6 @@ class AddDialog extends Dialog
     relativeDirectoryPath += path.sep if relativeDirectoryPath.length > 0
 
     @relativeDirectoryPath = relativeDirectoryPath
-    console.log('full', @relativeDirectoryPath)
-    console.log('project', @rootProjectPath)
 
     icon = switch @mode
       when 'file' then 'icon-file-add'
@@ -42,6 +40,7 @@ class AddDialog extends Dialog
 
   parsePaths: (newPathsString, subProjectPath) ->
     paths = newPathsString.split(/,\s?/g)
+    @rawPaths = paths
     console.log(paths)
 
     return paths.map((unparsed) => @pathToDesc(unparsed, subProjectPath))
@@ -49,54 +48,48 @@ class AddDialog extends Dialog
   pathToDesc: (unparsed, subProjectPath, forceType = null) ->
     unparsed = unparsed.trim()
 
-    console.log('forceType', unparsed, forceType, subProjectPath)
-
     type:
       if forceType is null
         if unparsed.endsWith('/') then "folder" else "file"
       else
         forceType
     path:
-      if unparsed.startsWith('.')
+      if unparsed.startsWith('./')
         path.join(@rootProjectPath, unparsed)
       else if unparsed.startsWith(path.sep)
         unparsed
       else
         path.join(@rootProjectPath, subProjectPath, unparsed)
 
-  createFile: (path) ->
+  createFile: (path, triggerOpen) ->
     try
       if fs.existsSync(path)
-        @showError("'#{path}' already exists.")
-        return false
+        return {error: "'#{path}' already exists."}
       fs.writeFileSync(path, '')
       repoForPath(path)?.getPathStatus(path)
     catch error
-      @showError("#{error.message}.")
-      return false
+      return (error: "#{error.message}.")
 
-    @trigger 'file-created', [path]
-    return true
+    @trigger 'file-created', [path, triggerOpen]
+    return null
 
-  createFolder: (path) ->
+  createFolder: (path, triggerSelect) ->
     try
       if fs.existsSync(path)
-        @showError("'#{path}' already exists.")
-        return false
+        return {error: "'#{path}' already exists."}
 
       fs.makeTreeSync(path)
     catch error
-      @showError("#{error.message}.")
-      return false
+      return {error: "#{error.message}."}
 
-    @trigger 'directory-created', [path]
-    return true
+    @trigger 'directory-created', [path, triggerSelect]
+    return null
 
-  createDesc: (fileDesc) ->
+  createDesc: (fileDesc, trigger = true) ->
     if fileDesc.type is "folder"
-      return @createFolder(fileDesc.path)
+      return @createFolder(fileDesc.path, trigger)
     else
-      return @createFile(fileDesc.path)
+      return @createFile(fileDesc.path, trigger)
 
   onConfirm: (newPath) ->
 
@@ -109,14 +102,22 @@ class AddDialog extends Dialog
     if @mode is "advanced"
       pathDescs = @parsePaths(newPath, @relativeDirectoryPath)
 
-      for desc in pathDescs
-        break unless @createDesc(desc)
+      for desc, index in pathDescs
+        error = @createDesc(desc, false)
+        if error
+          remainingPaths = @rawPaths.slice(index).join(', ')
+          @miniEditor.getModel().setText(remainingPaths)
+          @showError(error.error)
+          return
 
       @close()
     else if @mode is "folder"
       desc = @pathToDesc(newPath, '.', 'folder')
 
-      @close() if @createDesc(desc)
+      error = @createDesc(desc)
+      return @showError(error.error) if error
+
+      @close()
     else
       desc = @pathToDesc(newPath, '.', 'file')
 
@@ -124,4 +125,7 @@ class AddDialog extends Dialog
         @showError("File names must not end with a '#{path.sep}' character.")
         return
 
-      @close() if @createDesc(desc)
+      error = @createDesc(desc)
+      return @showError(error.error) if error
+
+      @close()
