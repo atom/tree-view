@@ -614,11 +614,17 @@ describe "TreeView", ->
           expect(activePaneItem.isPending()).toBe true
 
         it "terminates pending state on the double-click and focuses file", ->
-          sampleJs.trigger clickEvent(originalEvent: {detail: 1})
           sampleJs.trigger clickEvent(originalEvent: {detail: 2})
           expect(atom.views.getView(activePaneItem)).toHaveFocus()
           waitsFor ->
             activePaneItem.isPending() is false
+
+        it "keeps focus on tree-view if the file is the active pane item", ->
+          sampleJs.trigger clickEvent(originalEvent: {detail: 1})
+          expect(treeView).toHaveFocus()
+
+          sampleJs.trigger clickEvent(originalEvent: {detail: 2})
+          expect(treeView).toHaveFocus()
 
   describe "when a directory is single-clicked", ->
     it "is selected", ->
