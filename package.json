@@ -55,6 +55,12 @@
       "type": "boolean",
       "default": true,
       "description": "When listing directory items, list subdirectories before listing files."
+    },
+    "displayVcsStatus": {
+      "type": "boolean",
+      "title": "Display VCS Status",
+      "description": "Use color indication for added, modified and ignored files in VCS.",
+      "default": true
     }
   }
 }
