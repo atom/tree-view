@@ -4,38 +4,6 @@ path = require 'path'
 FileIcons = require './file-icons'
 
 module.exports =
-  config:
-    squashDirectoryNames:
-      type: 'boolean'
-      default: false
-      title: 'Collapse directories'
-      description: 'Collapse directories that only contain a single directory.'
-    hideVcsIgnoredFiles:
-      type: 'boolean'
-      default: false
-      title: 'Hide VCS Ignored Files'
-      description: 'Don\'t show files and directories ignored by the current project\'s VCS system. For example, projects using Git have these paths defined in their `.gitignore` file.'
-    hideIgnoredNames:
-      type: 'boolean'
-      default: false
-      description: 'Don\'t show items matched by the `Ignored Names` config setting.'
-    mergeIgnoredNames:
-      type: 'boolean'
-      default: true
-      description: 'Merge the `Ignored Names` of this package with the `Ignored Names` from the core configuration setting.'
-    ignoredNames:
-      type: 'array'
-      default: []
-      description: 'List of string glob patterns. Files and directories matching these patterns will be ignored. This list is merged with the list defined by the core `Ignored Names` config setting, if the `Merge Ignored Names` setting is on. Example: `.git, ._*, Thumbs.db`.'
-    showOnRightSide:
-      type: 'boolean'
-      default: false
-      description: 'Show the tree view on the right side of the editor instead of the left.'
-    sortFoldersBeforeFiles:
-      type: 'boolean'
-      default: true
-      description: 'When listing directory items, list subdirectories before listing files.'
-
   treeView: null
 
   activate: (@state) ->

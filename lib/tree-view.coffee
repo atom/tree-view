@@ -109,11 +109,11 @@ class TreeView extends View
      'core:page-down': => @pageDown()
      'core:move-to-top': => @scrollToTop()
      'core:move-to-bottom': => @scrollToBottom()
-     'tree-view:expand-directory': => @expandDirectory()
+     'tree-view:expand-item': => @openSelectedEntry(pending: true, true)
      'tree-view:recursive-expand-directory': => @expandDirectory(true)
      'tree-view:collapse-directory': => @collapseDirectory()
      'tree-view:recursive-collapse-directory': => @collapseDirectory(true)
-     'tree-view:open-selected-entry': => @openSelectedEntry(true)
+     'tree-view:open-selected-entry': => @openSelectedEntry()
      'tree-view:open-selected-entry-right': => @openSelectedEntryRight()
      'tree-view:open-selected-entry-left': => @openSelectedEntryLeft()
      'tree-view:open-selected-entry-up': => @openSelectedEntryUp()
@@ -208,11 +208,18 @@ class TreeView extends View
     switch e.originalEvent?.detail ? 1
       when 1
         @selectEntry(entry)
-        @openSelectedEntry(false) if entry instanceof FileView
-        entry.toggleExpansion(isRecursive) if entry instanceof DirectoryView
+        if entry instanceof FileView
+          if entry.getPath() is atom.workspace.getActivePaneItem()?.getPath?()
+            @focus()
+          else
+            @openedItem = atom.workspace.open(entry.getPath(), pending: true)
+        else if entry instanceof DirectoryView
+          entry.toggleExpansion(isRecursive)
       when 2
         if entry instanceof FileView
-          @unfocus()
+          @openedItem.then((item) -> item.terminatePendingState?())
+          unless entry.getPath() is atom.workspace.getActivePaneItem()?.getPath?()
+            @unfocus()
         else if entry instanceof DirectoryView
           entry.toggleExpansion(isRecursive)
 
@@ -371,7 +378,9 @@ class TreeView extends View
     @scrollToEntry(@selectedEntry())
 
   expandDirectory: (isRecursive=false) ->
-    @selectedEntry()?.expand?(isRecursive)
+    selectedEntry = @selectedEntry()
+    if selectedEntry instanceof DirectoryView
+      selectedEntry.expand(isRecursive)
 
   collapseDirectory: (isRecursive=false) ->
     selectedEntry = @selectedEntry()
@@ -381,12 +390,19 @@ class TreeView extends View
       directory.collapse(isRecursive)
       @selectEntry(directory)
 
-  openSelectedEntry: (activatePane) ->
+  openSelectedEntry: (options={}, expandDirectory=false) ->
     selectedEntry = @selectedEntry()
     if selectedEntry instanceof DirectoryView
-      selectedEntry.toggleExpansion()
+      if expandDirectory
+        selectedEntry.expand()
+      else
+        selectedEntry.toggleExpansion()
     else if selectedEntry instanceof FileView
-      atom.workspace.open(selectedEntry.getPath(), {activatePane})
+      uri = selectedEntry.getPath()
+      item = atom.workspace.getActivePane()?.itemForURI(uri)
+      if item? and not options.pending
+        item.terminatePendingState?()
+      atom.workspace.open(uri, options)
 
   openSelectedEntrySplit: (orientation, side) ->
     selectedEntry = @selectedEntry()
@@ -842,11 +858,17 @@ class TreeView extends View
     entry = e.currentTarget
     return unless entry instanceof DirectoryView
 
-    initialPath = e.originalEvent.dataTransfer.getData("initialPath")
-    newDirectoryPath = $(entry).find(".name").data("path")
-
     entry.classList.remove('selected')
 
+    newDirectoryPath = $(entry).find(".name").data("path")
     return false unless newDirectoryPath
 
-    @moveEntry(initialPath, newDirectoryPath)
+    initialPath = e.originalEvent.dataTransfer.getData("initialPath")
+
+    if initialPath
+      # Drop event from Atom
+      @moveEntry(initialPath, newDirectoryPath)
+    else
+      # Drop event from OS
+      for file in e.originalEvent.dataTransfer.files
+        @moveEntry(file.path, newDirectoryPath)

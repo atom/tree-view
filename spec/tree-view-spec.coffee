@@ -4,7 +4,7 @@ fs = require 'fs-plus'
 path = require 'path'
 temp = require('temp').track()
 os = require 'os'
-{buildDragEvents} = require "./event-helpers"
+eventHelpers = require "./event-helpers"
 
 waitsForFileToOpen = (causeFileToOpen) ->
   waitsFor (done) ->
@@ -526,47 +526,105 @@ describe "TreeView", ->
       sampleJs.mousedown()
       expect(sampleJs).toHaveClass 'selected'
 
-  describe "when a file is single-clicked", ->
-    beforeEach ->
-      jasmine.attachToDOM(workspaceElement)
+  if atom.workspace.buildTextEditor().isPending?
+    describe "when files are clicked", ->
+      beforeEach ->
+        jasmine.attachToDOM(workspaceElement)
 
-    it "selects the files and opens it in the active editor, without changing focus", ->
-      treeView.focus()
+      describe "when a file is single-clicked", ->
+        activePaneItem = null
 
-      waitsForFileToOpen ->
-        sampleJs.trigger clickEvent(originalEvent: {detail: 1})
+        beforeEach ->
+          treeView.focus()
 
-      runs ->
-        expect(sampleJs).toHaveClass 'selected'
-        expect(atom.workspace.getActivePaneItem().getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
-        expect(treeView.list).toHaveFocus()
+          waitsForFileToOpen ->
+            sampleJs.trigger clickEvent(originalEvent: {detail: 1})
 
-      waitsForFileToOpen ->
-        sampleTxt.trigger clickEvent(originalEvent: {detail: 1})
+          runs ->
+            activePaneItem = atom.workspace.getActivePaneItem()
 
-      runs ->
-        expect(sampleTxt).toHaveClass 'selected'
-        expect(treeView.find('.selected').length).toBe 1
-        expect(atom.workspace.getActivePaneItem().getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.txt')
-        expect(treeView.list).toHaveFocus()
+        it "selects the file", ->
+          expect(sampleJs).toHaveClass 'selected'
 
-  describe "when a file is double-clicked", ->
-    beforeEach ->
-      jasmine.attachToDOM(workspaceElement)
+        it "opens it in the pane in pending state", ->
+          expect(activePaneItem.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
+          expect(activePaneItem.isPending()).toBe true
 
-    it "selects the file and opens it in the active editor on the first click, then changes focus to the active editor on the second", ->
-      treeView.focus()
+        it "changes the focus to the file", ->
+          expect(atom.views.getView(activePaneItem)).toHaveFocus()
 
-      waitsForFileToOpen ->
-        sampleJs.trigger clickEvent(originalEvent: {detail: 1})
+      describe "when a file is single-clicked and then another is single-clicked", ->
+        beforeEach ->
+          treeView.focus()
 
-      runs ->
-        expect(sampleJs).toHaveClass 'selected'
-        item = atom.workspace.getActivePaneItem()
-        expect(item.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
+          waitsForFileToOpen ->
+            sampleJs.trigger clickEvent(originalEvent: {detail: 1})
 
-        sampleJs.trigger clickEvent(originalEvent: {detail: 2})
-        expect(atom.views.getView(item)).toHaveFocus()
+          waitsForFileToOpen ->
+            sampleTxt.trigger clickEvent(originalEvent: {detail: 1})
+
+        it "selects only the second file", ->
+          expect(sampleTxt).toHaveClass 'selected'
+          expect(treeView.find('.selected').length).toBe 1
+
+        it "replaces other files open in pending state", ->
+          expect(atom.workspace.getActivePane().getItems().length).toBe 1
+
+      describe "when a file is double-clicked", ->
+        activePaneItem = null
+
+        beforeEach ->
+          treeView.focus()
+
+          waitsForFileToOpen ->
+            sampleJs.trigger clickEvent(originalEvent: {detail: 1})
+
+          runs ->
+            activePaneItem = atom.workspace.getActivePaneItem()
+
+        it "opens it in pending state on first click", ->
+          expect(activePaneItem.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
+          expect(activePaneItem.isPending()).toBe true
+
+        it "terminates pending state on second click", ->
+          sampleJs.trigger clickEvent(originalEvent: {detail: 2})
+          waitsFor ->
+            activePaneItem.isPending() is false
+
+        it "does not create pending state on subsequent single click", ->
+          sampleJs.trigger clickEvent(originalEvent: {detail: 2})
+          sampleJs.trigger clickEvent(originalEvent: {detail: 1})
+          waitsFor ->
+            activePaneItem.isPending() is false
+
+      describe "when a file is single-clicked, then double-clicked", ->
+        activePaneItem = null
+
+        beforeEach ->
+          treeView.focus()
+
+          waitsForFileToOpen ->
+            sampleJs.trigger clickEvent(originalEvent: {detail: 1})
+
+          runs ->
+            activePaneItem = atom.workspace.getActivePaneItem()
+
+        it "opens it in pending state on single-click", ->
+          expect(activePaneItem.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
+          expect(activePaneItem.isPending()).toBe true
+
+        it "terminates pending state on the double-click and focuses file", ->
+          sampleJs.trigger clickEvent(originalEvent: {detail: 2})
+          expect(atom.views.getView(activePaneItem)).toHaveFocus()
+          waitsFor ->
+            activePaneItem.isPending() is false
+
+        it "keeps focus on tree-view if the file is the active pane item", ->
+          sampleJs.trigger clickEvent(originalEvent: {detail: 1})
+          expect(treeView).toHaveFocus()
+
+          sampleJs.trigger clickEvent(originalEvent: {detail: 2})
+          expect(treeView).toHaveFocus()
 
   describe "when a directory is single-clicked", ->
     it "is selected", ->
@@ -577,13 +635,13 @@ describe "TreeView", ->
   describe "when a directory is double-clicked", ->
     it "toggles the directory expansion state and does not change the focus to the editor", ->
       jasmine.attachToDOM(workspaceElement)
-      treeView.focus()
 
       subdir = null
       waitsForFileToOpen ->
         sampleJs.trigger clickEvent(originalEvent: {detail: 1})
 
       runs ->
+        treeView.focus()
         subdir = root1.find('.directory:first')
         subdir.trigger clickEvent(originalEvent: {detail: 1})
         expect(subdir).toHaveClass 'selected'
@@ -889,25 +947,6 @@ describe "TreeView", ->
         _.times entryCount, -> atom.commands.dispatch(treeView.element, 'core:move-up')
         expect(treeView.scrollTop()).toBe 0
 
-    describe "tree-view:expand-directory", ->
-      describe "when a directory entry is selected", ->
-        it "expands the current directory", ->
-          subdir = root1.find('.directory:first')
-          subdir.click()
-          subdir[0].collapse()
-
-          expect(subdir).not.toHaveClass 'expanded'
-          atom.commands.dispatch(treeView.element, 'tree-view:expand-directory')
-          expect(subdir).toHaveClass 'expanded'
-
-      describe "when a file entry is selected", ->
-        it "does nothing", ->
-          waitsForFileToOpen ->
-            root1.find('.file').click()
-
-          runs ->
-            atom.commands.dispatch(treeView.element, 'tree-view:expand-directory')
-
     describe "tree-view:recursive-expand-directory", ->
       describe "when an collapsed root is recursively expanded", ->
         it "expands the root and all subdirectories", ->
@@ -1003,8 +1042,8 @@ describe "TreeView", ->
         it "opens the file in the editor and focuses it", ->
           jasmine.attachToDOM(workspaceElement)
 
-          waitsForFileToOpen ->
-            root1.find('.file:contains(tree-view.js)').click()
+          file = root1.find('.file:contains(tree-view.js)')[0]
+          treeView.selectEntry(file)
 
           waitsForFileToOpen ->
             atom.commands.dispatch(treeView.element, 'tree-view:open-selected-entry')
@@ -1013,6 +1052,36 @@ describe "TreeView", ->
             item = atom.workspace.getActivePaneItem()
             expect(item.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
             expect(atom.views.getView(item)).toHaveFocus()
+            if atom.workspace.buildTextEditor().isPending?
+              expect(item.isPending()).toBe false
+
+        if atom.workspace.buildTextEditor().isPending?
+          it "terminates pending state for items that are pending", ->
+            jasmine.attachToDOM(workspaceElement)
+
+            file = root1.find('.file:contains(tree-view.js)')[0]
+            treeView.selectEntry(file)
+
+            waitsForFileToOpen ->
+              atom.commands.dispatch(treeView.element, 'tree-view:expand-item')
+
+            runs ->
+              item = atom.workspace.getActivePaneItem()
+              expect(item.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
+              expect(item.isPending()).toBe true
+              expect(atom.views.getView(item)).toHaveFocus()
+
+              file = root1.find('.file:contains(tree-view.js)')[0]
+              treeView.selectEntry(file)
+
+            waitsForFileToOpen ->
+              atom.commands.dispatch(treeView.element, 'tree-view:open-selected-entry')
+
+            runs ->
+              item = atom.workspace.getActivePaneItem()
+              expect(item.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
+              expect(atom.views.getView(item)).toHaveFocus()
+              expect(item.isPending()).toBe false
 
       describe "when a directory is selected", ->
         it "expands or collapses the directory", ->
@@ -1078,6 +1147,39 @@ describe "TreeView", ->
             it "does nothing", ->
               atom.commands.dispatch(treeView.element, command)
               expect(atom.workspace.getActivePaneItem()).toBeUndefined()
+
+    describe "tree-view:expand-item", ->
+      describe "when a file is selected", ->
+        it "opens the file in the editor in pending state and focuses it", ->
+          jasmine.attachToDOM(workspaceElement)
+
+          file = root1.find('.file:contains(tree-view.js)')[0]
+          treeView.selectEntry(file)
+
+          waitsForFileToOpen ->
+            atom.commands.dispatch(treeView.element, 'tree-view:expand-item')
+
+          runs ->
+            item = atom.workspace.getActivePaneItem()
+            expect(item.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
+            if atom.workspace.buildTextEditor().isPending?
+              expect(item.isPending()).toBe true
+            expect(atom.views.getView(item)).toHaveFocus()
+
+      describe "when a directory is selected", ->
+        it "expands the directory", ->
+          subdir = root1.find('.directory').first()
+          subdir.click()
+          subdir[0].collapse()
+
+          expect(subdir).not.toHaveClass 'expanded'
+          atom.commands.dispatch(treeView.element, 'tree-view:expand-item')
+          expect(subdir).toHaveClass 'expanded'
+
+      describe "when nothing is selected", ->
+        it "does nothing", ->
+          atom.commands.dispatch(treeView.element, 'tree-view:expand-item')
+          expect(atom.workspace.getActivePaneItem()).toBeUndefined()
 
   describe "opening in existing split panes", ->
     beforeEach ->
@@ -2708,6 +2810,9 @@ describe "TreeView", ->
             entries: {}
 
   describe "Dragging and dropping files", ->
+    deltaFilePath = null
+    gammaDirPath = null
+
     beforeEach ->
       rootDirPath = fs.absolute(temp.mkdirSync('tree-view'))
 
@@ -2746,7 +2851,8 @@ describe "TreeView", ->
         gammaDir[0].expand()
         deltaFile = gammaDir[0].entries.children[2]
 
-        [dragStartEvent, dragEnterEvent, dropEvent] = buildDragEvents(deltaFile, alphaDir.find('.header')[0])
+        [dragStartEvent, dragEnterEvent, dropEvent] =
+            eventHelpers.buildInternalDragEvents(deltaFile, alphaDir.find('.header')[0])
         treeView.onDragStart(dragStartEvent)
         treeView.onDragEnter(dragEnterEvent)
         expect(alphaDir).toHaveClass('selected')
@@ -2769,7 +2875,8 @@ describe "TreeView", ->
         gammaDir[0].expand()
         deltaFile = gammaDir[0].entries.children[2]
 
-        [dragStartEvent, dragEnterEvent, dropEvent] = buildDragEvents(deltaFile, alphaDir.find('.header')[0], alphaDir[0])
+        [dragStartEvent, dragEnterEvent, dropEvent] =
+            eventHelpers.buildInternalDragEvents(deltaFile, alphaDir.find('.header')[0], alphaDir[0])
 
         runs ->
           treeView.onDragStart(dragStartEvent)
@@ -2784,7 +2891,7 @@ describe "TreeView", ->
 
     describe "when dropping a DirectoryView onto a DirectoryView's header", ->
       it "should move the directory to the hovered directory", ->
-        # Dragging delta.txt onto alphaDir
+        # Dragging thetaDir onto alphaDir
         alphaDir = $(treeView.roots[0].entries).find('.directory:contains(alpha):first')
         alphaDir[0].expand()
 
@@ -2792,7 +2899,8 @@ describe "TreeView", ->
         gammaDir[0].expand()
         thetaDir = gammaDir[0].entries.children[0]
 
-        [dragStartEvent, dragEnterEvent, dropEvent] = buildDragEvents(thetaDir, alphaDir.find('.header')[0], alphaDir[0])
+        [dragStartEvent, dragEnterEvent, dropEvent] =
+            eventHelpers.buildInternalDragEvents(thetaDir, alphaDir.find('.header')[0], alphaDir[0])
 
         runs ->
           treeView.onDragStart(dragStartEvent)
@@ -2804,3 +2912,57 @@ describe "TreeView", ->
 
         runs ->
           expect($(treeView.roots[0].entries).find('.directory:contains(alpha):first .entry').length).toBe 3
+
+    describe "when dragging a file from the OS onto a DirectoryView's header", ->
+      it "should move the file to the hovered directory", ->
+        # Dragging delta.txt from OS file explorer onto alphaDir
+        alphaDir = $(treeView.roots[0].entries).find('.directory:contains(alpha):first')
+        alphaDir[0].expand()
+
+        dropEvent = eventHelpers.buildExternalDropEvent([deltaFilePath], alphaDir[0])
+
+        runs ->
+          treeView.onDrop(dropEvent)
+          expect(alphaDir[0].children.length).toBe 2
+
+        waitsFor "directory view contents to refresh", ->
+          $(treeView.roots[0].entries).find('.directory:contains(alpha):first .entry').length > 2
+
+        runs ->
+          expect($(treeView.roots[0].entries).find('.directory:contains(alpha):first .entry').length).toBe 3
+
+    describe "when dragging a directory from the OS onto a DirectoryView's header", ->
+      it "should move the directory to the hovered directory", ->
+        # Dragging gammaDir from OS file explorer onto alphaDir
+        alphaDir = $(treeView.roots[0].entries).find('.directory:contains(alpha):first')
+        alphaDir[0].expand()
+
+        dropEvent = eventHelpers.buildExternalDropEvent([gammaDirPath], alphaDir[0])
+
+        runs ->
+          treeView.onDrop(dropEvent)
+          expect(alphaDir[0].children.length).toBe 2
+
+        waitsFor "directory view contents to refresh", ->
+          $(treeView.roots[0].entries).find('.directory:contains(alpha):first .entry').length > 2
+
+        runs ->
+          expect($(treeView.roots[0].entries).find('.directory:contains(alpha):first .entry').length).toBe 3
+
+    describe "when dragging a file and directory from the OS onto a DirectoryView's header", ->
+      it "should move the file and directory to the hovered directory", ->
+        # Dragging delta.txt and gammaDir from OS file explorer onto alphaDir
+        alphaDir = $(treeView.roots[0].entries).find('.directory:contains(alpha):first')
+        alphaDir[0].expand()
+
+        dropEvent = eventHelpers.buildExternalDropEvent([deltaFilePath, gammaDirPath], alphaDir[0])
+
+        runs ->
+          treeView.onDrop(dropEvent)
+          expect(alphaDir[0].children.length).toBe 2
+
+        waitsFor "directory view contents to refresh", ->
+          $(treeView.roots[0].entries).find('.directory:contains(alpha):first .entry').length > 3
+
+        runs ->
+          expect($(treeView.roots[0].entries).find('.directory:contains(alpha):first .entry').length).toBe 4
