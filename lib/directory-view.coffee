@@ -50,7 +50,7 @@ class DirectoryView extends HTMLElement
     if @directory.isRoot
       @classList.add('project-root')
     else
-      @draggable = true
+      @draggable = atom.config.get('tree-view.allowDragAndDrop')
       @subscriptions.add @directory.onDidStatusChange => @updateStatus()
       @updateStatus()
 
