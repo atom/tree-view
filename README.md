@@ -8,8 +8,13 @@ This solution was not merged due to a decision to limit the number of configurat
 I'm leaving the solution here for others.
 
 Changes to files:
+
 package.json            - Added **allowDragAndDrop** parameter.
+
 tree-view.coffee        - Added one-liner to refresh tree-view on a change to **allowDragAndDrop**.
+
 directory-view.coffee   - Added one-liner to set HTMLElement **draggable** attribute with **allowDragAndDrop** value.
+
 file-view.coffee        - Added one-liner to set HTMLElement **draggable** attribute with **allowDragAndDrop** value.
+
 tree-view-spec.coffee   - Added tests.
