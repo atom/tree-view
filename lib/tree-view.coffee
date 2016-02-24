@@ -97,20 +97,14 @@ class TreeView extends View
       @onMouseDown(e)
     @on 'mousedown', '.tree-view-resize-handle', (e) => @resizeStarted(e)
     @on 'dragstart', '.entry', (e) =>
-      if atom.config.get('tree-view.allowDragAndDrop')
         @onDragStart(e)
-
     @on 'dragenter', '.entry.directory > .header', (e) =>
-      if atom.config.get('tree-view.allowDragAndDrop')
         @onDragEnter(e)
     @on 'dragleave', '.entry.directory > .header', (e) =>
-      if atom.config.get('tree-view.allowDragAndDrop')
         @onDragLeave(e)
     @on 'dragover', '.entry', (e) =>
-      if atom.config.get('tree-view.allowDragAndDrop')
         @onDragOver(e)
     @on 'drop', '.entry', (e) =>
-      if atom.config.get('tree-view.allowDragAndDrop')
         @onDrop(e)
 
     atom.commands.add @element,
@@ -153,6 +147,8 @@ class TreeView extends View
     @disposables.add atom.config.onDidChange 'tree-view.hideVcsIgnoredFiles', =>
       @updateRoots()
     @disposables.add atom.config.onDidChange 'tree-view.hideIgnoredNames', =>
+      @updateRoots()
+    @disposables.add atom.config.onDidChange 'tree-view.allowDragAndDrop', =>
       @updateRoots()
     @disposables.add atom.config.onDidChange 'core.ignoredNames', =>
       @updateRoots() if atom.config.get('tree-view.hideIgnoredNames')
