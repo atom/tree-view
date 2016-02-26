@@ -25,9 +25,12 @@ class DirectoryView extends HTMLElement
     else
       iconClass = 'icon-file-directory'
       if @directory.isRoot
-        iconClass = 'icon-repo' if repoForPath(@directory.path)?.isProjectAtRoot()
+        repoForPath(@directory.path)?.isProjectAtRoot().then (projectAtRoot) =>
+          @directoryName.classList.add('icon-repo') if projectAtRoot
       else
-        iconClass = 'icon-file-submodule' if @directory.submodule
+        repoForPath(@directory.path)?.isSubmodule(@directory.path).then (isSubmodule) =>
+          @directoryName.classList.add('icon-file-submodule') if isSubmodule
+
     @directoryName.classList.add(iconClass)
     @directoryName.dataset.name = @directory.name
     @directoryName.title = @directory.name
@@ -50,15 +53,19 @@ class DirectoryView extends HTMLElement
     if @directory.isRoot
       @classList.add('project-root')
     else
+
       @draggable = true
-      @subscriptions.add @directory.onDidStatusChange => @updateStatus()
+      @subscriptions.add @directory.onDidStatusChange => @updateStatus(arguments[0])
       @updateStatus()
 
     @expand() if @directory.expansionState.isExpanded
 
-  updateStatus: ->
+  updateStatus: (status) ->
     @classList.remove('status-ignored', 'status-modified', 'status-added')
-    @classList.add("status-#{@directory.status}") if @directory.status?
+    if status?
+      @classList.add("status-#{status}")
+    else
+      @classList.add("status-#{@directory.status}") if @directory.status?
 
   subscribeToDirectory: ->
     @subscriptions.add @directory.onDidAddEntries (addedEntries) =>
@@ -106,17 +113,40 @@ class DirectoryView extends HTMLElement
     if @isExpanded then @collapse(isRecursive) else @expand(isRecursive)
 
   expand: (isRecursive=false) ->
+    initial = Promise.resolve(true)
     unless @isExpanded
       @isExpanded = true
       @classList.add('expanded')
       @classList.remove('collapsed')
-      @directory.expand()
+      initial = initial.then => @directory.expand()
 
     if isRecursive
-      for entry in @entries.children when entry instanceof DirectoryView
-        entry.expand(true)
-
+      children = (entry for entry in @entries.children when entry instanceof DirectoryView)
+      firstEntry = children.shift()
+      if firstEntry
+        initial.then => first.expandAsync()
+        reducer = (curr, next) =>
+          curr.then =>
+            next.expand(true)
+        children.reduce reducer, initial
+      else
+        initial.then =>
+          @expandAsync()
+        .then (children) =>
+          for child in children when child instanceof DirectoryView
+            child.expand(true)
     false
+
+  # Non-recursive ::expand that returns the promise from the model, for use in
+  # recursively revealing the active file
+  expandAsync: ->
+    if @isExpanded
+      return Promise.resolve(@entries.children)
+    else
+      @isExpanded = true
+      @classList.add('expanded')
+      @classList.remove('collapsed')
+      return @directory.expand().then => @entries.children
 
   collapse: (isRecursive=false) ->
     @isExpanded = false

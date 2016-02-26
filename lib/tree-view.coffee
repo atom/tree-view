@@ -53,7 +53,34 @@ class TreeView extends View
     @updateRoots(state.directoryExpansionStates)
     @selectEntry(@roots[0])
 
-    @selectEntryForPath(state.selectedPath) if state.selectedPath
+    # Now that directory expansion is done asyncly combining 2 different
+    # asynchronous code paths(1), there doesn't seem to be a good way to know
+    # that the tree view has been fully expanded from its initial tree of
+    # expansion states. So, we could make the expansion state construct know
+    # about when it's been fully walked, or we could just watch the DOM for the
+    # item in question to appear. I'm still a little concerned about hitting an
+    # edge case where this doesn't get ::disconnected() though.
+    #
+    # 1: Directories were expanded synchronously, but this was changed to work
+    #    with the new async git repo interaction. However, we also use event
+    #    subscription with Directory::onDidAddEntries to build up a tree view as
+    #    well, meaning we can't just tag on to the end of the Directory::expand()
+    #    promise chain :/
+
+    if state.selectedPath
+      @initialSelectionMutationObserver = new MutationObserver (mutationRecords, observer) =>
+        nodeLists = mutationRecords.map((m) -> m.addedNodes)
+        for nodeList in nodeLists
+          for entry in nodeList
+            if entry.getPath() is state.selectedPath
+              @selectEntry(entry)
+              @initialSelectionMutationObserver.disconnect()
+      @initialSelectionMutationObserver.observe(@[0], {childList: true, subtree: true})
+
+    else
+      @selectEntry(@roots[0])
+
+
     @focusAfterAttach = state.hasFocus
     @scrollTopAfterAttach = state.scrollTop if state.scrollTop
     @scrollLeftAfterAttach = state.scrollLeft if state.scrollLeft
@@ -305,15 +332,29 @@ class TreeView extends View
     return unless rootPath?
 
     activePathComponents = relativePath.split(path.sep)
-    currentPath = rootPath
-    for pathComponent in activePathComponents
+
+    processPathComponent = (pathComponent, currentPath) =>
+      return currentPath unless pathComponent
       currentPath += path.sep + pathComponent
       entry = @entryForPath(currentPath)
+
       if entry instanceof DirectoryView
-        entry.expand()
+        return entry.expandAsync().then -> currentPath
       else
         @selectEntry(entry)
         @scrollToEntry(entry)
+        return currentPath
+
+    reducer = (currentItemPromise, nextItem) =>
+      return currentItemPromise.then (currentPath) =>
+        processPathComponent(nextItem, currentPath)
+
+    # Porting git status to async means that some of the internal tree-view APIs
+    # needed to go async as well. However, certain parts of the codebase (including
+    # this function) iterate over lists of values - generally we can just use
+    # Promise.all in those cases, but this one works its way sequentially through
+    # the list, so we use Array::reduce to serialize the promises.
+    activePathComponents.reduce reducer, Promise.resolve(rootPath)
 
   copySelectedEntryPath: (relativePath = false) ->
     if pathToCopy = @selectedPath
@@ -627,8 +668,7 @@ class TreeView extends View
     AddDialog ?= require './add-dialog'
     dialog = new AddDialog(selectedPath, isCreatingFile)
     dialog.on 'directory-created', (event, createdPath) =>
-      @entryForPath(createdPath)?.reload()
-      @selectEntryForPath(createdPath)
+      @entryForPath(createdPath)?.reload().then => @selectEntryForPath(createdPath)
       false
     dialog.on 'file-created', (event, createdPath) ->
       atom.workspace.open(createdPath)
@@ -704,8 +744,8 @@ class TreeView extends View
       fs.moveSync(initialPath, newPath)
 
       if repo = repoForPath(newPath)
-        repo.getPathStatus(initialPath)
-        repo.getPathStatus(newPath)
+        repo.refreshStatusForPath(initialPath)
+        repo.refreshStatusForPath(newPath)
 
     catch error
       atom.notifications.addWarning("Failed to move entry #{initialPath} to #{newDirectoryPath}", detail: error.message)

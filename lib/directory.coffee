@@ -5,6 +5,8 @@ fs = require 'fs-plus'
 PathWatcher = require 'pathwatcher'
 File = require './file'
 {repoForPath} = require './helpers'
+{GitRepositoryAsync} = require 'atom'
+
 realpathCache = {}
 
 module.exports =
@@ -29,8 +31,6 @@ class Directory
     @expansionState.entries ?= {}
     @status = null
     @entries = {}
-
-    @submodule = repoForPath(@path)?.isSubmodule(@path)
 
     @subscribeToRepo()
     @updateStatus()
@@ -64,44 +64,46 @@ class Directory
 
   # Subscribe to project's repo for changes to the Git status of this directory.
   subscribeToRepo: ->
-    repo = repoForPath(@path)
-    return unless repo?
-
-    @subscriptions.add repo.onDidChangeStatus (event) =>
-      @updateStatus(repo) if @contains(event.path)
-    @subscriptions.add repo.onDidChangeStatuses =>
-      @updateStatus(repo)
+    if repo = repoForPath(@path)
+      @subscriptions.add repo.onDidChangeStatus (event) =>
+        @updateStatus() if @contains(event.path)
+      @subscriptions.add repo.onDidChangeStatuses =>
+        @updateStatus()
 
   # Update the status property of this directory using the repo.
   updateStatus: ->
     repo = repoForPath(@path)
-    return unless repo?
-
-    newStatus = null
-    if repo.isPathIgnored(@path)
-      newStatus = 'ignored'
-    else
-      status = repo.getDirectoryStatus(@path)
-      if repo.isStatusModified(status)
+    repo?.isPathIgnored(@path).then (isIgnored) =>
+      if isIgnored
+        return GitRepositoryAsync.Git.Status.STATUS.IGNORED
+      else
+        return repo.getDirectoryStatus(@path)
+    .then (status) =>
+      newStatus = null
+      if status is GitRepositoryAsync.Git.Status.STATUS.IGNORED
+        newStatus = 'ignored'
+      else if repo.isStatusModified(status)
         newStatus = 'modified'
       else if repo.isStatusNew(status)
         newStatus = 'added'
 
-    if newStatus isnt @status
-      @status = newStatus
-      @emitter.emit('did-status-change', newStatus)
+      if newStatus isnt @status
+        @status = newStatus
+        @emitter.emit('did-status-change', newStatus)
+      newStatus
 
   # Is the given path ignored?
   isPathIgnored: (filePath) ->
     if atom.config.get('tree-view.hideVcsIgnoredFiles')
       repo = repoForPath(@path)
-      return true if repo? and repo.isProjectAtRoot() and repo.isPathIgnored(filePath)
-
-    if atom.config.get('tree-view.hideIgnoredNames')
+      if repo? and repo.isProjectAtRoot()
+        # repo.isPathIgnored also returns a promise that resolves to a Boolean
+        return repo.isPathIgnored(filePath)
+    else if atom.config.get('tree-view.hideIgnoredNames')
       for ignoredPattern in @ignoredPatterns
-        return true if ignoredPattern.match(filePath)
+        return Promise.resolve(true) if ignoredPattern.match(filePath)
 
-    false
+    return Promise.resolve(false)
 
   # Does given full path start with the given prefix?
   isPathPrefixOf: (prefix, fullPath) ->
@@ -163,34 +165,59 @@ class Directory
       names = []
     names.sort(new Intl.Collator(undefined, {numeric: true, sensitivity: "base"}).compare)
 
-    files = []
-    directories = []
+    # async/await will make this more pleasant when this is
+    # inevitably ported to ES6
+    namePromises = names.map (name) =>
+      localName = name
+      fullPath = path.join(@path, localName)
 
-    for name in names
-      fullPath = path.join(@path, name)
-      continue if @isPathIgnored(fullPath)
+      return @isPathIgnored(fullPath).then (isIgnored) =>
+        return if isIgnored
 
-      stat = fs.lstatSyncNoException(fullPath)
-      symlink = stat.isSymbolicLink?()
-      stat = fs.statSyncNoException(fullPath) if symlink
+        stat = fs.lstatSyncNoException(fullPath)
+        symlink = stat.isSymbolicLink?()
+        stat = fs.statSyncNoException(fullPath) if symlink
+        if stat.isDirectory?()
+          if @entries.hasOwnProperty(localName)
+            # push a placeholder since this entry already exists but this helps
+            # track the insertion index for the created views
+            return [localName, 'directory']
+          else
+            expansionState = @expansionState.entries[localName]
+            return [localName, new Directory({
+                name: localName,
+                fullPath: fullPath,
+                symlink: symlink,
+                expansionState: expansionState,
+                ignoredPatterns: @ignoredPatterns
+                })]
+        else if stat.isFile?()
+          if @entries.hasOwnProperty(localName)
+            # push a placeholder since this entry already exists but this helps
+            # track the insertion index for the created views
+            return [localName, 'file']
+          else
+            return [localName, new File({
+              name: localName,
+              fullPath: fullPath,
+              symlink: symlink,
+              realpathCache: realpathCache
+              })]
 
-      if stat.isDirectory?()
-        if @entries.hasOwnProperty(name)
-          # push a placeholder since this entry already exists but this helps
-          # track the insertion index for the created views
-          directories.push(name)
-        else
-          expansionState = @expansionState.entries[name]
-          directories.push(new Directory({name, fullPath, symlink, expansionState, @ignoredPatterns}))
-      else if stat.isFile?()
-        if @entries.hasOwnProperty(name)
-          # push a placeholder since this entry already exists but this helps
-          # track the insertion index for the created views
-          files.push(name)
-        else
-          files.push(new File({name, fullPath, symlink, realpathCache}))
-
-    @sortEntries(directories.concat(files))
+    Promise.all(namePromises).then (values) =>
+      directories = []
+      files = []
+      values = values.filter (v) -> v isnt undefined
+      for value in values
+        if value[1] instanceof File
+          files.push value[1]
+        else if value[1] instanceof Directory
+          directories.push value[1]
+        else if value[1] is 'file'
+          files.push value[0]
+        else if value[1] is 'directory'
+          directories.push value[0]
+      @sortEntries(directories.concat(files))
 
   normalizeEntryName: (value) ->
     normalizedValue = value.name
@@ -209,38 +236,39 @@ class Directory
         secondName = @normalizeEntryName(second)
         firstName.localeCompare(secondName)
 
-  # Public: Perform a synchronous reload of the directory.
+  # Public: Perform an asynchronous reload of the directory.
   reload: ->
     newEntries = []
     removedEntries = _.clone(@entries)
     index = 0
+    @getEntries().then (entries) =>
+      for entry in entries
+        if @entries.hasOwnProperty(entry)
+          delete removedEntries[entry]
+          index++
+          continue
 
-    for entry in @getEntries()
-      if @entries.hasOwnProperty(entry)
-        delete removedEntries[entry]
+        entry.indexInParentDirectory = index
         index++
-        continue
+        newEntries.push(entry)
 
-      entry.indexInParentDirectory = index
-      index++
-      newEntries.push(entry)
+      entriesRemoved = false
+      for name, entry of removedEntries
+        entriesRemoved = true
+        entry.destroy()
 
-    entriesRemoved = false
-    for name, entry of removedEntries
-      entriesRemoved = true
-      entry.destroy()
+        if @entries.hasOwnProperty(name)
+          delete @entries[name]
 
-      if @entries.hasOwnProperty(name)
-        delete @entries[name]
+        if @expansionState.entries.hasOwnProperty(name)
+          delete @expansionState.entries[name]
 
-      if @expansionState.entries.hasOwnProperty(name)
-        delete @expansionState.entries[name]
+      @emitter.emit('did-remove-entries', removedEntries) if entriesRemoved
 
-    @emitter.emit('did-remove-entries', removedEntries) if entriesRemoved
+      if newEntries.length > 0
+        @entries[entry.name] = entry for entry in newEntries
+        @emitter.emit('did-add-entries', newEntries)
 
-    if newEntries.length > 0
-      @entries[entry.name] = entry for entry in newEntries
-      @emitter.emit('did-add-entries', newEntries)
 
   # Public: Collapse this directory and stop watching it.
   collapse: ->
@@ -252,8 +280,8 @@ class Directory
   # changes.
   expand: ->
     @expansionState.isExpanded = true
-    @reload()
-    @watch()
+    @reload().then =>
+      @watch()
 
   serializeExpansionState: ->
     expansionState = {}
