@@ -2712,6 +2712,51 @@ describe "TreeView", ->
 
       expect(gammaEntries).toEqual(["delta.txt", "epsilon.txt", "theta"])
 
+  describe "the focusOnReveal config option", ->
+    beforeEach ->
+      treeView.detach()
+      spyOn(treeView, 'focus')
+
+    it "switches focus to sidebar on changing files when focusOnReveal option is set", ->
+      atom.config.set "tree-view.focusOnReveal", true
+
+      waitsForPromise ->
+        atom.workspace.open(path.join(atom.project.getPaths()[0], 'dir1', 'file1'))
+
+      runs ->
+        atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
+        expect(treeView.hasParent()).toBeTruthy()
+        expect(treeView.focus).toHaveBeenCalled()
+
+      waitsForPromise ->
+        treeView.focus.reset()
+        atom.workspace.open(path.join(atom.project.getPaths()[1], 'dir3', 'file3'))
+
+      runs ->
+        atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
+        expect(treeView.hasParent()).toBeTruthy()
+        expect(treeView.focus).toHaveBeenCalled()
+
+    it "does not switch focus to sidebar on changing files when focusOnReveal option is unset", ->
+      atom.config.set "tree-view.focusOnReveal", false
+
+      waitsForPromise ->
+        atom.workspace.open(path.join(atom.project.getPaths()[0], 'dir1', 'file1'))
+
+      runs ->
+        atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
+        expect(treeView.hasParent()).toBeTruthy()
+        expect(treeView.focus).not.toHaveBeenCalled()
+
+      waitsForPromise ->
+        treeView.focus.reset()
+        atom.workspace.open(path.join(atom.project.getPaths()[1], 'dir3', 'file3'))
+
+      runs ->
+        atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
+        expect(treeView.hasParent()).toBeTruthy()
+        expect(treeView.focus).not.toHaveBeenCalled()
+
   describe "showSelectedEntryInFileManager()", ->
     beforeEach ->
       atom.notifications.clear()
