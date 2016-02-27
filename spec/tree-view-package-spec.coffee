@@ -6,6 +6,7 @@ os = require 'os'
 {remote, shell} = require 'electron'
 Directory = require '../lib/directory'
 eventHelpers = require "./event-helpers"
+helpers = require '../lib/helpers'
 
 waitForPackageActivation = ->
   waitsForPromise ->
@@ -3418,7 +3419,7 @@ describe "TreeView", ->
 
       newFile = path.join(newDir, 'new2')
       fs.writeFileSync(newFile, '')
-      atom.project.getRepositories()[0].getPathStatus(newFile)
+      helpers.getRepoCache()[projectPath].getPathStatus(newFile)
 
       ignoreFile = path.join(projectPath, '.gitignore')
       fs.writeFileSync(ignoreFile, 'ignored.txt')
@@ -3428,7 +3429,7 @@ describe "TreeView", ->
       modifiedFile = path.join(projectPath, 'dir', 'b.txt')
       originalFileContent = fs.readFileSync(modifiedFile, 'utf8')
       fs.writeFileSync modifiedFile, 'ch ch changes'
-      atom.project.getRepositories()[0].getPathStatus(modifiedFile)
+      helpers.getRepoCache()[projectPath].getPathStatus(modifiedFile)
 
       treeView.useSyncFS = true
       treeView.updateRoots()
@@ -3504,6 +3505,8 @@ describe "TreeView", ->
             expect(dirView.directory.updateStatus).toHaveBeenCalled()
 
     describe "on #darwin, when the project is a symbolic link to the repository root", ->
+      symlinkPath = null
+
       beforeEach ->
         symlinkPath = temp.path('tree-view-project')
         fs.symlinkSync(projectPath, symlinkPath, 'junction')
@@ -3511,7 +3514,7 @@ describe "TreeView", ->
         treeView.roots[0].entries.querySelectorAll('.directory')[1].expand()
 
         waitsFor (done) ->
-          disposable = atom.project.getRepositories()[0].onDidChangeStatuses ->
+          disposable = helpers.getRepoCache()[symlinkPath].onDidChangeStatuses ->
             disposable.dispose()
             done()
 
@@ -3524,11 +3527,276 @@ describe "TreeView", ->
       describe "when a file loses its modified status", ->
         it "updates its and its parent directories' styles", ->
           fs.writeFileSync(modifiedFile, originalFileContent)
-          atom.project.getRepositories()[0].getPathStatus(modifiedFile)
-
+          helpers.getRepoCache()[symlinkPath].getPathStatus(modifiedFile)
           expect(treeView.element.querySelector('.project-root .file.status-modified')).not.toExist()
           expect(treeView.element.querySelector('.project-root .directory.status-modified')).not.toExist()
           expect(treeView.element.querySelector('.project-root.status-modified')).not.toExist()
+
+  describe "Git status decorations for nested repositories", ->
+    repo1= null
+    subrepo1 = null
+    repo2 = null
+
+    getDirectoryWithName = (treeView, name) ->
+      return Array.from(treeView.element.querySelectorAll('.tree-view-root .directory')).find((el) -> el.querySelector("div.header span[data-name='#{name}']"))
+
+    getElementsContains = (element, selector, subSelector) ->
+      return Array.from(element.querySelectorAll(selector)).filter((el) -> el.querySelector(subSelector))
+
+    beforeEach ->
+      rootProjectPath = fs.realpathSync(temp.mkdirSync('tree-view-project'))
+      atom.project.setPaths([rootProjectPath])
+
+      prepareRepo = (subPath, repoName) ->
+        projectPath = path.normalize(rootProjectPath + '/' + subPath + repoName)
+        unless fs.existsSync(projectPath)
+          fs.mkdirSync(projectPath)
+        projectPath = fs.realpathSync(projectPath)
+        workingDirFixture = path.join(__dirname, 'fixtures', 'git', 'working-dir')
+        fs.copySync(workingDirFixture, projectPath)
+        fs.moveSync(path.join(projectPath, 'git.git'), path.join(projectPath, '.git'))
+
+        newDir = path.join(projectPath, 'dir2')
+        fs.mkdirSync(newDir)
+
+        newFile = path.join(newDir, 'new2')
+        fs.writeFileSync(newFile, '')
+
+        pRepo = helpers.getRepoCache()[projectPath]
+        if pRepo
+          pRepo.getPathStatus(newFile)
+
+        ignoreFile = path.join(projectPath, '.gitignore')
+        fs.writeFileSync(ignoreFile, 'ignored.txt')
+        ignoredFile = path.join(projectPath, 'ignored.txt')
+        fs.writeFileSync(ignoredFile, '')
+
+        modifiedFile = path.join(projectPath, 'dir', 'b.txt')
+        originalFileContent = fs.readFileSync(modifiedFile, 'utf8')
+        fs.writeFileSync modifiedFile, 'ch ch changes'
+        if pRepo
+          pRepo.getPathStatus(modifiedFile)
+
+      prepareRepo('', '') # root repo
+      prepareRepo('', 'repo1')
+      prepareRepo('repo1/', 'subrepo1')
+      prepareRepo('', 'repo2')
+      treeView.updateRoots()
+
+      getDirectoryWithName(treeView, 'repo1').expand(true)
+      getDirectoryWithName(treeView, 'repo2').expand(true)
+      getDirectoryWithName(treeView, 'dir').expand()
+      getDirectoryWithName(treeView, 'dir2').expand()
+      repo1 = getDirectoryWithName(treeView, 'repo1')
+      repo2 = getDirectoryWithName(treeView, 'repo2')
+      subrepo1 = getDirectoryWithName(treeView, 'subrepo1')
+      waitsFor ->
+        treeView.element.querySelectorAll('.directory.status-modified').length is 8
+
+    describe "when the several git repositories nested under project root", ->
+      it "adds a custom style to root and all nested repos", ->
+        expect(treeView.element.querySelectorAll('.tree-view-root .icon-repo').length).toBe 4
+        expect(getDirectoryWithName(treeView, 'repo1').querySelector('span')).toHaveClass 'icon-repo'
+        expect(getDirectoryWithName(treeView, 'subrepo1').querySelector('span')).toHaveClass 'icon-repo'
+        expect(getDirectoryWithName(treeView, 'repo2').querySelector('span')).toHaveClass 'icon-repo'
+
+    describe "when a file is modified in either root or an any nested repo", ->
+      it "adds a custom style", ->
+        expect(treeView.element.querySelectorAll(".status-modified .file span[data-name='b.txt']").length).toBe 4
+        expect(getElementsContains(repo1, '.file', "span[data-name='b.txt']")[0]).toHaveClass 'status-modified'
+        expect(getElementsContains(repo2, '.file', "span[data-name='b.txt']")[0]).toHaveClass 'status-modified'
+        expect(getElementsContains(subrepo1, '.file', "span[data-name='b.txt']")[0]).toHaveClass 'status-modified'
+
+
+    describe "when a directory is modified in either root or an any nested repo", ->
+      it "adds a custom style", ->
+        expect(treeView.element.querySelectorAll(".status-modified.directory>.header span[data-name='dir']").length).toBe 4
+        expect(getElementsContains(repo1, '.directory', "span[data-name='dir']")[0]).toHaveClass 'status-modified'
+        expect(getElementsContains(repo2, '.directory', "span[data-name='dir']")[0]).toHaveClass 'status-modified'
+        expect(getElementsContains(subrepo1, '.directory', "span[data-name='dir']")[0]).toHaveClass 'status-modified'
+
+    describe "when a file is new in either root or an any nested repo", ->
+      it "adds a custom style", ->
+        expect(treeView.element.querySelectorAll(".status-added.file span[data-name='new2']").length).toBe 4
+        expect(getElementsContains(repo1, '.file', "span[data-name='new2']")[0]).toHaveClass 'status-added'
+        expect(getElementsContains(repo2, '.file', "span[data-name='new2']")[0]).toHaveClass 'status-added'
+        expect(getElementsContains(subrepo1, '.file', "span[data-name='new2']")[0]).toHaveClass 'status-added'
+
+    describe "when a directory is new in either root or an any nested repo", ->
+      it "adds a custom style", ->
+        expect(treeView.element.querySelectorAll(".status-added.directory>.header span[data-name='dir2']").length).toBe 4
+        expect(getElementsContains(repo1, '.directory', "span[data-name='dir2']")[0]).toHaveClass 'status-added'
+        expect(getElementsContains(repo2, '.directory', "span[data-name='dir2']")[0]).toHaveClass 'status-added'
+        expect(getElementsContains(subrepo1, '.directory', "span[data-name='dir2']")[0]).toHaveClass 'status-added'
+
+    describe "when a file is ignored in either root or an any nested repo", ->
+      it "adds a custom style", ->
+        expect(treeView.element.querySelectorAll(".status-ignored.file span[data-name='ignored.txt']").length).toBe 4
+        expect(getElementsContains(repo1, '.file', "span[data-name='ignored.txt']")[0]).toHaveClass 'status-ignored'
+        expect(getElementsContains(repo2, '.file', "span[data-name='ignored.txt']")[0]).toHaveClass 'status-ignored'
+        expect(getElementsContains(subrepo1, '.file', "span[data-name='ignored.txt']")[0]).toHaveClass 'status-ignored'
+
+  describe "the refreshVcsStatusOnFocusChange config option set to 2", ->
+    rootProjectPath = null
+    rootPath = null
+    repo2Path = null
+    repo3Path = null
+    repo4Path = null
+
+    beforeEach ->
+      atom.config.set("tree-view.refreshVcsStatusOnFocusChange", 2)
+      rootProjectPath = fs.realpathSync(temp.mkdirSync('tree-view-project'))
+      atom.project.setPaths([rootProjectPath])
+
+      prepareRepo = (subPath, repoName = null) ->
+        projectPath = path.normalize(rootProjectPath + '/' + subPath + repoName)
+        unless fs.existsSync(projectPath)
+          fs.mkdirSync(projectPath)
+        projectPath = fs.realpathSync(projectPath)
+        workingDirFixture = path.join(__dirname, 'fixtures', 'git', 'working-dir')
+        fs.copySync(workingDirFixture, projectPath)
+        fs.moveSync(path.join(projectPath, 'git.git'), path.join(projectPath, '.git'))
+        treeView.updateRoots()
+        projectPath
+
+      rootPath = prepareRepo('', '')
+      repo2Path = prepareRepo('', 'repo2')
+      repo3Path = prepareRepo('', 'repo3')
+      repo4Path = prepareRepo('', 'repo4')
+      spyOn(helpers.getRepoCache()[rootPath], 'refreshStatus')
+      spyOn(helpers.getRepoCache()[repo2Path], 'refreshStatus')
+      spyOn(helpers.getRepoCache()[repo3Path], 'refreshStatus')
+      spyOn(helpers.getRepoCache()[repo4Path], 'refreshStatus')
+      # fire focus event
+      focused = false
+      onWindowFocus = ->
+        focused = true
+      window.addEventListener 'focus', onWindowFocus
+      ev = document.createEvent('HTMLEvents')
+      ev.initEvent('focus', true, true)
+      window.dispatchEvent(ev)
+      waitsFor ->
+        focused is true
+
+    it "doesn't update status of 3rd or 4th repos", ->
+      #
+      expect(helpers.getRepoCache()[rootPath].refreshStatus.callCount).toBe 1
+      expect(helpers.getRepoCache()[repo2Path].refreshStatus.callCount).toBe 1
+      expect(helpers.getRepoCache()[repo3Path].refreshStatus.callCount).toBe 0
+      expect(helpers.getRepoCache()[repo4Path].refreshStatus.callCount).toBe 0
+
+  describe "the refreshVcsStatusOnProjectOpen config option set to 2", ->
+    repo2 = null
+    repo3 = null
+    repo4 = null
+    projectRoot = null
+
+    getElementsContains = (element, selector, subSelector) ->
+      return Array.from(element.querySelectorAll(selector)).filter((el) -> el.querySelector(subSelector))
+
+    beforeEach ->
+      atom.config.set("tree-view.refreshVcsStatusOnProjectOpen", 2)
+      rootProjectPath = fs.realpathSync(temp.mkdirSync('tree-view-project'))
+      treeView.useSyncFS = true
+
+      prepareRepo = (subPath, repoName = null) ->
+        projectPath = path.normalize(rootProjectPath + '/' + subPath + repoName)
+        unless fs.existsSync(projectPath)
+          fs.mkdirSync(projectPath)
+        projectPath = fs.realpathSync(projectPath)
+        workingDirFixture = path.join(__dirname, 'fixtures', 'git', 'working-dir')
+        fs.copySync(workingDirFixture, projectPath)
+        fs.moveSync(path.join(projectPath, 'git.git'), path.join(projectPath, '.git'))
+        newDir = path.join(projectPath, 'dir2')
+        fs.mkdirSync(newDir)
+        newFile = path.join(newDir, 'new2')
+        fs.writeFileSync(newFile, '')
+        modifiedFile = path.join(projectPath, 'dir', 'b.txt')
+        originalFileContent = fs.readFileSync(modifiedFile, 'utf8')
+        fs.writeFileSync modifiedFile, 'ch ch changes'
+
+      prepareRepo('', '')
+      prepareRepo('', 'repo2')
+      prepareRepo('', 'repo3')
+      prepareRepo('', 'repo4')
+      atom.project.setPaths([rootProjectPath])
+      projectRoot = treeView.element.querySelector('.project-root')
+      repo2 = getElementsContains(projectRoot, ".directory", ".header span[data-name='repo2']")[0]
+      repo3 = getElementsContains(projectRoot, ".directory", ".header span[data-name='repo3']")[0]
+      repo4 = getElementsContains(projectRoot, ".directory", ".header span[data-name='repo4']")[0]
+
+    it "doesn't update status of 3rd or 4th repos", ->
+      waitsFor ->
+        treeView.roots[0].entries.querySelectorAll('.directory.status-modified').length is 2
+      runs ->
+        expect(Object.keys(helpers.getRepoCache()).length).toBe 4
+        expect(repo2).toHaveClass 'status-modified'
+        expect(repo3).not.toHaveClass 'status-modified'
+        expect(repo4).not.toHaveClass 'status-modified'
+
+  describe "the refresh-vcs-status command", ->
+    repo2 = null
+    repo3 = null
+    repo4 = null
+    projectRoot = null
+
+    getElementsContains = (element, selector, subSelector) ->
+      return Array.from(element.querySelectorAll(selector)).filter((el) -> el.querySelector(subSelector))
+
+    beforeEach ->
+      atom.config.set("tree-view.refreshVcsStatusOnFocusChange", 0)
+      atom.config.set("tree-view.refreshVcsStatusOnProjectOpen", 0)
+      rootProjectPath = fs.realpathSync(temp.mkdirSync('tree-view-project'))
+
+      prepareRepo = (subPath, repoName = null) ->
+        projectPath = path.normalize(rootProjectPath + '/' + subPath + repoName)
+        unless fs.existsSync(projectPath)
+          fs.mkdirSync(projectPath)
+        projectPath = fs.realpathSync(projectPath)
+        workingDirFixture = path.join(__dirname, 'fixtures', 'git', 'working-dir')
+        fs.copySync(workingDirFixture, projectPath)
+        fs.moveSync(path.join(projectPath, 'git.git'), path.join(projectPath, '.git'))
+        newDir = path.join(projectPath, 'dir2')
+        fs.mkdirSync(newDir)
+        newFile = path.join(newDir, 'new2')
+        fs.writeFileSync(newFile, '')
+        modifiedFile = path.join(projectPath, 'dir', 'b.txt')
+        originalFileContent = fs.readFileSync(modifiedFile, 'utf8')
+        fs.writeFileSync modifiedFile, 'ch ch changes'
+
+      prepareRepo('', '')
+      prepareRepo('', 'repo2')
+      prepareRepo('', 'repo3')
+      prepareRepo('', 'repo4')
+      atom.project.setPaths([rootProjectPath])
+      projectRoot = treeView.element.querySelector('.project-root')
+      repo2 = getElementsContains(projectRoot, ".directory", ".header span[data-name='repo2']")[0]
+      repo3 = getElementsContains(projectRoot, ".directory", ".header span[data-name='repo3']")[0]
+      repo4 = getElementsContains(projectRoot, ".directory", ".header span[data-name='repo4']")[0]
+
+    it "does show option in menu", ->
+      expect(atom.contextMenu.templateForElement(repo2)).toContain({command: 'tree-view:refresh-folder-vcs-status', label: 'Refresh VCS Status'})
+
+    it "does update selected tree recursively", ->
+      expect(repo2).not.toHaveClass 'status-modified'
+      repo2.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, button: 1}))
+      atom.commands.dispatch(repo2, 'tree-view:refresh-folder-vcs-status')
+      waitsFor ->
+        getElementsContains(projectRoot, ".directory.status-modified", ".header span[data-name='repo2']").length is 1
+      runs ->
+        expect(repo2).toHaveClass 'status-modified'
+        expect(repo3).not.toHaveClass 'status-modified'
+        expect(repo4).not.toHaveClass 'status-modified'
+
+    it "does update all tree if triggered from command palette", ->
+      expect(repo2).not.toHaveClass 'status-modified'
+      atom.commands.dispatch(treeView.element, 'tree-view:refresh-vcs-status')
+      waitsFor ->
+        treeView.element.querySelectorAll('.entries .directory.status-modified .icon-repo').length is 3
+      runs ->
+        expect(repo2).toHaveClass 'status-modified'
+        expect(repo3).toHaveClass 'status-modified'
+        expect(repo4).toHaveClass 'status-modified'
 
   describe "selecting items", ->
     [dirView, fileView1, fileView2, fileView3, fileView4, fileView5, treeView, rootDirPath, dirPath, filePath1, filePath2, filePath3, filePath4, filePath5] = []

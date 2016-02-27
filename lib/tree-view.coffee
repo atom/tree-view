@@ -3,7 +3,7 @@ path = require 'path'
 
 _ = require 'underscore-plus'
 {BufferedProcess, CompositeDisposable, Emitter} = require 'atom'
-{repoForPath, getStyleObject, getFullExtension} = require "./helpers"
+{repoForPath, getStyleObject, getFullExtension, isFakeProjectRoot} = require "./helpers"
 fs = require 'fs-plus'
 
 AddDialog = require './add-dialog'
@@ -237,6 +237,7 @@ class TreeView
      'tree-view:toggle-vcs-ignored-files': -> toggleConfig 'tree-view.hideVcsIgnoredFiles'
      'tree-view:toggle-ignored-names': -> toggleConfig 'tree-view.hideIgnoredNames'
      'tree-view:remove-project-folder': (e) => @removeProjectFolder(e)
+     'tree-view:refresh-folder-vcs-status': (e) => @refreshVcsStatus(e)
 
     [0..8].forEach (index) =>
       atom.commands.add @element, "tree-view:open-selected-entry-in-pane-#{index + 1}", =>
@@ -257,6 +258,15 @@ class TreeView
       @updateRoots()
     @disposables.add atom.config.onDidChange 'tree-view.squashDirectoryNames', =>
       @updateRoots()
+
+  refreshVcsStatus: (e) ->
+    unless e
+      refreshFrom = @list.querySelectorAll('.project-root')
+    else
+      refreshFrom = [@selectedEntry()]
+    for refreshPoint in refreshFrom
+      if refreshPoint? and refreshPoint.refreshRepoStatus
+        refreshPoint.refreshRepoStatus(true, includeCollapsed = true)
 
   toggle: ->
     atom.workspace.toggle(this)

@@ -94,6 +94,18 @@
       "type": "boolean",
       "default": false,
       "description": "When opening a file, always focus an already-existing view of the file even if it's in a another pane."
+    },
+    "refreshVcsStatusOnFocusChange": {
+      "title": "Refresh VCS Status On Focus Change for first N repos it met",
+      "type": "integer",
+      "default": 1,
+      "description": "Refresh VCS Status when focus of Atom editor changes of first N repos. In case of many nested repos Atom can be freezing, so consider this value to be low."
+    },
+    "refreshVcsStatusOnProjectOpen": {
+      "title": "Refresh VCS Status On Project Open for first N repos it met",
+      "type": "integer",
+      "default": 10,
+      "description": "Refresh VCS Status once Atom project is opened of first N repos. Can decrease start-up time if amount of repositories and the option number are high."
     }
   }
 }

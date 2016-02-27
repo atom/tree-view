@@ -36,6 +36,9 @@
     {'label': 'Add Project Folder', 'command': 'application:add-project-folder'}
     {'type': 'separator'}
 
+    {'label': 'Refresh VCS Status', 'command': 'tree-view:refresh-folder-vcs-status'}
+    {'type': 'separator'}
+
     {'label': 'Copy Full Path', 'command': 'tree-view:copy-full-path'}
     {'label': 'Copy Project Path', 'command': 'tree-view:copy-project-path'}
     {'label': 'Open in New Window', 'command': 'tree-view:open-in-new-window'}
