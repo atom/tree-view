@@ -137,6 +137,7 @@ class TreeView extends View
 
     @disposables.add atom.workspace.onDidChangeActivePaneItem =>
       @selectActiveFile()
+      @revealActiveFile() if atom.config.get('tree-view.autoReveal')
     @disposables.add atom.project.onDidChangePaths =>
       @updateRoots()
     @disposables.add atom.config.onDidChange 'tree-view.hideVcsIgnoredFiles', =>

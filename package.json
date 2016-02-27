@@ -55,6 +55,11 @@
       "type": "boolean",
       "default": true,
       "description": "When listing directory items, list subdirectories before listing files."
+    },
+    "autoReveal": {
+      "type": "boolean",
+      "default": false,
+      "description": "Reveal files as they are opened or switched-to in the editor panes."
     }
   }
 }
