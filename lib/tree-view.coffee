@@ -302,7 +302,7 @@ class TreeView extends View
     return if _.isEmpty(atom.project.getPaths())
 
     @attach()
-    @focus()
+    @focus() if atom.config.get('tree-view.focusOnReveal')
 
     return unless activeFilePath = @getActivePath()
 

@@ -55,6 +55,11 @@
       "type": "boolean",
       "default": true,
       "description": "When listing directory items, list subdirectories before listing files."
+    },
+    "focusOnReveal": {
+      "type": "boolean",
+      "default": true,
+      "description": "When a file is revealed in the sidebar, switch the focus to the sidebar."
     }
   }
 }
