@@ -12,7 +12,6 @@ class Directory
   constructor: ({@name, fullPath, @symlink, @expansionState, @isRoot, @ignoredPatterns}) ->
     @destroyed = false
     @emitter = new Emitter()
-    @subscriptions = new CompositeDisposable()
 
     if atom.config.get('tree-view.squashDirectoryNames')
       fullPath = @squashDirectoryNames(fullPath)
@@ -32,14 +31,13 @@ class Directory
 
     @submodule = repoForPath(@path)?.isSubmodule(@path)
 
-    @subscribeToRepo()
-    @updateStatus()
+    @loadStatus()
     @loadRealPath()
 
   destroy: ->
     @destroyed = true
     @unwatch()
-    @subscriptions.dispose()
+    @unsubscribeFromRepo()
     @emitter.emit('did-destroy')
 
   onDidDestroy: (callback) ->
@@ -55,22 +53,40 @@ class Directory
     @emitter.on('did-remove-entries', callback)
 
   loadRealPath: ->
+    canUpdateStatus = atom.config.get('tree-view.displayVcsStatus')
     fs.realpath @path, realpathCache, (error, realPath) =>
       return if @destroyed
       if realPath and realPath isnt @path
         @realPath = realPath
         @lowerCaseRealPath = @realPath.toLowerCase() if fs.isCaseInsensitive()
+        @updateStatus() if canUpdateStatus
+
+  loadStatus: ->
+    if atom.config.get('tree-view.displayVcsStatus')
+      @subscribeToRepo()
+      @updateStatus()
+
+    atom.config.onDidChange 'tree-view.displayVcsStatus', (value) =>
+      if value.newValue
+        @subscribeToRepo()
         @updateStatus()
+      else
+        @unsubscribeFromRepo()
+        @resetStatus()
 
   # Subscribe to project's repo for changes to the Git status of this directory.
   subscribeToRepo: ->
     repo = repoForPath(@path)
     return unless repo?
 
-    @subscriptions.add repo.onDidChangeStatus (event) =>
+    @repoSubscriptions = new CompositeDisposable()
+    @repoSubscriptions.add repo.onDidChangeStatus (event) =>
       @updateStatus(repo) if @contains(event.path)
-    @subscriptions.add repo.onDidChangeStatuses =>
+    @repoSubscriptions.add repo.onDidChangeStatuses =>
       @updateStatus(repo)
+
+  unsubscribeFromRepo: ->
+    @repoSubscriptions?.dispose()
 
   # Update the status property of this directory using the repo.
   updateStatus: ->
@@ -90,6 +106,10 @@ class Directory
     if newStatus isnt @status
       @status = newStatus
       @emitter.emit('did-status-change', newStatus)
+
+  resetStatus: ->
+    @status = null
+    @emitter.emit('did-status-change', @status)
 
   # Is the given path ignored?
   isPathIgnored: (filePath) ->
