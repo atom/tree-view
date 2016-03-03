@@ -173,6 +173,17 @@ describe "TreeView", ->
           {treeView} = atom.packages.getActivePackage("tree-view").mainModule
           expect(treeView).toBeFalsy()
 
+  describe "when allowDragAndDrop configuration item unchecked", ->
+    beforeEach ->
+      atom.config.set('tree-view.allowDragAndDrop', false)
+
+    it "makes all visible folders and files non-draggable", ->
+      expect(treeView.roots[0].hasAttribute('draggable')).toBe(false)
+      expect(treeView.roots[1].hasAttribute('draggable')).toBe(false)
+
+    afterEach ->
+      atom.config.set('tree-view.allowDragAndDrop', true)
+
   describe "serialization", ->
     it "restores the attached/detached state of the tree-view", ->
       jasmine.attachToDOM(workspaceElement)
@@ -663,7 +674,10 @@ describe "TreeView", ->
 
         children = root1.find('.directory')
         expect(children.length).toBeGreaterThan 0
-        children.each (index, child) -> expect(child).toHaveClass 'expanded'
+        children.each (index, child) ->
+          expect(child).toHaveClass 'expanded'
+          expect(child.hasAttribute('draggable')).toBe(true)
+          expect(child.getAttribute('draggable')).toBe('true')
 
     describe "when the directory is expanded", ->
       parent    = null
@@ -2462,6 +2476,44 @@ describe "TreeView", ->
 
       expect(treeView.width()).toBe(150)
 
+  describe "when allowDragAndDrop is false", ->
+    [dirView, fileView1, fileView2, fileView3, treeView, rootDirPath, dirPath, filePath1, filePath2, filePath3] = []
+
+    beforeEach ->
+      atom.config.set('tree-view.allowDragAndDrop', false)
+      rootDirPath = fs.absolute(temp.mkdirSync('tree-view'))
+
+      dirPath = path.join(rootDirPath, "test-dir")
+      filePath1 = path.join(dirPath, "test-file1.txt")
+      filePath2 = path.join(dirPath, "test-file2.txt")
+      filePath3 = path.join(dirPath, "test-file3.txt")
+
+      fs.makeTreeSync(dirPath)
+      fs.writeFileSync(filePath1, "doesn't matter")
+      fs.writeFileSync(filePath2, "doesn't matter")
+      fs.writeFileSync(filePath3, "doesn't matter")
+
+      atom.project.setPaths([rootDirPath])
+
+      dirView = $(treeView.roots[0].entries).find('.directory:contains(test-dir)')
+      dirView[0].expand()
+      fileView1 = treeView.find('.file:contains(test-file1.txt)')
+      fileView2 = treeView.find('.file:contains(test-file2.txt)')
+      fileView3 = treeView.find('.file:contains(test-file3.txt)')
+      treeView.updateRoots()
+
+      it 'makes expanded directory and files draggable', ->
+        console.log(dirView[0].getAttribute('draggable'))
+        expect(dirView[0].hasAttribute('draggable')).toBe(true)
+        expect(dirView[0].getAttribute('draggable')).toBe('false')
+        expect(fileView1[0].hasAttribute('draggable')).toBe(true)
+        expect(fileView1[0].getAttribute('draggable')).toBe('false')
+        expect(fileView2[0].hasAttribute('draggable')).toBe(true)
+        expect(fileView2[0].getAttribute('draggable')).toBe('false')
+        expect(fileView3[0].hasAttribute('draggable')).toBe(true)
+        expect(fileView3[0].getAttribute('draggable')).toBe('false')
+        atom.config.set('tree-view.allowDragAndDrop', true)
+
   describe "selecting items", ->
     [dirView, fileView1, fileView2, fileView3, treeView, rootDirPath, dirPath, filePath1, filePath2, filePath3] = []
 
@@ -2485,6 +2537,19 @@ describe "TreeView", ->
       fileView1 = treeView.find('.file:contains(test-file1.txt)')
       fileView2 = treeView.find('.file:contains(test-file2.txt)')
       fileView3 = treeView.find('.file:contains(test-file3.txt)')
+
+    describe 'when allowDragAndDrop', ->
+      it 'makes expanded directory and files draggable', ->
+        expect(dirView[0].hasAttribute('draggable')).toBe(true)
+        expect(dirView[0].getAttribute('draggable')).toBe('true')
+        expect(fileView1[0].hasAttribute('draggable')).toBe(true)
+        expect(fileView1[0].getAttribute('draggable')).toBe('true')
+        expect(fileView2[0].hasAttribute('draggable')).toBe(true)
+        expect(fileView2[0].getAttribute('draggable')).toBe('true')
+        expect(fileView3[0].hasAttribute('draggable')).toBe(true)
+        expect(fileView3[0].getAttribute('draggable')).toBe('true')
+
+
 
     describe 'selecting multiple items', ->
       it 'switches the contextual menu to muli-select mode', ->

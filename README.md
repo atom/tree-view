@@ -2,18 +2,19 @@
 
 Explore and open files in the current project.
 
-Press <kbd>ctrl-\\</kbd> or <kbd>cmd-\\</kbd> to open/close the Tree view and <kbd>alt-\\</kbd> or <kbd>ctrl-0</kbd> to focus it.
+This fork successfully blocks dragging and dropping of files using a configuration parameter. See issue #566.
+This solution was not merged due to a decision to limit the number of configuration parameters, as well as a desire to solve in a global manner.
 
-When the Tree view has focus you can press <kbd>a</kbd>, <kbd>shift-a</kbd>, <kbd>m</kbd>, or <kbd>delete</kbd> to add, move
-or delete files and folders.
+I'm leaving the solution here for others.
 
-![](https://f.cloud.github.com/assets/671378/2241932/6d9cface-9ceb-11e3-9026-31d5011d889d.png)
+Changes to files:
 
-## API
+package.json            - Added **allowDragAndDrop** parameter.
 
-The Tree View displays icons next to files. These icons are customizable by installing a package that provides an `atom.file-icons` service.
+tree-view.coffee        - Added one-liner to refresh tree-view on a change to **allowDragAndDrop**.
 
-The `atom.file-icons` service must provide the following methods:
+directory-view.coffee   - Added one-liner to set HTMLElement **draggable** attribute with **allowDragAndDrop** value.
 
-* `iconClassForPath(path)` - Returns a CSS class name to add to the file view
-* `onWillDeactivate` - An event that lets the tree view return to its default icon strategy
+file-view.coffee        - Added one-liner to set HTMLElement **draggable** attribute with **allowDragAndDrop** value.
+
+tree-view-spec.coffee   - Added tests.
