@@ -712,6 +712,21 @@ describe "TreeView", ->
           dirView = root1.find('.directory:contains(dir1)')
           expect(dirView).toHaveClass 'selected'
 
+      describe "when the tree-view.autoReveal config setting is true", ->
+        beforeEach ->
+          atom.config.set "tree-view.autoReveal", true
+
+        it "selects the active item's entry in the tree view, expanding parent directories if needed", ->
+          waitsForPromise ->
+            atom.workspace.open(path.join('dir1', 'sub-dir1', 'sub-file1'))
+
+          runs ->
+            dirView = root1.find('.directory:contains(dir1)')
+            fileView = root1.find('.file:contains(sub-file1)')
+            expect(dirView).not.toHaveClass 'selected'
+            expect(fileView).toHaveClass 'selected'
+            expect(treeView.find('.selected').length).toBe 1
+
     describe "when the item has no path", ->
       it "deselects the previously selected entry", ->
         waitsForFileToOpen ->
@@ -2711,33 +2726,6 @@ describe "TreeView", ->
         element.innerText
 
       expect(gammaEntries).toEqual(["delta.txt", "epsilon.txt", "theta"])
-
-  describe "the autoReveal config option", ->
-    beforeEach ->
-      atom.config.set "tree-view.autoReveal", true
-
-    describe "when the item has a path", ->
-      it "selects the entry with that path in the tree view if it is visible", ->
-        waitsForFileToOpen ->
-          sampleJs.click()
-
-        waitsForPromise ->
-          atom.workspace.open(atom.project.getDirectories()[0].resolve('tree-view.txt'))
-
-        runs ->
-          expect(sampleTxt).toHaveClass 'selected'
-          expect(treeView.find('.selected').length).toBe 1
-
-      it "selects the entry with that path in the tree view if it is not visible", ->
-        waitsForPromise ->
-          atom.workspace.open(path.join('dir1', 'sub-dir1', 'sub-file1'))
-
-        runs ->
-          dirView = root1.find('.directory:contains(dir1)')
-          fileView = root1.find('.file:contains(sub-file1)')
-          expect(dirView).not.toHaveClass 'selected'
-          expect(fileView).toHaveClass 'selected'
-          expect(treeView.find('.selected').length).toBe 1
 
   describe "showSelectedEntryInFileManager()", ->
     beforeEach ->
