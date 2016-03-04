@@ -59,7 +59,7 @@
     "autoReveal": {
       "type": "boolean",
       "default": false,
-      "description": "Reveal files as they are opened or switched-to in the editor panes."
+      "description": "Reveal tree view entries when they become the active pane item."
     }
   }
 }
