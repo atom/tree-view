@@ -346,25 +346,47 @@ describe "TreeView", ->
       spyOn(treeView, 'focus')
 
     describe "if the current file has a path", ->
-      it "shows and focuses the tree view and selects the file", ->
-        waitsForPromise ->
-          atom.workspace.open(path.join(atom.project.getPaths()[0], 'dir1', 'file1'))
+      describe "if the tree-view.focusOnReveal config option is true", ->
+        it "shows and focuses the tree view and selects the file", ->
+          atom.config.set "tree-view.focusOnReveal", true
 
-        runs ->
-          atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
-          expect(treeView.hasParent()).toBeTruthy()
-          expect(treeView.focus).toHaveBeenCalled()
-          expect(treeView.selectedEntry().getPath()).toContain(path.join("dir1", "file1"))
+          waitsForPromise ->
+            atom.workspace.open(path.join(atom.project.getPaths()[0], 'dir1', 'file1'))
 
-        waitsForPromise ->
-          treeView.focus.reset()
-          atom.workspace.open(path.join(atom.project.getPaths()[1], 'dir3', 'file3'))
+          runs ->
+            atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
+            expect(treeView.hasParent()).toBeTruthy()
+            expect(treeView.focus).toHaveBeenCalled()
 
-        runs ->
-          atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
-          expect(treeView.hasParent()).toBeTruthy()
-          expect(treeView.focus).toHaveBeenCalled()
-          expect(treeView.selectedEntry().getPath()).toContain(path.join("dir3", "file3"))
+          waitsForPromise ->
+            treeView.focus.reset()
+            atom.workspace.open(path.join(atom.project.getPaths()[1], 'dir3', 'file3'))
+
+          runs ->
+            atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
+            expect(treeView.hasParent()).toBeTruthy()
+            expect(treeView.focus).toHaveBeenCalled()
+
+      describe "if the tree-view.focusOnReveal config option is false", ->
+        it "shows the tree view and selects the file, but does not change the focus", ->
+          atom.config.set "tree-view.focusOnReveal", false
+
+          waitsForPromise ->
+            atom.workspace.open(path.join(atom.project.getPaths()[0], 'dir1', 'file1'))
+
+          runs ->
+            atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
+            expect(treeView.hasParent()).toBeTruthy()
+            expect(treeView.focus).not.toHaveBeenCalled()
+
+          waitsForPromise ->
+            treeView.focus.reset()
+            atom.workspace.open(path.join(atom.project.getPaths()[1], 'dir3', 'file3'))
+
+          runs ->
+            atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
+            expect(treeView.hasParent()).toBeTruthy()
+            expect(treeView.focus).not.toHaveBeenCalled()
 
     describe "if the current file has no path", ->
       it "shows and focuses the tree view, but does not attempt to select a specific file", ->
