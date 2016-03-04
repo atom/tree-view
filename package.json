@@ -55,6 +55,11 @@
       "type": "boolean",
       "default": true,
       "description": "When listing directory items, list subdirectories before listing files."
+    },
+    "autoReveal": {
+      "type": "boolean",
+      "default": false,
+      "description": "Reveal tree view entries when they become the active pane item."
     }
   }
 }
