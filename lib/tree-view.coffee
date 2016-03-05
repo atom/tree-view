@@ -213,7 +213,7 @@ class TreeView extends View
         else if entry instanceof DirectoryView
           entry.toggleExpansion(isRecursive)
       when 2
-        if entry instanceof FileView & @openedItem?
+        if entry instanceof FileView and @openedItem?
           @openedItem.then (item) ->
             activePane = atom.workspace.getActivePane()
             if activePane?.getPendingItem?
