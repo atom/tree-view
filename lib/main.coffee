@@ -34,6 +34,7 @@ module.exports =
   consumeFileIcons: (service) ->
     FileIcons.setService(service)
     @fileIconsDisposable = service.onWillDeactivate -> FileIcons.resetService()
+    @treeView?.updateRoots()
 
   serialize: ->
     if @treeView?
