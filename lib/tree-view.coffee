@@ -535,7 +535,7 @@ class TreeView extends View
     else if activePath = @getActivePath()
       selectedPaths = [activePath]
 
-    return unless selectedPaths
+    return unless selectedPaths and selectedPaths.length > 0
 
     for root in @roots
       if root.getPath() in selectedPaths
@@ -549,10 +549,16 @@ class TreeView extends View
       detailedMessage: "You are deleting:\n#{selectedPaths.join('\n')}"
       buttons:
         "Move to Trash": ->
+          failedDeletions = []
           for selectedPath in selectedPaths
-            shell.moveItemToTrash(selectedPath)
+            if not shell.moveItemToTrash(selectedPath)
+              failedDeletions.push "#{selectedPath}"
             if repo = repoForPath(selectedPath)
               repo.getPathStatus(selectedPath)
+          if failedDeletions.length > 0
+            atom.notifications.addError "The following #{if failedDeletions.length > 1 then 'files' else 'file'} couldn't be moved to trash#{if process.platform is 'linux' then " (is `gvfs-trash` installed?)" else ""}",
+              detail: "#{failedDeletions.join('\n')}"
+              dismissable: true
         "Cancel": null
 
   # Public: Copy the path of the selected entry element.
