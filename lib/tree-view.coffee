@@ -1,5 +1,6 @@
 path = require 'path'
-{shell} = require 'electron'
+# TODO: Remove the catch once Atom 1.7.0 is released
+try {shell} = require 'electron' catch then shell = require 'shell'
 
 _ = require 'underscore-plus'
 {BufferedProcess, CompositeDisposable} = require 'atom'
