@@ -548,6 +548,42 @@ describe "TreeView", ->
       sampleJs.mousedown()
       expect(sampleJs).toHaveClass 'selected'
 
+  describe "when the package first activates and there is a file open (regression)", ->
+    # Note: it is important that this test is not nested inside any other tests
+    # that generate click events in their `beforeEach` hooks, as this test
+    # tests incorrect behavior that only manifested itself on the first
+    # UI interaction after the package was activated.
+    describe "when the file is permanent", ->
+      beforeEach ->
+        waitsForFileToOpen ->
+          atom.workspace.open('tree-view.js')
+
+      it "does not throw when the file is double clicked", ->
+        expect ->
+          sampleJs.trigger clickEvent(originalEvent: {detail: 1})
+          sampleJs.trigger clickEvent(originalEvent: {detail: 2})
+        .not.toThrow()
+
+    # TODO: remove conditional on 1.6 release [MKT]
+    if atom.workspace.getActivePane().getPendingItem?
+      describe "when the file is pending", ->
+        editor = null
+
+        beforeEach ->
+          waitsForPromise ->
+            atom.workspace.open('tree-view.js', pending: true).then (o) ->
+              editor = o
+
+        it "marks the pending file as permanent", ->
+          runs ->
+            expect(atom.workspace.getActivePane().getActiveItem()).toBe editor
+            expect(atom.workspace.getActivePane().getPendingItem()).toBe editor
+            sampleJs.trigger clickEvent(originalEvent: {detail: 1})
+            sampleJs.trigger clickEvent(originalEvent: {detail: 2})
+
+          waitsFor ->
+            atom.workspace.getActivePane().getPendingItem() is null
+
   if atom.workspace.getActivePane().getPendingItem?
     describe "when files are clicked", ->
       beforeEach ->
