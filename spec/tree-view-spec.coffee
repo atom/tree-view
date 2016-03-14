@@ -560,6 +560,7 @@ describe "TreeView", ->
 
       it "does not throw when the file is double clicked", ->
         expect ->
+          sampleJs.trigger clickEvent(originalEvent: {detail: 1})
           sampleJs.trigger clickEvent(originalEvent: {detail: 2})
         .not.toThrow()
 
@@ -574,9 +575,14 @@ describe "TreeView", ->
               editor = o
 
         it "marks the pending file as permanent", ->
-          expect(atom.workspace.getActivePane().getPendingItem()).toBe editor
-          sampleJs.trigger clickEvent(originalEvent: {detail: 2})
-          expect(atom.workspace.getActivePane().getPendingItem()).toBeNull()
+          runs ->
+            expect(atom.workspace.getActivePane().getActiveItem()).toBe editor
+            expect(atom.workspace.getActivePane().getPendingItem()).toBe editor
+            sampleJs.trigger clickEvent(originalEvent: {detail: 1})
+            sampleJs.trigger clickEvent(originalEvent: {detail: 2})
+
+          waitsFor ->
+            atom.workspace.getActivePane().getPendingItem() is null
 
   if atom.workspace.getActivePane().getPendingItem?
     describe "when files are clicked", ->

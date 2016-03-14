@@ -207,13 +207,14 @@ class TreeView extends View
         @selectEntry(entry)
         if entry instanceof FileView
           if entry.getPath() is atom.workspace.getActivePaneItem()?.getPath?()
+            @openedItem = Promise.resolve(atom.workspace.getActivePaneItem())
             @focus()
           else
             @openedItem = atom.workspace.open(entry.getPath(), pending: true)
         else if entry instanceof DirectoryView
           entry.toggleExpansion(isRecursive)
       when 2
-        if entry instanceof FileView and @openedItem?
+        if entry instanceof FileView
           @openedItem.then (item) ->
             activePane = atom.workspace.getActivePane()
             if activePane?.getPendingItem?
