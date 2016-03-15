@@ -29,17 +29,19 @@ class DirectoryView extends HTMLElement
       else
         iconClass = 'icon-file-submodule' if @directory.submodule
     @directoryName.classList.add(iconClass)
-    @directoryName.dataset.name = @directory.name
-    @directoryName.title = @directory.name
     @directoryName.dataset.path = @directory.path
 
     if @directory.squashedNames?
+      @directoryName.dataset.name = @directory.squashedNames.join('')
+      @directoryName.title = @directory.squashedNames.join('')
       squashedDirectoryNameNode = document.createElement('span')
       squashedDirectoryNameNode.classList.add('squashed-dir')
       squashedDirectoryNameNode.textContent = @directory.squashedNames[0]
       @directoryName.appendChild(squashedDirectoryNameNode)
       @directoryName.appendChild(document.createTextNode(@directory.squashedNames[1]))
     else
+      @directoryName.dataset.name = @directory.name
+      @directoryName.title = @directory.name
       @directoryName.textContent = @directory.name
 
     @appendChild(@header)
