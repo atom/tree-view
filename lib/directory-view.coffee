@@ -33,17 +33,16 @@ class DirectoryView extends HTMLElement
     @directoryName.title = @directory.name
     @directoryName.dataset.path = @directory.path
 
-    if @directory.squashedName?
-      @squashedDirectoryName = document.createElement('span')
-      @squashedDirectoryName.classList.add('squashed-dir')
-      @squashedDirectoryName.textContent = @directory.squashedName
-
-    directoryNameTextNode = document.createTextNode(@directory.name)
+    if @directory.squashedNames?
+      squashedDirectoryNameNode = document.createElement('span')
+      squashedDirectoryNameNode.classList.add('squashed-dir')
+      squashedDirectoryNameNode.textContent = @directory.squashedNames[0]
+      @directoryName.appendChild(squashedDirectoryNameNode)
+      @directoryName.appendChild(document.createTextNode(@directory.squashedNames[1]))
+    else
+      @directoryName.textContent = @directory.name
 
     @appendChild(@header)
-    if @squashedDirectoryName?
-      @directoryName.appendChild(@squashedDirectoryName)
-    @directoryName.appendChild(directoryNameTextNode)
     @header.appendChild(@directoryName)
     @appendChild(@entries)
 
