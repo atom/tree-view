@@ -560,13 +560,13 @@ class TreeView extends View
           moveToTrash(selectedPaths)
         "Cancel": null
 
-  moveToTrash: (paths) ->
+  moveToTrash: (pathsToDel) ->
     failedDeletions = []
-    for path in paths
-      if not shell.moveItemToTrash(path)
-        failedDeletions.push "#{path}"
-      if repo = repoForPath(path)
-        repo.getPathStatus(path)
+    for pathToDel in pathsToDel
+      if not shell.moveItemToTrash(pathToDel)
+        failedDeletions.push "#{pathToDel}"
+      if repo = repoForPath(pathToDel)
+        repo.getPathStatus(pathToDel)
     if failedDeletions.length > 0
       atom.notifications.addError "The following #{if failedDeletions.length > 1 then 'files' else 'file'} couldn't be moved to trash#{if process.platform is 'linux' then " (is `gvfs-trash` installed?)" else ""}",
         detail: "#{failedDeletions.join('\n')}"
