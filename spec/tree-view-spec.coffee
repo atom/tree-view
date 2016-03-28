@@ -2438,6 +2438,7 @@ describe "TreeView", ->
       fs.writeFileSync modifiedFile, 'ch ch changes'
       atom.project.getRepositories()[0].getPathStatus(modifiedFile)
 
+      treeView.useSyncFS = true
       treeView.updateRoots()
       $(treeView.roots[0].entries).find('.directory:contains(dir)')[0].expand()
 
