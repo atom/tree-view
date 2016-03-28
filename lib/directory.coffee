@@ -9,7 +9,7 @@ realpathCache = {}
 
 module.exports =
 class Directory
-  constructor: ({@name, fullPath, @symlink, @expansionState, @isRoot, @ignoredPatterns}) ->
+  constructor: ({@name, fullPath, @symlink, @expansionState, @isRoot, @ignoredPatterns, @useSyncFS}) ->
     @destroyed = false
     @emitter = new Emitter()
     @subscriptions = new CompositeDisposable()
@@ -55,12 +55,16 @@ class Directory
     @emitter.on('did-remove-entries', callback)
 
   loadRealPath: ->
-    fs.realpath @path, realpathCache, (error, realPath) =>
-      return if @destroyed
-      if realPath and realPath isnt @path
-        @realPath = realPath
-        @lowerCaseRealPath = @realPath.toLowerCase() if fs.isCaseInsensitive()
-        @updateStatus()
+    if @useSyncFS
+      @realPath = fs.realpathSync(@path)
+      @lowerCaseRealPath = @realPath.toLowerCase() if fs.isCaseInsensitive()
+    else
+      fs.realpath @path, realpathCache, (error, realPath) =>
+        return if @destroyed
+        if realPath and realPath isnt @path
+          @realPath = realPath
+          @lowerCaseRealPath = @realPath.toLowerCase() if fs.isCaseInsensitive()
+          @updateStatus()
 
   # Subscribe to project's repo for changes to the Git status of this directory.
   subscribeToRepo: ->
@@ -181,14 +185,14 @@ class Directory
           directories.push(name)
         else
           expansionState = @expansionState.entries[name]
-          directories.push(new Directory({name, fullPath, symlink, expansionState, @ignoredPatterns}))
+          directories.push(new Directory({name, fullPath, symlink, expansionState, @ignoredPatterns, @useSyncFS}))
       else if stat.isFile?()
         if @entries.hasOwnProperty(name)
           # push a placeholder since this entry already exists but this helps
           # track the insertion index for the created views
           files.push(name)
         else
-          files.push(new File({name, fullPath, symlink, realpathCache}))
+          files.push(new File({name, fullPath, symlink, realpathCache, @useSyncFS}))
 
     @sortEntries(directories.concat(files))
 

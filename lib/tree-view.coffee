@@ -39,6 +39,7 @@ class TreeView extends View
     @scrollTopAfterAttach = -1
     @selectedPath = null
     @ignoredPatterns = []
+    @useSyncFS = false
 
     @dragEventCounts = new WeakMap
 
@@ -283,6 +284,7 @@ class TreeView extends View
                         oldExpansionStates[projectPath] ?
                         {isExpanded: true}
         @ignoredPatterns
+        @useSyncFS
       })
       root = new DirectoryView()
       root.initialize(directory)
