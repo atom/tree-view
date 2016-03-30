@@ -41,7 +41,7 @@ describe 'DefaultFileIcons', ->
       filePath = path.join(tempDir, 'foo.bar')
       linkPath = path.join(tempDir, 'link.bar')
       fs.writeFileSync(filePath, '')
-      fs.symlinkSync(filePath, linkPath)
+      fs.symlinkSync(filePath, linkPath, 'junction')
 
       expect(fileIcons.iconClassForPath(linkPath)).toEqual('icon-file-symlink-file')
 
@@ -49,6 +49,6 @@ describe 'DefaultFileIcons', ->
       filePath = path.join(tempDir, 'foo.zip')
       linkPath = path.join(tempDir, 'link.zip')
       fs.writeFileSync(filePath, '')
-      fs.symlinkSync(filePath, linkPath)
+      fs.symlinkSync(filePath, linkPath, 'junction')
 
       expect(fileIcons.iconClassForPath(linkPath)).toEqual('icon-file-symlink-file')

@@ -2491,7 +2491,7 @@ describe "TreeView", ->
     describe "when the project is a symbolic link to the repository root", ->
       beforeEach ->
         symlinkPath = temp.path('tree-view-project')
-        fs.symlinkSync(projectPath, symlinkPath)
+        fs.symlinkSync(projectPath, symlinkPath, 'junction')
         atom.project.setPaths([symlinkPath])
         $(treeView.roots[0].entries).find('.directory:contains(dir)')[0].expand()
 
