@@ -1449,7 +1449,7 @@ describe "TreeView", ->
             expect(fs.existsSync(filePath)).toBeTruthy()
 
           describe "when the target already exists", ->
-            it "appends a number to the destination directory name", ->
+            it "appends a number to the destination file name", ->
               LocalStorage['tree-view:copyPath'] = JSON.stringify([filePath])
 
               dirView.click()
@@ -1467,25 +1467,28 @@ describe "TreeView", ->
               expect(fs.existsSync(numberedFileName1)).toBeTruthy()
               expect(fs.existsSync(filePath)).toBeTruthy()
 
-        xdescribe "when a directory with a period is selected", ->
-          it "creates a copy of the original file in the selected directory", ->
+        describe "when a directory with a period is selected", ->
+          [dotDirPath] = []
+
+          beforeEach ->
             dotDirPath = path.join(rootDirPath, "test.dir")
             fs.makeTreeSync(dotDirPath)
+
+            atom.project.setPaths([rootDirPath]) # Force test.dir to show up
+
+          it "creates a copy of the original file in the selected directory", ->
             LocalStorage['tree-view:copyPath'] = JSON.stringify([filePath])
 
             dotDirView = $(treeView.roots[0].entries).find('.directory:contains(test\\.dir)')
             dotDirView.click()
-            console.log dotDirView
             atom.commands.dispatch(treeView.element, "tree-view:paste")
 
             expect(fs.existsSync(path.join(dotDirPath, path.basename(filePath)))).toBeTruthy()
             expect(fs.existsSync(filePath)).toBeTruthy()
 
           describe "when the target already exists", ->
-            it "appends a number to the destination directory name", ->
-              dotDirPath = path.join(rootDirPath, "test.dir")
+            it "appends a number to the destination file name", ->
               dotFilePath = path.join(dotDirPath, "test.file.txt")
-              fs.makeTreeSync(dotDirPath)
               fs.writeFileSync(dotFilePath, "doesn't matter .")
               LocalStorage['tree-view:copyPath'] = JSON.stringify([dotFilePath])
 
