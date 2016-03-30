@@ -625,9 +625,9 @@ class TreeView extends View
               newPath = "#{originalNewPath}#{fileCounter.toString()}"
             else
               if process.platform is 'win32'
-                fileArr = /(.+)\.(?!.*\\)(.+)/.exec(originalNewPath)
+                fileArr = /(.+?)\.(?!.*\\)(.+)/.exec(originalNewPath)
               else
-                fileArr = /(.+)\.(?!.*\/)(.+)/.exec(originalNewPath)
+                fileArr = /(.+?)\.(?!.*\/)(.+)/.exec(originalNewPath)
 
               if fileArr?
                 newPath = "#{fileArr[1]}#{fileCounter.toString()}.#{fileArr[2]}"
