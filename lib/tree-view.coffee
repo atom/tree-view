@@ -1,5 +1,6 @@
 path = require 'path'
-shell = require 'shell'
+# TODO: Remove the catch once Atom 1.7.0 is released
+try {shell} = require 'electron' catch then shell = require 'shell'
 
 _ = require 'underscore-plus'
 {BufferedProcess, CompositeDisposable} = require 'atom'
@@ -38,6 +39,7 @@ class TreeView extends View
     @scrollTopAfterAttach = -1
     @selectedPath = null
     @ignoredPatterns = []
+    @useSyncFS = false
 
     @dragEventCounts = new WeakMap
 
@@ -137,6 +139,7 @@ class TreeView extends View
 
     @disposables.add atom.workspace.onDidChangeActivePaneItem =>
       @selectActiveFile()
+      @revealActiveFile() if atom.config.get('tree-view.autoReveal')
     @disposables.add atom.project.onDidChangePaths =>
       @updateRoots()
     @disposables.add atom.config.onDidChange 'tree-view.hideVcsIgnoredFiles', =>
@@ -206,6 +209,7 @@ class TreeView extends View
         @selectEntry(entry)
         if entry instanceof FileView
           if entry.getPath() is atom.workspace.getActivePaneItem()?.getPath?()
+            @openedItem = Promise.resolve(atom.workspace.getActivePaneItem())
             @focus()
           else
             @openedItem = atom.workspace.open(entry.getPath(), pending: true)
@@ -280,6 +284,7 @@ class TreeView extends View
                         oldExpansionStates[projectPath] ?
                         {isExpanded: true}
         @ignoredPatterns
+        @useSyncFS
       })
       root = new DirectoryView()
       root.initialize(directory)
@@ -302,7 +307,7 @@ class TreeView extends View
     return if _.isEmpty(atom.project.getPaths())
 
     @attach()
-    @focus()
+    @focus() if atom.config.get('tree-view.focusOnReveal')
 
     return unless activeFilePath = @getActivePath()
 
@@ -534,7 +539,7 @@ class TreeView extends View
     else if activePath = @getActivePath()
       selectedPaths = [activePath]
 
-    return unless selectedPaths
+    return unless selectedPaths and selectedPaths.length > 0
 
     for root in @roots
       if root.getPath() in selectedPaths
@@ -548,10 +553,16 @@ class TreeView extends View
       detailedMessage: "You are deleting:\n#{selectedPaths.join('\n')}"
       buttons:
         "Move to Trash": ->
+          failedDeletions = []
           for selectedPath in selectedPaths
-            shell.moveItemToTrash(selectedPath)
+            if not shell.moveItemToTrash(selectedPath)
+              failedDeletions.push "#{selectedPath}"
             if repo = repoForPath(selectedPath)
               repo.getPathStatus(selectedPath)
+          if failedDeletions.length > 0
+            atom.notifications.addError "The following #{if failedDeletions.length > 1 then 'files' else 'file'} couldn't be moved to trash#{if process.platform is 'linux' then " (is `gvfs-trash` installed?)" else ""}",
+              detail: "#{failedDeletions.join('\n')}"
+              dismissable: true
         "Cancel": null
 
   # Public: Copy the path of the selected entry element.

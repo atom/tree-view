@@ -346,25 +346,47 @@ describe "TreeView", ->
       spyOn(treeView, 'focus')
 
     describe "if the current file has a path", ->
-      it "shows and focuses the tree view and selects the file", ->
-        waitsForPromise ->
-          atom.workspace.open(path.join(atom.project.getPaths()[0], 'dir1', 'file1'))
+      describe "if the tree-view.focusOnReveal config option is true", ->
+        it "shows and focuses the tree view and selects the file", ->
+          atom.config.set "tree-view.focusOnReveal", true
 
-        runs ->
-          atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
-          expect(treeView.hasParent()).toBeTruthy()
-          expect(treeView.focus).toHaveBeenCalled()
-          expect(treeView.selectedEntry().getPath()).toContain(path.join("dir1", "file1"))
+          waitsForPromise ->
+            atom.workspace.open(path.join(atom.project.getPaths()[0], 'dir1', 'file1'))
 
-        waitsForPromise ->
-          treeView.focus.reset()
-          atom.workspace.open(path.join(atom.project.getPaths()[1], 'dir3', 'file3'))
+          runs ->
+            atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
+            expect(treeView.hasParent()).toBeTruthy()
+            expect(treeView.focus).toHaveBeenCalled()
 
-        runs ->
-          atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
-          expect(treeView.hasParent()).toBeTruthy()
-          expect(treeView.focus).toHaveBeenCalled()
-          expect(treeView.selectedEntry().getPath()).toContain(path.join("dir3", "file3"))
+          waitsForPromise ->
+            treeView.focus.reset()
+            atom.workspace.open(path.join(atom.project.getPaths()[1], 'dir3', 'file3'))
+
+          runs ->
+            atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
+            expect(treeView.hasParent()).toBeTruthy()
+            expect(treeView.focus).toHaveBeenCalled()
+
+      describe "if the tree-view.focusOnReveal config option is false", ->
+        it "shows the tree view and selects the file, but does not change the focus", ->
+          atom.config.set "tree-view.focusOnReveal", false
+
+          waitsForPromise ->
+            atom.workspace.open(path.join(atom.project.getPaths()[0], 'dir1', 'file1'))
+
+          runs ->
+            atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
+            expect(treeView.hasParent()).toBeTruthy()
+            expect(treeView.focus).not.toHaveBeenCalled()
+
+          waitsForPromise ->
+            treeView.focus.reset()
+            atom.workspace.open(path.join(atom.project.getPaths()[1], 'dir3', 'file3'))
+
+          runs ->
+            atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
+            expect(treeView.hasParent()).toBeTruthy()
+            expect(treeView.focus).not.toHaveBeenCalled()
 
     describe "if the current file has no path", ->
       it "shows and focuses the tree view, but does not attempt to select a specific file", ->
@@ -525,6 +547,42 @@ describe "TreeView", ->
       expect(sampleJs).not.toHaveClass 'selected'
       sampleJs.mousedown()
       expect(sampleJs).toHaveClass 'selected'
+
+  describe "when the package first activates and there is a file open (regression)", ->
+    # Note: it is important that this test is not nested inside any other tests
+    # that generate click events in their `beforeEach` hooks, as this test
+    # tests incorrect behavior that only manifested itself on the first
+    # UI interaction after the package was activated.
+    describe "when the file is permanent", ->
+      beforeEach ->
+        waitsForFileToOpen ->
+          atom.workspace.open('tree-view.js')
+
+      it "does not throw when the file is double clicked", ->
+        expect ->
+          sampleJs.trigger clickEvent(originalEvent: {detail: 1})
+          sampleJs.trigger clickEvent(originalEvent: {detail: 2})
+        .not.toThrow()
+
+    # TODO: remove conditional on 1.6 release [MKT]
+    if atom.workspace.getActivePane().getPendingItem?
+      describe "when the file is pending", ->
+        editor = null
+
+        beforeEach ->
+          waitsForPromise ->
+            atom.workspace.open('tree-view.js', pending: true).then (o) ->
+              editor = o
+
+        it "marks the pending file as permanent", ->
+          runs ->
+            expect(atom.workspace.getActivePane().getActiveItem()).toBe editor
+            expect(atom.workspace.getActivePane().getPendingItem()).toBe editor
+            sampleJs.trigger clickEvent(originalEvent: {detail: 1})
+            sampleJs.trigger clickEvent(originalEvent: {detail: 2})
+
+          waitsFor ->
+            atom.workspace.getActivePane().getPendingItem() is null
 
   if atom.workspace.getActivePane().getPendingItem?
     describe "when files are clicked", ->
@@ -711,6 +769,21 @@ describe "TreeView", ->
         runs ->
           dirView = root1.find('.directory:contains(dir1)')
           expect(dirView).toHaveClass 'selected'
+
+      describe "when the tree-view.autoReveal config setting is true", ->
+        beforeEach ->
+          atom.config.set "tree-view.autoReveal", true
+
+        it "selects the active item's entry in the tree view, expanding parent directories if needed", ->
+          waitsForPromise ->
+            atom.workspace.open(path.join('dir1', 'sub-dir1', 'sub-file1'))
+
+          runs ->
+            dirView = root1.find('.directory:contains(dir1)')
+            fileView = root1.find('.file:contains(sub-file1)')
+            expect(dirView).not.toHaveClass 'selected'
+            expect(fileView).toHaveClass 'selected'
+            expect(treeView.find('.selected').length).toBe 1
 
     describe "when the item has no path", ->
       it "deselects the previously selected entry", ->
@@ -1256,6 +1329,7 @@ describe "TreeView", ->
       dirView3 = $(treeView.roots[1].entries).find('.directory:contains(test-dir3):first')
       dirView3[0].expand()
       fileView4 = treeView.find('.file:contains(test-file4.txt)')
+      fileView5 = treeView.find('.file:contains(test-file5.txt)')
 
     describe "tree-view:copy", ->
       LocalStorage = window.localStorage
@@ -2194,6 +2268,40 @@ describe "TreeView", ->
           args = atom.confirm.mostRecentCall.args[0]
           expect(Object.keys(args.buttons)).toEqual ['Move to Trash', 'Cancel']
 
+      it "shows a notification on failure", ->
+        atom.notifications.clear()
+
+        spyOn(atom, 'confirm')
+
+        waitsForFileToOpen ->
+          fileView.click()
+
+        runs ->
+          repeat = 2
+          while (repeat > 0)
+            atom.commands.dispatch(treeView.element, 'tree-view:remove')
+            args = atom.confirm.mostRecentCall.args[0]
+            args.buttons["Move to Trash"]()
+            --repeat
+
+          notificationsNumber = atom.notifications.getNotifications().length
+          expect(notificationsNumber).toBe 1
+          if notificationsNumber is 1
+            notification = atom.notifications.getNotifications()[0]
+            expect(notification.getMessage()).toContain 'The following file couldn\'t be moved to trash'
+            expect(notification.getDetail()).toContain 'test-file.txt'
+
+      it "does nothing when no file is selected", ->
+        atom.notifications.clear()
+
+        jasmine.attachToDOM(workspaceElement)
+        treeView.focus()
+        treeView.deselect()
+        atom.commands.dispatch(treeView.element, 'tree-view:remove')
+
+        expect(atom.confirm.mostRecentCall).not.toExist
+        expect(atom.notifications.getNotifications().length).toBe 0
+
   describe "file system events", ->
     temporaryFilePath = null
 
@@ -2415,6 +2523,7 @@ describe "TreeView", ->
       fs.writeFileSync modifiedFile, 'ch ch changes'
       atom.project.getRepositories()[0].getPathStatus(modifiedFile)
 
+      treeView.useSyncFS = true
       treeView.updateRoots()
       $(treeView.roots[0].entries).find('.directory:contains(dir)')[0].expand()
 

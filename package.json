@@ -1,6 +1,6 @@
 {
   "name": "tree-view",
-  "version": "0.201.5",
+  "version": "0.203.3",
   "main": "./lib/main",
   "description": "Explore and open files in the current project.",
   "repository": "https://github.com/atom/tree-view",
@@ -55,6 +55,16 @@
       "type": "boolean",
       "default": true,
       "description": "When listing directory items, list subdirectories before listing files."
+    },
+    "autoReveal": {
+      "type": "boolean",
+      "default": false,
+      "description": "Reveal tree view entries when they become the active pane item."
+    },
+    "focusOnReveal": {
+      "type": "boolean",
+      "default": true,
+      "description": "Focus the tree view when revealing entries."
     }
   }
 }
