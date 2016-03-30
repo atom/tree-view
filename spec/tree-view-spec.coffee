@@ -1502,9 +1502,9 @@ describe "TreeView", ->
                 atom.commands.dispatch(treeView.element, "tree-view:paste")
 
                 if process.platform is 'win32'
-                  fileArr = /(.+)\.(?!.*\\)(.+)/.exec(dotFilePath)
+                  fileArr = /(.+?)\.(?!.*\\)(.+)/.exec(dotFilePath)
                 else
-                  fileArr = /(.+)\.(?!.*\/)(.+)/.exec(dotFilePath)
+                  fileArr = /(.+?)\.(?!.*\/)(.+)/.exec(dotFilePath)
 
                 numberedFileName0 = "#{fileArr[1]}0.#{fileArr[2]}"
                 numberedFileName1 = "#{fileArr[1]}1.#{fileArr[2]}"
