@@ -998,28 +998,35 @@ class TreeView
       if @rootDragAndDrop.canDragStart(e)
         return @rootDragAndDrop.onDragStart(e)
 
-      target = entry.querySelector(".name")
-      initialPath = target.dataset.path
-
-      fileNameElement = target.cloneNode(true)
-      for key, value of getStyleObject(target)
-        fileNameElement.style[key] = value
-      fileNameElement.style.position = 'absolute'
-      fileNameElement.style.top = 0
-      fileNameElement.style.left = 0
+      initialPaths = []
+      dragImage = document.createElement("ol")
+      dragImage.classList.add("entries list-tree")
+      dragImage.style.position = "absolute"
+      dragImage.style.top = 0
+      dragImage.style.left = 0
       # Ensure the cloned file name element is rendered on a separate GPU layer
       # to prevent overlapping elements located at (0px, 0px) from being used as
       # the drag image.
-      fileNameElement.style.willChange = 'transform'
+      dragImage.style.willChange = "transform"
 
-      document.body.appendChild(fileNameElement)
+      for target in @getSelectedEntries()
+        nameElement = target.querySelector(".name")
+        initialPaths.push(nameElement.dataset.path)
+
+        newNameElement = nameElement.cloneNode(true)
+        for key, value of getStyleObject(nameElement)
+          newNameElement.style[key] = value
+        dragImage.append(newNameElement)
+
+
+      document.body.appendChild(dragImage)
 
       e.dataTransfer.effectAllowed = "move"
-      e.dataTransfer.setDragImage(fileNameElement, 0, 0)
-      e.dataTransfer.setData("initialPath", initialPath)
+      e.dataTransfer.setDragImage(dragImage, 0, 0)
+      e.dataTransfer.setData("initialPaths", initialPaths)
 
       window.requestAnimationFrame ->
-        fileNameElement.remove()
+        dragImage.remove()
 
   # Handle entry dragover event; reset default dragover actions
   onDragOver: (e) ->
@@ -1047,11 +1054,12 @@ class TreeView
       newDirectoryPath = entry.querySelector('.name')?.dataset.path
       return false unless newDirectoryPath
 
-      initialPath = e.dataTransfer.getData("initialPath")
+      initialPaths = e.dataTransfer.getData("initialPaths")
 
-      if initialPath
+      if initialPaths
         # Drop event from Atom
-        @moveEntry(initialPath, newDirectoryPath)
+        for initialPath in initialPaths.split(',')
+          @moveEntry(initialPath, newDirectoryPath)
       else
         # Drop event from OS
         for file in e.dataTransfer.files
