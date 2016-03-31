@@ -2874,7 +2874,11 @@ describe "TreeView", ->
 
       runs ->
         expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Opening folder in Finder failed'
-        expect(atom.notifications.getNotifications()[0].getDetail()).toContain 'ENOENT'
+
+        if process.platform isnt 'win32'
+          expect(atom.notifications.getNotifications()[0].getDetail()).toContain 'ENOENT'
+        else # Typical Windows
+          expect(atom.notifications.getNotifications()[0].getDetail()).toContain 'The system cannot find the path specified.'
 
   describe "when reloading a directory with deletions and additions", ->
     it "does not throw an error (regression)", ->
