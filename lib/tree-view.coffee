@@ -738,11 +738,8 @@ class TreeView extends View
   onMouseDown: (e) ->
     e.stopPropagation()
 
-    # return early if we're opening a contextual menu (right click) during multi-select mode
-    if @multiSelectEnabled() and
-       e.currentTarget.classList.contains('selected') and
-       # mouse right click or ctrl click as right click on darwin platforms
-       (e.button is 2 or e.ctrlKey and process.platform is 'darwin')
+    # return early if there's a multi-select
+    if @multiSelectEnabled() and e.currentTarget.classList.contains('selected')
       return
 
     entryToSelect = e.currentTarget
@@ -835,26 +832,31 @@ class TreeView extends View
   onDragStart: (e) ->
     e.stopPropagation()
 
-    target = $(e.currentTarget).find(".name")
-    initialPath = target.data("path")
+    initialPaths = []
+    targets = []
 
-    style = getStyleObject(target[0])
-
-    fileNameElement = target.clone()
-      .css(style)
+    eventTarget = $(e.currentTarget).find('.name')
+    style = getStyleObject(eventTarget[0])
+    dragImage = $('<ol></ol>', {class: 'entries list-tree'})
       .css(
         position: 'absolute'
         top: 0
         left: 0
       )
-    fileNameElement.appendTo(document.body)
 
-    e.originalEvent.dataTransfer.effectAllowed = "move"
-    e.originalEvent.dataTransfer.setDragImage(fileNameElement[0], 0, 0)
-    e.originalEvent.dataTransfer.setData("initialPath", initialPath)
+    $(@getSelectedEntries()).each((i, target) ->
+      initialPaths.push($(target).find('.name').data('path'))
+      dragImage.append($(target).clone().removeClass('selected'))
+    )
+
+    dragImage.appendTo(document.body)
+
+    e.originalEvent.dataTransfer.effectAllowed = 'move'
+    e.originalEvent.dataTransfer.setDragImage(dragImage[0], 0, 0)
+    e.originalEvent.dataTransfer.setData('initialPaths', initialPaths)
 
     window.requestAnimationFrame ->
-      fileNameElement.remove()
+      dragImage.remove()
 
   # Handle entry dragover event; reset default dragover actions
   onDragOver: (e) ->
@@ -874,11 +876,12 @@ class TreeView extends View
     newDirectoryPath = $(entry).find(".name").data("path")
     return false unless newDirectoryPath
 
-    initialPath = e.originalEvent.dataTransfer.getData("initialPath")
+    initialPaths = e.originalEvent.dataTransfer.getData("initialPaths")
 
-    if initialPath
+    if initialPaths
       # Drop event from Atom
-      @moveEntry(initialPath, newDirectoryPath)
+      for initialPath in initialPaths.split(',')
+        @moveEntry(initialPath, newDirectoryPath)
     else
       # Drop event from OS
       for file in e.originalEvent.dataTransfer.files
