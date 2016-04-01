@@ -3080,8 +3080,10 @@ describe "TreeView", ->
         deltaFile = gammaDir[0].entries.children[2]
 
         [dragStartEvent, dragEnterEvent, dropEvent] =
-            eventHelpers.buildInternalDragEvents(deltaFile, alphaDir.find('.header')[0])
+            eventHelpers.buildInternalDragEvents([deltaFile], alphaDir.find('.header')[0])
+
         treeView.onDragStart(dragStartEvent)
+        expect(deltaFile).toHaveClass('selected')
         treeView.onDragEnter(dragEnterEvent)
         expect(alphaDir).toHaveClass('selected')
 
@@ -3104,7 +3106,7 @@ describe "TreeView", ->
         deltaFile = gammaDir[0].entries.children[2]
 
         [dragStartEvent, dragEnterEvent, dropEvent] =
-            eventHelpers.buildInternalDragEvents(deltaFile, alphaDir.find('.header')[0], alphaDir[0])
+            eventHelpers.buildInternalDragEvents([deltaFile], alphaDir.find('.header')[0], alphaDir[0])
 
         runs ->
           treeView.onDragStart(dragStartEvent)
@@ -3117,6 +3119,30 @@ describe "TreeView", ->
         runs ->
           expect($(treeView.roots[0].entries).find('.directory:contains(alpha):first .entry').length).toBe 3
 
+    describe "when dropping multiple FileViews onto a DirectoryView's header", ->
+      it "should move the files to the hovered directory", ->
+        # Dragging delta.txt onto alphaDir
+        alphaDir = $(treeView.roots[0].entries).find('.directory:contains(alpha):first')
+        alphaDir[0].expand()
+
+        gammaDir = $(treeView.roots[0].entries).find('.directory:contains(gamma):first')
+        gammaDir[0].expand()
+        gammaFiles = [].slice.call(gammaDir[0].entries.children, 1, 3)
+
+        [dragStartEvent, dragEnterEvent, dropEvent] =
+            eventHelpers.buildInternalDragEvents([gammaFiles], alphaDir.find('.header')[0], alphaDir[0])
+
+        runs ->
+          treeView.onDragStart(dragStartEvent)
+          treeView.onDrop(dropEvent)
+          expect(alphaDir[0].children.length).toBe 2
+
+        waitsFor "directory view contents to refresh", ->
+          $(treeView.roots[0].entries).find('.directory:contains(alpha):first .entry').length > 2
+
+        runs ->
+          expect($(treeView.roots[0].entries).find('.directory:contains(alpha):first .entry').length).toBe 4
+
     describe "when dropping a DirectoryView onto a DirectoryView's header", ->
       it "should move the directory to the hovered directory", ->
         # Dragging thetaDir onto alphaDir
@@ -3128,7 +3154,7 @@ describe "TreeView", ->
         thetaDir = gammaDir[0].entries.children[0]
 
         [dragStartEvent, dragEnterEvent, dropEvent] =
-            eventHelpers.buildInternalDragEvents(thetaDir, alphaDir.find('.header')[0], alphaDir[0])
+            eventHelpers.buildInternalDragEvents([thetaDir], alphaDir.find('.header')[0], alphaDir[0])
 
         runs ->
           treeView.onDragStart(dragStartEvent)
