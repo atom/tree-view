@@ -836,7 +836,6 @@ class TreeView extends View
     targets = []
 
     eventTarget = $(e.currentTarget).find('.name')
-    style = getStyleObject(eventTarget[0])
     dragImage = $('<ol></ol>', {class: 'entries list-tree'})
       .css(
         position: 'absolute'
