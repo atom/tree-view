@@ -3611,6 +3611,7 @@ describe "TreeView", ->
         [dragStartEvent, dragEnterEvent, dropEvent] =
             eventHelpers.buildInternalDragEvents(deltaFile, alphaDir.querySelector('.header'))
         treeView.onDragStart(dragStartEvent)
+        expect(deltaFile).toHaveClass('selected')
         treeView.onDragEnter(dragEnterEvent)
         expect(alphaDir).toHaveClass('selected')
 
@@ -3674,6 +3675,30 @@ describe "TreeView", ->
           editors = atom.workspace.getTextEditors()
           expect(editors[0].getPath()).toBe deltaFilePath.replace('gamma', 'alpha')
           expect(editors[1].getPath()).toBe deltaFilePath2
+
+    describe "when dropping multiple FileViews onto a DirectoryView's header", ->
+      it "should move the files to the hovered directory", ->
+        # Dragging delta.txt onto alphaDir
+        alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
+        alphaDir.expand()
+
+        gammaDir = findDirectoryContainingText(treeView.roots[0], 'gamma')
+        gammaDir.expand()
+        gammaFiles = [].slice.call(gammaDir.entries.children, 1, 3)
+
+        [dragStartEvent, dragEnterEvent, dropEvent] =
+            eventHelpers.buildInternalDragEvents([gammaFiles], alphaDir.querySelector('.header'), alphaDir)
+
+        runs ->
+          treeView.onDragStart(dragStartEvent)
+          treeView.onDrop(dropEvent)
+          expect(alphaDir.children.length).toBe 2
+
+        waitsFor "directory view contents to refresh", ->
+          findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > 2
+
+        runs ->
+          expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe 4
 
     describe "when dropping a DirectoryView onto a DirectoryView's header", ->
       beforeEach ->
