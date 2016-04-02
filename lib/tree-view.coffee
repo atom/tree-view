@@ -1058,7 +1058,8 @@ class TreeView
 
       if initialPaths
         # Drop event from Atom
-        for initialPath in initialPaths.split(',')
+        # iterate backwards so files in a dir are moved before the dir itself
+        for initialPath in initialPaths.split(',') by -1
           @moveEntry(initialPath, newDirectoryPath)
       else
         # Drop event from OS
