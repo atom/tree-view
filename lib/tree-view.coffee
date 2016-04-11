@@ -712,6 +712,25 @@ class TreeView extends View
   toggleSide: ->
     toggleConfig('tree-view.showOnRightSide')
 
+  copyEntry: (initialPath, newDirectoryPath) ->
+    if initialPath is newDirectoryPath
+      return
+
+    entryName = path.basename(initialPath)
+    newPath = "#{newDirectoryPath}/#{entryName}".replace(/\s+$/, '')
+
+    try
+      fs.makeTreeSync(newDirectoryPath) unless fs.existsSync(newDirectoryPath)
+      file = fs.readFileSync initialPath
+      fs.writeFileSync newPath, file, null
+
+      if repo = repoForPath(newPath)
+        repo.getPathStatus(initialPath)
+        repo.getPathStatus(newPath)
+
+    catch error
+      atom.notifications.addWarning("Failed to copy entry #{initialPath} to #{newDirectoryPath}", detail: error.message)
+
   moveEntry: (initialPath, newDirectoryPath) ->
     if initialPath is newDirectoryPath
       return
@@ -881,8 +900,8 @@ class TreeView extends View
 
     if initialPath
       # Drop event from Atom
-      @moveEntry(initialPath, newDirectoryPath)
+      @copyEntry(initialPath, newDirectoryPath)
     else
       # Drop event from OS
       for file in e.originalEvent.dataTransfer.files
-        @moveEntry(file.path, newDirectoryPath)
+        @copyEntry(file.path, newDirectoryPath)
