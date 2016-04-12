@@ -608,8 +608,8 @@ describe "TreeView", ->
           expect(activePaneItem.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
           expect(atom.workspace.getActivePane().getPendingItem()).toEqual activePaneItem
 
-        it "changes the focus to the file", ->
-          expect(atom.views.getView(activePaneItem)).toHaveFocus()
+        it "retains focus on the tree-view", ->
+          expect(treeView).toHaveFocus()
 
       describe "when a file is single-clicked and then another is single-clicked", ->
         beforeEach ->
@@ -671,12 +671,6 @@ describe "TreeView", ->
           expect(activePaneItem.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
           expect(atom.workspace.getActivePane().getPendingItem()).toEqual activePaneItem
 
-        it "keeps focus on tree-view if the file is the active pane item", ->
-          sampleJs.trigger clickEvent(originalEvent: {detail: 1})
-          expect(treeView).toHaveFocus()
-
-          sampleJs.trigger clickEvent(originalEvent: {detail: 2})
-          expect(treeView).toHaveFocus()
         it "opens file in permanent state on double-click and focuses file", ->
           waitsForFileToOpen ->
             sampleJs.trigger clickEvent(originalEvent: {detail: 2})

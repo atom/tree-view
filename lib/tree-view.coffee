@@ -211,7 +211,7 @@ class TreeView extends View
     else if entry instanceof FileView
       detail = e.originalEvent?.detail ? 1
       if detail is 1
-        atom.workspace.open(entry.getPath(), pending: true)
+        atom.workspace.open(entry.getPath(), pending: true, activatePane: false)
       else if detail is 2
         atom.workspace.open(entry.getPath())
 
