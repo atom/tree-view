@@ -204,29 +204,16 @@ class TreeView extends View
   entryClicked: (e) ->
     entry = e.currentTarget
     isRecursive = e.altKey or false
-    switch e.originalEvent?.detail ? 1
-      when 1
-        @selectEntry(entry)
-        if entry instanceof FileView
-          if entry.getPath() is atom.workspace.getActivePaneItem()?.getPath?()
-            @openedItem = Promise.resolve(atom.workspace.getActivePaneItem())
-            @focus()
-          else
-            @openedItem = atom.workspace.open(entry.getPath(), pending: true)
-        else if entry instanceof DirectoryView
-          entry.toggleExpansion(isRecursive)
-      when 2
-        if entry instanceof FileView
-          @openedItem.then (item) ->
-            activePane = atom.workspace.getActivePane()
-            if activePane?.getPendingItem?
-              activePane.clearPendingItem() if activePane.getPendingItem() is item
-            else if item.terminatePendingState?
-              item.terminatePendingState()
-          unless entry.getPath() is atom.workspace.getActivePaneItem()?.getPath?()
-            @unfocus()
-        else if entry instanceof DirectoryView
-          entry.toggleExpansion(isRecursive)
+    @selectEntry(entry)
+    if entry instanceof DirectoryView
+      entry.toggleExpansion(isRecursive)
+      return false
+    else if entry instanceof FileView
+      detail = e.originalEvent?.detail ? 1
+      if detail is 1
+        atom.workspace.open(entry.getPath(), pending: true)
+      else if detail is 2
+        atom.workspace.open(entry.getPath())
 
     false
 
