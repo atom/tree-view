@@ -564,118 +564,115 @@ describe "TreeView", ->
           sampleJs.trigger clickEvent(originalEvent: {detail: 2})
         .not.toThrow()
 
-    # TODO: remove conditional on 1.6 release [MKT]
-    if atom.workspace.getActivePane().getPendingItem?
-      describe "when the file is pending", ->
-        editor = null
+    describe "when the file is pending", ->
+      editor = null
 
-        beforeEach ->
-          waitsForPromise ->
-            atom.workspace.open('tree-view.js', pending: true).then (o) ->
-              editor = o
-
-        it "marks the pending file as permanent", ->
-          runs ->
-            expect(atom.workspace.getActivePane().getActiveItem()).toBe editor
-            expect(atom.workspace.getActivePane().getPendingItem()).toBe editor
-            sampleJs.trigger clickEvent(originalEvent: {detail: 1})
-            sampleJs.trigger clickEvent(originalEvent: {detail: 2})
-
-          waitsFor ->
-            atom.workspace.getActivePane().getPendingItem() is null
-
-  if atom.workspace.getActivePane().getPendingItem?
-    describe "when files are clicked", ->
       beforeEach ->
-        jasmine.attachToDOM(workspaceElement)
+        waitsForPromise ->
+          atom.workspace.open('tree-view.js', pending: true).then (o) ->
+            editor = o
 
-      describe "when a file is single-clicked", ->
-        activePaneItem = null
-
-        beforeEach ->
-          treeView.focus()
-
-          waitsForFileToOpen ->
-            sampleJs.trigger clickEvent(originalEvent: {detail: 1})
-
-          runs ->
-            activePaneItem = atom.workspace.getActivePaneItem()
-
-        it "selects the file", ->
-          expect(sampleJs).toHaveClass 'selected'
-
-        it "opens it in the pane in pending state", ->
-          expect(activePaneItem.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
-          expect(atom.workspace.getActivePane().getPendingItem()).toEqual activePaneItem
-
-        it "retains focus on the tree-view", ->
-          expect(treeView).toHaveFocus()
-
-      describe "when a file is single-clicked and then another is single-clicked", ->
-        beforeEach ->
-          treeView.focus()
-
-          waitsForFileToOpen ->
-            sampleJs.trigger clickEvent(originalEvent: {detail: 1})
-
-          waitsForFileToOpen ->
-            sampleTxt.trigger clickEvent(originalEvent: {detail: 1})
-
-        it "selects only the second file", ->
-          expect(sampleTxt).toHaveClass 'selected'
-          expect(treeView.find('.selected').length).toBe 1
-
-        it "replaces other files open in pending state", ->
-          expect(atom.workspace.getActivePane().getItems().length).toBe 1
-
-      describe "when a file is double-clicked", ->
-        activePaneItem = null
-
-        beforeEach ->
-          treeView.focus()
-
-          waitsForFileToOpen ->
-            sampleJs.trigger clickEvent(originalEvent: {detail: 1})
-
-          runs ->
-            activePaneItem = atom.workspace.getActivePaneItem()
-
-        it "opens it in pending state on first click", ->
-          expect(activePaneItem.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
-          expect(atom.workspace.getActivePane().getPendingItem()).toEqual activePaneItem
-
-        it "terminates pending state on second click", ->
-          sampleJs.trigger clickEvent(originalEvent: {detail: 2})
-          waitsFor ->
-            atom.workspace.getActivePane().getPendingItem() isnt activePaneItem
-
-        it "does not create pending state on subsequent single click", ->
-          sampleJs.trigger clickEvent(originalEvent: {detail: 2})
+      it "marks the pending file as permanent", ->
+        runs ->
+          expect(atom.workspace.getActivePane().getActiveItem()).toBe editor
+          expect(atom.workspace.getActivePane().getPendingItem()).toBe editor
           sampleJs.trigger clickEvent(originalEvent: {detail: 1})
-          waitsFor ->
-            atom.workspace.getActivePane().getPendingItem() isnt activePaneItem
+          sampleJs.trigger clickEvent(originalEvent: {detail: 2})
 
-      describe "when a file is single-clicked, then double-clicked", ->
-        activePaneItem = null
+        waitsFor ->
+          atom.workspace.getActivePane().getPendingItem() is null
 
-        beforeEach ->
-          treeView.focus()
+  describe "when files are clicked", ->
+    beforeEach ->
+      jasmine.attachToDOM(workspaceElement)
 
-          waitsForFileToOpen ->
-            sampleJs.trigger clickEvent(originalEvent: {detail: 1})
+    describe "when a file is single-clicked", ->
+      activePaneItem = null
 
-          runs ->
-            activePaneItem = atom.workspace.getActivePaneItem()
+      beforeEach ->
+        treeView.focus()
 
-        it "opens it in pending state on single-click", ->
-          expect(activePaneItem.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
-          expect(atom.workspace.getActivePane().getPendingItem()).toEqual activePaneItem
+        waitsForFileToOpen ->
+          sampleJs.trigger clickEvent(originalEvent: {detail: 1})
 
-        it "opens file in permanent state on double-click and focuses file", ->
-          waitsForFileToOpen ->
-            sampleJs.trigger clickEvent(originalEvent: {detail: 2})
-          runs ->
-            expect(atom.views.getView(activePaneItem)).toHaveFocus()
+        runs ->
+          activePaneItem = atom.workspace.getActivePaneItem()
+
+      it "selects the file", ->
+        expect(sampleJs).toHaveClass 'selected'
+
+      it "opens it in the pane in pending state", ->
+        expect(activePaneItem.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
+        expect(atom.workspace.getActivePane().getPendingItem()).toEqual activePaneItem
+
+      it "retains focus on the tree-view", ->
+        expect(treeView).toHaveFocus()
+
+    describe "when a file is single-clicked and then another is single-clicked", ->
+      beforeEach ->
+        treeView.focus()
+
+        waitsForFileToOpen ->
+          sampleJs.trigger clickEvent(originalEvent: {detail: 1})
+
+        waitsForFileToOpen ->
+          sampleTxt.trigger clickEvent(originalEvent: {detail: 1})
+
+      it "selects only the second file", ->
+        expect(sampleTxt).toHaveClass 'selected'
+        expect(treeView.find('.selected').length).toBe 1
+
+      it "replaces other files open in pending state", ->
+        expect(atom.workspace.getActivePane().getItems().length).toBe 1
+
+    describe "when a file is double-clicked", ->
+      activePaneItem = null
+
+      beforeEach ->
+        treeView.focus()
+
+        waitsForFileToOpen ->
+          sampleJs.trigger clickEvent(originalEvent: {detail: 1})
+
+        runs ->
+          activePaneItem = atom.workspace.getActivePaneItem()
+
+      it "opens it in pending state on first click", ->
+        expect(activePaneItem.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
+        expect(atom.workspace.getActivePane().getPendingItem()).toEqual activePaneItem
+
+      it "terminates pending state on second click", ->
+        sampleJs.trigger clickEvent(originalEvent: {detail: 2})
+        waitsFor ->
+          atom.workspace.getActivePane().getPendingItem() isnt activePaneItem
+
+      it "does not create pending state on subsequent single click", ->
+        sampleJs.trigger clickEvent(originalEvent: {detail: 2})
+        sampleJs.trigger clickEvent(originalEvent: {detail: 1})
+        waitsFor ->
+          atom.workspace.getActivePane().getPendingItem() isnt activePaneItem
+
+    describe "when a file is single-clicked, then double-clicked", ->
+      activePaneItem = null
+
+      beforeEach ->
+        treeView.focus()
+
+        waitsForFileToOpen ->
+          sampleJs.trigger clickEvent(originalEvent: {detail: 1})
+
+        runs ->
+          activePaneItem = atom.workspace.getActivePaneItem()
+
+      it "opens it in pending state on single-click", ->
+        expect(activePaneItem.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
+        expect(atom.workspace.getActivePane().getPendingItem()).toEqual activePaneItem
+
+      it "opens file in permanent state on double-click and focuses file", ->
+        waitsForFileToOpen ->
+          sampleJs.trigger clickEvent(originalEvent: {detail: 2})
+        runs ->
+          expect(atom.views.getView(activePaneItem)).toHaveFocus()
 
   describe "when a directory is single-clicked", ->
     it "is selected", ->
