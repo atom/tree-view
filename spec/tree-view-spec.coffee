@@ -977,6 +977,52 @@ describe "TreeView", ->
         _.times entryCount, -> atom.commands.dispatch(treeView.element, 'core:move-up')
         expect(treeView.scrollTop()).toBe 0
 
+    describe "tree-view:expand-directory", ->
+      describe "when a directory entry is selected", ->
+        it "expands the current directory", ->
+          subdir = root1.find('.directory:first')
+          subdir.click()
+          subdir[0].collapse()
+
+          expect(subdir).not.toHaveClass 'expanded'
+          atom.commands.dispatch(treeView.element, 'tree-view:expand-item')
+          expect(subdir).toHaveClass 'expanded'
+
+        describe "when the directory is already expanded", ->
+          describe "when the directory is empty", ->
+            it "does nothing", ->
+              rootDirPath = fs.absolute(temp.mkdirSync('tree-view-root1'))
+              fs.mkdirSync(path.join(rootDirPath, "empty-dir"))
+              atom.project.setPaths([rootDirPath])
+              rootView = $(treeView.roots[0])
+
+              subdir = rootView.find('.directory:first')
+              subdir.click()
+              subdir[0].expand()
+              expect(subdir).toHaveClass('expanded')
+              expect(subdir).toHaveClass('selected')
+
+              atom.commands.dispatch(treeView.element, 'tree-view:expand-directory')
+              expect(subdir).toHaveClass('expanded')
+              expect(subdir).toHaveClass('selected')
+
+          describe "when the directory has entries", ->
+            it "moves the cursor down to the first sub-entry", ->
+              subdir = root1.find('.directory:first')
+              subdir.click()
+              subdir[0].expand()
+
+              atom.commands.dispatch(treeView.element, 'tree-view:expand-item')
+              expect(subdir.find('.entry:first')).toHaveClass('selected')
+
+      describe "when a file entry is selected", ->
+        it "does nothing", ->
+          waitsForFileToOpen ->
+            root1.find('.file').click()
+
+          runs ->
+            atom.commands.dispatch(treeView.element, 'tree-view:expand-directory')
+
     describe "tree-view:recursive-expand-directory", ->
       describe "when an collapsed root is recursively expanded", ->
         it "expands the root and all subdirectories", ->
