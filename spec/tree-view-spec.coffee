@@ -985,7 +985,7 @@ describe "TreeView", ->
           subdir[0].collapse()
 
           expect(subdir).not.toHaveClass 'expanded'
-          atom.commands.dispatch(treeView.element, 'tree-view:expand-directory')
+          atom.commands.dispatch(treeView.element, 'tree-view:expand-item')
           expect(subdir).toHaveClass 'expanded'
 
         describe "when the directory is already expanded", ->
@@ -1012,7 +1012,7 @@ describe "TreeView", ->
               subdir.click()
               subdir[0].expand()
 
-              atom.commands.dispatch(treeView.element, 'tree-view:expand-directory')
+              atom.commands.dispatch(treeView.element, 'tree-view:expand-item')
               expect(subdir.find('.entry:first')).toHaveClass('selected')
 
       describe "when a file entry is selected", ->
