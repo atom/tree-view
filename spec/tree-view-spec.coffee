@@ -26,6 +26,7 @@ describe "TreeView", ->
 
   beforeEach ->
     expect(atom.config.get('core.allowPendingPaneItems')).toBeTruthy()
+    expect(atom.config.get('tree-view.openFilesWithSingleClick')).toBeFalsy()
 
     fixturesPath = atom.project.getPaths()[0]
     path1 = path.join(fixturesPath, "root-dir1")
@@ -623,6 +624,18 @@ describe "TreeView", ->
 
         it "does not open the file", ->
           expect(atom.workspace.open).not.toHaveBeenCalled()
+      
+      describe "when tree-view.openFilesWithSingleClick is set to true", ->
+        beforeEach ->
+          atom.config.set('core.allowPendingPaneItems', false)
+          atom.config.set('tree-view.openFilesWithSingleClick', true)
+          spyOn(atom.workspace, 'open')
+          
+          treeView.focus()
+          sampleJs.trigger clickEvent(originalEvent: {detail: 1})
+        
+        it "opens the file immediately upon selection", ->
+          expect(atom.workspace.open).toHaveBeenCalled()
 
     describe "when a file is double-clicked", ->
       activePaneItem = null
