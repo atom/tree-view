@@ -65,6 +65,12 @@
       "type": "boolean",
       "default": true,
       "description": "Focus the tree view when revealing entries."
+    },
+    "openFilesWithSingleClick": {
+      "type": "boolean",
+      "default": false,
+      "title": "Open files with single-click",
+      "description": "Open files with a single-click instead of a double-click."
     }
   }
 }
