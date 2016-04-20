@@ -1,6 +1,5 @@
 path = require 'path'
-# TODO: Remove the catch once Atom 1.7.0 is released
-try {shell} = require 'electron' catch then shell = require 'shell'
+{shell} = require 'electron'
 
 _ = require 'underscore-plus'
 {BufferedProcess, CompositeDisposable} = require 'atom'
@@ -204,29 +203,17 @@ class TreeView extends View
   entryClicked: (e) ->
     entry = e.currentTarget
     isRecursive = e.altKey or false
-    switch e.originalEvent?.detail ? 1
-      when 1
-        @selectEntry(entry)
-        if entry instanceof FileView
-          if entry.getPath() is atom.workspace.getActivePaneItem()?.getPath?()
-            @openedItem = Promise.resolve(atom.workspace.getActivePaneItem())
-            @focus()
-          else
-            @openedItem = atom.workspace.open(entry.getPath(), pending: true)
-        else if entry instanceof DirectoryView
-          entry.toggleExpansion(isRecursive)
-      when 2
-        if entry instanceof FileView
-          @openedItem.then (item) ->
-            activePane = atom.workspace.getActivePane()
-            if activePane?.getPendingItem?
-              activePane.clearPendingItem() if activePane.getPendingItem() is item
-            else if item.terminatePendingState?
-              item.terminatePendingState()
-          unless entry.getPath() is atom.workspace.getActivePaneItem()?.getPath?()
-            @unfocus()
-        else if entry instanceof DirectoryView
-          entry.toggleExpansion(isRecursive)
+    @selectEntry(entry)
+    if entry instanceof DirectoryView
+      entry.toggleExpansion(isRecursive)
+      return false
+    else if entry instanceof FileView
+      detail = e.originalEvent?.detail ? 1
+      if detail is 1
+        if atom.config.get('core.allowPendingPaneItems')
+          atom.workspace.open(entry.getPath(), pending: true, activatePane: false)
+      else if detail is 2
+        atom.workspace.open(entry.getPath())
 
     false
 
@@ -349,7 +336,7 @@ class TreeView extends View
     @selectEntry(@entryForPath(entryPath))
 
   moveDown: (event) ->
-    event.stopImmediatePropagation()
+    event?.stopImmediatePropagation()
     selectedEntry = @selectedEntry()
     if selectedEntry?
       if selectedEntry instanceof DirectoryView
@@ -383,7 +370,9 @@ class TreeView extends View
 
   expandDirectory: (isRecursive=false) ->
     selectedEntry = @selectedEntry()
-    if selectedEntry instanceof DirectoryView
+    if isRecursive is false and selectedEntry.isExpanded
+      @moveDown() if selectedEntry.directory.getEntries().length > 0
+    else
       selectedEntry.expand(isRecursive)
 
   collapseDirectory: (isRecursive=false) ->
@@ -398,7 +387,7 @@ class TreeView extends View
     selectedEntry = @selectedEntry()
     if selectedEntry instanceof DirectoryView
       if expandDirectory
-        selectedEntry.expand()
+        @expandDirectory(false)
       else
         selectedEntry.toggleExpansion()
     else if selectedEntry instanceof FileView
@@ -406,10 +395,7 @@ class TreeView extends View
       activePane = atom.workspace.getActivePane()
       item = activePane?.itemForURI(uri)
       if item? and not options.pending
-        if activePane?.getPendingItem?
-          activePane.clearPendingItem() if activePane.getPendingItem() is item
-        else if item.terminatePendingState?
-          item.terminatePendingState()
+        activePane.clearPendingItem() if activePane.getPendingItem() is item
       atom.workspace.open(uri, options)
 
   openSelectedEntrySplit: (orientation, side) ->

@@ -25,6 +25,8 @@ describe "TreeView", ->
     treeView.selectEntryForPath atom.project.getDirectories()[0].resolve pathToSelect
 
   beforeEach ->
+    expect(atom.config.get('core.allowPendingPaneItems')).toBeTruthy()
+
     fixturesPath = atom.project.getPaths()[0]
     path1 = path.join(fixturesPath, "root-dir1")
     path2 = path.join(fixturesPath, "root-dir2")
@@ -564,34 +566,32 @@ describe "TreeView", ->
           sampleJs.trigger clickEvent(originalEvent: {detail: 2})
         .not.toThrow()
 
-    # TODO: remove conditional on 1.6 release [MKT]
-    if atom.workspace.getActivePane().getPendingItem?
-      describe "when the file is pending", ->
-        editor = null
+    describe "when the file is pending", ->
+      editor = null
 
-        beforeEach ->
-          waitsForPromise ->
-            atom.workspace.open('tree-view.js', pending: true).then (o) ->
-              editor = o
-
-        it "marks the pending file as permanent", ->
-          runs ->
-            expect(atom.workspace.getActivePane().getActiveItem()).toBe editor
-            expect(atom.workspace.getActivePane().getPendingItem()).toBe editor
-            sampleJs.trigger clickEvent(originalEvent: {detail: 1})
-            sampleJs.trigger clickEvent(originalEvent: {detail: 2})
-
-          waitsFor ->
-            atom.workspace.getActivePane().getPendingItem() is null
-
-  if atom.workspace.getActivePane().getPendingItem?
-    describe "when files are clicked", ->
       beforeEach ->
-        jasmine.attachToDOM(workspaceElement)
+        waitsForPromise ->
+          atom.workspace.open('tree-view.js', pending: true).then (o) ->
+            editor = o
 
-      describe "when a file is single-clicked", ->
+      it "marks the pending file as permanent", ->
+        runs ->
+          expect(atom.workspace.getActivePane().getActiveItem()).toBe editor
+          expect(atom.workspace.getActivePane().getPendingItem()).toBe editor
+          sampleJs.trigger clickEvent(originalEvent: {detail: 1})
+          sampleJs.trigger clickEvent(originalEvent: {detail: 2})
+
+        waitsFor ->
+          atom.workspace.getActivePane().getPendingItem() is null
+
+  describe "when files are clicked", ->
+    beforeEach ->
+      jasmine.attachToDOM(workspaceElement)
+
+    describe "when a file is single-clicked", ->
+
+      describe "when core.allowPendingPaneItems is set to true (default)", ->
         activePaneItem = null
-
         beforeEach ->
           treeView.focus()
 
@@ -601,88 +601,45 @@ describe "TreeView", ->
           runs ->
             activePaneItem = atom.workspace.getActivePaneItem()
 
-        it "selects the file", ->
+        it "selects the file and retains focus on tree-view", ->
           expect(sampleJs).toHaveClass 'selected'
-
-        it "opens it in the pane in pending state", ->
-          expect(activePaneItem.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
-          expect(atom.workspace.getActivePane().getPendingItem()).toEqual activePaneItem
-
-        it "changes the focus to the file", ->
-          expect(atom.views.getView(activePaneItem)).toHaveFocus()
-
-      describe "when a file is single-clicked and then another is single-clicked", ->
-        beforeEach ->
-          treeView.focus()
-
-          waitsForFileToOpen ->
-            sampleJs.trigger clickEvent(originalEvent: {detail: 1})
-
-          waitsForFileToOpen ->
-            sampleTxt.trigger clickEvent(originalEvent: {detail: 1})
-
-        it "selects only the second file", ->
-          expect(sampleTxt).toHaveClass 'selected'
-          expect(treeView.find('.selected').length).toBe 1
-
-        it "replaces other files open in pending state", ->
-          expect(atom.workspace.getActivePane().getItems().length).toBe 1
-
-      describe "when a file is double-clicked", ->
-        activePaneItem = null
-
-        beforeEach ->
-          treeView.focus()
-
-          waitsForFileToOpen ->
-            sampleJs.trigger clickEvent(originalEvent: {detail: 1})
-
-          runs ->
-            activePaneItem = atom.workspace.getActivePaneItem()
-
-        it "opens it in pending state on first click", ->
-          expect(activePaneItem.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
-          expect(atom.workspace.getActivePane().getPendingItem()).toEqual activePaneItem
-
-        it "terminates pending state on second click", ->
-          sampleJs.trigger clickEvent(originalEvent: {detail: 2})
-          waitsFor ->
-            atom.workspace.getActivePane().getPendingItem() isnt activePaneItem
-
-        it "does not create pending state on subsequent single click", ->
-          sampleJs.trigger clickEvent(originalEvent: {detail: 2})
-          sampleJs.trigger clickEvent(originalEvent: {detail: 1})
-          waitsFor ->
-            atom.workspace.getActivePane().getPendingItem() isnt activePaneItem
-
-      describe "when a file is single-clicked, then double-clicked", ->
-        activePaneItem = null
-
-        beforeEach ->
-          treeView.focus()
-
-          waitsForFileToOpen ->
-            sampleJs.trigger clickEvent(originalEvent: {detail: 1})
-
-          runs ->
-            activePaneItem = atom.workspace.getActivePaneItem()
-
-        it "opens it in pending state on single-click", ->
-          expect(activePaneItem.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
-          expect(atom.workspace.getActivePane().getPendingItem()).toEqual activePaneItem
-
-        it "terminates pending state on the double-click and focuses file", ->
-          sampleJs.trigger clickEvent(originalEvent: {detail: 2})
-          expect(atom.views.getView(activePaneItem)).toHaveFocus()
-          waitsFor ->
-            atom.workspace.getActivePane().getPendingItem() isnt activePaneItem
-
-        it "keeps focus on tree-view if the file is the active pane item", ->
-          sampleJs.trigger clickEvent(originalEvent: {detail: 1})
           expect(treeView).toHaveFocus()
 
-          sampleJs.trigger clickEvent(originalEvent: {detail: 2})
+        it "opens the file in a pending state", ->
+          expect(activePaneItem.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
+          expect(atom.workspace.getActivePane().getPendingItem()).toEqual activePaneItem
+
+      describe "when core.allowPendingPaneItems is set to false", ->
+        beforeEach ->
+          atom.config.set('core.allowPendingPaneItems', false)
+          spyOn(atom.workspace, 'open')
+
+          treeView.focus()
+          sampleJs.trigger clickEvent(originalEvent: {detail: 1})
+
+        it "selects the file and retains focus on tree-view", ->
+          expect(sampleJs).toHaveClass 'selected'
           expect(treeView).toHaveFocus()
+
+        it "does not open the file", ->
+          expect(atom.workspace.open).not.toHaveBeenCalled()
+
+    describe "when a file is double-clicked", ->
+      activePaneItem = null
+
+      beforeEach ->
+        treeView.focus()
+
+        waitsForFileToOpen ->
+          sampleJs.trigger clickEvent(originalEvent: {detail: 1})
+          sampleJs.trigger clickEvent(originalEvent: {detail: 2})
+
+        runs ->
+          activePaneItem = atom.workspace.getActivePaneItem()
+
+      it "opens the file and focuses it", ->
+        expect(activePaneItem.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
+        expect(atom.views.getView(activePaneItem)).toHaveFocus()
 
   describe "when a directory is single-clicked", ->
     it "is selected", ->
@@ -1020,6 +977,52 @@ describe "TreeView", ->
         _.times entryCount, -> atom.commands.dispatch(treeView.element, 'core:move-up')
         expect(treeView.scrollTop()).toBe 0
 
+    describe "tree-view:expand-directory", ->
+      describe "when a directory entry is selected", ->
+        it "expands the current directory", ->
+          subdir = root1.find('.directory:first')
+          subdir.click()
+          subdir[0].collapse()
+
+          expect(subdir).not.toHaveClass 'expanded'
+          atom.commands.dispatch(treeView.element, 'tree-view:expand-item')
+          expect(subdir).toHaveClass 'expanded'
+
+        describe "when the directory is already expanded", ->
+          describe "when the directory is empty", ->
+            it "does nothing", ->
+              rootDirPath = fs.absolute(temp.mkdirSync('tree-view-root1'))
+              fs.mkdirSync(path.join(rootDirPath, "empty-dir"))
+              atom.project.setPaths([rootDirPath])
+              rootView = $(treeView.roots[0])
+
+              subdir = rootView.find('.directory:first')
+              subdir.click()
+              subdir[0].expand()
+              expect(subdir).toHaveClass('expanded')
+              expect(subdir).toHaveClass('selected')
+
+              atom.commands.dispatch(treeView.element, 'tree-view:expand-directory')
+              expect(subdir).toHaveClass('expanded')
+              expect(subdir).toHaveClass('selected')
+
+          describe "when the directory has entries", ->
+            it "moves the cursor down to the first sub-entry", ->
+              subdir = root1.find('.directory:first')
+              subdir.click()
+              subdir[0].expand()
+
+              atom.commands.dispatch(treeView.element, 'tree-view:expand-item')
+              expect(subdir.find('.entry:first')).toHaveClass('selected')
+
+      describe "when a file entry is selected", ->
+        it "does nothing", ->
+          waitsForFileToOpen ->
+            root1.find('.file').click()
+
+          runs ->
+            atom.commands.dispatch(treeView.element, 'tree-view:expand-directory')
+
     describe "tree-view:recursive-expand-directory", ->
       describe "when an collapsed root is recursively expanded", ->
         it "expands the root and all subdirectories", ->
@@ -1125,36 +1128,34 @@ describe "TreeView", ->
             item = atom.workspace.getActivePaneItem()
             expect(item.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
             expect(atom.views.getView(item)).toHaveFocus()
-            if atom.workspace.buildTextEditor().isPending?
-              expect(item.isPending()).toBe false
+            expect(atom.workspace.getActivePane().getPendingItem()).not.toEqual item
 
-        if atom.workspace.buildTextEditor().isPending?
-          it "terminates pending state for items that are pending", ->
-            jasmine.attachToDOM(workspaceElement)
+        it "opens pending items in a permanent state", ->
+          jasmine.attachToDOM(workspaceElement)
+
+          file = root1.find('.file:contains(tree-view.js)')[0]
+          treeView.selectEntry(file)
+
+          waitsForFileToOpen ->
+            atom.commands.dispatch(treeView.element, 'tree-view:expand-item')
+
+          runs ->
+            item = atom.workspace.getActivePaneItem()
+            expect(item.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
+            expect(atom.workspace.getActivePane().getPendingItem()).toEqual item
+            expect(atom.views.getView(item)).toHaveFocus()
 
             file = root1.find('.file:contains(tree-view.js)')[0]
             treeView.selectEntry(file)
 
-            waitsForFileToOpen ->
-              atom.commands.dispatch(treeView.element, 'tree-view:expand-item')
+          waitsForFileToOpen ->
+            atom.commands.dispatch(treeView.element, 'tree-view:open-selected-entry')
 
-            runs ->
-              item = atom.workspace.getActivePaneItem()
-              expect(item.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
-              expect(item.isPending()).toBe true
-              expect(atom.views.getView(item)).toHaveFocus()
-
-              file = root1.find('.file:contains(tree-view.js)')[0]
-              treeView.selectEntry(file)
-
-            waitsForFileToOpen ->
-              atom.commands.dispatch(treeView.element, 'tree-view:open-selected-entry')
-
-            runs ->
-              item = atom.workspace.getActivePaneItem()
-              expect(item.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
-              expect(atom.views.getView(item)).toHaveFocus()
-              expect(item.isPending()).toBe false
+          runs ->
+            item = atom.workspace.getActivePaneItem()
+            expect(item.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
+            expect(atom.views.getView(item)).toHaveFocus()
+            expect(atom.workspace.getActivePane().getPendingItem()).not.toEqual item
 
       describe "when a directory is selected", ->
         it "expands or collapses the directory", ->
@@ -1235,8 +1236,7 @@ describe "TreeView", ->
           runs ->
             item = atom.workspace.getActivePaneItem()
             expect(item.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
-            if atom.workspace.buildTextEditor().isPending?
-              expect(item.isPending()).toBe true
+            expect(atom.workspace.getActivePane().getPendingItem()).toEqual item
             expect(atom.views.getView(item)).toHaveFocus()
 
       describe "when a directory is selected", ->
