@@ -1885,7 +1885,7 @@ describe "TreeView", ->
               addDialog.miniEditor.getModel().insertText("new2#{path.sep}")
               atom.commands.dispatch addDialog.element, 'core:confirm'
               waitsFor ->
-                fs.isDirectorySync(newPath) && atom.workspace.getModalPanels().length == 0
+                fs.isDirectorySync(newPath) and atom.workspace.getModalPanels().length is 0
               runs ->
                 expect(atom.workspace.getActivePaneItem().getPath()).not.toBe newPath
                 expect(treeView.find(".tree-view")).toMatchSelector(':focus')
@@ -1905,7 +1905,7 @@ describe "TreeView", ->
                 addDialog.miniEditor.getModel().insertText(newPath)
                 atom.commands.dispatch addDialog.element, 'core:confirm'
                 waitsFor ->
-                  fs.isDirectorySync(newPath) && atom.workspace.getModalPanels().length == 0
+                  fs.isDirectorySync(newPath) and atom.workspace.getModalPanels().length is 0
                 runs ->
 
           describe "when a directory already exists at the given path", ->
