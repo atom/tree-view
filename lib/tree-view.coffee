@@ -453,7 +453,7 @@ class TreeView extends View
         label: 'Finder'
         args: ['-R', pathToOpen]
       when 'win32'
-        args = ["/select,#{pathToOpen}"]
+        args = ["/select,\"#{pathToOpen}\""]
 
         if process.env.SystemRoot
           command = path.join(process.env.SystemRoot, 'explorer.exe')
