@@ -1448,7 +1448,7 @@ describe "TreeView", ->
 
       describe "when a file has been copied", ->
         describe "when a file is selected", ->
-          it "creates a copy of the original file in the selected file's parent directory", ->
+          it "creates a copy of the original file in the selected file's parent directory and selects it", ->
             LocalStorage['tree-view:copyPath'] = JSON.stringify([filePath])
 
             fileView2.click()
@@ -1457,12 +1457,23 @@ describe "TreeView", ->
             expect(fs.existsSync(path.join(dirPath2, path.basename(filePath)))).toBeTruthy()
             expect(fs.existsSync(filePath)).toBeTruthy()
 
+            waitsFor (done) ->
+              disposable = dirView2[0].directory.onDidAddEntries ->
+                disposable.dispose()
+                done()
+
+            runs ->
+              newFileView = dirView2.find('.file:contains(test-file.txt)')
+              expect(newFileView).not.toBeNull()
+              expect(newFileView).toHaveClass('selected')
+
           describe 'when target already exists', ->
             it 'appends a number to the destination name', ->
               LocalStorage['tree-view:copyPath'] = JSON.stringify([filePath])
 
               fileView.click()
               atom.commands.dispatch(treeView.element, "tree-view:paste")
+              fileView.click()
               atom.commands.dispatch(treeView.element, "tree-view:paste")
 
               fileArr = filePath.split(path.sep).pop().split('.')
@@ -1488,6 +1499,7 @@ describe "TreeView", ->
 
               dirView.click()
               atom.commands.dispatch(treeView.element, "tree-view:paste")
+              dirView.click()
               atom.commands.dispatch(treeView.element, "tree-view:paste")
 
               fileArr = filePath.split(path.sep).pop().split('.')

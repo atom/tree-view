@@ -588,10 +588,12 @@ class TreeView extends View
     cutPaths = if LocalStorage['tree-view:cutPath'] then JSON.parse(LocalStorage['tree-view:cutPath']) else null
     copiedPaths = if LocalStorage['tree-view:copyPath'] then JSON.parse(LocalStorage['tree-view:copyPath']) else null
     initialPaths = copiedPaths or cutPaths
+    newPaths = []
 
-    catchAndShowFileErrors = (operation) ->
+    catchAndShowFileErrors = (operation, newPath) ->
       try
         operation()
+        newPaths.push(newPath)
       catch error
         atom.notifications.addWarning("Unable to paste paths: #{initialPaths}", detail: error.message)
 
@@ -616,15 +618,39 @@ class TreeView extends View
 
           if fs.isDirectorySync(initialPath)
             # use fs.copy to copy directories since read/write will fail for directories
-            catchAndShowFileErrors -> fs.copySync(initialPath, newPath)
+            catchAndShowFileErrors( (-> fs.copySync(initialPath, newPath)), newPath)
           else
             # read the old file and write a new one at target location
-            catchAndShowFileErrors -> fs.writeFileSync(newPath, fs.readFileSync(initialPath))
+            catchAndShowFileErrors( (-> fs.writeFileSync(newPath, fs.readFileSync(initialPath))), newPath)
         else if cutPaths
           # Only move the target if the cut target doesn't exists and if the newPath
           # is not within the initial path
           unless fs.existsSync(newPath) or newPath.startsWith(initialPath)
-            catchAndShowFileErrors -> fs.moveSync(initialPath, newPath)
+            catchAndShowFileErrors( (-> fs.moveSync(initialPath, newPath)), newPath)
+            if repo = repoForPath(initialPath)
+              repo.getPathStatus(initialPath) # for side effect; cut may result in status change of parent dir
+    if newPaths.length > 0
+      @deselect(@getSelectedEntries())
+      @selectOnCreate(newPaths)
+
+  # For new paths that have been created, select each entry if it exists or
+  # set up a subscription to select it when it is added.
+  selectOnCreate: (newPaths) ->
+    subscribedDirectories = []
+    for p in newPaths
+      entry = @entryForPath(p)
+      if entry.isPathEqual(p)
+        entry.classList.add('selected')
+        continue
+      if entry instanceof DirectoryView
+        continue if subscribedDirectories.indexOf(entry.directory.name) isnt -1
+        subscribedDirectories.push(entry.directory.name)
+        subscription = entry.directory.onDidAddEntries (addedEntries) =>
+          for e in addedEntries
+            @entryForPath(e.path)?.classList.add('selected') if newPaths.indexOf(e.path) isnt -1
+            if repo = repoForPath(e.path)
+              repo.getPathStatus(e.path)
+          subscription.dispose()
 
   add: (isCreatingFile) ->
     selectedEntry = @selectedEntry() ? @roots[0]
