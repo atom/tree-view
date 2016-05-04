@@ -1465,13 +1465,11 @@ describe "TreeView", ->
               atom.commands.dispatch(treeView.element, "tree-view:paste")
               atom.commands.dispatch(treeView.element, "tree-view:paste")
 
-              if process.platform is 'win32'
-                fileArr = /(.+)\.(?!.*\\)(.+)/.exec(filePath)
-              else
-                fileArr = /(.+)\.(?!.*\/)(.+)/.exec(filePath)
+              extension = path.extname(filePath)
+              file = path.dirname(filePath) + path.sep + path.basename(filePath, extension)
 
-              numberedFileName0 = "#{fileArr[1]}0.#{fileArr[2]}"
-              numberedFileName1 = "#{fileArr[1]}1.#{fileArr[2]}"
+              numberedFileName0 = "#{file}0#{extension}"
+              numberedFileName1 = "#{file}1#{extension}"
               expect(fs.existsSync(numberedFileName0)).toBeTruthy()
               expect(fs.existsSync(numberedFileName1)).toBeTruthy()
               expect(fs.existsSync(filePath)).toBeTruthy()
@@ -1501,13 +1499,11 @@ describe "TreeView", ->
                 atom.commands.dispatch(treeView.element, "tree-view:paste")
                 atom.commands.dispatch(treeView.element, "tree-view:paste")
 
-                if process.platform is 'win32'
-                  fileArr = /(.+?)\.(?!.*\\)(.+)/.exec(dotFilePath)
-                else
-                  fileArr = /(.+?)\.(?!.*\/)(.+)/.exec(dotFilePath)
+                extension = path.extname(dotFilePath)
+                file = path.dirname(dotFilePath) + path.sep + path.basename(dotFilePath, extension)
 
-                numberedFileName0 = "#{fileArr[1]}0.#{fileArr[2]}"
-                numberedFileName1 = "#{fileArr[1]}1.#{fileArr[2]}"
+                numberedFileName0 = "#{file}0#{extension}"
+                numberedFileName1 = "#{file}1#{extension}"
                 expect(fs.existsSync(numberedFileName0)).toBeTruthy()
                 expect(fs.existsSync(numberedFileName1)).toBeTruthy()
                 expect(fs.existsSync(dotFilePath)).toBeTruthy()
@@ -1530,13 +1526,11 @@ describe "TreeView", ->
               atom.commands.dispatch(treeView.element, "tree-view:paste")
               atom.commands.dispatch(treeView.element, "tree-view:paste")
 
-              if process.platform is 'win32'
-                fileArr = /(.+)\.(?!.*\\)(.+)/.exec(filePath)
-              else
-                fileArr = /(.+)\.(?!.*\/)(.+)/.exec(filePath)
+              extension = path.extname(filePath)
+              file = path.dirname(filePath) + path.sep + path.basename(filePath, extension)
 
-              numberedFileName0 = "#{fileArr[1]}0.#{fileArr[2]}"
-              numberedFileName1 = "#{fileArr[1]}1.#{fileArr[2]}"
+              numberedFileName0 = "#{file}0#{extension}"
+              numberedFileName1 = "#{file}1#{extension}"
               expect(fs.existsSync(numberedFileName0)).toBeTruthy()
               expect(fs.existsSync(numberedFileName1)).toBeTruthy()
               expect(fs.existsSync(filePath)).toBeTruthy()
@@ -1571,13 +1565,11 @@ describe "TreeView", ->
               atom.commands.dispatch(treeView.element, "tree-view:paste")
               atom.commands.dispatch(treeView.element, "tree-view:paste")
 
-              if process.platform is 'win32'
-                fileArr = /(.+?)\.(?!.*\\)(.+)/.exec(dotFilePath)
-              else
-                fileArr = /(.+?)\.(?!.*\/)(.+)/.exec(dotFilePath)
+              extension = path.extname(dotFilePath)
+              file = path.dirname(dotFilePath) + path.sep + path.basename(dotFilePath, extension)
 
-              numberedFileName0 = "#{fileArr[1]}0.#{fileArr[2]}"
-              numberedFileName1 = "#{fileArr[1]}1.#{fileArr[2]}"
+              numberedFileName0 = "#{file}0#{extension}"
+              numberedFileName1 = "#{file}1#{extension}"
               expect(fs.existsSync(numberedFileName0)).toBeTruthy()
               expect(fs.existsSync(numberedFileName1)).toBeTruthy()
               expect(fs.existsSync(dotFilePath)).toBeTruthy()
