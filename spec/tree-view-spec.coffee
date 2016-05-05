@@ -1465,11 +1465,16 @@ describe "TreeView", ->
               atom.commands.dispatch(treeView.element, "tree-view:paste")
               atom.commands.dispatch(treeView.element, "tree-view:paste")
 
-              extension = path.extname(filePath)
-              file = path.dirname(filePath) + path.sep + path.basename(filePath, extension)
+              nextExtension = path.extname(filePath)
+              fullExtension = ''
+              while nextExtension isnt '' # This is for files with multiple extensions since extname only returns the last extension
+                fullExtension = nextExtension.concat(fullExtension)
+                nextExtension = path.extname(path.basename(filePath, fullExtension))
 
-              numberedFileName0 = "#{file}0#{extension}"
-              numberedFileName1 = "#{file}1#{extension}"
+              file = path.dirname(filePath) + path.sep + path.basename(filePath, fullExtension)
+
+              numberedFileName0 = "#{file}0#{fullExtension}"
+              numberedFileName1 = "#{file}1#{fullExtension}"
               expect(fs.existsSync(numberedFileName0)).toBeTruthy()
               expect(fs.existsSync(numberedFileName1)).toBeTruthy()
               expect(fs.existsSync(filePath)).toBeTruthy()
@@ -1499,11 +1504,16 @@ describe "TreeView", ->
                 atom.commands.dispatch(treeView.element, "tree-view:paste")
                 atom.commands.dispatch(treeView.element, "tree-view:paste")
 
-                extension = path.extname(dotFilePath)
-                file = path.dirname(dotFilePath) + path.sep + path.basename(dotFilePath, extension)
+                nextExtension = path.extname(dotFilePath)
+                fullExtension = ''
+                while nextExtension isnt '' # This is for files with multiple extensions since extname only returns the last extension
+                  fullExtension = nextExtension.concat(fullExtension)
+                  nextExtension = path.extname(path.basename(dotFilePath, fullExtension))
 
-                numberedFileName0 = "#{file}0#{extension}"
-                numberedFileName1 = "#{file}1#{extension}"
+                file = path.dirname(dotFilePath) + path.sep + path.basename(dotFilePath, fullExtension)
+
+                numberedFileName0 = "#{file}0#{fullExtension}"
+                numberedFileName1 = "#{file}1#{fullExtension}"
                 expect(fs.existsSync(numberedFileName0)).toBeTruthy()
                 expect(fs.existsSync(numberedFileName1)).toBeTruthy()
                 expect(fs.existsSync(dotFilePath)).toBeTruthy()
@@ -1526,11 +1536,16 @@ describe "TreeView", ->
               atom.commands.dispatch(treeView.element, "tree-view:paste")
               atom.commands.dispatch(treeView.element, "tree-view:paste")
 
-              extension = path.extname(filePath)
-              file = path.dirname(filePath) + path.sep + path.basename(filePath, extension)
+              nextExtension = path.extname(filePath)
+              fullExtension = ''
+              while nextExtension isnt '' # This is for files with multiple extensions since extname only returns the last extension
+                fullExtension = nextExtension.concat(fullExtension)
+                nextExtension = path.extname(path.basename(filePath, fullExtension))
 
-              numberedFileName0 = "#{file}0#{extension}"
-              numberedFileName1 = "#{file}1#{extension}"
+              file = path.dirname(filePath) + path.sep + path.basename(filePath, fullExtension)
+
+              numberedFileName0 = "#{file}0#{fullExtension}"
+              numberedFileName1 = "#{file}1#{fullExtension}"
               expect(fs.existsSync(numberedFileName0)).toBeTruthy()
               expect(fs.existsSync(numberedFileName1)).toBeTruthy()
               expect(fs.existsSync(filePath)).toBeTruthy()
@@ -1565,11 +1580,16 @@ describe "TreeView", ->
               atom.commands.dispatch(treeView.element, "tree-view:paste")
               atom.commands.dispatch(treeView.element, "tree-view:paste")
 
-              extension = path.extname(dotFilePath)
-              file = path.dirname(dotFilePath) + path.sep + path.basename(dotFilePath, extension)
+              nextExtension = path.extname(dotFilePath)
+              fullExtension = ''
+              while nextExtension isnt '' # This is for files with multiple extensions since extname only returns the last extension
+                fullExtension = nextExtension.concat(fullExtension)
+                nextExtension = path.extname(path.basename(dotFilePath, fullExtension))
 
-              numberedFileName0 = "#{file}0#{extension}"
-              numberedFileName1 = "#{file}1#{extension}"
+              file = path.dirname(dotFilePath) + path.sep + path.basename(dotFilePath, fullExtension)
+
+              numberedFileName0 = "#{file}0#{fullExtension}"
+              numberedFileName1 = "#{file}1#{fullExtension}"
               expect(fs.existsSync(numberedFileName0)).toBeTruthy()
               expect(fs.existsSync(numberedFileName1)).toBeTruthy()
               expect(fs.existsSync(dotFilePath)).toBeTruthy()
