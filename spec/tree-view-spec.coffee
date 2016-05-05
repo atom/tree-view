@@ -1467,7 +1467,7 @@ describe "TreeView", ->
               atom.commands.dispatch(treeView.element, "tree-view:paste")
 
               extension = getFullExtension(filePath)
-              file = path.dirname(filePath) + path.sep + path.basename(filePath, extension)
+              file = path.join(path.dirname(filePath), path.basename(filePath, extension))
 
               numberedFileName0 = "#{file}0#{extension}"
               numberedFileName1 = "#{file}1#{extension}"
@@ -1501,7 +1501,7 @@ describe "TreeView", ->
                 atom.commands.dispatch(treeView.element, "tree-view:paste")
 
                 extension = getFullExtension(dotFilePath)
-                file = path.dirname(dotFilePath) + path.sep + path.basename(dotFilePath, extension)
+                file = path.join(path.dirname(dotFilePath), path.basename(dotFilePath, extension))
 
                 numberedFileName0 = "#{file}0#{extension}"
                 numberedFileName1 = "#{file}1#{extension}"
@@ -1528,7 +1528,7 @@ describe "TreeView", ->
               atom.commands.dispatch(treeView.element, "tree-view:paste")
 
               extension = getFullExtension(filePath)
-              file = path.dirname(filePath) + path.sep + path.basename(filePath, extension)
+              file = path.join(path.dirname(filePath), path.basename(filePath, extension))
 
               numberedFileName0 = "#{file}0#{extension}"
               numberedFileName1 = "#{file}1#{extension}"
@@ -1567,7 +1567,7 @@ describe "TreeView", ->
               atom.commands.dispatch(treeView.element, "tree-view:paste")
 
               extension = getFullExtension(dotFilePath)
-              file = path.dirname(dotFilePath) + path.sep + path.basename(dotFilePath, extension)
+              file = path.join(path.dirname(dotFilePath), path.basename(dotFilePath, extension))
 
               numberedFileName0 = "#{file}0#{extension}"
               numberedFileName1 = "#{file}1#{extension}"
