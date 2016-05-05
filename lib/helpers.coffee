@@ -15,3 +15,11 @@ module.exports =
       camelizedAttr = property.replace /\-([a-z])/g, (a, b) -> b.toUpperCase()
       styleObject[camelizedAttr] = value
     styleObject
+
+  getFullExtension: (filePath) ->
+    nextExtension = path.extname(filePath)
+    fullExtension = ''
+    while nextExtension isnt ''
+      fullExtension = nextExtension.concat(fullExtension)
+      nextExtension = path.extname(path.basename(filePath, fullExtension))
+    fullExtension

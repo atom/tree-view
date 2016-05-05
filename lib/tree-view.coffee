@@ -3,7 +3,7 @@ path = require 'path'
 
 _ = require 'underscore-plus'
 {BufferedProcess, CompositeDisposable} = require 'atom'
-{repoForPath, getStyleObject} = require "./helpers"
+{repoForPath, getStyleObject, getFullExtension} = require "./helpers"
 {$, View} = require 'atom-space-pen-views'
 fs = require 'fs-plus'
 
@@ -610,15 +610,9 @@ class TreeView extends View
             if initialPathIsDirectory
               newPath = "#{originalNewPath}#{fileCounter.toString()}"
             else
-              nextExtension = path.extname(originalNewPath)
-              fullExtension = ''
-              while nextExtension isnt '' # This is for files with multiple extensions since extname only returns the last extension
-                fullExtension = nextExtension.concat(fullExtension)
-                nextExtension = path.extname(path.basename(originalNewPath, fullExtension))
-
-              filePath = path.dirname(originalNewPath) + path.sep + path.basename(originalNewPath, fullExtension)
-
-              newPath = "#{filePath}#{fileCounter.toString()}#{fullExtension}"
+              extension = getFullExtension(originalNewPath)
+              filePath = path.dirname(originalNewPath) + path.sep + path.basename(originalNewPath, extension)
+              newPath = "#{filePath}#{fileCounter.toString()}#{extension}"
             fileCounter += 1
 
           if fs.isDirectorySync(initialPath)
