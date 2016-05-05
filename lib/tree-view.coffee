@@ -611,7 +611,7 @@ class TreeView extends View
               newPath = "#{originalNewPath}#{fileCounter.toString()}"
             else
               extension = getFullExtension(originalNewPath)
-              filePath = path.dirname(originalNewPath) + path.sep + path.basename(originalNewPath, extension)
+              filePath = path.join(path.dirname(originalNewPath), path.basename(originalNewPath, fullExtension))
               newPath = "#{filePath}#{fileCounter.toString()}#{extension}"
             fileCounter += 1
 
