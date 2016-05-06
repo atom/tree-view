@@ -40,7 +40,7 @@
     {'label': 'Copy Project Path', 'command': 'tree-view:copy-project-path'}
     {'label': 'Open In New Window', 'command': 'tree-view:open-in-new-window'}
   ]
-  
+
   '.tree-view.full-menu [is="tree-view-file"]': [
     {'label': 'Split Up', 'command': 'tree-view:open-selected-entry-up'}
     {'label': 'Split Down', 'command': 'tree-view:open-selected-entry-down'}
@@ -91,9 +91,11 @@
   ]
 
   'atom-pane[data-active-item-path] .item-views': [
+    {'label': 'Rename', 'command': 'tree-view:rename'}
     {'label': 'Reveal in Tree View', 'command': 'tree-view:reveal-active-file'}
   ]
 
   'atom-pane[data-active-item-path] .tab.active': [
+    {'label': 'Rename', 'command': 'tree-view:rename'}
     {'label': 'Reveal in Tree View', 'command': 'tree-view:reveal-active-file'}
   ]
