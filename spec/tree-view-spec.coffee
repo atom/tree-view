@@ -1992,6 +1992,103 @@ describe "TreeView", ->
             expect(atom.workspace.getModalPanels().length).toBe 0
             expect(atom.views.getView(atom.workspace.getActivePane())).toHaveFocus()
 
+      describe "when multiple files are selected", ->
+        moveDialog = null
+
+        beforeEach ->
+          jasmine.attachToDOM(workspaceElement)
+
+          waitsForFileToOpen ->
+            fileView2.click()
+
+          runs ->
+            fileView3.trigger($.Event('mousedown', {metaKey: true}))
+            treeView.focus()
+
+          waitsFor 'multiple selections to occur', ->
+            treeView.find('.tree-view').hasClass('multi-select')
+
+          runs ->
+            atom.commands.dispatch(treeView.element, "tree-view:move")
+            moveDialog = $(atom.workspace.getModalPanels()[0].getItem()).view()
+
+        afterEach ->
+          waits 50 # The move specs cause too many false positives because of their async nature, so wait a little bit before we cleanup
+
+        it "opens a move dialog with the files' lowest common ancestor as default suggested path", ->
+          expect(moveDialog).toExist()
+          expect(moveDialog.promptText.text()).toBe "Enter the new path for the files."
+          expect(moveDialog.miniEditor.getText()).toBe(atom.project.relativize(dirPath2 + path.sep))
+          expect(moveDialog.miniEditor.getModel().getSelectedText()).toBe ''
+          expect(moveDialog.miniEditor).toHaveFocus()
+
+        describe "when the path is changed and confirmed", ->
+          describe "when all the directories along the new path exist", ->
+            it "moves the files, updates the tree view, and closes the dialog", ->
+              moveDialog.miniEditor.setText(dirPath + path.sep)
+
+              atom.commands.dispatch moveDialog.element, 'core:confirm'
+
+              fileBasename2 = path.basename(filePath2)
+              fileBasename3 = path.basename(filePath3)
+
+              expect(fs.existsSync(path.join(dirPath, fileBasename2))).toBeTruthy()
+              expect(fs.existsSync(path.join(dirPath, fileBasename3))).toBeTruthy()
+              expect(fs.existsSync(path.join(dirPath2, fileBasename2))).toBeFalsy()
+              expect(fs.existsSync(path.join(dirPath2, fileBasename3))).toBeFalsy()
+              expect(atom.workspace.getModalPanels().length).toBe 0
+
+              waitsFor "tree view to update", ->
+                dirView.find(".file:contains(#{fileBasename2})").length > 0
+                dirView.find(".file:contains(#{fileBasename3})").length > 0
+
+              runs ->
+                dirView = $(treeView.roots[0].entries).find('.directory:contains(test-dir2)')
+                dirView[0].expand()
+                expect($(dirView[0].entries).children().length).toBe 0
+
+          describe "when the directories along the new path don't exist", ->
+            it "creates the target directory before moving the file", ->
+              newPath = path.join(rootDirPath, 'new', 'directory')
+              moveDialog.miniEditor.setText(newPath)
+
+              atom.commands.dispatch moveDialog.element, 'core:confirm'
+
+              waitsFor "tree view to update", ->
+                root1.find('> .entries > .directory:contains(new)').length > 0
+
+              runs ->
+                fileBasename2 = path.basename(filePath2)
+                fileBasename3 = path.basename(filePath3)
+
+                expect(fs.existsSync(newPath)).toBeTruthy()
+                expect(fs.existsSync(path.join(dirPath2, fileBasename2))).toBeFalsy()
+                expect(fs.existsSync(path.join(dirPath2, fileBasename3))).toBeFalsy()
+
+          describe "when a file or directory already exists at the target path", ->
+            it "shows an error message and does not close the dialog", ->
+              runs ->
+                fs.writeFileSync(path.join(dirPath, path.basename(filePath2)), '')
+                moveDialog.miniEditor.setText(dirPath)
+
+                atom.commands.dispatch moveDialog.element, 'core:confirm'
+
+                expect(moveDialog.errorMessage.text()).toContain 'already exists'
+                expect(moveDialog).toHaveClass('error')
+                expect(moveDialog.hasParent()).toBeTruthy()
+
+        describe "when 'core:cancel' is triggered on the move dialog", ->
+          it "removes the dialog and focuses the tree view", ->
+            atom.commands.dispatch moveDialog.element, 'core:cancel'
+            expect(atom.workspace.getModalPanels().length).toBe 0
+            expect(treeView.find(".tree-view")).toMatchSelector(':focus')
+
+        describe "when the move dialog's editor loses focus", ->
+          it "removes the dialog and focuses root view", ->
+            $(workspaceElement).focus()
+            expect(atom.workspace.getModalPanels().length).toBe 0
+            expect(atom.views.getView(atom.workspace.getActivePane())).toHaveFocus()
+
       describe "when a file is selected that's name starts with a '.'", ->
         [dotFilePath, dotFileView, moveDialog] = []
 
