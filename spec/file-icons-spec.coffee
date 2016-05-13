@@ -65,5 +65,5 @@ describe 'FileIcons', ->
     it 'allows an array of classes to be passed', ->
       expect(files[1].fileName.className).toBe('name icon first second')
 
-    it 'passes a file reference as iconClassForPath\'s second argument', ->
-      expect(files[2].fileName.className).toBe('name icon File')
+    it 'passes a FileView reference as iconClassForPath\'s second argument', ->
+      expect(files[2].fileName.className).toBe('name icon tree-view-file')
