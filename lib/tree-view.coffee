@@ -608,11 +608,11 @@ class TreeView extends View
           originalNewPath = newPath
           while fs.existsSync(newPath)
             if initialPathIsDirectory
-              newPath = "#{originalNewPath}#{fileCounter.toString()}"
+              newPath = "#{originalNewPath}#{fileCounter}"
             else
               extension = getFullExtension(originalNewPath)
               filePath = path.join(path.dirname(originalNewPath), path.basename(originalNewPath, extension))
-              newPath = "#{filePath}#{fileCounter.toString()}#{extension}"
+              newPath = "#{filePath}#{fileCounter}#{extension}"
             fileCounter += 1
 
           if fs.isDirectorySync(initialPath)
