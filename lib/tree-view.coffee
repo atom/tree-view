@@ -534,22 +534,30 @@ class TreeView extends View
           buttons: ['OK']
         return
 
+    if selectedPaths.length is 1 and fs.isFileSync(selectedPaths[0])
+      if fs.getSizeSync(selectedPaths[0]) is 0
+        @moveToTrash(selectedPaths)
+        return
+
     atom.confirm
       message: "Are you sure you want to delete the selected #{if selectedPaths.length > 1 then 'items' else 'item'}?"
       detailedMessage: "You are deleting:\n#{selectedPaths.join('\n')}"
       buttons:
-        "Move to Trash": ->
-          failedDeletions = []
-          for selectedPath in selectedPaths
-            if not shell.moveItemToTrash(selectedPath)
-              failedDeletions.push "#{selectedPath}"
-            if repo = repoForPath(selectedPath)
-              repo.getPathStatus(selectedPath)
-          if failedDeletions.length > 0
-            atom.notifications.addError "The following #{if failedDeletions.length > 1 then 'files' else 'file'} couldn't be moved to trash#{if process.platform is 'linux' then " (is `gvfs-trash` installed?)" else ""}",
-              detail: "#{failedDeletions.join('\n')}"
-              dismissable: true
+        "Move to Trash": =>
+          @moveToTrash(selectedPaths)
         "Cancel": null
+
+  moveToTrash: (pathsToDelete) ->
+    failedDeletions = []
+    for pathToDelete in pathsToDelete
+      if not shell.moveItemToTrash(pathToDelete)
+        failedDeletions.push "#{pathToDelete}"
+      if repo = repoForPath(pathToDelete)
+        repo.getPathStatus(pathToDelete)
+    if failedDeletions.length > 0
+      atom.notifications.addError "The following #{if failedDeletions.length > 1 then 'files' else 'file'} couldn't be moved to trash#{if process.platform is 'linux' then " (is `gvfs-trash` installed?)" else ""}",
+        detail: "#{failedDeletions.join('\n')}"
+        dismissable: true
 
   # Public: Copy the path of the selected entry element.
   #         Save the path in localStorage, so that copying from 2 different

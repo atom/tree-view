@@ -1282,6 +1282,27 @@ describe "TreeView", ->
             expect(atom.views.getView(pane)).toHaveFocus()
             expect(item.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.txt')
 
+  describe "when an empty file is being deleted", ->
+    afterEach ->
+      # add back the deleted file
+      atom.commands.dispatch(treeView.element, 'tree-view:add-file')
+      [addFilePanel] = atom.workspace.getModalPanels()
+      addFileDialog = $(addFilePanel.getItem()).view()
+      addFileDialog.miniEditor.getModel().setText('dir2/file2')
+      atom.commands.dispatch addFileDialog.element, 'core:confirm'
+
+    it "should not have a confirmation", ->
+      jasmine.attachToDOM(workspaceElement)
+      treeView.focus()
+      element.expand() for element in treeView.find('.directory')
+      fileView = treeView.find('.file:contains(file2)')
+      expect(fileView).not.toBeNull()
+      fileView.click()
+      expect(treeView.selectedEntry().getPath()).toContain(path.join('dir2', 'file2'))
+
+      atom.commands.dispatch(treeView.element, 'tree-view:remove')
+      expect(atom.confirm.mostRecentCall).not.toExist()
+
   describe "removing a project folder", ->
     it "removes the folder from the project", ->
       rootHeader = treeView.roots[1].querySelector(".header")
