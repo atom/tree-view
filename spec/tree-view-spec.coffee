@@ -1987,7 +1987,7 @@ describe "TreeView", ->
           expect(moveDialog).toExist()
           expect(moveDialog.promptText.text()).toBe "Enter the new path for the file."
           expect(moveDialog.miniEditor.getText()).toBe(atom.project.relativize(filePath))
-          expect(moveDialog.miniEditor.getModel().getSelectedText()).toBe path.basename(fileNameWithoutExtension)
+          expect(moveDialog.miniEditor.getModel().getSelectedText()).toBe fileNameWithoutExtension
           expect(moveDialog.miniEditor).toHaveFocus()
 
         describe "when the path is changed and confirmed", ->
@@ -2100,7 +2100,7 @@ describe "TreeView", ->
           expect(copyDialog).toExist()
           expect(copyDialog.promptText.text()).toBe "Enter the new path for the duplicate."
           expect(copyDialog.miniEditor.getText()).toBe(atom.project.relativize(filePath))
-          expect(copyDialog.miniEditor.getModel().getSelectedText()).toBe path.basename(fileNameWithoutExtension)
+          expect(copyDialog.miniEditor.getModel().getSelectedText()).toBe fileNameWithoutExtension
           expect(copyDialog.miniEditor).toHaveFocus()
 
         describe "when the path is changed and confirmed", ->
