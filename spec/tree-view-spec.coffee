@@ -13,15 +13,6 @@ waitsForFileToOpen = (causeFileToOpen) ->
       done()
     causeFileToOpen()
 
-waitsForWindowOpen = (causeWindowOpenCalled) ->
-  waitsFor (done) ->
-    workspaceOpen = atom.workspace.open
-    atom.workspace.open = ->
-      delete atom.workspace.open
-      workspaceOpen.apply(this, arguments)
-      setImmediate(done)
-    causeWindowOpenCalled()
-
 clickEvent = (properties) ->
   event = $.Event('click')
   _.extend(event, properties) if properties?
@@ -3143,7 +3134,6 @@ describe "TreeView", ->
 
     describe "opening existing opened files in existing split panes", ->
       beforeEach ->
-        atom.project.setPaths([path1])
 
         jasmine.attachToDOM(workspaceElement)
         waitsForFileToOpen ->
@@ -3205,7 +3195,7 @@ describe "TreeView", ->
 
             treeView.focus()
 
-            waitsForWindowOpen ->
+            waitsForFileToOpen ->
               sampleTxt.trigger clickEvent(originalEvent: {detail: 1})
 
             runs ->
@@ -3216,10 +3206,12 @@ describe "TreeView", ->
             expect(treeView).toHaveFocus()
 
           it "doesn't open the file in the active pane", ->
-            expect(atom.views.getView(firstPane)).toHaveFocus()
+            expect(atom.views.getView(treeView)).toHaveFocus()
             expect(activePaneItem.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
 
       describe "when a file is double-clicked", ->
+        beforeEach ->
+          atom.config.set "tree-view.alwaysOpenExisting", true
         activePaneItem = null
 
         beforeEach ->
@@ -3228,9 +3220,11 @@ describe "TreeView", ->
 
           treeView.focus()
 
-          waitsForWindowOpen ->
+          waitsForFileToOpen ->
             sampleTxt.trigger clickEvent(originalEvent: {detail: 1})
             sampleTxt.trigger clickEvent(originalEvent: {detail: 2})
+
+          waits 100
 
           runs ->
             activePaneItem = atom.workspace.getActivePaneItem()
