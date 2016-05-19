@@ -18,6 +18,20 @@ clickEvent = (properties) ->
   _.extend(event, properties) if properties?
   event
 
+setupPaneFiles = ->
+  rootDirPath = fs.absolute(temp.mkdirSync('tree-view'))
+
+  dirPath = path.join(rootDirPath, "test-dir")
+
+  fs.makeTreeSync(dirPath)
+  [1..9].forEach (index) ->
+    filePath = path.join(dirPath, "test-file-#{index}.txt")
+    fs.writeFileSync(filePath, "#{index}. Some text.")
+
+  return dirPath
+
+getPaneFileName = (index) -> "test-file-#{index}.txt"
+
 describe "TreeView", ->
   [treeView, path1, path2, root1, root2, sampleJs, sampleTxt, workspaceElement] = []
 
@@ -1281,6 +1295,39 @@ describe "TreeView", ->
             item = atom.workspace.getActivePaneItem()
             expect(atom.views.getView(pane)).toHaveFocus()
             expect(item.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.txt')
+
+  describe "opening existing opened files in existing split panes", ->
+    beforeEach ->
+      projectPath = setupPaneFiles()
+      atom.project.setPaths([projectPath])
+
+      jasmine.attachToDOM(workspaceElement)
+      [1..9].forEach (index) ->
+        waitsForFileToOpen ->
+          selectEntry getPaneFileName(index)
+          atom.commands.dispatch(treeView.element, 'tree-view:open-selected-entry-right')
+
+    it "should have opened all windows", ->
+      expect(atom.workspace.getPanes().length).toBe 9
+
+    [0..8].forEach (index) ->
+      paneNumber = index + 1
+      command = "tree-view:open-selected-entry-in-pane-#{paneNumber}"
+
+      describe command, ->
+        [1..9].forEach (fileIndex) ->
+          fileName = getPaneFileName(fileIndex)
+          describe "when a file is selected that is already open in pane #{fileIndex}", ->
+            beforeEach ->
+              selectEntry fileName
+              waitsForFileToOpen ->
+                atom.commands.dispatch treeView.element, command
+
+            it "opens the file in pane #{paneNumber} and focuses it", ->
+              pane = atom.workspace.getPanes()[index]
+              item = atom.workspace.getActivePaneItem()
+              expect(atom.views.getView(pane)).toHaveFocus()
+              expect(item.getPath()).toBe atom.project.getDirectories()[0].resolve(fileName)
 
   describe "removing a project folder", ->
     it "removes the folder from the project", ->
@@ -3112,3 +3159,134 @@ describe "TreeView", ->
 
         runs ->
           expect($(treeView.roots[0].entries).find('.directory:contains(alpha):first .entry').length).toBe 4
+
+  describe "the alwaysOpenExisting config option", ->
+    it "defaults to unset", ->
+      expect(atom.config.get("tree-view.alwaysOpenExisting")).toBeFalsy()
+
+    describe "when a file is single-clicked", ->
+      beforeEach ->
+        atom.config.set "tree-view.alwaysOpenExisting", true
+        jasmine.attachToDOM(workspaceElement)
+
+      it "selects the files and opens it in the active editor, without changing focus", ->
+        treeView.focus()
+
+        waitsForFileToOpen ->
+          sampleJs.trigger clickEvent(originalEvent: {detail: 1})
+
+        runs ->
+          expect(sampleJs).toHaveClass 'selected'
+          expect(atom.workspace.getActivePaneItem().getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
+          expect(treeView.list).toHaveFocus()
+
+        waitsForFileToOpen ->
+          sampleTxt.trigger clickEvent(originalEvent: {detail: 1})
+
+        runs ->
+          expect(sampleTxt).toHaveClass 'selected'
+          expect(treeView.find('.selected').length).toBe 1
+          expect(atom.workspace.getActivePaneItem().getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.txt')
+          expect(treeView.list).toHaveFocus()
+
+    describe "opening existing opened files in existing split panes", ->
+      beforeEach ->
+
+        jasmine.attachToDOM(workspaceElement)
+        waitsForFileToOpen ->
+          selectEntry 'tree-view.js'
+          atom.commands.dispatch(treeView.element, 'tree-view:open-selected-entry-right')
+
+        waitsForFileToOpen ->
+          selectEntry 'tree-view.txt'
+          atom.commands.dispatch(treeView.element, 'tree-view:open-selected-entry-right')
+
+      it "should have opened both panes", ->
+        expect(atom.workspace.getPanes().length).toBe 2
+
+      describe "tree-view:open-selected-entry", ->
+        beforeEach ->
+          atom.config.set "tree-view.alwaysOpenExisting", true
+        describe "when the first pane is focused, a file is opened that is already open in the second pane", ->
+          beforeEach ->
+            firstPane = atom.workspace.getPanes()[0]
+            firstPane.activate()
+            selectEntry 'tree-view.txt'
+            waitsForFileToOpen ->
+              atom.commands.dispatch treeView.element, "tree-view:open-selected-entry"
+
+          it "opens the file in the second pane and focuses it", ->
+            pane = atom.workspace.getPanes()[1]
+            item = atom.workspace.getActivePaneItem()
+            expect(atom.views.getView(pane)).toHaveFocus()
+            expect(item.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.txt')
+
+      describe "tree-view:open-selected-entry (alwaysOpenExisting off)", ->
+        beforeEach ->
+          atom.config.set "tree-view.alwaysOpenExisting", false
+
+
+        describe "when the first pane is focused, a file is opened that is already open in the second pane", ->
+          firstPane = null
+          beforeEach ->
+            firstPane = atom.workspace.getPanes()[0]
+            firstPane.activate()
+            selectEntry 'tree-view.txt'
+            waitsForFileToOpen ->
+              atom.commands.dispatch treeView.element, "tree-view:open-selected-entry"
+
+          it "opens the file in the first pane, which was the current focus", ->
+            item = atom.workspace.getActivePaneItem()
+            expect(atom.views.getView(firstPane)).toHaveFocus()
+            expect(item.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.txt')
+
+      describe "when a file that is already open in other pane is single-clicked", ->
+        beforeEach ->
+          atom.config.set "tree-view.alwaysOpenExisting", true
+
+        describe "when core.allowPendingPaneItems is set to true (default)", ->
+          firstPane = activePaneItem = null
+          beforeEach ->
+            firstPane = atom.workspace.getPanes()[0]
+            firstPane.activate()
+
+            treeView.focus()
+
+            waitsForFileToOpen ->
+              sampleTxt.trigger clickEvent(originalEvent: {detail: 1})
+
+            runs ->
+              activePaneItem = atom.workspace.getActivePaneItem()
+
+          it "selects the file and retains focus on tree-view", ->
+            expect(sampleTxt).toHaveClass 'selected'
+            expect(treeView).toHaveFocus()
+
+          it "doesn't open the file in the active pane", ->
+            expect(atom.views.getView(treeView)).toHaveFocus()
+            expect(activePaneItem.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
+
+      describe "when a file is double-clicked", ->
+        beforeEach ->
+          atom.config.set "tree-view.alwaysOpenExisting", true
+        activePaneItem = null
+
+        beforeEach ->
+          firstPane = atom.workspace.getPanes()[0]
+          firstPane.activate()
+
+          treeView.focus()
+
+          waitsForFileToOpen ->
+            sampleTxt.trigger clickEvent(originalEvent: {detail: 1})
+            sampleTxt.trigger clickEvent(originalEvent: {detail: 2})
+
+          waits 100
+
+          runs ->
+            activePaneItem = atom.workspace.getActivePaneItem()
+
+        it "opens the file and focuses it", ->
+
+          expect(activePaneItem.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.txt')
+          expect(atom.views.getView(atom.workspace.getPanes()[1])).toHaveFocus()

@@ -209,11 +209,12 @@ class TreeView extends View
       return false
     else if entry instanceof FileView
       detail = e.originalEvent?.detail ? 1
+      alwaysOpenExisting = atom.config.get('tree-view.alwaysOpenExisting')
       if detail is 1
         if atom.config.get('core.allowPendingPaneItems')
-          atom.workspace.open(entry.getPath(), pending: true, activatePane: false)
+          atom.workspace.open(entry.getPath(), pending: true, activatePane: false, searchAllPanes: alwaysOpenExisting)
       else if detail is 2
-        atom.workspace.open(entry.getPath())
+        atom.workspace.open(entry.getPath(), searchAllPanes: alwaysOpenExisting)
 
     false
 
@@ -396,6 +397,10 @@ class TreeView extends View
       item = activePane?.itemForURI(uri)
       if item? and not options.pending
         activePane.clearPendingItem() if activePane.getPendingItem() is item
+
+      if atom.config.get('tree-view.alwaysOpenExisting')
+        options = Object.assign searchAllPanes: true, options
+
       atom.workspace.open(uri, options)
 
   openSelectedEntrySplit: (orientation, side) ->
