@@ -5,7 +5,7 @@ fs = require 'fs-plus'
 
 module.exports =
 class File
-  constructor: ({@name, fullPath, @symlink, realpathCache}) ->
+  constructor: ({@name, fullPath, @symlink, realpathCache, useSyncFS}) ->
     @destroyed = false
     @emitter = new Emitter()
     @subscriptions = new CompositeDisposable()
@@ -16,11 +16,14 @@ class File
     @subscribeToRepo()
     @updateStatus()
 
-    fs.realpath @path, realpathCache, (error, realPath) =>
-      return if @destroyed
-      if realPath and realPath isnt @path
-        @realPath = realPath
-        @updateStatus()
+    if useSyncFS
+      @realPath = fs.realpathSync(@path)
+    else
+      fs.realpath @path, realpathCache, (error, realPath) =>
+        return if @destroyed
+        if realPath and realPath isnt @path
+          @realPath = realPath
+          @updateStatus()
 
   destroy: ->
     @destroyed = true

@@ -14,7 +14,7 @@ class Dialog extends View
     atom.commands.add @element,
       'core:confirm': => @onConfirm(@miniEditor.getText())
       'core:cancel': => @cancel()
-    @miniEditor.on 'blur', => @close()
+    @miniEditor.on 'blur', => @close() if document.hasFocus()
     @miniEditor.getModel().onDidChange => @showError()
     @miniEditor.getModel().setText(initialPath)
 
