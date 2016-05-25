@@ -638,22 +638,57 @@ describe "TreeView", ->
         it "does not open the file", ->
           expect(atom.workspace.open).not.toHaveBeenCalled()
 
+      describe "when it is immediately opened with `::openSelectedEntry` afterward", ->
+        it "does not open a duplicate file", ->
+          # Fixes https://github.com/atom/atom/issues/11391
+          openedCount = 0
+          originalOpen = atom.workspace.open.bind(atom.workspace)
+          spyOn(atom.workspace, 'open').andCallFake (uri, options) ->
+            originalOpen(uri, options).then -> openedCount++
+
+          sampleJs.trigger clickEvent(originalEvent: {detail: 1})
+          treeView.openSelectedEntry()
+
+          waitsFor 'open to be called twice', ->
+            openedCount is 2
+
+          runs ->
+            expect(atom.workspace.getActivePane().getItems().length).toBe 1
+
     describe "when a file is double-clicked", ->
       activePaneItem = null
 
       beforeEach ->
         treeView.focus()
 
+      it "opens the file and focuses it", ->
         waitsForFileToOpen ->
           sampleJs.trigger clickEvent(originalEvent: {detail: 1})
           sampleJs.trigger clickEvent(originalEvent: {detail: 2})
 
+        waitsFor "next tick to avoid race condition", (done) ->
+          setImmediate(done)
+
         runs ->
           activePaneItem = atom.workspace.getActivePaneItem()
+          expect(activePaneItem.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
+          expect(atom.views.getView(activePaneItem)).toHaveFocus()
 
-      it "opens the file and focuses it", ->
-        expect(activePaneItem.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
-        expect(atom.views.getView(activePaneItem)).toHaveFocus()
+      it "does not open a duplicate file", ->
+        # Fixes https://github.com/atom/atom/issues/11391
+        openedCount = 0
+        originalOpen = atom.workspace.open.bind(atom.workspace)
+        spyOn(atom.workspace, 'open').andCallFake (uri, options) ->
+          originalOpen(uri, options).then -> openedCount++
+
+        sampleJs.trigger clickEvent(originalEvent: {detail: 1})
+        sampleJs.trigger clickEvent(originalEvent: {detail: 2})
+
+        waitsFor 'open to be called twice', ->
+          openedCount is 2
+
+        runs ->
+          expect(atom.workspace.getActivePane().getItems().length).toBe 1
 
   describe "when a directory is single-clicked", ->
     it "is selected", ->
