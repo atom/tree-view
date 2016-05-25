@@ -222,10 +222,13 @@ class TreeView extends View
         @currentlyOpening.set(filePath, openPromise)
         openPromise.then => @currentlyOpening.delete(filePath)
     else if detail is 2
-      if promise = @currentlyOpening.get(filePath)
-        promise.then => atom.workspace.open(filePath, searchAllPanes: alwaysOpenExisting)
-      else
-        atom.workspace.open(filePath, searchAllPanes: alwaysOpenExisting)
+      @openAfterPromise(filePath, searchAllPanes: alwaysOpenExisting)
+
+  openAfterPromise: (uri, options) ->
+    if promise = @currentlyOpening.get(uri)
+      promise.then => atom.workspace.open(uri, options)
+    else
+      atom.workspace.open(uri, options)
 
   resizeStarted: =>
     $(document).on('mousemove', @resizeTreeView)
@@ -401,16 +404,9 @@ class TreeView extends View
       else
         selectedEntry.toggleExpansion()
     else if selectedEntry instanceof FileView
-      uri = selectedEntry.getPath()
-      activePane = atom.workspace.getActivePane()
-      item = activePane?.itemForURI(uri)
-      if item? and not options.pending
-        activePane.clearPendingItem() if activePane.getPendingItem() is item
-
       if atom.config.get('tree-view.alwaysOpenExisting')
         options = Object.assign searchAllPanes: true, options
-
-      atom.workspace.open(uri, options)
+      @openAfterPromise(selectedEntry.getPath(), options)
 
   openSelectedEntrySplit: (orientation, side) ->
     selectedEntry = @selectedEntry()
