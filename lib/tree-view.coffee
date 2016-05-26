@@ -847,6 +847,7 @@ class TreeView extends View
       entryPath = $(entry).find('.name').data('path')
       unless path.dirname(entryPath) in initialPaths
         initialPaths.push(entryPath)
+      entry.collapse() if entry instanceof DirectoryView
       dragImage.append($(entry).clone().removeClass('selected'))
 
     dragImage.appendTo(document.body)
