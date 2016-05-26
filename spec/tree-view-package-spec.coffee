@@ -3700,6 +3700,41 @@ describe "TreeView", ->
         runs ->
           expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe 4
 
+    describe "when dropping a DirectoryView and FileViews onto a DirectoryView's header", ->
+      it "should move the files and directory to the hovered directory", ->
+        # Dragging alpha.txt and alphaDir into thetaDir
+        rootDir = $(treeView.roots[0])
+
+        alphaFile = rootDir[0].entries.children[2]
+        alphaDir = $(treeView.roots[0].entries).find('.directory:contains(alpha):first')
+        alphaDir[0].expand()
+
+        gammaDir = $(treeView.roots[0].entries).find('.directory:contains(gamma):first')
+        gammaDir[0].expand()
+        thetaDir = $(gammaDir[0].entries).find('.directory:contains(theta):first')
+
+        dragged = [alphaFile, alphaDir[0]]
+
+        [dragStartEvent, dragEnterEvent, dropEvent] =
+            eventHelpers.buildInternalDragEvents(dragged, thetaDir.find('.header')[0], thetaDir[0])
+
+        runs ->
+          treeView.onDragStart(dragStartEvent)
+          treeView.onDrop(dropEvent)
+          expect(thetaDir[0].children.length).toBe 2
+
+        waitsFor "directory view contents to refresh", ->
+          $(treeView.roots[0].entries).find('.directory:contains(theta):first .entry').length > 2
+
+        runs ->
+          thetaDir = $(gammaDir[0].entries).find('.directory:contains(theta):first')
+          thetaDir[0].expand()
+          expect(thetaDir.find('.entry').length).toBe 2
+          # alpha dir still has all its entries
+          alphaDir = $(thetaDir[0].entries).find('.directory:contains(alpha):first')
+          alphaDir[0].expand()
+          expect(alphaDir.find('.entry').length).toBe 2
+
     describe "when dropping a DirectoryView onto a DirectoryView's header", ->
       beforeEach ->
         waitForWorkspaceOpenEvent ->
