@@ -843,10 +843,11 @@ class TreeView extends View
         left: 0
       )
 
-    $(@getSelectedEntries()).each((i, target) ->
-      initialPaths.push($(target).find('.name').data('path'))
-      dragImage.append($(target).clone().removeClass('selected'))
-    )
+    for entry in @getSelectedEntries()
+      entryPath = $(entry).find('.name').data('path')
+      unless path.dirname(entryPath) in initialPaths
+        initialPaths.push(entryPath)
+      dragImage.append($(entry).clone().removeClass('selected'))
 
     dragImage.appendTo(document.body)
 
