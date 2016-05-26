@@ -870,6 +870,7 @@ class TreeView extends View
     return unless entry instanceof DirectoryView
 
     entry.classList.remove('selected')
+    @dragEventCounts.set(entry, 0)
 
     newDirectoryPath = $(entry).find(".name").data("path")
     return false unless newDirectoryPath
