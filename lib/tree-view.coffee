@@ -1011,8 +1011,9 @@ class TreeView
 
       for target in @getSelectedEntries()
         nameElement = target.querySelector(".name")
-        initialPaths.push(nameElement.dataset.path)
-
+        entryPath = nameElement.dataset.path
+        unless path.dirname(entryPath) in initialPaths
+          initialPaths.push(entryPath)
         newNameElement = nameElement.cloneNode(true)
         for key, value of getStyleObject(nameElement)
           newNameElement.style[key] = value
