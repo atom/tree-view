@@ -738,8 +738,8 @@ class TreeView extends View
   onMouseDown: (e) ->
     e.stopPropagation()
 
-    # return early if there's a multi-select
-    if @multiSelectEnabled() and e.currentTarget.classList.contains('selected')
+    # return early if we're opening a contextual menu (right click) during multi-select mode
+    if @multiSelectEnabled() and e.currentTarget.classList.contains('selected') and not e.metaKey
       return
 
     entryToSelect = e.currentTarget
@@ -847,8 +847,9 @@ class TreeView extends View
       entryPath = $(entry).find('.name').data('path')
       unless path.dirname(entryPath) in initialPaths
         initialPaths.push(entryPath)
-      entry.collapse() if entry instanceof DirectoryView
-      dragImage.append($(entry).clone().removeClass('selected'))
+        image = $(entry).clone()
+        image.find('.entry').addBack('.entry').removeClass('selected')
+        dragImage.append(image)
 
     dragImage.appendTo(document.body)
 
