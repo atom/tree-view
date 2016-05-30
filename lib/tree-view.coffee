@@ -1014,11 +1014,10 @@ class TreeView
         entryPath = nameElement.dataset.path
         unless path.dirname(entryPath) in initialPaths
           initialPaths.push(entryPath)
-        entry.collapse() if entry instanceof DirectoryView
-        newNameElement = nameElement.cloneNode(true)
-        for key, value of getStyleObject(nameElement)
-          newNameElement.style[key] = value
-        dragImage.append(newNameElement)
+          newNameElement = nameElement.cloneNode(true)
+          for key, value of getStyleObject(nameElement)
+            newNameElement.style[key] = value
+          dragImage.append(newNameElement)
 
 
       document.body.appendChild(dragImage)
