@@ -3325,3 +3325,39 @@ describe "TreeView", ->
 
           expect(activePaneItem.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.txt')
           expect(atom.views.getView(atom.workspace.getPanes()[1])).toHaveFocus()
+
+
+  describe "provision of filesystem stats", ->
+    [file1Data, file2Data] = ["ABCDEFGHIJKLMNOPQRSTUVWXYZ", "0123456789"]
+    
+    beforeEach ->
+      rootDirPath = fs.absolute(temp.mkdirSync('tree-view'))
+      subdirPath = path.join(rootDirPath, "subdir")
+      filePath1 = path.join(rootDirPath, "file1.txt")
+      filePath2 = path.join(subdirPath, "file2.txt")
+
+      fs.makeTreeSync(subdirPath)
+      fs.writeFileSync(filePath1, file1Data)
+      fs.writeFileSync(filePath2, file2Data)
+      atom.project.setPaths([rootDirPath])
+
+    it "passes stats to File instances", ->
+      stats = treeView.roots[0].directory.entries["file1.txt"].stats
+      expect(stats).toBeDefined()
+      expect(stats.mtime).toBeDefined()
+      expect(stats.size).toEqual(file1Data.length)
+
+    it "passes stats to Directory instances", ->
+      stats = treeView.roots[0].directory.entries["subdir"].stats
+      expect(stats).toBeDefined()
+      expect(stats.mtime).toBeDefined()
+    
+    it "passes stats to a root directory when initialised", ->
+      expect(treeView.roots[0].directory.stats).toBeDefined()
+    
+    it "passes stats to File instances in subdirectories", ->
+      treeView.find('.entries > li:contains(subdir)').click()
+      subdir = treeView.roots[0].directory.entries["subdir"]
+      stats = subdir.entries["file2.txt"].stats
+      expect(stats).toBeDefined()
+      expect(stats.size).toEqual(file2Data.length)
