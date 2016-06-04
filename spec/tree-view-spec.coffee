@@ -3356,7 +3356,7 @@ describe "TreeView", ->
       expect(treeView.roots[0].directory.stats).toBeDefined()
     
     it "passes stats to File instances in subdirectories", ->
-      treeView.find('.entries > li:contains(subdir)').click()
+      treeView.find('.entries > li:contains(subdir)')[0].expand()
       subdir = treeView.roots[0].directory.entries["subdir"]
       stats = subdir.entries["file2.txt"].stats
       expect(stats).toBeDefined()
