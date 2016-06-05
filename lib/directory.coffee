@@ -180,7 +180,7 @@ class Directory
       statFlat = _.pick stat, _.keys(stat)...
       for i in ["atime", "birthtime", "ctime", "mtime"]
         statFlat[i] = statFlat[i].getTime()
-      console.log statFlat
+
       if stat.isDirectory?()
         if @entries.hasOwnProperty(name)
           # push a placeholder since this entry already exists but this helps
