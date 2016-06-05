@@ -3328,9 +3328,10 @@ describe "TreeView", ->
 
 
   describe "provision of filesystem stats", ->
-    [file1Data, file2Data] = ["ABCDEFGHIJKLMNOPQRSTUVWXYZ", "0123456789"]
+    [file1Data, file2Data, timeStarted] = ["ABCDEFGHIJKLMNOPQRSTUVWXYZ", "0123456789"]
     
     beforeEach ->
+      timeStarted = Date.now()
       rootDirPath = fs.absolute(temp.mkdirSync('tree-view'))
       subdirPath = path.join(rootDirPath, "subdir")
       filePath1 = path.join(rootDirPath, "file1.txt")
@@ -3361,3 +3362,15 @@ describe "TreeView", ->
       stats = subdir.entries["file2.txt"].stats
       expect(stats).toBeDefined()
       expect(stats.size).toEqual(file2Data.length)
+    
+    it "converts date-stats to timestamps", ->
+      stats = treeView.roots[0].directory.entries["file1.txt"].stats
+      stamp = stats.mtime
+      expect(_.isDate stamp).toBe(false)
+      expect(typeof stamp).toBe("number")
+      expect(Number.isNaN stamp).toBe(false)
+    
+    it "accurately converts timestamps", ->
+      stats = treeView.roots[0].directory.entries["file1.txt"].stats
+      # Two minutes should be enough
+      expect(Math.abs stats.mtime - timeStarted).toBeLessThan(120000)
