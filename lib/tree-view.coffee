@@ -277,8 +277,8 @@ class TreeView extends View
     @roots = for projectPath in atom.project.getPaths()
       stats = fs.lstatSyncNoException(projectPath)
       stats = _.pick stats, _.keys(stats)...
-      for i in ["atime", "birthtime", "ctime", "mtime"]
-        stats[i] = stats[i].getTime()
+      for key in ["atime", "birthtime", "ctime", "mtime"]
+        stats[key] = stats[key].getTime()
       
       directory = new Directory({
         name: path.basename(projectPath)
