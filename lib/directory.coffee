@@ -179,7 +179,7 @@ class Directory
       stat = fs.statSyncNoException(fullPath) if symlink
       statFlat = _.pick stat, _.keys(stat)...
       for key in ["atime", "birthtime", "ctime", "mtime"]
-        statFlat[key] = statFlat[key].getTime()
+        statFlat[key] = statFlat[key]?.getTime()
 
       if stat.isDirectory?()
         if @entries.hasOwnProperty(name)
