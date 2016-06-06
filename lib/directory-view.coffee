@@ -13,6 +13,7 @@ class DirectoryView extends HTMLElement
 
     @header = document.createElement('div')
     @header.classList.add('header', 'list-item')
+    @header.title = @directory.name
 
     @directoryName = document.createElement('span')
     @directoryName.classList.add('name', 'icon')
@@ -30,7 +31,6 @@ class DirectoryView extends HTMLElement
         iconClass = 'icon-file-submodule' if @directory.submodule
     @directoryName.classList.add(iconClass)
     @directoryName.dataset.name = @directory.name
-    @directoryName.title = @directory.name
     @directoryName.dataset.path = @directory.path
 
     if @directory.squashedName?

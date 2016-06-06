@@ -10,12 +10,12 @@ class FileView extends HTMLElement
     @draggable = true
 
     @classList.add('file', 'entry', 'list-item')
+    @title = @file.name
 
     @fileName = document.createElement('span')
     @fileName.classList.add('name', 'icon')
     @appendChild(@fileName)
     @fileName.textContent = @file.name
-    @fileName.title = @file.name
     @fileName.dataset.name = @file.name
     @fileName.dataset.path = @file.path
 
