@@ -5,15 +5,17 @@ fs = require 'fs-plus'
 PathWatcher = require 'pathwatcher'
 File = require './file'
 {repoForPath} = require './helpers'
-
 realpathCache = {}
 
 module.exports =
 class Directory
-  constructor: ({@name, fullPath, @symlink, @expansionState, @isRoot, @ignoredPatterns}) ->
+  constructor: ({@name, fullPath, @symlink, @expansionState, @isRoot, @ignoredPatterns, @useSyncFS}) ->
     @destroyed = false
     @emitter = new Emitter()
     @subscriptions = new CompositeDisposable()
+
+    if atom.config.get('tree-view.squashDirectoryNames')
+      fullPath = @squashDirectoryNames(fullPath)
 
     @path = fullPath
     @realPath = @path
@@ -53,12 +55,16 @@ class Directory
     @emitter.on('did-remove-entries', callback)
 
   loadRealPath: ->
-    fs.realpath @path, realpathCache, (error, realPath) =>
-      return if @destroyed
-      if realPath and realPath isnt @path
-        @realPath = realPath
-        @lowerCaseRealPath = @realPath.toLowerCase() if fs.isCaseInsensitive()
-        @updateStatus()
+    if @useSyncFS
+      @realPath = fs.realpathSync(@path)
+      @lowerCaseRealPath = @realPath.toLowerCase() if fs.isCaseInsensitive()
+    else
+      fs.realpath @path, realpathCache, (error, realPath) =>
+        return if @destroyed
+        if realPath and realPath isnt @path
+          @realPath = realPath
+          @lowerCaseRealPath = @realPath.toLowerCase() if fs.isCaseInsensitive()
+          @updateStatus()
 
   # Subscribe to project's repo for changes to the Git status of this directory.
   subscribeToRepo: ->
@@ -159,8 +165,8 @@ class Directory
       names = fs.readdirSync(@path)
     catch error
       names = []
-    names.sort (name1, name2) -> name1.toLowerCase().localeCompare(name2.toLowerCase())
-    
+    names.sort(new Intl.Collator(undefined, {numeric: true, sensitivity: "base"}).compare)
+
     files = []
     directories = []
 
@@ -179,14 +185,14 @@ class Directory
           directories.push(name)
         else
           expansionState = @expansionState.entries[name]
-          directories.push(new Directory({name, fullPath, symlink, expansionState, @ignoredPatterns}))
+          directories.push(new Directory({name, fullPath, symlink, expansionState, @ignoredPatterns, @useSyncFS}))
       else if stat.isFile?()
         if @entries.hasOwnProperty(name)
           # push a placeholder since this entry already exists but this helps
           # track the insertion index for the created views
           files.push(name)
         else
-          files.push(new File({name, fullPath, symlink, realpathCache}))
+          files.push(new File({name, fullPath, symlink, realpathCache, @useSyncFS}))
 
     @sortEntries(directories.concat(files))
 
@@ -227,8 +233,13 @@ class Directory
     for name, entry of removedEntries
       entriesRemoved = true
       entry.destroy()
-      delete @entries[name]
-      delete @expansionState[name]
+
+      if @entries.hasOwnProperty(name)
+        delete @entries[name]
+
+      if @expansionState.entries.hasOwnProperty(name)
+        delete @expansionState.entries[name]
+
     @emitter.emit('did-remove-entries', removedEntries) if entriesRemoved
 
     if newEntries.length > 0
@@ -255,3 +266,19 @@ class Directory
     for name, entry of @entries when entry.expansionState?
       expansionState.entries[name] = entry.serializeExpansionState()
     expansionState
+
+  squashDirectoryNames: (fullPath) ->
+    squashedDirs = [@name]
+    loop
+      contents = fs.listSync fullPath
+      break if contents.length isnt 1
+      break if not fs.isDirectorySync(contents[0])
+      relativeDir = path.relative(fullPath, contents[0])
+      squashedDirs.push relativeDir
+      fullPath = path.join(fullPath, relativeDir)
+
+    if squashedDirs.length > 1
+      @squashedName = squashedDirs[0..squashedDirs.length - 2].join(path.sep) + path.sep
+    @name = squashedDirs[squashedDirs.length - 1]
+
+    return fullPath
