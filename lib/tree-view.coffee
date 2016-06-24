@@ -738,9 +738,17 @@ class TreeView extends View
   onMouseDown: (e) ->
     e.stopPropagation()
 
-    # return early if we're opening a contextual menu (right click) during multi-select mode
-    if @multiSelectEnabled() and e.currentTarget.classList.contains('selected') and not e.metaKey
-      return
+    if @multiSelectEnabled() and e.currentTarget.classList.contains('selected')
+      # return early if we're opening a contextual menu (right click) during multi-select mode
+      if (e.button is 2 or e.ctrlKey and process.platform is 'darwin')
+        return
+      # return early unless we're deselecting an entry (metaKey on OSX, ctrl/metaKey on linux/windows)
+      if process.platform is 'darwin'
+        if not e.metaKey
+          return
+      else if process.platform isnt 'darwin'
+        if not (e.ctrlKey or e.metaKey)
+          return
 
     entryToSelect = e.currentTarget
 
