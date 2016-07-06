@@ -514,6 +514,12 @@ class TreeView extends View
     {command, args, label} = @fileManagerCommandForPath(entry.getPath(), isFile)
     @openInFileManager(command, args, label, isFile)
 
+  showCurrentFileInFileManager: ->
+    return unless editor = atom.workspace.getActiveTextEditor()
+    return if editor.getPath() is undefined  # handle untitled tab
+    {command, args, label} = @fileManagerCommandForPath(editor.getPath(), true)
+    @openInFileManager(command, args, label, true)
+
   openSelectedEntryInNewWindow: ->
     if pathToOpen = @selectedEntry()?.getPath()
       atom.open({pathsToOpen: [pathToOpen], newWindow: true})

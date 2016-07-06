@@ -97,4 +97,9 @@
   'atom-pane[data-active-item-path] .tab.active': [
     {'label': 'Rename', 'command': 'tree-view:rename'}
     {'label': 'Reveal in Tree View', 'command': 'tree-view:reveal-active-file'}
+    {'label': 'Show In File Manager', 'command': 'tree-view:show-current-file-in-file-manager'}
+  ]
+
+  'atom-text-editor': [
+    {'label': 'Show In File Manager', 'command': 'tree-view:show-current-file-in-file-manager'}
   ]

@@ -23,6 +23,7 @@ module.exports =
       'tree-view:duplicate': => @createView().copySelectedEntry()
       'tree-view:remove': => @createView().removeSelectedEntries()
       'tree-view:rename': => @createView().moveSelectedEntry()
+      'tree-view:show-current-file-in-file-manager': => @createView().showCurrentFileInFileManager()
     })
 
   deactivate: ->
