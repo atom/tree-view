@@ -483,13 +483,7 @@ class TreeView extends View
         label: 'File Manager'
         args: [pathToOpen]
 
-  showSelectedEntryInFileManager: ->
-    entry = @selectedEntry()
-    return unless entry
-
-    isFile = entry instanceof FileView
-    {command, args, label} = @fileManagerCommandForPath(entry.getPath(), isFile)
-
+  openInFileManager: (command, args, label, isFile) ->
     handleError = (errorMessage) ->
       atom.notifications.addError "Opening #{if isFile then 'file' else 'folder'} in #{label} failed",
         detail: errorMessage
@@ -511,6 +505,14 @@ class TreeView extends View
     showProcess.onWillThrowError ({error, handle}) ->
       handle()
       handleError(error?.message)
+
+  showSelectedEntryInFileManager: ->
+    entry = @selectedEntry()
+    return unless entry
+
+    isFile = entry instanceof FileView
+    {command, args, label} = @fileManagerCommandForPath(entry.getPath(), isFile)
+    @openInFileManager(command, args, label, isFile)
 
   openSelectedEntryInNewWindow: ->
     if pathToOpen = @selectedEntry()?.getPath()
