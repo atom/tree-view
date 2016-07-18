@@ -3007,6 +3007,70 @@ describe "TreeView", ->
         expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Opening folder in Finder failed'
         expect(atom.notifications.getNotifications()[0].getDetail()).toContain 'ENOENT'
 
+  describe "showCurrentFileInFileManager()", ->
+    it "does nothing when no file is opened", ->
+      expect(atom.workspace.getPaneItems().length).toBe(0)
+      expect(treeView.showCurrentFileInFileManager()).toBeUndefined()
+
+    it "does nothing when only an untitled tab is opened", ->
+      waitsForPromise ->
+        atom.workspace.open()
+      runs ->
+        $(workspaceElement).focus()
+        expect(treeView.showCurrentFileInFileManager()).toBeUndefined()
+
+    describe "showCurrentFileInFileManager() when some file is opened", ->
+      beforeEach ->
+        filePath = path.join(os.tmpdir(), 'non-project-file.txt')
+        fs.writeFileSync(filePath, 'test')
+        waitsForPromise ->
+          atom.workspace.open(filePath)
+
+      it "displays the standard error output when the process fails", ->
+        atom.notifications.clear()
+        {BufferedProcess} = require 'atom'
+        spyOn(BufferedProcess.prototype, 'spawn').andCallFake ->
+          EventEmitter = require 'events'
+          fakeProcess = new EventEmitter()
+          fakeProcess.send = ->
+          fakeProcess.kill = ->
+          fakeProcess.stdout = new EventEmitter()
+          fakeProcess.stdout.setEncoding = ->
+          fakeProcess.stderr = new EventEmitter()
+          fakeProcess.stderr.setEncoding = ->
+          @process = fakeProcess
+          process.nextTick ->
+            fakeProcess.stderr.emit('data', 'bad process')
+            fakeProcess.stderr.emit('close')
+            fakeProcess.stdout.emit('close')
+            fakeProcess.emit('exit')
+
+        treeView.showCurrentFileInFileManager()
+
+        waitsFor ->
+          atom.notifications.getNotifications().length is 1
+
+        runs ->
+          expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Opening file'
+          expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'failed'
+          expect(atom.notifications.getNotifications()[0].getDetail()).toContain 'bad process'
+
+      it "handles errors thrown when spawning the OS file manager", ->
+        atom.notifications.clear()
+        spyOn(treeView, 'fileManagerCommandForPath').andReturn
+          command: '/this/command/does/not/exist'
+          label: 'Finder'
+          args: ['foo']
+
+        treeView.showCurrentFileInFileManager()
+
+        waitsFor ->
+          atom.notifications.getNotifications().length is 1
+
+        runs ->
+          expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Opening file in Finder failed'
+          expect(atom.notifications.getNotifications()[0].getDetail()).toContain 'ENOENT'
+
   describe "when reloading a directory with deletions and additions", ->
     it "does not throw an error (regression)", ->
       projectPath = temp.mkdirSync('atom-project')
