@@ -1,6 +1,6 @@
 fs = require 'fs-plus'
 path = require 'path'
-process = require 'process'
+{process} = require 'electron'
 temp = require('temp').track()
 
 DefaultFileIcons = require '../lib/default-file-icons'
