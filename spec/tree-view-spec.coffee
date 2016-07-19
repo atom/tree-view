@@ -3006,7 +3006,6 @@ describe "TreeView", ->
         label: 'OS file manager'
         args: ['foo']
 
-      debugger
       treeView.showSelectedEntryInFileManager()
 
       waitsFor ->
