@@ -505,10 +505,10 @@ class TreeView extends View
     showProcess.onWillThrowError ({error, handle}) ->
       handle()
       handleError(error?.message)
+    showProcess
 
   showSelectedEntryInFileManager: ->
-    entry = @selectedEntry()
-    return unless entry
+    return unless entry = @selectedEntry()
 
     isFile = entry instanceof FileView
     {command, args, label} = @fileManagerCommandForPath(entry.getPath(), isFile)
