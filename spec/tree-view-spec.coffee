@@ -3026,8 +3026,9 @@ describe "TreeView", ->
         atom.workspace.open(filePath)
 
       runs ->
-        fileManagerProcess = treeView.showCurrentFileInFileManager()
         {BufferedProcess} = require 'atom'
+        spyOn(BufferedProcess.prototype, 'spawn').andCallFake ->
+        fileManagerProcess = treeView.showCurrentFileInFileManager()
         expect(fileManagerProcess instanceof BufferedProcess).toBeTruthy()
         fileManagerProcess.kill()
 
