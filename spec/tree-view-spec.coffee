@@ -3002,8 +3002,8 @@ describe "TreeView", ->
 
     it "handle errors thrown when spawning the OS file manager", ->
       spyOn(treeView, 'fileManagerCommandForPath').andReturn
-        command: '/this/command/does/not/exist'
-        label: 'Finder'
+        command: path.normalize('/this/command/does/not/exist')
+        label: 'OS file manager'
         args: ['foo']
 
       treeView.showSelectedEntryInFileManager()
@@ -3012,12 +3012,8 @@ describe "TreeView", ->
         atom.notifications.getNotifications().length is 1
 
       runs ->
-        expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Opening folder in Finder failed'
-
-        if process.platform isnt 'win32'
-          expect(atom.notifications.getNotifications()[0].getDetail()).toContain 'ENOENT'
-        else # Typical Windows
-          expect(atom.notifications.getNotifications()[0].getDetail()).toContain 'The system cannot find the path specified.'
+        expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Opening folder in OS file manager failed'
+        expect(atom.notifications.getNotifications()[0].getDetail()).toContain 'ENOENT'
 
   describe "when reloading a directory with deletions and additions", ->
     it "does not throw an error (regression)", ->
