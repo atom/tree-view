@@ -100,6 +100,6 @@
     {'label': 'Show In File Manager', 'command': 'tree-view:show-current-file-in-file-manager'}
   ]
 
-  'atom-text-editor': [
+  'atom-text-editor:not([mini])': [
     {'label': 'Show In File Manager', 'command': 'tree-view:show-current-file-in-file-manager'}
   ]
