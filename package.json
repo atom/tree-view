@@ -1,6 +1,6 @@
 {
   "name": "tree-view",
-  "version": "0.206.2",
+  "version": "0.208.1",
   "main": "./lib/main",
   "description": "Explore and open files in the current project.",
   "repository": "https://github.com/atom/tree-view",
@@ -65,6 +65,10 @@
       "type": "boolean",
       "default": true,
       "description": "Focus the tree view when revealing entries."
+    },
+    "alwaysOpenExisting": {
+      "type": "boolean",
+      "default": false
     }
   }
 }
