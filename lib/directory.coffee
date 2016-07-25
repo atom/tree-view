@@ -54,6 +54,12 @@ class Directory
   onDidRemoveEntries: (callback) ->
     @emitter.on('did-remove-entries', callback)
 
+  onDidCollapse: (callback) ->
+    @emitter.on('did-collapse', callback)
+
+  onDidExpand: (callback) ->
+    @emitter.on('did-expand', callback)
+
   loadRealPath: ->
     if @useSyncFS
       @realPath = fs.realpathSync(@path)
@@ -251,6 +257,7 @@ class Directory
     @expansionState.isExpanded = false
     @expansionState = @serializeExpansionState()
     @unwatch()
+    @emitter.emit('did-collapse')
 
   # Public: Expand this directory, load its children, and start watching it for
   # changes.
@@ -258,6 +265,7 @@ class Directory
     @expansionState.isExpanded = true
     @reload()
     @watch()
+    @emitter.emit('did-expand')
 
   serializeExpansionState: ->
     expansionState = {}
