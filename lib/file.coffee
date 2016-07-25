@@ -67,3 +67,6 @@ class File
 
   isPathEqual: (pathToCompare) ->
     @path is pathToCompare or @realPath is pathToCompare
+
+  # Return a snapshot of the instance's filesystem properties for API consumption
+  getMetadata: -> {@symlink, @realPath, @status, @stats}
