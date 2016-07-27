@@ -32,6 +32,8 @@ setupPaneFiles = ->
 
 getPaneFileName = (index) -> "test-file-#{index}.txt"
 
+global.testId = 0
+
 describe "TreeView", ->
   [treeView, path1, path2, root1, root2, sampleJs, sampleTxt, workspaceElement] = []
 
@@ -39,6 +41,7 @@ describe "TreeView", ->
     treeView.selectEntryForPath atom.project.getDirectories()[0].resolve pathToSelect
 
   beforeEach ->
+    global.testId++
     expect(atom.config.get('core.allowPendingPaneItems')).toBeTruthy()
 
     fixturesPath = atom.project.getPaths()[0]
@@ -570,6 +573,7 @@ describe "TreeView", ->
     # tests incorrect behavior that only manifested itself on the first
     # UI interaction after the package was activated.
     describe "when the file is permanent", ->
+
       beforeEach ->
         waitsForFileToOpen ->
           atom.workspace.open('tree-view.js')
@@ -594,6 +598,7 @@ describe "TreeView", ->
 
       it "marks the pending file as permanent", ->
         runs ->
+          console.log 'active item path', atom.workspace.getActivePaneItem().getPath()
           expect(atom.workspace.getActivePane().getActiveItem()).toBe editor
           expect(atom.workspace.getActivePane().getPendingItem()).toBe editor
           sampleJs.trigger clickEvent(originalEvent: {detail: 1})
