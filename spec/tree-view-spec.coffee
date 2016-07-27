@@ -590,6 +590,7 @@ describe "TreeView", ->
 
       it "marks the pending file as permanent", ->
         runs ->
+          console.log 'active item path', atom.workspace.getActivePaneItem().getPath()
           expect(atom.workspace.getActivePane().getActiveItem()).toBe editor
           expect(atom.workspace.getActivePane().getPendingItem()).toBe editor
           sampleJs.trigger clickEvent(originalEvent: {detail: 1})
