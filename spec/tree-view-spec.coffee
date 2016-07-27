@@ -573,6 +573,7 @@ describe "TreeView", ->
     # tests incorrect behavior that only manifested itself on the first
     # UI interaction after the package was activated.
     describe "when the file is permanent", ->
+
       beforeEach ->
         waitsForFileToOpen ->
           atom.workspace.open('tree-view.js')
