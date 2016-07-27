@@ -225,8 +225,11 @@ class TreeView extends View
       @openAfterPromise(filePath, searchAllPanes: alwaysOpenExisting)
 
   openAfterPromise: (uri, options) ->
+    testIdWhenStarted = global.testId
     if promise = @currentlyOpening.get(uri)
-      promise.then => atom.workspace.open(uri, options)
+      promise.then ->
+        console.log testIdWhenStarted + ' -> ' + global.testId
+        atom.workspace.open(uri, options)
     else
       atom.workspace.open(uri, options)
 

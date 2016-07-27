@@ -32,6 +32,8 @@ setupPaneFiles = ->
 
 getPaneFileName = (index) -> "test-file-#{index}.txt"
 
+global.testId = 0
+
 describe "TreeView", ->
   [treeView, path1, path2, root1, root2, sampleJs, sampleTxt, workspaceElement] = []
 
@@ -39,6 +41,7 @@ describe "TreeView", ->
     treeView.selectEntryForPath atom.project.getDirectories()[0].resolve pathToSelect
 
   beforeEach ->
+    global.testId++
     expect(atom.config.get('core.allowPendingPaneItems')).toBeTruthy()
 
     fixturesPath = atom.project.getPaths()[0]
