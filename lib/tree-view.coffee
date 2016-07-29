@@ -1,5 +1,5 @@
 path = require 'path'
-{shell} = require 'electron'
+shell = require 'shell'
 
 _ = require 'underscore-plus'
 {BufferedProcess, CompositeDisposable} = require 'atom'
