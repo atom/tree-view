@@ -22,11 +22,18 @@ class FileView extends HTMLElement
     @fileName.classList.add(FileIcons.getService().iconClassForPath(@file.path))
 
     @subscriptions.add @file.onDidStatusChange => @updateStatus()
+    @subscriptions.add @file.onDidIconStatusChange (iconStatus) => @updateIconStatus(iconStatus)
     @updateStatus()
 
   updateStatus: ->
     @classList.remove('status-ignored', 'status-modified',  'status-added')
     @classList.add("status-#{@file.status}") if @file.status?
+
+  updateIconStatus: (newIconStatus) ->
+    if newIconStatus isnt @iconStatus and @iconStatus
+      @classList.remove(@iconStatus)
+    @classList.add(newIconStatus) if newIconStatus
+    @iconStatus = newIconStatus
 
   getPath: ->
     @fileName.dataset.path

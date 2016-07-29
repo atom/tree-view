@@ -48,6 +48,9 @@ class Directory
   onDidStatusChange: (callback) ->
     @emitter.on('did-status-change', callback)
 
+  onDidIconStatusChange: (callback) ->
+    @emitter.on('did-icon-status-change', callback)
+
   onDidAddEntries: (callback) ->
     @emitter.on('did-add-entries', callback)
 
@@ -100,6 +103,11 @@ class Directory
     if newStatus isnt @status
       @status = newStatus
       @emitter.emit('did-status-change', newStatus)
+
+  updateIconStatus: (newIconStatus) ->
+    if newIconStatus isnt @iconStatus
+      @iconStatus = newIconStatus
+      @emitter.emit('did-icon-status-change', newIconStatus)
 
   # Is the given path ignored?
   isPathIgnored: (filePath) ->

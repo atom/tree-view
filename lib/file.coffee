@@ -36,6 +36,9 @@ class File
   onDidStatusChange: (callback) ->
     @emitter.on('did-status-change', callback)
 
+  onDidIconStatusChange: (callback) ->
+    @emitter.on('did-icon-status-change', callback)
+
   # Subscribe to the project' repo for changes to the Git status of this file.
   subscribeToRepo: ->
     repo = repoForPath(@path)
@@ -64,6 +67,11 @@ class File
     if newStatus isnt @status
       @status = newStatus
       @emitter.emit('did-status-change', newStatus)
+
+  updateIconStatus: (newIconStatus) ->
+    if newIconStatus isnt @iconStatus
+      @iconStatus = newIconStatus
+      @emitter.emit('did-icon-status-change', newIconStatus)
 
   isPathEqual: (pathToCompare) ->
     @path is pathToCompare or @realPath is pathToCompare

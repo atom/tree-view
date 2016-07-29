@@ -52,6 +52,8 @@ class DirectoryView extends HTMLElement
     else
       @draggable = true
       @subscriptions.add @directory.onDidStatusChange => @updateStatus()
+      @subscriptions.add @directory.onDidIconStatusChange (iconStatus) =>
+        @updateIconStatus(iconStatus)
       @updateStatus()
 
     @expand() if @directory.expansionState.isExpanded
@@ -59,6 +61,12 @@ class DirectoryView extends HTMLElement
   updateStatus: ->
     @classList.remove('status-ignored', 'status-modified', 'status-added')
     @classList.add("status-#{@directory.status}") if @directory.status?
+
+  updateIconStatus: (newIconStatus) ->
+    if newIconStatus isnt @iconStatus and @iconStatus
+      @classList.remove(@iconStatus)
+    @classList.add(newIconStatus) if newIconStatus
+    @iconStatus = newIconStatus
 
   subscribeToDirectory: ->
     @subscriptions.add @directory.onDidAddEntries (addedEntries) =>
