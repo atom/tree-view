@@ -36,7 +36,7 @@ class File
   onDidStatusChange: (callback) ->
     @emitter.on('did-status-change', callback)
 
-  # Subscribe to the project' repo for changes to the Git status of this file.
+  # Subscribe to the project's repo for changes to the Git status of this file.
   subscribeToRepo: ->
     repo = repoForPath(@path)
     return unless repo?
@@ -67,6 +67,3 @@ class File
 
   isPathEqual: (pathToCompare) ->
     @path is pathToCompare or @realPath is pathToCompare
-
-  # Return a snapshot of the instance's filesystem properties for API consumption
-  getMetadata: -> {@symlink, @realPath, @status, @stats}

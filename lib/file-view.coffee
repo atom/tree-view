@@ -19,7 +19,7 @@ class FileView extends HTMLElement
     @fileName.dataset.name = @file.name
     @fileName.dataset.path = @file.path
 
-    iconClass = FileIcons.getService().iconClassForPath(@file.path, @file.getMetadata())
+    iconClass = FileIcons.getService().iconClassForPath(@file.path)
     if iconClass
       unless Array.isArray iconClass
         iconClass = iconClass.toString().split(/\s+/g)

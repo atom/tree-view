@@ -3349,11 +3349,7 @@ describe 'Icon class handling', ->
     jasmine.attachToDOM(workspaceElement)
 
     FileIcons.setService
-      iconClassForPath: (path, info) ->
-        expect(info).toBeDefined()
-        expect(info.hasOwnProperty "symlink").toBe true
-        expect(info.hasOwnProperty "stats").toBe true
-
+      iconClassForPath: (path) ->
         [name, id] = path.match(/file-(\d+)\.txt$/)
         switch id
           when "1" then 'first second'
