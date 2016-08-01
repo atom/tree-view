@@ -3349,7 +3349,8 @@ describe 'Icon class handling', ->
     jasmine.attachToDOM(workspaceElement)
 
     FileIcons.setService
-      iconClassForPath: (path) ->
+      iconClassForPath: (path, context) ->
+        expect(context).toBe "tree-view"
         [name, id] = path.match(/file-(\d+)\.txt$/)
         switch id
           when "1" then 'first second'
