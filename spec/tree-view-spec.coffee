@@ -1227,6 +1227,31 @@ describe "TreeView", ->
           atom.commands.dispatch(treeView.element, 'tree-view:open-selected-entry')
           expect(atom.workspace.getActivePaneItem()).toBeUndefined()
 
+      describe "tree-view:open-selected-entry-without-activate", ->
+        ensurePreviewOpen = (fileName) ->
+          runs ->
+            file = root1.find(".file:contains(#{fileName})")[0]
+            treeView.selectEntry(file)
+
+          waitsForFileToOpen ->
+            atom.commands.dispatch(treeView.element, 'tree-view:open-selected-entry-without-activate')
+
+          runs ->
+            item = atom.workspace.getActivePaneItem()
+            expect(item.getPath()).toBe atom.project.getDirectories()[0].resolve(fileName)
+            expect(atom.views.getView(item)).not.toHaveFocus()
+            expect(atom.workspace.getActivePane().getPendingItem()).toEqual(item)
+            expect(treeView).toHaveFocus()
+
+        beforeEach ->
+          jasmine.attachToDOM(workspaceElement)
+          treeView.focus()
+          expect(treeView).toHaveFocus()
+
+        it "opens the file with pending state and focus remains on treeView", ->
+          ensurePreviewOpen('tree-view.js')
+          ensurePreviewOpen('tree-view.txt')
+
     describe "opening in new split panes", ->
       splitOptions =
         right: ['horizontal', 'after']
