@@ -29,8 +29,11 @@ class FileView extends HTMLElement
     @updateStatus()
 
   updateStatus: ->
-    @classList.remove('status-ignored', 'status-modified',  'status-added')
-    @classList.add("status-#{@file.status}") if @file.status?
+    @classList.remove(
+      'status-added', 'status-updated',
+      'status-unmerged', 'status-changed','status-untracked',
+      'status-conflicted', 'status-unmodified', 'status-ignored')
+    @classList.add.apply(@classList, @file.statuses.map (s) -> "status-#{s}")
 
   getPath: ->
     @fileName.dataset.path

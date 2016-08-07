@@ -1,0 +1,51 @@
+
+@import "ui-variables";
+@red: @text-color-error;
+@green: @text-color-success;
+
+.gradient-text(@color1, @color2) {
+  background: linear-gradient(to right, @color1, @color2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.tree-view {
+   // new file, staged
+  .status-added .name {
+    color: @green;
+  }
+   // modified and staged
+  .status-updated .name {
+    color: @green;
+  }
+
+  // The same file has both staged and unstaged parts
+  .status-updated.status-changed,
+  .status-added.status-changed {
+    .name {
+      .gradient-text(@green, @red);
+    }
+  }
+
+  .status-unmerged .name {
+    color: @red;
+  }
+
+  // modified, but not staged
+  .status-changed .name {
+    color: @red;
+  }
+
+  // new file, not yet staged
+  .status-untracked .name {
+    color: @red;
+  }
+
+  .status-conflicted .name {
+    color: @red;
+  }
+
+  .status-unmodified .name {
+    // nothing
+  }
+}
