@@ -2605,9 +2605,13 @@ describe "TreeView", ->
       it "adds a custom style", ->
         $(treeView.roots[0].entries).find('.directory:contains(dir2)')[0].expand()
         expect(treeView.find('.file:contains(new2)')).toHaveClass 'status-untracked'
+      it "adds a custom style to the directory too", ->
+        expect(treeView.find('.directory:contains(dir2)')).toHaveClass 'status-changed'
 
     describe "when a directory is new", ->
       it "adds a custom style", ->
+        expect(treeView.find('.directory:contains(dir2)')).toHaveClass 'status-changed'
+      it "adds a custom style to it's parent too", ->
         expect(treeView.find('.directory:contains(dir2)')).toHaveClass 'status-changed'
 
     describe "when a file is ignored", ->
