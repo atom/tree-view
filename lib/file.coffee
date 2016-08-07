@@ -71,7 +71,7 @@ class File
     if repo.isPathIgnored(@path)
       newStatuses = ['ignored']
     else
-      statusCode = repo.getCachedPathStatus(@path)
+      statusCode = repo.getCachedPathStatus(@path) || repo.getPathStatus(@path)
       index =
         if statusCode & GIT_STATUS_INDEX_NEW
           # git treats added the same as updated internally, but provides a
