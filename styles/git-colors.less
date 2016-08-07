@@ -4,48 +4,69 @@
 @green: @text-color-success;
 
 .gradient-text(@color1, @color2) {
-  background: linear-gradient(to right, @color1, @color2);
+  background-image: linear-gradient(to bottom, @color1, @color2);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
+// apply @rules to dirs and files
+.entries(@rules) {
+  &.directory .header .name, // dir name
+  &.directory .header .name::before, // dir icon
+  &.file { // file
+    @rules();
+  }
+}
+
 .tree-view {
    // new file, staged
-  .status-added .name {
-    color: @green;
+  .status-added {
+    .entries({
+      color: @green;
+    })
   }
    // modified and staged
-  .status-updated .name {
-    color: @green;
+  .status-updated {
+    .entries({
+      color: @green;
+    })
   }
 
   // The same file has both staged and unstaged parts
   .status-updated.status-changed,
   .status-added.status-changed {
-    .name {
+    .entries({
       .gradient-text(@green, @red);
-    }
-  }
-
-  .status-unmerged .name {
-    color: @red;
+    })
   }
 
   // modified, but not staged
-  .status-changed .name {
-    color: @red;
+  .status-changed {
+    .entries({
+        color: @red;
+    })
+  }
+
+  .status-unmerged {
+    .entries({
+      color: @red;
+    })
   }
 
   // new file, not yet staged
-  .status-untracked .name {
-    color: @red;
+  .status-untracked {
+    .entries({
+      color: @red;
+    })
   }
 
-  .status-conflicted .name {
-    color: @red;
+  .status-conflicted {
+    .entries({
+      color: @red;
+    })
   }
 
-  .status-unmodified .name {
+  .status-unmodified {
     // nothing
   }
 }

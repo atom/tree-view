@@ -27,7 +27,7 @@ class Directory
     @expansionState ?= {}
     @expansionState.isExpanded ?= false
     @expansionState.entries ?= {}
-    @status = null
+    @statuses = []
     @entries = {}
 
     @submodule = repoForPath(@path)?.isSubmodule(@path)
@@ -84,22 +84,66 @@ class Directory
 
   # Update the status property of this directory using the repo.
   updateStatus: ->
+    GIT_STATUS_INDEX_NEW        = 1 << 0
+    GIT_STATUS_INDEX_MODIFIED   = 1 << 1
+    GIT_STATUS_INDEX_DELETED    = 1 << 2
+    GIT_STATUS_INDEX_RENAMED    = 1 << 3
+    GIT_STATUS_INDEX_TYPECHANGE = 1 << 4
+    GIT_STATUS_WT_NEW           = 1 << 7
+    GIT_STATUS_WT_MODIFIED      = 1 << 8
+    GIT_STATUS_WT_DELETED       = 1 << 9
+    GIT_STATUS_WT_TYPECHANGE    = 1 << 10
+    GIT_STATUS_WT_RENAMED       = 1 << 11
+    GIT_STATUS_WT_UNREADABLE    = 1 << 12
+    GIT_STATUS_IGNORED          = 1 << 14
+    GIT_STATUS_CONFLICTED       = 1 << 15
+
     repo = repoForPath(@path)
     return unless repo?
 
-    newStatus = null
+    newStatuses = []
     if repo.isPathIgnored(@path)
-      newStatus = 'ignored'
+      newStatuses = ['ignored']
     else
-      status = repo.getDirectoryStatus(@path)
-      if repo.isStatusModified(status)
-        newStatus = 'modified'
-      else if repo.isStatusNew(status)
-        newStatus = 'added'
+      statusCode = repo.getDirectoryStatus(@path)
 
-    if newStatus isnt @status
-      @status = newStatus
-      @emitter.emit('did-status-change', newStatus)
+      # statusCode is a combined code for every file in the directory. There are
+      # a lot of possible statuses, and to show them effectively, we need to cut
+      # down the number of statuses to a reasonable number (esp since the
+      # combinations are large).
+      # - move "added" into "updated" (the dir is updated, after all)
+      # - move "untracked" into "changed" (the dir is changed, after all
+      # - ignored files only matter if the only files in the dir are ignored
+
+      if statusCode & GIT_STATUS_INDEX_NEW \
+      || statusCode & GIT_STATUS_INDEX_MODIFIED \
+      || statusCode & GIT_STATUS_INDEX_DELETED \
+      || statusCode & GIT_STATUS_INDEX_RENAMED \
+      || statusCode & GIT_STATUS_INDEX_TYPECHANGE
+        newStatuses.push "updated"
+
+      if statusCode & GIT_STATUS_WT_MODIFIED \
+      || statusCode & GIT_STATUS_WT_DELETED \
+      || statusCode & GIT_STATUS_WT_TYPECHANGE \
+      || statusCode & GIT_STATUS_WT_RENAMED \
+      || statusCode & GIT_STATUS_WT_UNREADABLE \
+      || statusCode & GIT_STATUS_WT_NEW
+        newStatuses.push "changed"
+
+      if statusCode & GIT_STATUS_CONFLICTED
+        newStatuses.push "conflicted"
+
+      if statusCode & GIT_STATUS_IGNORED \
+      && newStatuses == []
+        newStatuses.push "ignored"
+
+      if newStatuses == []
+        newStatuses = ["unmodified"]
+
+
+    if newStatuses isnt @statuses
+      @statuses = newStatuses
+      @emitter.emit('did-status-change', newStatuses)
 
   # Is the given path ignored?
   isPathIgnored: (filePath) ->
