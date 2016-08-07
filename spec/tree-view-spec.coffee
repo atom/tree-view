@@ -2595,20 +2595,20 @@ describe "TreeView", ->
     describe "when a file is modified", ->
       it "adds a custom style", ->
         $(treeView.roots[0].entries).find('.directory:contains(dir)')[0].expand()
-        expect(treeView.find('.file:contains(b.txt)')).toHaveClass 'status-modified'
+        expect(treeView.find('.file:contains(b.txt)')).toHaveClass 'status-changed'
 
-    describe "when a directory if modified", ->
+    describe "when a directory is modified", ->
       it "adds a custom style", ->
-        expect(treeView.find('.directory:contains(dir)')).toHaveClass 'status-modified'
+        expect(treeView.find('.directory:contains(dir)')).toHaveClass 'status-changed'
 
     describe "when a file is new", ->
       it "adds a custom style", ->
         $(treeView.roots[0].entries).find('.directory:contains(dir2)')[0].expand()
-        expect(treeView.find('.file:contains(new2)')).toHaveClass 'status-added'
+        expect(treeView.find('.file:contains(new2)')).toHaveClass 'status-untracked'
 
     describe "when a directory is new", ->
       it "adds a custom style", ->
-        expect(treeView.find('.directory:contains(dir2)')).toHaveClass 'status-added'
+        expect(treeView.find('.directory:contains(dir2)')).toHaveClass 'status-changed'
 
     describe "when a file is ignored", ->
       it "adds a custom style", ->
@@ -2648,16 +2648,16 @@ describe "TreeView", ->
 
       describe "when a file is modified", ->
         it "updates its and its parent directories' styles", ->
-          expect(treeView.find('.file:contains(b.txt)')).toHaveClass 'status-modified'
-          expect(treeView.find('.directory:contains(dir)')).toHaveClass 'status-modified'
+          expect(treeView.find('.file:contains(b.txt)')).toHaveClass 'status-changed'
+          expect(treeView.find('.directory:contains(dir)')).toHaveClass 'status-changed'
 
       describe "when a file loses its modified status", ->
         it "updates its and its parent directories' styles", ->
           fs.writeFileSync(modifiedFile, originalFileContent)
           atom.project.getRepositories()[0].getPathStatus(modifiedFile)
 
-          expect(treeView.find('.file:contains(b.txt)')).not.toHaveClass 'status-modified'
-          expect(treeView.find('.directory:contains(dir)')).not.toHaveClass 'status-modified'
+          expect(treeView.find('.file:contains(b.txt)')).not.toHaveClass 'status-changed'
+          expect(treeView.find('.directory:contains(dir)')).not.toHaveClass 'status-changed'
 
   describe "when the resize handle is double clicked", ->
     beforeEach ->
@@ -3336,14 +3336,14 @@ describe "TreeView", ->
 
 describe 'Icon class handling', ->
   [workspaceElement, treeView, files] = []
-  
+
   beforeEach ->
     rootDirPath = fs.absolute(temp.mkdirSync('tree-view-root1'))
-    
+
     for i in [1..3]
       filepath = path.join(rootDirPath, "file-#{i}.txt")
       fs.writeFileSync(filepath, "Nah")
-    
+
     atom.project.setPaths([rootDirPath])
     workspaceElement = atom.views.getView(atom.workspace)
     jasmine.attachToDOM(workspaceElement)
@@ -3358,11 +3358,11 @@ describe 'Icon class handling', ->
 
     waitsForPromise ->
       atom.packages.activatePackage('tree-view')
-    
+
     runs ->
       treeView = atom.packages.getActivePackage("tree-view").mainModule.createView()
       files = workspaceElement.querySelectorAll('li[is="tree-view-file"]')
-    
+
   afterEach ->
     temp.cleanup()
 
