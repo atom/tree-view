@@ -116,28 +116,27 @@ class Directory
       # - ignored files only matter if the only files in the dir are ignored
 
       if statusCode & GIT_STATUS_INDEX_NEW \
-      || statusCode & GIT_STATUS_INDEX_MODIFIED \
-      || statusCode & GIT_STATUS_INDEX_DELETED \
-      || statusCode & GIT_STATUS_INDEX_RENAMED \
-      || statusCode & GIT_STATUS_INDEX_TYPECHANGE
+      or statusCode & GIT_STATUS_INDEX_MODIFIED \
+      or statusCode & GIT_STATUS_INDEX_DELETED \
+      or statusCode & GIT_STATUS_INDEX_RENAMED \
+      or statusCode & GIT_STATUS_INDEX_TYPECHANGE
         newStatuses.push "updated"
 
       if statusCode & GIT_STATUS_WT_MODIFIED \
-      || statusCode & GIT_STATUS_WT_DELETED \
-      || statusCode & GIT_STATUS_WT_TYPECHANGE \
-      || statusCode & GIT_STATUS_WT_RENAMED \
-      || statusCode & GIT_STATUS_WT_UNREADABLE \
-      || statusCode & GIT_STATUS_WT_NEW
+      or statusCode & GIT_STATUS_WT_DELETED \
+      or statusCode & GIT_STATUS_WT_TYPECHANGE \
+      or statusCode & GIT_STATUS_WT_RENAMED \
+      or statusCode & GIT_STATUS_WT_UNREADABLE \
+      or statusCode & GIT_STATUS_WT_NEW
         newStatuses.push "changed"
 
       if statusCode & GIT_STATUS_CONFLICTED
         newStatuses.push "conflicted"
 
-      if statusCode & GIT_STATUS_IGNORED \
-      && newStatuses == []
+      if statusCode & GIT_STATUS_IGNORED and newStatuses is []
         newStatuses.push "ignored"
 
-      if newStatuses == []
+      if newStatuses is []
         newStatuses = ["unmodified"]
 
 

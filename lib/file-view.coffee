@@ -31,7 +31,7 @@ class FileView extends HTMLElement
   updateStatus: ->
     @classList.remove(
       'status-added', 'status-updated',
-      'status-unmerged', 'status-changed','status-untracked',
+      'status-unmerged', 'status-changed', 'status-untracked',
       'status-conflicted', 'status-unmodified', 'status-ignored')
     @classList.add.apply(@classList, @file.statuses.map (s) -> "status-#{s}")
 

@@ -71,24 +71,24 @@ class File
     if repo.isPathIgnored(@path)
       newStatuses = ['ignored']
     else
-      statusCode = repo.getCachedPathStatus(@path) || repo.getPathStatus(@path)
+      statusCode = repo.getCachedPathStatus(@path) or repo.getPathStatus(@path)
       index =
         if statusCode & GIT_STATUS_INDEX_NEW
           # git treats added the same as updated internally, but provides a
           # different configuration slot name
           "added"
         else if statusCode & GIT_STATUS_INDEX_MODIFIED \
-             || statusCode & GIT_STATUS_INDEX_DELETED \
-             || statusCode & GIT_STATUS_INDEX_RENAMED \
-             || statusCode & GIT_STATUS_INDEX_TYPECHANGE
+             or statusCode & GIT_STATUS_INDEX_DELETED \
+             or statusCode & GIT_STATUS_INDEX_RENAMED \
+             or statusCode & GIT_STATUS_INDEX_TYPECHANGE
           "updated"
 
       working =
         if statusCode & GIT_STATUS_WT_MODIFIED \
-        || statusCode & GIT_STATUS_WT_DELETED \
-        || statusCode & GIT_STATUS_WT_TYPECHANGE \
-        || statusCode & GIT_STATUS_WT_RENAMED \
-        || statusCode & GIT_STATUS_WT_UNREADABLE
+        or statusCode & GIT_STATUS_WT_DELETED \
+        or statusCode & GIT_STATUS_WT_TYPECHANGE \
+        or statusCode & GIT_STATUS_WT_RENAMED \
+        or statusCode & GIT_STATUS_WT_UNREADABLE
           "changed"
 
 
@@ -101,7 +101,7 @@ class File
           "conflicted"
 
       newStatuses = [index, working, overall].filter (x) -> x?
-      newStatuses = ["unmodified"] if newStatuses == []
+      newStatuses = ["unmodified"] if newStatuses is []
 
     if newStatuses isnt @statuses
       @statuses = newStatuses
