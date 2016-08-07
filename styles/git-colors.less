@@ -11,8 +11,8 @@
 
 // apply @rules to dirs and files
 .entries(@rules) {
-  &.directory .header .name, // dir name
-  &.directory .header .name::before, // dir icon
+  &.directory > .header > .name, // dir name
+  &.directory > .header > .name::before, // dir icon
   &.file { // file
     @rules();
   }
