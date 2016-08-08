@@ -150,6 +150,8 @@ class TreeView extends View
       @updateRoots() if atom.config.get('tree-view.hideIgnoredNames')
     @disposables.add atom.config.onDidChange 'tree-view.showOnRightSide', ({newValue}) =>
       @onSideToggled(newValue)
+    @disposables.add atom.config.onDidChange 'tree-view.sortByCase', =>
+      @updateRoots()
     @disposables.add atom.config.onDidChange 'tree-view.sortFoldersBeforeFiles', =>
       @updateRoots()
     @disposables.add atom.config.onDidChange 'tree-view.squashDirectoryNames', =>
