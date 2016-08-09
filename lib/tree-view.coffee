@@ -275,6 +275,11 @@ class TreeView extends View
     @loadIgnoredPatterns()
 
     @roots = for projectPath in atom.project.getPaths()
+      stats = fs.lstatSyncNoException(projectPath)
+      stats = _.pick stats, _.keys(stats)...
+      for key in ["atime", "birthtime", "ctime", "mtime"]
+        stats[key] = stats[key].getTime()
+      
       directory = new Directory({
         name: path.basename(projectPath)
         fullPath: projectPath
@@ -285,6 +290,7 @@ class TreeView extends View
                         {isExpanded: true}
         @ignoredPatterns
         @useSyncFS
+        stats
       })
       root = new DirectoryView()
       root.initialize(directory)
