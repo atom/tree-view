@@ -2,19 +2,17 @@ RemoteFileSystem = require('./remote-file-system')
 
 module.exports = nsync =
   activate: ->
-    nsync.setProject()
+    @removeProjects()
 
-    remoteFS = new RemoteFileSystem(atom.project.getPaths()[0])
+    remoteFS = new RemoteFileSystem()
     atom.learnIDE = {remoteFS}
 
   deactive: ->
-    nsync.resetProjects()
+    @resetProjects()
 
-  setProject: ->
+  removeProjects: ->
     @projectPaths = atom.project.getPaths()
     @projectPaths.forEach (path) -> atom.project.removePath(path)
-
-    atom.project.addPath('/home/drewprice/code')
 
   resetProjects: ->
     atom.project.getPaths().forEach (path) -> atom.project.removePath(path)

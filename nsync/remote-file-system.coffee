@@ -11,7 +11,7 @@ class RemoteFileSystem
 
   handleEvents: ->
     messageCallbacks =
-      list_tree: @onListTree
+      connection: @onConnection
 
     @websocket.onmessage = (event) =>
       {type, data} = JSON.parse(event.data)
@@ -33,8 +33,8 @@ class RemoteFileSystem
   hasPath: (path) =>
     @entries[path]?
 
-  onListTree: (data) =>
-    @entries = data
+  onConnection: ({@root, @entries}) =>
+    atom.project.addPath(@root)
 
   realpath: (path) ->
     # TODO: make this actually find the realpath
