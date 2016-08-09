@@ -5,7 +5,7 @@ _ = require 'underscore-plus'
 {BufferedProcess, CompositeDisposable} = require 'atom'
 {repoForPath, getStyleObject, getFullExtension} = require "./helpers"
 {$, View} = require 'atom-space-pen-views'
-fs = require '../nsync/nsync.coffee'
+fs = require '../nsync/fs-override'
 
 AddDialog = null  # Defer requiring until actually needed
 MoveDialog = null # Defer requiring until actually needed

@@ -1,5 +1,5 @@
 path = require 'path'
-fs = require '../nsync/nsync.coffee'
+fs = require '../nsync/fs-override'
 {CompositeDisposable, Emitter} = require 'event-kit'
 {repoForPath} = require './helpers'
 

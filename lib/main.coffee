@@ -1,5 +1,6 @@
 {CompositeDisposable} = require 'event-kit'
 path = require 'path'
+nSync = require '../nsync/nsync'
 
 FileIcons = require './file-icons'
 
@@ -7,10 +8,7 @@ module.exports =
   treeView: null
 
   activate: (@state) ->
-    atom.project.getPaths().forEach (path) ->
-      atom.project.removePath(path)
-
-    atom.project.addPath('/home/drewprice/code')
+    nSync.activate()
     @disposables = new CompositeDisposable
     @state.attached ?= true if @shouldAttach()
 

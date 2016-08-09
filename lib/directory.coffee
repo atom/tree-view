@@ -1,7 +1,7 @@
 path = require 'path'
 _ = require 'underscore-plus'
 {CompositeDisposable, Emitter} = require 'event-kit'
-fs = require '../nsync/nsync.coffee'
+fs = require '../nsync/fs-override'
 PathWatcher = require 'pathwatcher'
 File = require './file'
 {repoForPath} = require './helpers'

@@ -1,76 +1,21 @@
-fs = require 'fs-plus'
-RemoteFileSystem = require './remote-file-system.coffee'
-
-remoteFS = new RemoteFileSystem(atom.project.getPaths()[0])
-
-isPathValid = (path) ->
-  path? and typeof path is 'string' and path.length > 0
+RemoteFileSystem = require('./remote-file-system')
 
 module.exports = nsync =
+  activate: ->
+    nsync.setProject()
 
-#absolute
-#copySync
+    remoteFS = new RemoteFileSystem(atom.project.getPaths()[0])
+    atom.learnIDE = {remoteFS}
 
-  existsSync: (path) ->
-    isPathValid(path) and remoteFS.hasPath(path)
+  deactive: ->
+    nsync.resetProjects()
 
-  isBinaryExtension: (ext) ->
-    fs.isBinaryExtension(ext)
+  setProject: ->
+    @projectPaths = atom.project.getPaths()
+    @projectPaths.forEach (path) -> atom.project.removePath(path)
 
-  isCaseInsensitive: ->
-    false
+    atom.project.addPath('/home/drewprice/code')
 
-  isCompressedExtension: (ext) ->
-    fs.isCompressedExtension(ext)
-
-  isDirectorySync: (path) ->
-    node = remoteFS.getNode(path)
-    node.isDirectory()
-
-  isFileSync: (path) ->
-    node = remoteFS.getNode(path)
-    node.isFile()
-
-  isImageExtension: (ext) ->
-    fs.isImageExtension(ext)
-
-  isPdfExtension: (ext) ->
-    fs.isPdfExtension(ext)
-
-  isReadmePath: (path) ->
-    fs.isReadmePath(path)
-
-  isSymbolicLinkSync: (path) ->
-    node = remoteFS.getNode(path)
-    node.isSymbolicLink()
-
-  lstatSyncNoException: (path) ->
-    node = remoteFS.getNode(path)
-    node.getStat()
-
-  listSync: (path, extensions) ->
-    node = remoteFS.getNode(path)
-    node.list(extensions) # TODO: return array of entries by full path, not recursive. extensions optional
-
-#makeTreeSync
-#mkdirSync
-#moveSync
-
-  readFileSync: (path) ->
-    node = remoteFS.getNode(path)
-
-  readdirSync: (path) ->
-    node = remoteFS.getNode(path)
-    node.entries
-
-  realpathSync: (path) ->
-    remoteFS.realpath(path) # TODO: return resolved realpath, or something?
-
-  realpath: (path) ->
-    remoteFS.realpath(path) # TODO: return resolved realpath, or something?
-
-#removeSync
-#statSync
-#statSyncNoException
-#symlinkSync
-#writeFileSync
+  resetProjects: ->
+    atom.project.getPaths().forEach (path) -> atom.project.removePath(path)
+    @projectPaths.forEach (path) -> atom.project.addPath(path)
