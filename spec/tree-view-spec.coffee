@@ -2571,10 +2571,12 @@ describe "TreeView", ->
         it "squashes the directory names the last of which is same as an unsquashed directory", ->
           muDir = $(treeView.roots[0].entries).find('.directory:contains(mu):first')
           muDir[0].expand()
-          muDir[0].reload()
-          muEntries = [].slice.call(muDir[0].children[1].children).map (element) ->
-            element.innerText
+          muEntries = Array.from(muDir[0].children[1].children).map (element) -> element.innerText
+          expect(muEntries).toEqual(["nu#{path.sep}xi", "xi"])
 
+          muDir[0].expand()
+          muDir[0].reload()
+          muEntries = Array.from(muDir[0].children[1].children).map (element) -> element.innerText
           expect(muEntries).toEqual(["nu#{path.sep}xi", "xi"])
 
   describe "Git status decorations", ->
