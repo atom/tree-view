@@ -7,7 +7,7 @@ module.exports = nsync =
     remoteFS = new RemoteFileSystem()
     atom.learnIDE = {remoteFS}
 
-  deactive: ->
+  deactivate: ->
     @resetProjects()
 
   removeProjects: ->

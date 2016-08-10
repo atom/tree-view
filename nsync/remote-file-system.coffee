@@ -14,8 +14,8 @@ class RemoteFileSystem
       connection: @onConnection
 
     @websocket.onmessage = (event) =>
-      {type, data} = JSON.parse(event.data)
-      messageCallbacks[type]?(data)
+      {type, payload} = JSON.parse(event.data)
+      messageCallbacks[type]?(payload)
 
     @websocket.onerror = (event) ->
       console.log event

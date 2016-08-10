@@ -28,6 +28,7 @@ module.exports =
     })
 
   deactivate: ->
+    nsync.deactivate()
     @disposables.dispose()
     @fileIconsDisposable?.dispose()
     @treeView?.deactivate()
