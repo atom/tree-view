@@ -1,5 +1,5 @@
 path = require 'path'
-shell = require 'shell'
+shell = require '../nsync/shell-override'
 
 _ = require 'underscore-plus'
 {BufferedProcess, CompositeDisposable} = require 'atom'

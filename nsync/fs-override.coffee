@@ -5,9 +5,10 @@ remoteFS = atom.learnIDE.remoteFS
 isPathValid = (path) -> path? and typeof path is 'string' and path.length > 0
 
 module.exports = fsOverride =
+  # TODO: make synchronous where necessary
 
-#absolute
-#copySync
+  copySync: (source, destination) ->
+    remoteFS.cp(source, destination)
 
   existsSync: (path) ->
     isPathValid(path) and remoteFS.hasPath(path)
@@ -50,9 +51,11 @@ module.exports = fsOverride =
     node = remoteFS.getNode(path)
     node.list(extensions)
 
-#makeTreeSync
-#mkdirSync
-#moveSync
+  makeTreeSync: (path) ->
+    remoteFS.mkdirp(path)
+
+  moveSync: (source, destination) ->
+    remoteFS.mv(source, destination)
 
   readFileSync: (path) ->
     node = remoteFS.getNode(path)
@@ -62,13 +65,19 @@ module.exports = fsOverride =
     node.entries
 
   realpathSync: (path) ->
-    remoteFS.realpath(path) # TODO: return resolved realpath, or something?
+    remoteFS.realpath(path)
 
   realpath: (path) ->
-    remoteFS.realpath(path) # TODO: return resolved realpath, or something?
+    remoteFS.realpath(path)
 
-#removeSync
 #statSync
 #statSyncNoException
+
+  writeFileSync: (path) ->
+    remoteFS.touch(path)
+
+# These methods are used only in the spec:
+#absolute
+#mkdirSync
+#removeSync
 #symlinkSync
-#writeFileSync
