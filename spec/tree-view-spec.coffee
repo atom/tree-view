@@ -2500,6 +2500,11 @@ describe "TreeView", ->
       iotaDirPath = path.join(lambdaDirPath, "iota")
       kappaDirPath = path.join(lambdaDirPath, "kappa")
 
+      muDirPath = path.join(rootDirPath, "mu")
+      nuDirPath = path.join(muDirPath, "nu")
+      xiDirPath1 = path.join(muDirPath, "xi")
+      xiDirPath2 = path.join(nuDirPath, "xi")
+
       fs.makeTreeSync(zetaDirPath)
       fs.writeFileSync(zetaFilePath, "doesn't matter")
 
@@ -2515,6 +2520,11 @@ describe "TreeView", ->
       fs.makeTreeSync(lambdaDirPath)
       fs.makeTreeSync(iotaDirPath)
       fs.makeTreeSync(kappaDirPath)
+
+      fs.makeTreeSync(muDirPath)
+      fs.makeTreeSync(nuDirPath)
+      fs.makeTreeSync(xiDirPath1)
+      fs.makeTreeSync(xiDirPath2)
 
       atom.project.setPaths([rootDirPath])
 
@@ -2556,6 +2566,18 @@ describe "TreeView", ->
           element.innerText
 
         expect(lambdaEntries).toEqual(["iota", "kappa"])
+
+      describe "when a directory is reloaded", ->
+        it "squashes the directory names the last of which is same as an unsquashed directory", ->
+          muDir = $(treeView.roots[0].entries).find('.directory:contains(mu):first')
+          muDir[0].expand()
+          muEntries = Array.from(muDir[0].children[1].children).map (element) -> element.innerText
+          expect(muEntries).toEqual(["nu#{path.sep}xi", "xi"])
+
+          muDir[0].expand()
+          muDir[0].reload()
+          muEntries = Array.from(muDir[0].children[1].children).map (element) -> element.innerText
+          expect(muEntries).toEqual(["nu#{path.sep}xi", "xi"])
 
   describe "Git status decorations", ->
     [projectPath, modifiedFile, originalFileContent] = []

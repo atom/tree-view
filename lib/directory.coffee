@@ -289,7 +289,6 @@ class Directory
       fullPath = path.join(fullPath, relativeDir)
 
     if squashedDirs.length > 1
-      @squashedName = squashedDirs[0..squashedDirs.length - 2].join(path.sep) + path.sep
-    @name = squashedDirs[squashedDirs.length - 1]
+      @squashedNames = [squashedDirs[0..squashedDirs.length - 2].join(path.sep) + path.sep, _.last(squashedDirs)]
 
     return fullPath
