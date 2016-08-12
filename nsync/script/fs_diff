@@ -1,7 +1,7 @@
 #!/bin/bash
 
-grep -ohr "fs\.\w*[(| ]" * --exclude-dir=node_modules --exclude-dir=nsnyc | sed 's/^fs\.\(.*\).$/\1/' | sort -u > fs_tree_view
-grep -ohr "\w*: [(|-]" nsync/fs-override* | sed 's/.\{3\}$//' | sort -u > fs_nsnyc
-diff fs_tree_view fs_nsnyc
-rm fs_tree_view fs_nsnyc
+grep -ohr "fs\.\w*[(| ]" * --exclude-dir=node_modules --exclude-dir=nsync | sed 's/^fs\.\(.*\).$/\1/' | sort -u > fs_tree_view
+grep -ohr "\w*: [(|-]" nsync/fs-override* | sed 's/.\{3\}$//' | sort -u > fs_nsync
+diff fs_tree_view fs_nsync
+rm fs_tree_view fs_nsync
 
