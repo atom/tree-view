@@ -1,4 +1,5 @@
-FileSystemNode = require './file-system-node.coffee'
+nsync = require './nsync'
+FileSystemNode = require './file-system-node'
 
 serverURI = 'ws://vm02.students.learn.co:3304/no_strings_attached'
 token     = atom.config.get('integrated-learn-environment.oauthToken')
@@ -30,34 +31,23 @@ class RemoteFileSystem
     @websocket.onopen = (event) ->
       console.log event
 
-  send: (data) ->
-    payload = JSON.stringify(data)
-    console.log "send: #{payload}"
-    @websocket.send(payload)
-
   onChange: ({@entries, path, parent}) =>
     console.log "Change: #{path}"
-    learnIDE.treeView.entryForPath(parent)?.reload?()
-    learnIDE.treeView.selectEntryForPath(path)
+    nsync.refreshTree(path, parent)
 
   onConnection: ({@root, @entries}) =>
-    @projectPaths = atom.project.getPaths()
-    @projectPaths.forEach (path) -> atom.project.removePath(path)
-    atom.project.addPath(@root)
+    nsync.setProject(@root)
 
   onRescue: ({message}) ->
     console.log "RESCUE: #{message}"
 
   onClose: ->
-    atom.project.removePath(@root)
-    @projectPaths.forEach (path) -> atom.project.addPath(path)
+    nsync.resetProjects()
 
-  getNode: (path) =>
-    entry = @entries[path]
-    new FileSystemNode(entry)
-
-  hasPath: (path) =>
-    @entries[path]?
+  send: (data) ->
+    payload = JSON.stringify(data)
+    console.log "send: #{payload}"
+    @websocket.send(payload)
 
   fakeDelete: (path) =>
     @send {command: 'fake_delete', path}
@@ -77,4 +67,11 @@ class RemoteFileSystem
   realpath: (path) ->
     # TODO: make this actually find the realpath
     path
+
+  getNode: (path) =>
+    entry = @entries[path]
+    new FileSystemNode(entry)
+
+  hasPath: (path) =>
+    @entries[path]?
 
