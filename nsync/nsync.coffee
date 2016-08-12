@@ -13,7 +13,7 @@ module.exports = nsync =
 
   resetProjects: ->
     atom.project.getPaths().forEach (path) -> atom.project.removePath(path)
-    @projectPaths.forEach (path) -> atom.project.addPath(path)
+    @projectPaths?.forEach (path) -> atom.project.addPath(path)
 
   refreshTree: (path, parent) ->
     learnIDE.treeView.entryForPath(parent)?.reload?()

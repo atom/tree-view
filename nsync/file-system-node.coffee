@@ -1,7 +1,10 @@
 module.exports =
 class FileSystemNode
-  constructor: ({@name, @path, @size, @digest, @symlink, @directory, @entries}) ->
-    # cool
+  constructor: ({@name, @path, @size, @digest, @symlink, @directory, @entries, atime, ctime, mtime, birthtime}) ->
+    @atime = new Date(atime)
+    @ctime = new Date(ctime)
+    @mtime = new Date(mtime)
+    @birthtime = new Date(birthtime)
 
   list: (extension) ->
     if extension?
@@ -18,7 +21,3 @@ class FileSystemNode
   isSymbolicLink: ->
     @symlink
 
-  getStat: ->
-    isDirectory: => @isDirectory()
-    isFile: => @isFile()
-    isSymbolicLink: => @isSymbolicLink()
