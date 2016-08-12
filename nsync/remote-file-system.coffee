@@ -11,17 +11,21 @@ class RemoteFileSystem
 
   handleEvents: ->
     messageCallbacks =
+      change: @onChange
+      rescue: @onRescue
       connection: @onConnection
 
     @websocket.onmessage = (event) ->
       {type, payload} = JSON.parse(event.data)
       messageCallbacks[type]?(payload)
 
-    @websocket.onerror = (event) ->
+    @websocket.onerror = (event) =>
       console.log event
+      @onClose()
 
-    @websocket.onclose = (event) ->
+    @websocket.onclose = (event) =>
       console.log event
+      @onClose()
 
     @websocket.onopen = (event) ->
       console.log event
@@ -29,11 +33,24 @@ class RemoteFileSystem
   send: (data) ->
     payload = JSON.stringify(data)
     console.log "send: #{payload}"
-
     @websocket.send(payload)
 
+  onChange: ({@entries, path, parent}) =>
+    console.log "Change: #{path}"
+    learnIDE.treeView.entryForPath(parent)?.reload?()
+    learnIDE.treeView.selectEntryForPath(path)
+
   onConnection: ({@root, @entries}) =>
+    @projectPaths = atom.project.getPaths()
+    @projectPaths.forEach (path) -> atom.project.removePath(path)
     atom.project.addPath(@root)
+
+  onRescue: ({message}) ->
+    console.log "RESCUE: #{message}"
+
+  onClose: ->
+    atom.project.removePath(@root)
+    @projectPaths.forEach (path) -> atom.project.addPath(path)
 
   getNode: (path) =>
     entry = @entries[path]

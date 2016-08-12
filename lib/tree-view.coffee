@@ -31,6 +31,7 @@ class TreeView extends View
       @div class: 'tree-view-resize-handle', outlet: 'resizeHandle'
 
   initialize: (state) ->
+    learnIDE.treeView = this
     @disposables = new CompositeDisposable
     @focusAfterAttach = false
     @roots = []
@@ -644,6 +645,8 @@ class TreeView extends View
     AddDialog ?= require './add-dialog'
     dialog = new AddDialog(selectedPath, isCreatingFile)
     dialog.on 'directory-created', (event, createdPath) =>
+      console.log "CREATED: #{createdPath}"
+      console.log event
       @entryForPath(createdPath)?.reload()
       @selectEntryForPath(createdPath)
       false
