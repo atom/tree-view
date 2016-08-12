@@ -6,6 +6,9 @@ temp = require('temp').track()
 os = require 'os'
 eventHelpers = require "./event-helpers"
 
+DefaultFileIcons = require '../lib/default-file-icons'
+FileIcons = require '../lib/file-icons'
+
 waitsForFileToOpen = (causeFileToOpen) ->
   waitsFor (done) ->
     disposable = atom.workspace.onDidOpen ->
@@ -579,6 +582,10 @@ describe "TreeView", ->
           sampleJs.trigger clickEvent(originalEvent: {detail: 1})
           sampleJs.trigger clickEvent(originalEvent: {detail: 2})
         .not.toThrow()
+
+        # Ensure we don't move on to the next test until the promise spawned click event resolves.
+        # (If it resolves in the middle of the next test we'll pollute that test)
+        waitsForPromise -> treeView.currentlyOpening.get(atom.workspace.getActivePaneItem().getPath())
 
     describe "when the file is pending", ->
       editor = null
@@ -2493,6 +2500,11 @@ describe "TreeView", ->
       iotaDirPath = path.join(lambdaDirPath, "iota")
       kappaDirPath = path.join(lambdaDirPath, "kappa")
 
+      muDirPath = path.join(rootDirPath, "mu")
+      nuDirPath = path.join(muDirPath, "nu")
+      xiDirPath1 = path.join(muDirPath, "xi")
+      xiDirPath2 = path.join(nuDirPath, "xi")
+
       fs.makeTreeSync(zetaDirPath)
       fs.writeFileSync(zetaFilePath, "doesn't matter")
 
@@ -2508,6 +2520,11 @@ describe "TreeView", ->
       fs.makeTreeSync(lambdaDirPath)
       fs.makeTreeSync(iotaDirPath)
       fs.makeTreeSync(kappaDirPath)
+
+      fs.makeTreeSync(muDirPath)
+      fs.makeTreeSync(nuDirPath)
+      fs.makeTreeSync(xiDirPath1)
+      fs.makeTreeSync(xiDirPath2)
 
       atom.project.setPaths([rootDirPath])
 
@@ -2549,6 +2566,18 @@ describe "TreeView", ->
           element.innerText
 
         expect(lambdaEntries).toEqual(["iota", "kappa"])
+
+      describe "when a directory is reloaded", ->
+        it "squashes the directory names the last of which is same as an unsquashed directory", ->
+          muDir = $(treeView.roots[0].entries).find('.directory:contains(mu):first')
+          muDir[0].expand()
+          muEntries = Array.from(muDir[0].children[1].children).map (element) -> element.innerText
+          expect(muEntries).toEqual(["nu#{path.sep}xi", "xi"])
+
+          muDir[0].expand()
+          muDir[0].reload()
+          muEntries = Array.from(muDir[0].children[1].children).map (element) -> element.innerText
+          expect(muEntries).toEqual(["nu#{path.sep}xi", "xi"])
 
   describe "Git status decorations", ->
     [projectPath, modifiedFile, originalFileContent] = []
@@ -3325,3 +3354,42 @@ describe "TreeView", ->
 
           expect(activePaneItem.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.txt')
           expect(atom.views.getView(atom.workspace.getPanes()[1])).toHaveFocus()
+
+
+describe 'Icon class handling', ->
+  [workspaceElement, treeView, files] = []
+  
+  beforeEach ->
+    rootDirPath = fs.absolute(temp.mkdirSync('tree-view-root1'))
+    
+    for i in [1..3]
+      filepath = path.join(rootDirPath, "file-#{i}.txt")
+      fs.writeFileSync(filepath, "Nah")
+    
+    atom.project.setPaths([rootDirPath])
+    workspaceElement = atom.views.getView(atom.workspace)
+    jasmine.attachToDOM(workspaceElement)
+
+    FileIcons.setService
+      iconClassForPath: (path) ->
+        [name, id] = path.match(/file-(\d+)\.txt$/)
+        switch id
+          when "1" then 'first second'
+          when "2" then ['first', 'second']
+          else "some-other-file"
+
+    waitsForPromise ->
+      atom.packages.activatePackage('tree-view')
+    
+    runs ->
+      treeView = atom.packages.getActivePackage("tree-view").mainModule.createView()
+      files = workspaceElement.querySelectorAll('li[is="tree-view-file"]')
+    
+  afterEach ->
+    temp.cleanup()
+
+  it 'allows multiple classes to be passed', ->
+    expect(files[0].fileName.className).toBe('name icon first second')
+
+  it 'allows an array of classes to be passed', ->
+    expect(files[1].fileName.className).toBe('name icon first second')
