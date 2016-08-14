@@ -101,7 +101,7 @@ class File
           "conflicted"
 
       newStatuses = [index, working, overall].filter (x) -> x?
-      newStatuses = ["unmodified"] if newStatuses is []
+      newStatuses = ["unmodified"] if newStatuses.length is 0
 
     if newStatuses isnt @statuses
       @statuses = newStatuses

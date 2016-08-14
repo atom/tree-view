@@ -136,7 +136,7 @@ class Directory
       if statusCode & GIT_STATUS_IGNORED and newStatuses is []
         newStatuses.push "ignored"
 
-      if newStatuses is []
+      if newStatuses.length is 0
         newStatuses = ["unmodified"]
 
 
