@@ -1,5 +1,5 @@
 nsync = require './nsync'
-FileSystemNode = require './file-system-node'
+FileStat = require './file-stat'
 
 serverURI = 'ws://vm02.students.learn.co:3304/no_strings_attached'
 token     = atom.config.get('integrated-learn-environment.oauthToken')
@@ -68,9 +68,9 @@ class RemoteFileSystem
     # TODO: make this actually find the realpath
     path
 
-  getNode: (path) =>
+  getStat: (path) =>
     entry = @entries[path]
-    new FileSystemNode(entry)
+    new FileStat(entry)
 
   hasPath: (path) =>
     @entries[path]?

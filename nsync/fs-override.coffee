@@ -24,12 +24,12 @@ module.exports = fsOverride =
     fs.isCompressedExtension(ext)
 
   isDirectorySync: (path) ->
-    node = learnIDE.remoteFS.getNode(path)
-    node.isDirectory()
+    stat = learnIDE.remoteFS.getStat(path)
+    stat.isDirectory()
 
   isFileSync: (path) ->
-    node = learnIDE.remoteFS.getNode(path)
-    node.isFile()
+    stat = learnIDE.remoteFS.getStat(path)
+    stat.isFile()
 
   isImageExtension: (ext) ->
     fs.isImageExtension(ext)
@@ -41,15 +41,15 @@ module.exports = fsOverride =
     fs.isReadmePath(path)
 
   isSymbolicLinkSync: (path) ->
-    node = learnIDE.remoteFS.getNode(path)
-    node.isSymbolicLink()
+    stat = learnIDE.remoteFS.getStat(path)
+    stat.isSymbolicLink()
 
   lstatSyncNoException: (path) ->
-    learnIDE.remoteFS.getNode(path)
+    learnIDE.remoteFS.getStat(path)
 
   listSync: (path, extensions) ->
-    node = learnIDE.remoteFS.getNode(path)
-    node.list(extensions)
+    stat = learnIDE.remoteFS.getStat(path)
+    stat.list(extensions)
 
   makeTreeSync: (path) ->
     learnIDE.remoteFS.mkdirp(path)
@@ -58,11 +58,11 @@ module.exports = fsOverride =
     learnIDE.remoteFS.mv(source, destination)
 
   readFileSync: (path) ->
-    node = learnIDE.remoteFS.getNode(path)
+    stat = learnIDE.remoteFS.getStat(path)
 
   readdirSync: (path) ->
-    node = learnIDE.remoteFS.getNode(path)
-    node.entries
+    stat = learnIDE.remoteFS.getStat(path)
+    stat.entries
 
   realpathSync: (path) ->
     learnIDE.remoteFS.realpath(path)
