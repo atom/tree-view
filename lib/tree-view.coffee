@@ -516,7 +516,7 @@ class TreeView extends View
 
   showCurrentFileInFileManager: ->
     return unless editor = atom.workspace.getActiveTextEditor()
-    return if editor.getPath() is undefined  # handle untitled tab
+    return unless editor.getPath()
     {command, args, label} = @fileManagerCommandForPath(editor.getPath(), true)
     @openInFileManager(command, args, label, true)
 
