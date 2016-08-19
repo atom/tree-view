@@ -12,6 +12,12 @@ buildBuffer = (filePath) ->
   atom.project.addBuffer(buffer)
 
 buildEditor = (buffer, largeFileMode, options) ->
+  existingEditor = null
+  atom.textEditors.editors.forEach (editor) ->
+    existingEditor = editor if editor.getPath() is buffer.getPath()
+
+  return existingEditor if existingEditor?
+
   editor = atom.workspace.buildTextEditor(Object.assign({buffer, largeFileMode}, options))
   disposable = atom.textEditors.add(editor)
   editor.onDidDestroy -> disposable.dispose()
@@ -27,7 +33,7 @@ largeFileConfirm = (editor) ->
       Cancel: null
   proceed
 
-displayLoading = (path) ->
+notify = (path) ->
   atom.notifications.addInfo "Loading #{path}...", icon: 'cloud-download'
 
 module.exports =
@@ -47,14 +53,13 @@ class RemoteFileOpener
     editor = buildEditor(buffer, @largeFileMode, @options)
 
     if not @isLarge or (@isLarge and largeFileConfirm())
-      displayLoading(@path) if @isLarge
+      notify(@path) if @isLarge
       learnIDE.remoteFS.open(@path)
 
     # TODO: this should prevent opening no matter what
     # i.e. only create text editor when contents are present (big files load slow,
     # so an empty editor just hanging out is weird)
     editor
-
 
   openFile: ->
     buffer = bufferForPath(@path)
