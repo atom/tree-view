@@ -227,7 +227,7 @@ class TreeView extends View
 
   openAfterPromise: (uri, options) ->
     if promise = @currentlyOpening.get(uri)
-      promise.then => atom.workspace.open(uri, options)
+      promise.then -> atom.workspace.open(uri, options)
     else
       atom.workspace.open(uri, options)
 
