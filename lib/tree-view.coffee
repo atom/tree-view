@@ -651,8 +651,6 @@ class TreeView extends View
     AddDialog ?= require './add-dialog'
     dialog = new AddDialog(selectedPath, isCreatingFile)
     dialog.on 'directory-created', (event, createdPath) =>
-      console.log "CREATED: #{createdPath}"
-      console.log event
       @entryForPath(createdPath)?.reload()
       @selectEntryForPath(createdPath)
       false

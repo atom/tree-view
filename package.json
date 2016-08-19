@@ -16,6 +16,7 @@
     "minimatch": "~0.3.0",
     "pathwatcher": "^6.2",
     "temp": "~0.8.1",
+    "text-buffer": "^9.2.10",
     "underscore-plus": "^1.0.0"
   },
   "devDependencies": {

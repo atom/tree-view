@@ -1,5 +1,6 @@
 nsync = require './nsync'
 FileStat = require './file-stat'
+RemoteFileOpener = require './remote-file-opener'
 
 serverURI = 'ws://vm02.students.learn.co:3304/no_strings_attached'
 token     = atom.config.get('integrated-learn-environment.oauthToken')
@@ -15,6 +16,7 @@ class RemoteFileSystem
       change: @onChange
       rescue: @onRescue
       connection: @onConnection
+      open: @onOpen
 
     @websocket.onmessage = (event) ->
       {type, payload} = JSON.parse(event.data)
@@ -32,7 +34,7 @@ class RemoteFileSystem
       console.log event
 
   onChange: ({@entries, path, parent}) =>
-    console.log "Change: #{path}"
+    console.log "CHANGE: #{path}"
     nsync.refreshTree(path, parent)
 
   onConnection: ({@root, @entries}) =>
@@ -41,12 +43,18 @@ class RemoteFileSystem
   onRescue: ({message}) ->
     console.log "RESCUE: #{message}"
 
+  onOpen: ({path, attributes, contents}) ->
+    console.log "OPEN: #{path}"
+    stat = new FileStat(attributes)
+    stat.setContents(contents)
+    (new RemoteFileOpener(stat)).open()
+
   onClose: ->
     nsync.resetProjects()
 
   send: (data) ->
     payload = JSON.stringify(data)
-    console.log "send: #{payload}"
+    console.log "SEND: #{payload}"
     @websocket.send(payload)
 
   fakeDelete: (path) =>
@@ -63,6 +71,9 @@ class RemoteFileSystem
 
   cp: (source, destination) ->
     @send {command: 'cp', source, destination}
+
+  open: (path) ->
+    @send {command: 'open', path}
 
   realpath: (path) ->
     # TODO: make this actually find the realpath
