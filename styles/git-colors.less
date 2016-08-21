@@ -1,0 +1,73 @@
+
+@import "ui-variables";
+@red: @text-color-error;
+@green: @text-color-success;
+
+.gradient-text(@color1, @color2) {
+  background: linear-gradient(to right, @color1, @color2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+// apply @rules to dirs and files
+.all(@rules) {
+  &.directory > .header > .name, // dir name
+  &.directory > .header > .name::before, // dir icon
+  &.file > .name, // file name
+  &.file > .name::before {  // file icon
+    @rules();
+  }
+}
+
+.tree-view {
+   // new file, staged
+  .status-added {
+    .all({
+      color: @green;
+    })
+  }
+   // modified and staged
+  .status-updated {
+    .all({
+      color: @green;
+    })
+  }
+
+  // The same file has both staged and unstaged parts
+  .status-updated.status-changed,
+  .status-added.status-changed {
+    .all({
+      .gradient-text(@green, @red);
+    })
+  }
+
+  // modified, but not staged
+  .status-changed {
+    .all({
+        color: @red;
+    })
+  }
+
+  .status-unmerged {
+    .all({
+      color: @red;
+    })
+  }
+
+  // new file, not yet staged
+  .status-untracked {
+    .all({
+      color: @red;
+    })
+  }
+
+  .status-conflicted {
+    .all({
+      color: @red;
+    })
+  }
+
+  .status-unmodified {
+    // nothing
+  }
+}

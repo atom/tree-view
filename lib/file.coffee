@@ -13,6 +13,8 @@ class File
     @path = fullPath
     @realPath = @path
 
+    @statuses = []
+
     @subscribeToRepo()
     @updateStatus()
 
@@ -48,22 +50,62 @@ class File
 
   # Update the status property of this directory using the repo.
   updateStatus: ->
+
+    GIT_STATUS_INDEX_NEW        = 1 << 0
+    GIT_STATUS_INDEX_MODIFIED   = 1 << 1
+    GIT_STATUS_INDEX_DELETED    = 1 << 2
+    GIT_STATUS_INDEX_RENAMED    = 1 << 3
+    GIT_STATUS_INDEX_TYPECHANGE = 1 << 4
+    GIT_STATUS_WT_NEW           = 1 << 7
+    GIT_STATUS_WT_MODIFIED      = 1 << 8
+    GIT_STATUS_WT_DELETED       = 1 << 9
+    GIT_STATUS_WT_TYPECHANGE    = 1 << 10
+    GIT_STATUS_WT_RENAMED       = 1 << 11
+    GIT_STATUS_WT_UNREADABLE    = 1 << 12
+    GIT_STATUS_IGNORED          = 1 << 14
+    GIT_STATUS_CONFLICTED       = 1 << 15
+
     repo = repoForPath(@path)
     return unless repo?
 
-    newStatus = null
     if repo.isPathIgnored(@path)
-      newStatus = 'ignored'
+      newStatuses = ['ignored']
     else
-      status = repo.getCachedPathStatus(@path)
-      if repo.isStatusModified(status)
-        newStatus = 'modified'
-      else if repo.isStatusNew(status)
-        newStatus = 'added'
+      statusCode = repo.getCachedPathStatus(@path) or repo.getPathStatus(@path)
+      index =
+        if statusCode & GIT_STATUS_INDEX_NEW
+          # git treats added the same as updated internally, but provides a
+          # different configuration slot name
+          "added"
+        else if statusCode & GIT_STATUS_INDEX_MODIFIED \
+             or statusCode & GIT_STATUS_INDEX_DELETED \
+             or statusCode & GIT_STATUS_INDEX_RENAMED \
+             or statusCode & GIT_STATUS_INDEX_TYPECHANGE
+          "updated"
 
-    if newStatus isnt @status
-      @status = newStatus
-      @emitter.emit('did-status-change', newStatus)
+      working =
+        if statusCode & GIT_STATUS_WT_MODIFIED \
+        or statusCode & GIT_STATUS_WT_DELETED \
+        or statusCode & GIT_STATUS_WT_TYPECHANGE \
+        or statusCode & GIT_STATUS_WT_RENAMED \
+        or statusCode & GIT_STATUS_WT_UNREADABLE
+          "changed"
+
+
+      overall =
+        if statusCode & GIT_STATUS_WT_NEW
+          "untracked"
+        else if statusCode & GIT_STATUS_IGNORED
+          "ignored"
+        else if statusCode & GIT_STATUS_CONFLICTED
+          "conflicted"
+
+      newStatuses = [index, working, overall].filter (x) -> x?
+      newStatuses = ["unmodified"] if newStatuses.length is 0
+
+    if newStatuses isnt @statuses
+      @statuses = newStatuses
+      @emitter.emit('did-status-change', newStatuses)
 
   isPathEqual: (pathToCompare) ->
     @path is pathToCompare or @realPath is pathToCompare
