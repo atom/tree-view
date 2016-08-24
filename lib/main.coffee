@@ -51,7 +51,7 @@ module.exports =
     @treeView
 
   shouldAttach: ->
-    projectPath = atom.project.getPaths()[0]
+    projectPath = atom.project.getPaths()[0] ? ''
     if atom.workspace.getActivePaneItem()
       false
     else if path.basename(projectPath) is '.git'
