@@ -17,9 +17,11 @@ class RemoteFileSystem
       rescue: @onRescue
       connection: @onConnection
       open: @onOpen
+      sync: @onSync
 
     @websocket.onmessage = (event) ->
       {type, payload} = JSON.parse(event.data)
+      console.log "RECIEVED: #{type}"
       messageCallbacks[type]?(payload)
 
     @websocket.onerror = (event) =>
@@ -33,12 +35,16 @@ class RemoteFileSystem
     @websocket.onopen = (event) ->
       console.log event
 
+  onSync: ({entries}) ->
+    nsync.remoteFetch(entries)
+
   onChange: ({@entries, path, parent}) =>
     console.log "CHANGE: #{path}"
     nsync.refreshTree(path, parent)
 
   onConnection: ({@root, @entries}) =>
     nsync.setProject(@root)
+    @sync()
 
   onRescue: ({message}) ->
     console.log "RESCUE: #{message}"
@@ -74,6 +80,9 @@ class RemoteFileSystem
 
   open: (path) ->
     @send {command: 'open', path}
+
+  sync: ->
+    @send {command: 'sync', path: @root}
 
   realpath: (path) ->
     # TODO: make this actually find the realpath

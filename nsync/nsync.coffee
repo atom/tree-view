@@ -1,4 +1,5 @@
 RemoteFileOpener = require './remote-file-opener'
+RemoteFileFetch = require './remote-file-fetch'
 
 module.exports = nsync =
   activate: (remoteFS) ->
@@ -7,7 +8,7 @@ module.exports = nsync =
     learnIDE.remoteFS ?= remoteFS
 
     atom.workspace.addOpener (uri) =>
-      @open(uri) if learnIDE.remoteFS.hasPath(uri)
+      @open(uri) if learnIDE.remoteFS.hasFile(uri) # and not fs.existSync(uri)
 
   deactivate: ->
     learnIDE.remoteFS = undefined
@@ -31,4 +32,9 @@ module.exports = nsync =
   open: (path) ->
     stat = learnIDE.remoteFS.getStat(path)
     (new RemoteFileOpener(stat)).open()
+
+  remoteFetch: (entries) ->
+    target = "#{atom.packages.getActivePackage('tree-view').path}/.remote-code"
+    fetch = new RemoteFileFetch(entries, target)
+    fetch.execute()
 
