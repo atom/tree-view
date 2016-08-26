@@ -11,18 +11,19 @@ pathConverter =
     if _path.sep isnt _path[remotePlatform].sep
       remotePath = remotePath.split(_path[remotePlatform].sep).join(_path.sep)
 
-    path.join(localTarget, remotePath)
+    _path.join(localTarget, remotePath)
 
   remoteEntries: (remoteEntries, remoteProjectRoot, localRoot, createVirtualFiles = false) ->
-    virtualRemote = remoteToLocal(remoteProjectRoot, localRoot)
-    virtualEntries = {}
+    new Promise (resolve, reject) =>
+      virtualRoot = @remoteToLocal(remoteProjectRoot, localRoot)
+      virtualEntries = {}
 
-    for own remotePath, attributes of remoteEntries
-      localPath = remoteToLocal(remotePath, localRoot)
-      value = if createVirtualFiles then new FileStat(attributes) else attributes
-      virtualEntries[localPath] = value
+      for own remotePath, attributes of remoteEntries
+        localPath = @remoteToLocal(remotePath, localRoot)
+        value = if createVirtualFiles then new FileStat(attributes) else attributes
+        virtualEntries[localPath] = value
 
-    {virtualEntries, virtualRemote}
+      resolve {virtualEntries, virtualRoot}
 
 
 module.exports =
@@ -31,39 +32,44 @@ class Interceptor
     @projectPaths = atom.project.getPaths()
     @projectPaths.forEach (path) -> atom.project.removePath(path)
 
-    # TODO: update package name
-    @localRoot = _path.join(atom.packages.getActivePackage('tree-view').path, '.remote-root')
-    @localHome = _path.join(@localRoot, 'home')
-
     @websocket = new WebSocket("#{serverURI}?token=#{token}")
     @handleEvents()
 
-    @send request: 'build_tree'
-
   handleEvents: ->
     messageCallbacks =
-      connect: @onBuildTree
+      connection: @onBuildTree
       file_sync: @onFileSync
+
+    @websocket.onopen = (event) =>
+      @send {request: 'build_tree'}
 
     @websocket.onmessage = (event) ->
       {type, payload} = JSON.parse(event.data)
       console.log "RECIEVED: #{type}"
       messageCallbacks[type]?(payload)
 
+  localRoot: ->
+    # TODO: update package name
+    _path.join(atom.packages.getActivePackage('tree-view')?.path, '.remote-root')
+
+  localHome: ->
+    _path.join(@localRoot(), 'home')
+
   send: (msg) ->
     payload = JSON.stringify(msg)
     console.log "SEND: #{payload}"
     @websocket.send(payload)
 
-  onBuildTree: ({entries, root}) ->
-    {@virtualEntries, @virtualRoot} = pathConverter.remoteEntries(entries, root, @localRoot, true)
-    atom.project.addPath(@virtualRoot)
-    document.title = 'Learn IDE - ' + @virtualRoot.replace("#{@localHome}/", '')
-    @send request: 'file_sync'
+  onBuildTree: ({entries, root}) =>
+    pathConverter.remoteEntries(entries, root, @localRoot(), true).then ({@virtualEntries, @virtualRoot}) =>
+      atom.project.addPath(@virtualRoot)
+      # TODO: persist title change, maybe use custom-title package
+      document.title = 'Learn IDE - ' + @virtualRoot.replace("#{@localHome()}/", '')
+      @send request: 'file_sync'
 
   onFileSync: ({entries, root}) ->
-    {virtualEntries} = pathConverter.remoteEntries(entries, root, @localRoot)
-    (new Sync(virtualEntries, @localHome)).execute()
+    {virtualEntries} = pathConverter.remoteEntries(entries, root, @localRoot())
+    (new Sync(virtualEntries, @localHome())).execute()
 
   #----------------
   # shell functions

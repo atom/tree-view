@@ -1,5 +1,4 @@
 path = require 'path'
-fs = fsInterceptor
 Dialog = require './dialog'
 {repoForPath} = require './helpers'
 

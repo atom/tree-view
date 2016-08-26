@@ -1,5 +1,4 @@
 path = require 'path'
-fs = fsInterceptor
 {CompositeDisposable, Emitter} = require 'event-kit'
 {repoForPath} = require './helpers'
 

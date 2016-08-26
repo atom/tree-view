@@ -7,7 +7,7 @@ module.exports =
   treeView: null
 
   activate: (@state) ->
-    global.fsInterceptor = new Interceptor()
+    global.fs = new Interceptor()
     @disposables = new CompositeDisposable
     @state.attached ?= true if @shouldAttach()
 
@@ -27,7 +27,7 @@ module.exports =
     })
 
   deactivate: ->
-    fsInterceptor = undefined
+    fs = undefined
     @disposables.dispose()
     @fileIconsDisposable?.dispose()
     @treeView?.deactivate()

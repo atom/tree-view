@@ -1,11 +1,10 @@
 path = require 'path'
-shell = fsInterceptor
+shell = global.fs
 
 _ = require 'underscore-plus'
 {BufferedProcess, CompositeDisposable} = require 'atom'
 {repoForPath, getStyleObject, getFullExtension} = require "./helpers"
 {$, View} = require 'atom-space-pen-views'
-fs = fsInterceptor
 
 AddDialog = null  # Defer requiring until actually needed
 MoveDialog = null # Defer requiring until actually needed
@@ -31,7 +30,6 @@ class TreeView extends View
       @div class: 'tree-view-resize-handle', outlet: 'resizeHandle'
 
   initialize: (state) ->
-    learnIDE.treeView = this
     @disposables = new CompositeDisposable
     @focusAfterAttach = false
     @roots = []

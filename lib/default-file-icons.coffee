@@ -1,4 +1,3 @@
-fs = fsInterceptor
 path = require 'path'
 
 class DefaultFileIcons
