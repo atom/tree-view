@@ -3,6 +3,9 @@ _path = require 'path'
 Sync = require './sync'
 FileStat = require './file-stat'
 
+serverURI = 'ws://vm02.students.learn.co:3304/no_strings_attached'
+token     = atom.config.get('integrated-learn-environment.oauthToken')
+
 pathConverter =
   remoteToLocal: (remotePath, localTarget = '', remotePlatform = 'posix') ->
     if _path.sep isnt _path[remotePlatform].sep
@@ -32,14 +35,14 @@ class Interceptor
     @localRoot = _path.join(atom.packages.getActivePackage('tree-view').path, '.remote-root')
     @localHome = _path.join(@localRoot, 'home')
 
-    @websocket = new WebSocket()
+    @websocket = new WebSocket("#{serverURI}?token=#{token}")
     @handleEvents()
 
     @send request: 'build_tree'
 
   handleEvents: ->
     messageCallbacks =
-      build_tree: @onBuildTree
+      connect: @onBuildTree
       file_sync: @onFileSync
 
     @websocket.onmessage = (event) ->

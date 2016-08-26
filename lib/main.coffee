@@ -1,6 +1,6 @@
 {CompositeDisposable} = require 'event-kit'
 path = require 'path'
-Interceptor = require 'fs-interceptor'
+Interceptor = require '../nsync/fs-interceptor'
 FileIcons = require './file-icons'
 
 module.exports =
