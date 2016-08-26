@@ -6,7 +6,7 @@ FileStat = require './file-stat'
 serverURI = 'ws://vm02.students.learn.co:3304/something'
 token     = atom.config.get('integrated-learn-environment.oauthToken')
 
-pathConverter =
+convert =
   localToRemote: (localPath, localRoot) ->
     localPath.replace(localRoot, '')
 
@@ -17,34 +17,33 @@ pathConverter =
     _path.join(localTarget, remotePath)
 
   remoteMessage: (msg, localRoot) ->
-    new Promise (resolve, reject) =>
-      converted = {}
+    converted = {}
 
-      for own key, value of msg
-        if typeof value is 'string' and value.startsWith(localRoot)
-          converted[key] = @localToRemote(value, localRoot)
-        else
-          converted[key] = value
+    for own key, value of msg
+      if typeof value is 'string' and value.startsWith(localRoot)
+        converted[key] = @localToRemote(value, localRoot)
+      else
+        converted[key] = value
 
-      resolve converted
+    converted
 
-  remoteEntries: (remoteEntries, remoteProjectRoot, localRoot, createVirtualFiles = false) ->
-    new Promise (resolve, reject) =>
-      virtualRoot = @remoteToLocal(remoteProjectRoot, localRoot) if remoteProjectRoot?
-      virtualEntries = {}
+  remoteEntries: (remoteEntries, localRoot, createVirtualFiles = false) ->
+    virtualEntries = {}
 
-      for own remotePath, attributes of remoteEntries
-        localPath = @remoteToLocal(remotePath, localRoot)
-        value = if createVirtualFiles then new FileStat(attributes) else attributes
-        virtualEntries[localPath] = value
+    for own remotePath, attributes of remoteEntries
+      localPath = @remoteToLocal(remotePath, localRoot)
+      value = if createVirtualFiles then new FileStat(attributes) else attributes
+      virtualEntries[localPath] = value
 
-      resolve {virtualEntries, virtualRoot}
+    virtualEntries
 
 module.exports =
 class Interceptor
   constructor: ->
     @projectPaths = atom.project.getPaths()
     @projectPaths.forEach (path) -> atom.project.removePath(path)
+
+    @localRoot = _path.join(atom.configDirPath, '.learn-ide')
 
     @websocket = new WebSocket("#{serverURI}?token=#{token}")
     @handleEvents()
@@ -61,14 +60,8 @@ class Interceptor
 
     @websocket.onmessage = (event) ->
       {type, payload} = JSON.parse(event.data)
-      console.log "RECIEVED: #{type}"
+      console.log "RECEIVED: #{type}"
       messageCallbacks[type]?(payload)
-
-  localRoot: ->
-    _path.join(@package()?.path, '.remote-root')
-
-  localHome: ->
-    _path.join(@localRoot(), 'home')
 
   package: ->
     # todo: update package name
@@ -78,30 +71,31 @@ class Interceptor
     @package()?.mainModule?.treeView
 
   send: (msg) ->
-    pathConverter.remoteMessage(msg, @localRoot()).then (convertedMsg) =>
-      payload = JSON.stringify(convertedMsg)
-      console.log "SEND: #{payload}"
-      @websocket.send(payload)
+    convertedMsg = convert.remoteMessage(msg, @localRoot)
+    payload = JSON.stringify(convertedMsg)
+    console.log "SEND: #{payload}"
+    @websocket.send(payload)
 
   onBuild: ({entries, root}) =>
-    pathConverter.remoteEntries(entries, root, @localRoot(), true).then ({@virtualEntries, @virtualRoot}) =>
-      atom.project.addPath(@virtualRoot)
-      # TODO: persist title change, maybe use custom-title package
-      document.title = 'Learn IDE - ' + @virtualRoot.replace("#{@localHome()}/", '')
-      @send {command: 'sync'}
+    @virtualRoot = convert.remoteToLocal(root, @localRoot)
+    @virtualEntries = convert.remoteEntries(entries, @localRoot, true)
+    atom.project.addPath(@virtualRoot)
+    # TODO: persist title change, maybe use custom-title package
+    document.title = 'Learn IDE - ' + @virtualRoot.replace("#{@localRoot}/", '')
+    @send {command: 'sync'}
 
   onSync: ({entries, root}) =>
-    pathConverter.remoteEntries(entries, root, @localRoot()).then ({virtualEntries}) =>
-      sync = new Sync(virtualEntries, @localHome())
-      sync.execute()
+    virtualEntries = convert.remoteEntries(entries, @localRoot)
+    sync = new Sync(virtualEntries, "#{@localRoot}/#{root}")
+    sync.execute()
 
-  onChange: ({entries, root, path, parent}) =>
+  onChange: ({entries, path, parent}) =>
     console.log "CHANGE: #{path}"
-    pathConverter.remoteEntries(entries, root, @localRoot(), true).then ({@virtualEntries}) =>
-      path = pathConverter.remoteToLocal(path, @localRoot())
-      parent = pathConverter.remoteToLocal(parent, @localRoot())
-      @treeView()?.entryForPath(parent)?.reload?()
-      @treeView()?.selectEntryForPath(path)
+    @virtualEntries = convert.remoteEntries(entries, @localRoot, true)
+    path = convert.remoteToLocal(path, @localRoot)
+    parent = convert.remoteToLocal(parent, @localRoot)
+    @treeView()?.entryForPath(parent).reload()
+    @treeView()?.selectEntryForPath(path)
 
   onRescue: ({message}) ->
     console.log "RESCUE: #{message}"

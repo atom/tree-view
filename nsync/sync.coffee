@@ -1,14 +1,13 @@
 crypto = require 'crypto'
-fs = require 'fs-plus'
+_fs = require 'fs-plus'
 _ = require 'underscore-plus'
 
 fetch = (path) ->
-  console.log "FETCH: #{path}"
-  # learnIDE.remoteFS.fetch(path)
+  fs.send {command: 'fetch', path}
 
 fetchIfDigestDiffers = (path, digest) ->
   hash = crypto.createHash('md5')
-  stream = fs.createReadStream(path)
+  stream = _fs.createReadStream(path)
 
   stream.on 'data', (data) ->
     hash.update(data, 'utf8')
@@ -20,18 +19,19 @@ fetchIfDigestDiffers = (path, digest) ->
 
 module.exports =
 class Sync
-  # TODO: make recursive, so that a directory exists before we attempt to create a file it houses?
   constructor: (@virtualEntries, @targetDir) ->
-    fs.makeTreeSync(@targetDir)
+    _fs.makeTreeSync(@targetDir)
 
   execute: ->
-    localEntries = fs.listTreeSync(@targetDir)
+    localEntries = _fs.listTreeSync(@targetDir)
     pathsToRemove = _.difference(localEntries, @virtualEntries)
-    pathsToRemove.forEach (path) -> fs.remove(path)
+    pathsToRemove.forEach (path) -> _fs.remove(path)
 
+    start = 0
+    delay = 1000
     for own path, digest of @virtualEntries
-      if not fs.existsSync(path)
-        fetch(path)
+      if not _fs.existsSync(path)
+        setTimeout fetch.bind(this, path), start += delay
       else
-        fetchIfDigestDiffers(path, digest)
+        setTimeout fetchIfDigestDiffers.bind(this, path, digest), start += delay
 
