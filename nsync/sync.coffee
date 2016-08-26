@@ -26,11 +26,10 @@ class Sync
 
   execute: ->
     localEntries = fs.listTreeSync(@targetDir)
-    pathsToRemove = _.difference(localEntries, @remoteEntries)
+    pathsToRemove = _.difference(localEntries, @virtualEntries)
     pathsToRemove.forEach (path) -> fs.remove(path)
 
     for own path, digest of @virtualEntries
-      path = path.replace('/home', @targetDir)
       if not fs.existsSync(path)
         fetch(path)
       else
