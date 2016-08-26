@@ -1,5 +1,5 @@
 path = require 'path'
-fs = require '../nsync/fs-override'
+fs = fsInterceptor
 {CompositeDisposable, Emitter} = require 'event-kit'
 {repoForPath} = require './helpers'
 

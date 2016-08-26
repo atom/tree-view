@@ -1,11 +1,11 @@
 path = require 'path'
-shell = require '../nsync/shell-override'
+shell = fsInterceptor
 
 _ = require 'underscore-plus'
 {BufferedProcess, CompositeDisposable} = require 'atom'
 {repoForPath, getStyleObject, getFullExtension} = require "./helpers"
 {$, View} = require 'atom-space-pen-views'
-fs = require '../nsync/fs-override'
+fs = fsInterceptor
 
 AddDialog = null  # Defer requiring until actually needed
 MoveDialog = null # Defer requiring until actually needed

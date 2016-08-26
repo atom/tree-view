@@ -1,4 +1,4 @@
-fs = require '../nsync/fs-override'
+fs = fsInterceptor
 path = require 'path'
 
 class DefaultFileIcons

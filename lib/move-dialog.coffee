@@ -1,5 +1,5 @@
 path = require 'path'
-fs = require '../nsync/fs-override'
+fs = fsInterceptor
 Dialog = require './dialog'
 {repoForPath} = require "./helpers"
 
