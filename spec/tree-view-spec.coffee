@@ -3359,14 +3359,14 @@ describe "TreeView", ->
 
 describe 'Icon class handling', ->
   [workspaceElement, treeView, files] = []
-  
+
   beforeEach ->
     rootDirPath = fs.absolute(temp.mkdirSync('tree-view-root1'))
-    
+
     for i in [1..3]
       filepath = path.join(rootDirPath, "file-#{i}.txt")
       fs.writeFileSync(filepath, "Nah")
-    
+
     atom.project.setPaths([rootDirPath])
     workspaceElement = atom.views.getView(atom.workspace)
     jasmine.attachToDOM(workspaceElement)
@@ -3382,11 +3382,11 @@ describe 'Icon class handling', ->
 
     waitsForPromise ->
       atom.packages.activatePackage('tree-view')
-    
+
     runs ->
       treeView = atom.packages.getActivePackage("tree-view").mainModule.createView()
       files = workspaceElement.querySelectorAll('li[is="tree-view-file"]')
-    
+
   afterEach ->
     temp.cleanup()
 
