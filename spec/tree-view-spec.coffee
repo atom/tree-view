@@ -583,9 +583,10 @@ describe "TreeView", ->
           sampleJs.trigger clickEvent(originalEvent: {detail: 2})
         .not.toThrow()
 
-        # Ensure we don't move on to the next test until the promise spawned click event resolves.
-        # (If it resolves in the middle of the next test we'll pollute that test)
-        waitsForPromise -> treeView.currentlyOpening.get(atom.workspace.getActivePaneItem().getPath())
+        waitsFor ->
+          # Ensure we don't move on to the next test until the promise spawned click event resolves.
+          # (If it resolves in the middle of the next test we'll pollute that test).
+          not treeView.currentlyOpening.has(atom.workspace.getActivePaneItem().getPath())
 
     describe "when the file is pending", ->
       editor = null
