@@ -275,7 +275,7 @@ class TreeView extends View
     @loadIgnoredPatterns()
 
     @roots = for projectPath in atom.project.getPaths()
-      stats = fs.lstatSyncNoException(projectPath)
+      continue unless stats = fs.lstatSyncNoException(projectPath)
       stats = _.pick stats, _.keys(stats)...
       for key in ["atime", "birthtime", "ctime", "mtime"]
         stats[key] = stats[key].getTime()
