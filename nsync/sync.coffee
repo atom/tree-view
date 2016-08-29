@@ -2,16 +2,42 @@ crypto = require 'crypto'
 _fs = require 'fs-plus'
 _ = require 'underscore-plus'
 
+getPathsNeedingSync = (virtualEntries) ->
+  pathsNeedingSync = []
+
+  digestPromises = _.map virtualEntries, (remoteDigest, path) ->
+
+    getDigest(path).then (localDigest) ->
+      console.log("local digest for path #{path}: #{localDigest}")
+
+      if localDigest != remoteDigest
+        pathsNeedingSync.push(path)
+
+
+  Promise.all(digestPromises).then(-> pathsNeedingSync)
+
 getDigest = (path) ->
   new Promise (resolve) ->
-    hash = crypto.createHash('md5')
-    stream = _fs.createReadStream(path)
+    _fs.stat(path, (err, stats) ->
+      if err
+        resolve(false)
+        return
 
-    stream.on 'data', (data) ->
-      hash.update(data, 'utf8')
+      if stats.isDirectory()
+        resolve(false)
+        return
 
-    stream.on 'end', ->
-      resolve hash.digest('hex')
+
+      hash = crypto.createHash('md5')
+      stream = _fs.createReadStream(path)
+
+      stream.on 'data', (data) ->
+        hash.update(data, 'utf8')
+
+      stream.on 'end', ->
+        resolve hash.digest('hex')
+    )
+
 
 module.exports =
 class Sync
@@ -24,11 +50,8 @@ class Sync
     # pathsToRemove = _.difference(localEntries, @virtualEntries)
     # pathsToRemove.forEach (path) -> _fs.remove(path)
 
-    pathsToAdd = _.difference(@virtualEntries, localEntries)
-
-    for own path, digest of @virtualEntries
-      getDigest(path).then (localDigest) ->
-        pathsToAdd.push(path) if localDigest isnt digest
-
-    fs.fetch(pathsToAdd)
-
+    getPathsNeedingSync(@virtualEntries).then((paths) ->
+      console.log('paths needing sync')
+      console.log(paths)
+      fs.fetch(paths)
+    )

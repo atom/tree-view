@@ -109,9 +109,9 @@ class Interceptor
     this.treeView().updateRoots()
 
   onSync: ({entries, root}) =>
-    # virtualEntries = convert.remoteEntries(entries, @localRoot)
-    # sync = new Sync(virtualEntries, "#{@localRoot}/#{root}")
-    # sync.execute()
+    virtualEntries = convert.remoteEntries(entries, @localRoot)
+    sync = new Sync(virtualEntries, "#{@localRoot}/#{root}")
+    sync.execute()
 
   onChange: ({entries, path, parent}) =>
     console.log "CHANGE: #{path}"
