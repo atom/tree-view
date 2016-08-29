@@ -7,8 +7,13 @@ serverURI = 'ws://vm02.students.learn.co:3304/something'
 token     = atom.config.get('integrated-learn-environment.oauthToken')
 
 convert =
-  localToRemote: (localPath, localRoot) ->
-    localPath.replace(localRoot, '')
+  localToRemote: (localPath, localRoot, remotePlatform = 'posix') ->
+    remotePath = localPath.replace(localRoot, '')
+
+    if _path.sep isnt _path[remotePlatform].sep
+      remotePath = remotePath.split(_path.sep).join(_path[remotePlatform].sep)
+
+    remotePath
 
   remoteToLocal: (remotePath, localTarget = '', remotePlatform = 'posix') ->
     if _path.sep isnt _path[remotePlatform].sep
@@ -50,10 +55,11 @@ class Interceptor
 
   handleEvents: ->
     messageCallbacks =
-      rescue: @onRescue
-      change: @onChange
-      build: @onBuild
       sync: @onSync
+      build: @onBuild
+      fetch: @onFetch
+      change: @onChange
+      rescue: @onRescue
 
     @websocket.onopen = (event) =>
       @send {command: 'build'}
@@ -76,6 +82,18 @@ class Interceptor
     console.log "SEND: #{payload}"
     @websocket.send(payload)
 
+  #-------------
+  # initial sync
+  #-------------
+
+  fetch: (paths) ->
+    pathsToFetch = paths.map (path) -> convert.localToRemote(path, @localRoot)
+    @send {command: 'fetch', paths: pathsToFetch}
+
+  #--------------------
+  # onmessage callbacks
+  #--------------------
+
   onBuild: ({entries, root}) =>
     @virtualRoot = convert.remoteToLocal(root, @localRoot)
     @virtualEntries = convert.remoteEntries(entries, @localRoot, true)
@@ -96,6 +114,14 @@ class Interceptor
     parent = convert.remoteToLocal(parent, @localRoot)
     @treeView()?.entryForPath(parent).reload()
     @treeView()?.selectEntryForPath(path)
+
+  onFetch: ({path, attributes, contents}) =>
+    # TODO: include mode and shiz?
+    localPath = convert.remoteToLocal(path, @localRoot)
+    dirname = _path.dirname(localPath)
+    return unless localPath? and dirname?
+    fs.makeTreeSync(dirname) unless fs.existsSync(dirname)
+    fs.writeFile(localPath, contents)
 
   onRescue: ({message}) ->
     console.log "RESCUE: #{message}"

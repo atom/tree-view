@@ -2,20 +2,16 @@ crypto = require 'crypto'
 _fs = require 'fs-plus'
 _ = require 'underscore-plus'
 
-fetch = (path) ->
-  fs.send {command: 'fetch', path}
+getDigest = (path) ->
+  new Promise (resolve) ->
+    hash = crypto.createHash('md5')
+    stream = _fs.createReadStream(path)
 
-fetchIfDigestDiffers = (path, digest) ->
-  hash = crypto.createHash('md5')
-  stream = _fs.createReadStream(path)
+    stream.on 'data', (data) ->
+      hash.update(data, 'utf8')
 
-  stream.on 'data', (data) ->
-    hash.update(data, 'utf8')
-
-  stream.on 'end', ->
-    calculatedDigest = hash.digest('hex')
-    console.log "DIGEST COMPARE: #{digest} == #{calculatedDigest}"
-    fetch(path) if calculatedDigest isnt digest
+    stream.on 'end', ->
+      resolve hash.digest('hex')
 
 module.exports =
 class Sync
@@ -24,14 +20,15 @@ class Sync
 
   execute: ->
     localEntries = _fs.listTreeSync(@targetDir)
-    pathsToRemove = _.difference(localEntries, @virtualEntries)
-    pathsToRemove.forEach (path) -> _fs.remove(path)
 
-    start = 0
-    delay = 1000
+    # pathsToRemove = _.difference(localEntries, @virtualEntries)
+    # pathsToRemove.forEach (path) -> _fs.remove(path)
+
+    pathsToAdd = _.difference(@virtualEntries, localEntries)
+
     for own path, digest of @virtualEntries
-      if not _fs.existsSync(path)
-        setTimeout fetch.bind(this, path), start += delay
-      else
-        setTimeout fetchIfDigestDiffers.bind(this, path, digest), start += delay
+      getDigest(path).then (localDigest) ->
+        pathsToAdd.push(path) if localDigest isnt digest
+
+    fs.fetch(pathsToAdd)
 
