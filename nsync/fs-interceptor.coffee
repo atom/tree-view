@@ -3,7 +3,7 @@ _path = require 'path'
 Sync = require './sync'
 FileStat = require './file-stat'
 
-serverURI = 'ws://vm02.students.learn.co:3304/something'
+serverURI = 'ws://vm02.students.learn.co:3304/background_sync'
 token     = atom.config.get('integrated-learn-environment.oauthToken')
 
 convert =
@@ -92,7 +92,7 @@ class Interceptor
   #-------------
 
   fetch: (paths) ->
-    pathsToFetch = paths.map (path) -> convert.localToRemote(path, @localRoot)
+    pathsToFetch = paths.map (path) => convert.localToRemote(path, @localRoot)
     @send {command: 'fetch', paths: pathsToFetch}
 
   #--------------------
@@ -127,7 +127,8 @@ class Interceptor
     dirname = _path.dirname(localPath)
     return unless localPath? and dirname?
     fs.makeTreeSync(dirname) unless fs.existsSync(dirname)
-    fs.writeFile(localPath, contents)
+    decoded = new Buffer(contents, 'base64').toString('utf8')
+    fs.writeFile(localPath, decoded)
 
   onRescue: ({message}) ->
     console.log "RESCUE: #{message}"
