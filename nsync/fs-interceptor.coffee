@@ -45,6 +45,7 @@ convert =
 module.exports =
 class Interceptor
   constructor: ->
+    @virtualEntries = {}
     @projectPaths = atom.project.getPaths()
     @projectPaths.forEach (path) -> atom.project.removePath(path)
 
@@ -68,6 +69,10 @@ class Interceptor
       {type, payload} = JSON.parse(event.data)
       console.log "RECEIVED: #{type}"
       messageCallbacks[type]?(payload)
+
+    @websocket.onerror = (err) ->
+      console.error('error with the websocket')
+      console.log(err)
 
   package: ->
     # todo: update package name
@@ -101,11 +106,12 @@ class Interceptor
     # TODO: persist title change, maybe use custom-title package
     document.title = 'Learn IDE - ' + @virtualRoot.replace("#{@localRoot}/", '')
     @send {command: 'sync'}
+    this.treeView().updateRoots()
 
   onSync: ({entries, root}) =>
-    virtualEntries = convert.remoteEntries(entries, @localRoot)
-    sync = new Sync(virtualEntries, "#{@localRoot}/#{root}")
-    sync.execute()
+    # virtualEntries = convert.remoteEntries(entries, @localRoot)
+    # sync = new Sync(virtualEntries, "#{@localRoot}/#{root}")
+    # sync.execute()
 
   onChange: ({entries, path, parent}) =>
     console.log "CHANGE: #{path}"
