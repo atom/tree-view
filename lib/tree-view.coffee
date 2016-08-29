@@ -442,7 +442,7 @@ class TreeView extends View
     if pane and selectedEntry instanceof FileView
       atom.workspace.openURIInPane selectedEntry.getPath(), pane
 
-  moveSelectedEntry: ->
+  renameSelectedEntry: (placement='select') ->
     if @hasFocus()
       entry = @selectedEntry()
       return if not entry? or entry in @roots
@@ -452,8 +452,11 @@ class TreeView extends View
 
     if oldPath
       MoveDialog ?= require './move-dialog'
-      dialog = new MoveDialog(oldPath)
+      dialog = new MoveDialog(oldPath, placement)
       dialog.attach()
+
+  moveSelectedEntry: ->
+    @renameSelectedEntry('cursor')
 
   # Get the outline of a system call to the current platform's file manager.
   #

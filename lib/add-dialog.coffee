@@ -20,7 +20,7 @@ class AddDialog extends Dialog
     super
       prompt: "Enter the path for the new " + if isCreatingFile then "file." else "folder."
       initialPath: relativeDirectoryPath
-      select: false
+      placement: false
       iconClass: if isCreatingFile then 'icon-file-add' else 'icon-file-directory-create'
 
   onConfirm: (newPath) ->

@@ -2054,7 +2054,7 @@ describe "TreeView", ->
               expect(addDialog).toHaveClass('error')
               expect(atom.workspace.getModalPanels()[0]).toBe addPanel
 
-    describe "tree-view:move", ->
+    describe "tree-view:rename", ->
       describe "when a file is selected", ->
         moveDialog = null
 
@@ -2065,7 +2065,7 @@ describe "TreeView", ->
             fileView.click()
 
           runs ->
-            atom.commands.dispatch(treeView.element, "tree-view:move")
+            atom.commands.dispatch(treeView.element, "tree-view:rename")
             moveDialog = $(atom.workspace.getModalPanels()[0].getItem()).view()
 
         afterEach ->
@@ -2139,7 +2139,7 @@ describe "TreeView", ->
             expect(atom.workspace.getModalPanels().length).toBe 0
             expect(atom.views.getView(atom.workspace.getActivePane())).toHaveFocus()
 
-      describe "when a file is selected that's name starts with a '.'", ->
+      describe "when a file is selected and its name starts with a '.'", ->
         [dotFilePath, dotFileView, moveDialog] = []
 
         beforeEach ->
@@ -2153,7 +2153,7 @@ describe "TreeView", ->
             dotFileView.click()
 
           runs ->
-            atom.commands.dispatch(treeView.element, "tree-view:move")
+            atom.commands.dispatch(treeView.element, "tree-view:rename")
             moveDialog = $(atom.workspace.getModalPanels()[0].getItem()).view()
 
         it "selects the entire file name", ->
@@ -2162,7 +2162,121 @@ describe "TreeView", ->
           expect(moveDialog.miniEditor.getModel().getSelectedText()).toBe '.dotfile'
 
       describe "when the project is selected", ->
-        it "doesn't display the move dialog", ->
+        it "doesn't display the move / rename dialog", ->
+          treeView.roots[0].click()
+          atom.commands.dispatch(treeView.element, "tree-view:rename")
+          expect(atom.workspace.getModalPanels().length).toBe(0)
+
+    describe "tree-view:move", ->
+      describe "when a file is selected", ->
+        moveDialog = null
+
+        beforeEach ->
+          jasmine.attachToDOM(workspaceElement)
+
+          waitsForFileToOpen ->
+            fileView.click()
+
+          runs ->
+            atom.commands.dispatch(treeView.element, "tree-view:move")
+            moveDialog = $(atom.workspace.getModalPanels()[0].getItem()).view()
+
+        afterEach ->
+          waits 50 # The move specs cause too many false positives because of their async nature, so wait a little bit before we cleanup
+
+        it "opens a move dialog with the file's current path (excluding extension) populated", ->
+          extension = path.extname(filePath)
+          fileNameWithoutExtension = path.basename(filePath, extension)
+          expect(moveDialog).toExist()
+          expect(moveDialog.promptText.text()).toBe "Enter the new path for the file."
+          expect(moveDialog.miniEditor.getText()).toBe(atom.project.relativize(filePath))
+          expect(moveDialog.miniEditor.getModel().getCursorBufferPosition().column).toBe(filePath.length - path.basename(fileNameWithoutExtension).length)
+          expect(moveDialog.miniEditor).toHaveFocus()
+
+        describe "when the path is changed and confirmed", ->
+          describe "when all the directories along the new path exist", ->
+            it "moves the file, updates the tree view, and closes the dialog", ->
+              newPath = path.join(rootDirPath, 'renamed-test-file.txt')
+              moveDialog.miniEditor.setText(path.basename(newPath))
+
+              atom.commands.dispatch moveDialog.element, 'core:confirm'
+
+              expect(fs.existsSync(newPath)).toBeTruthy()
+              expect(fs.existsSync(filePath)).toBeFalsy()
+              expect(atom.workspace.getModalPanels().length).toBe 0
+
+              waitsFor "tree view to update", ->
+                root1.find('> .entries > .file:contains(renamed-test-file.txt)').length > 0
+
+              runs ->
+                dirView = $(treeView.roots[0].entries).find('.directory:contains(test-dir)')
+                dirView[0].expand()
+                expect($(dirView[0].entries).children().length).toBe 0
+
+          describe "when the directories along the new path don't exist", ->
+            it "creates the target directory before moving the file", ->
+              newPath = path.join(rootDirPath, 'new', 'directory', 'renamed-test-file.txt')
+              moveDialog.miniEditor.setText(newPath)
+
+              atom.commands.dispatch moveDialog.element, 'core:confirm'
+
+              waitsFor "tree view to update", ->
+                root1.find('> .entries > .directory:contains(new)').length > 0
+
+              runs ->
+                expect(fs.existsSync(newPath)).toBeTruthy()
+                expect(fs.existsSync(filePath)).toBeFalsy()
+
+          describe "when a file or directory already exists at the target path", ->
+            it "shows an error message and does not close the dialog", ->
+              runs ->
+                fs.writeFileSync(path.join(rootDirPath, 'target.txt'), '')
+                newPath = path.join(rootDirPath, 'target.txt')
+                moveDialog.miniEditor.setText(newPath)
+
+                atom.commands.dispatch moveDialog.element, 'core:confirm'
+
+                expect(moveDialog.errorMessage.text()).toContain 'already exists'
+                expect(moveDialog).toHaveClass('error')
+                expect(moveDialog.hasParent()).toBeTruthy()
+
+        describe "when 'core:cancel' is triggered on the move dialog", ->
+          it "removes the dialog and focuses the tree view", ->
+            atom.commands.dispatch moveDialog.element, 'core:cancel'
+            expect(atom.workspace.getModalPanels().length).toBe 0
+            expect(treeView.find(".tree-view")).toMatchSelector(':focus')
+
+        describe "when the move dialog's editor loses focus", ->
+          it "removes the dialog and focuses root view", ->
+            $(workspaceElement).focus()
+            expect(atom.workspace.getModalPanels().length).toBe 0
+            expect(atom.views.getView(atom.workspace.getActivePane())).toHaveFocus()
+
+      describe "when a file is selected and its name starts with a '.'", ->
+        [dotFile, dotFilePath, dotFileView, moveDialog] = []
+
+        beforeEach ->
+          dotFile = '.dotfile'
+          dotFilePath = path.join(dirPath, dotFile)
+          fs.writeFileSync(dotFilePath, "dot")
+          dirView[0].collapse()
+          dirView[0].expand()
+          dotFileView = treeView.find('.file:contains(.dotfile)')
+
+          waitsForFileToOpen ->
+            dotFileView.click()
+
+          runs ->
+            atom.commands.dispatch(treeView.element, "tree-view:move")
+            moveDialog = $(atom.workspace.getModalPanels()[0].getItem()).view()
+
+        it "places the cursor before the file name", ->
+          expect(moveDialog).toExist()
+          expect(moveDialog.miniEditor.getText()).toBe(atom.project.relativize(dotFilePath))
+          expect(moveDialog.miniEditor.getModel().getCursorBufferPosition().column).toBe(dotFilePath.length - dotFile.length)
+
+      describe "when the project is selected", ->
+        it "doesn't display the move / rename dialog", ->
           treeView.roots[0].click()
           atom.commands.dispatch(treeView.element, "tree-view:move")
           expect(atom.workspace.getModalPanels().length).toBe(0)
@@ -2257,7 +2371,7 @@ describe "TreeView", ->
             expect(atom.workspace.getModalPanels().length).toBe 0
             expect(atom.views.getView(atom.workspace.getActivePane())).toHaveFocus()
 
-      describe "when a file is selected that's name starts with a '.'", ->
+      describe "when a file is selected and its name starts with a '.'", ->
         [dotFilePath, dotFileView, copyDialog] = []
 
         beforeEach ->
