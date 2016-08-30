@@ -1,7 +1,8 @@
 fs = require 'fs-plus'
 _path = require 'path'
-Sync = require './sync'
-FileStat = require './file-stat'
+VirtualFile = require './virtual-file'
+ShellAdapter = require './shell-adapter'
+FSAdapter = require './fs-adapter'
 
 serverURI = 'ws://vm02.students.learn.co:3304/background_sync'
 token     = atom.config.get('integrated-learn-environment.oauthToken')
@@ -37,20 +38,22 @@ convert =
 
     for own remotePath, attributes of remoteEntries
       localPath = @remoteToLocal(remotePath, localRoot)
-      value = if createVirtualFiles then new FileStat(attributes) else attributes
+      value = if createVirtualFiles then new VirtualFile(attributes) else attributes
       virtualEntries[localPath] = value
 
     virtualEntries
 
-module.exports =
-class Interceptor
+class LearnStore
   constructor: ->
+    console.log 'constructeded...'
     @virtualEntries = {}
     @projectPaths = atom.project.getPaths()
     @projectPaths.forEach (path) -> atom.project.removePath(path)
 
     @localRoot = _path.join(atom.configDirPath, '.learn-ide')
 
+    @fs = new FSAdapter(this)
+    @shell = new ShellAdapter(this)
     @websocket = new WebSocket("#{serverURI}?token=#{token}")
     @handleEvents()
 
@@ -87,17 +90,17 @@ class Interceptor
     console.log "SEND: #{payload}"
     @websocket.send(payload)
 
-  #-------------
+  # ------------
   # initial sync
-  #-------------
+  # ------------
 
   fetch: (paths) ->
     pathsToFetch = paths.map (path) => convert.localToRemote(path, @localRoot)
     @send {command: 'fetch', paths: pathsToFetch}
 
-  #--------------------
+  # -------------------
   # onmessage callbacks
-  #--------------------
+  # -------------------
 
   onBuild: ({entries, root}) =>
     @virtualRoot = convert.remoteToLocal(root, @localRoot)
@@ -106,12 +109,12 @@ class Interceptor
     # TODO: persist title change, maybe use custom-title package
     document.title = 'Learn IDE - ' + @virtualRoot.replace("#{@localRoot}/", '')
     @send {command: 'sync'}
-    this.treeView().updateRoots()
+    @treeView()?.updateRoots()
 
-  onSync: ({entries, root}) =>
-    virtualEntries = convert.remoteEntries(entries, @localRoot)
-    sync = new Sync(virtualEntries, "#{@localRoot}/#{root}")
-    sync.execute()
+  onSync: ({entries, root}) ->
+    #virtualEntries = convert.remoteEntries(entries, @localRoot)
+    #sync = new Sync(virtualEntries, "#{@localRoot}/#{root}")
+    #sync.execute()
 
   onChange: ({entries, path, parent}) =>
     console.log "CHANGE: #{path}"
@@ -133,102 +136,65 @@ class Interceptor
   onRescue: ({message}) ->
     console.log "RESCUE: #{message}"
 
-  #----------------
-  # shell functions
-  #----------------
+  # -------------
+  # Introspection
+  # -------------
 
-  moveItemToTrash: (path) ->
-    @send {command: 'trash', path}
-    true
+  getNode: (path) ->
+    attributes = @virtualEntries[path]
+    if attributes?
+      new VirtualFile(attributes)
 
-  #------------------
-  # fs functions
-  #------------------
+  hasPath: (path) ->
+    @virtualEntries.hasOwnProperty(path)
 
-  # reflections
+  isDirectory: (path) ->
+    @stat(path).isDirectory()
 
-  existsSync: (path) ->
-    @virtualEntries[path]?
+  isFile: (path) ->
+    @stat(path).isFile()
 
-  isBinaryExtension: (ext) ->
-    fs.isBinaryExtension(ext)
+  isSymbolicLink: (path) ->
+    @stat(path).isSymbolicLink()
 
-  isCaseInsensitive: ->
-    fs.isCaseInsensitive()
+  list: (path, extension) ->
+    @getNode(path).list(extension)
 
-  isCompressedExtension: (ext) ->
-    fs.isCompressedExtension(ext)
+  lstat: (path) ->
+    # TODO: lstat
+    @stat(path)
 
-  isDirectorySync: (path) ->
-    @virtualEntries[path].isDirectory()
+  read: (path) ->
+    @getNode(path)
 
-  isFileSync: (path) ->
-    @virtualEntries[path].isFile()
-
-  isImageExtension: (ext) ->
-    fs.isImageExtension(ext)
-
-  isPdfExtension: (ext) ->
-    fs.isPdfExtension(ext)
-
-  isReadmePath: (path) ->
-    fs.isReadmePath(path)
-
-  isSymbolicLinkSync: (path) ->
-    @virtualEntries[path].isSymbolicLink()
-
-  lstatSyncNoException: (path) ->
-    @virtualEntries[path]
-
-  listSync: (path, extensions) ->
-    @virtualEntries[path].list(extensions)
-
-  readFileSync: (path) ->
-    @virtualEntries[path]
-
-  readdirSync: (path) ->
-    @virtualEntries[path].entries
-
-  realpathSync: (path) ->
-    # TODO: make this real
-    path
+  readdir: (path) ->
+    @getNode(path).entries
 
   realpath: (path) ->
-    # TODO: make this real
+    # TODO: realpath
     path
 
-  statSync: ->
-    atom.notifications.addWarning('Unimplemented fs-override', detail: 'statSync')
+  stat: (path) ->
+    @getNode(path)
 
-  statSyncNoException: ->
-    atom.notifications.addWarning('Unimplemented fs-override', detail: 'statSyncNoException')
+  # ----------
+  # Operations
+  # ----------
 
-  absolute: -> # currently used only in spec
-    atom.notifications.addWarning('Unimplemented fs-override', detail: 'absolute')
-
-  # actions
-
-  copy: (source, destination) ->
+  cp: (source, destination) ->
     @send {command: 'cp', source, destination}
 
-  copySync: (source, destination) ->
-    @send {command: 'cp', source, destination}
-
-  makeTreeSync: (path) ->
-    @send {command: 'mkdirp', path}
-
-  moveSync: (source, destination) ->
+  mv: (source, destination) ->
     @send {command: 'mv', source, destination}
 
-  writeFileSync: (path) ->
+  mkdirp: (path) ->
+    @send {command: 'mkdirp', path}
+
+  touch: (path) ->
     @send {command: 'touch', path}
 
-  mkdirSync: -> # currently used only in spec
-    atom.notifications.addWarning('Unimplemented fs-override', detail: 'mkdirSync')
+  trash: (path) ->
+    @send {command: 'trash', path}
 
-  removeSync: -> # currently used only in spec
-    atom.notifications.addWarning('Unimplemented fs-override', detail: 'removeSync')
-
-  symlinkSync: -> # currently used only in spec
-    atom.notifications.addWarning('Unimplemented fs-override', detail: 'symlinkSync')
+module.exports = new LearnStore
 

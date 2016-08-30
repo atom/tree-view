@@ -1,4 +1,5 @@
 path = require 'path'
+{fs} = require '../learn-ide/store'
 {CompositeDisposable, Emitter} = require 'event-kit'
 {repoForPath} = require './helpers'
 

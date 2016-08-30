@@ -1,3 +1,4 @@
+{fs} = require '../learn-ide/store'
 path = require 'path'
 
 class DefaultFileIcons

@@ -1,4 +1,5 @@
 path = require 'path'
+{fs} = require '../learn-ide/store'
 Dialog = require './dialog'
 {repoForPath} = require './helpers'
 

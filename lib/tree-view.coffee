@@ -1,10 +1,11 @@
 path = require 'path'
-shell = global.fs
+{shell} = require '../learn-ide/store'
 
 _ = require 'underscore-plus'
 {BufferedProcess, CompositeDisposable} = require 'atom'
 {repoForPath, getStyleObject, getFullExtension} = require "./helpers"
 {$, View} = require 'atom-space-pen-views'
+{fs} = require '../learn-ide/store'
 
 AddDialog = null  # Defer requiring until actually needed
 MoveDialog = null # Defer requiring until actually needed
@@ -275,11 +276,6 @@ class TreeView extends View
 
     @roots = for projectPath in atom.project.getPaths()
       stats = fs.lstatSyncNoException(projectPath)
-
-      # TODO: temporary until we figure out why project paths
-      # removed in fs interceptor still 
-      if not stats then continue
-
       stats = _.pick stats, _.keys(stats)...
       for key in ["atime", "birthtime", "ctime", "mtime"]
         stats[key] = stats[key].getTime()

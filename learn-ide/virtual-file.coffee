@@ -1,5 +1,5 @@
 module.exports =
-class FileStat
+class VirtualFile
   constructor: ({@name, @path, @size, @digest, @symlink, @directory, @entries, atime, ctime, mtime, birthtime}) ->
     @atime = new Date(atime)
     @ctime = new Date(ctime)
