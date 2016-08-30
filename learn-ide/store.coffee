@@ -1,59 +1,26 @@
 fs = require 'fs-plus'
 _path = require 'path'
 VirtualFile = require './virtual-file'
-ShellAdapter = require './shell-adapter'
-FSAdapter = require './fs-adapter'
+ShellAdapter = require './util/shell-adapter'
+FSAdapter = require './util/fs-adapter'
+PathConverter = require './util/path-converter'
 
 serverURI = 'ws://vm02.students.learn.co:3304/background_sync'
 token     = atom.config.get('integrated-learn-environment.oauthToken')
 
-convert =
-  localToRemote: (localPath, localRoot, remotePlatform = 'posix') ->
-    remotePath = localPath.replace(localRoot, '')
-
-    if _path.sep isnt _path[remotePlatform].sep
-      remotePath = remotePath.split(_path.sep).join(_path[remotePlatform].sep)
-
-    remotePath
-
-  remoteToLocal: (remotePath, localTarget = '', remotePlatform = 'posix') ->
-    if _path.sep isnt _path[remotePlatform].sep
-      remotePath = remotePath.split(_path[remotePlatform].sep).join(_path.sep)
-
-    _path.join(localTarget, remotePath)
-
-  remoteMessage: (msg, localRoot) ->
-    converted = {}
-
-    for own key, value of msg
-      if typeof value is 'string' and value.startsWith(localRoot)
-        converted[key] = @localToRemote(value, localRoot)
-      else
-        converted[key] = value
-
-    converted
-
-  remoteEntries: (remoteEntries, localRoot, createVirtualFiles = false) ->
-    virtualEntries = {}
-
-    for own remotePath, attributes of remoteEntries
-      localPath = @remoteToLocal(remotePath, localRoot)
-      value = if createVirtualFiles then new VirtualFile(attributes) else attributes
-      virtualEntries[localPath] = value
-
-    virtualEntries
-
 class LearnStore
   constructor: ->
-    console.log 'constructeded...'
     @virtualEntries = {}
+
     @projectPaths = atom.project.getPaths()
     @projectPaths.forEach (path) -> atom.project.removePath(path)
 
     @localRoot = _path.join(atom.configDirPath, '.learn-ide')
+    @convert = new PathConverter(@localRoot)
 
     @fs = new FSAdapter(this)
     @shell = new ShellAdapter(this)
+
     @websocket = new WebSocket("#{serverURI}?token=#{token}")
     @handleEvents()
 
@@ -70,7 +37,7 @@ class LearnStore
 
     @websocket.onmessage = (event) ->
       {type, payload} = JSON.parse(event.data)
-      console.log "RECEIVED: #{type}"
+      console.log 'RECEIVED:', type
       messageCallbacks[type]?(payload)
 
     @websocket.onerror = (err) ->
@@ -85,9 +52,9 @@ class LearnStore
     @package()?.mainModule?.treeView
 
   send: (msg) ->
-    convertedMsg = convert.remoteMessage(msg, @localRoot)
+    convertedMsg = @convert.remoteMessage(msg)
+    console.log 'SEND:', convertedMsg
     payload = JSON.stringify(convertedMsg)
-    console.log "SEND: #{payload}"
     @websocket.send(payload)
 
   # ------------
@@ -95,7 +62,7 @@ class LearnStore
   # ------------
 
   fetch: (paths) ->
-    pathsToFetch = paths.map (path) => convert.localToRemote(path, @localRoot)
+    pathsToFetch = paths.map (path) => @convert.localToRemote(path)
     @send {command: 'fetch', paths: pathsToFetch}
 
   # -------------------
@@ -103,8 +70,8 @@ class LearnStore
   # -------------------
 
   onBuild: ({entries, root}) =>
-    @virtualRoot = convert.remoteToLocal(root, @localRoot)
-    @virtualEntries = convert.remoteEntries(entries, @localRoot, true)
+    @virtualRoot = @convert.remoteToLocal(root)
+    @virtualEntries = @convert.remoteEntries(entries, VirtualFile)
     atom.project.addPath(@virtualRoot)
     # TODO: persist title change, maybe use custom-title package
     document.title = 'Learn IDE - ' + @virtualRoot.replace("#{@localRoot}/", '')
@@ -117,33 +84,33 @@ class LearnStore
     #sync.execute()
 
   onChange: ({entries, path, parent}) =>
-    console.log "CHANGE: #{path}"
-    @virtualEntries = convert.remoteEntries(entries, @localRoot, true)
-    path = convert.remoteToLocal(path, @localRoot)
-    parent = convert.remoteToLocal(parent, @localRoot)
+    console.log 'CHANGE:', path
+    @virtualEntries = @convert.remoteEntries(entries)
+
+    parent = @convert.remoteToLocal(parent)
     @treeView()?.entryForPath(parent).reload()
+
+    path = @convert.remoteToLocal(path)
     @treeView()?.selectEntryForPath(path)
 
   onFetch: ({path, attributes, contents}) =>
     # TODO: include mode and shiz?
-    localPath = convert.remoteToLocal(path, @localRoot)
+    localPath = @convert.remoteToLocal(path)
     dirname = _path.dirname(localPath)
     return unless localPath? and dirname?
     fs.makeTreeSync(dirname) unless fs.existsSync(dirname)
     decoded = new Buffer(contents, 'base64').toString('utf8')
     fs.writeFile(localPath, decoded)
 
-  onRescue: ({message}) ->
-    console.log "RESCUE: #{message}"
+  onRescue: ({message, backtrace}) ->
+    console.log 'RESCUE:', message, backtrace
 
   # -------------
   # Introspection
   # -------------
 
   getNode: (path) ->
-    attributes = @virtualEntries[path]
-    if attributes?
-      new VirtualFile(attributes)
+    @virtualEntries[path]
 
   hasPath: (path) ->
     @virtualEntries.hasOwnProperty(path)
