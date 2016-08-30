@@ -1,6 +1,7 @@
 fs = require 'fs-plus'
 _path = require 'path'
 VirtualFile = require './virtual-file'
+VirtualEntries = require './virtual-entries'
 ShellAdapter = require './util/shell-adapter'
 FSAdapter = require './util/fs-adapter'
 PathConverter = require './util/path-converter'
@@ -10,13 +11,12 @@ token     = atom.config.get('integrated-learn-environment.oauthToken')
 
 class LearnStore
   constructor: ->
-    @virtualEntries = {}
-
     @projectPaths = atom.project.getPaths()
     @projectPaths.forEach (path) -> atom.project.removePath(path)
 
     @localRoot = _path.join(atom.configDirPath, '.learn-ide')
     @convert = new PathConverter(@localRoot)
+    @virtualEntries = new VirtualEntries({}, @convert)
 
     @fs = new FSAdapter(this)
     @shell = new ShellAdapter(this)
@@ -52,7 +52,14 @@ class LearnStore
     @package()?.mainModule?.treeView
 
   send: (msg) ->
-    convertedMsg = @convert.remoteMessage(msg)
+    convertedMsg = {}
+
+    for own key, value of msg
+      if typeof value is 'string' and value.startsWith(@localRoot)
+        convertedMsg[key] = @convert.localToRemote(value)
+      else
+        convertedMsg[key] = value
+
     console.log 'SEND:', convertedMsg
     payload = JSON.stringify(convertedMsg)
     @websocket.send(payload)
@@ -71,7 +78,7 @@ class LearnStore
 
   onBuild: ({entries, root}) =>
     @virtualRoot = @convert.remoteToLocal(root)
-    @virtualEntries = @convert.remoteEntries(entries, VirtualFile)
+    @virtualEntries.update(entries)
     atom.project.addPath(@virtualRoot)
     # TODO: persist title change, maybe use custom-title package
     document.title = 'Learn IDE - ' + @virtualRoot.replace("#{@localRoot}/", '')
@@ -85,7 +92,7 @@ class LearnStore
 
   onChange: ({entries, path, parent}) =>
     console.log 'CHANGE:', path
-    @virtualEntries = @convert.remoteEntries(entries)
+    @virtualEntries.update(entries)
 
     parent = @convert.remoteToLocal(parent)
     @treeView()?.entryForPath(parent).reload()
@@ -109,11 +116,11 @@ class LearnStore
   # Introspection
   # -------------
 
-  getNode: (path) ->
-    @virtualEntries[path]
+  getEntry: (path) ->
+    @virtualEntries.get(path)
 
   hasPath: (path) ->
-    @virtualEntries.hasOwnProperty(path)
+    @virtualEntries.include(path)
 
   isDirectory: (path) ->
     @stat(path).isDirectory()
@@ -125,24 +132,24 @@ class LearnStore
     @stat(path).isSymbolicLink()
 
   list: (path, extension) ->
-    @getNode(path).list(extension)
+    @getEntry(path).list(extension)
 
   lstat: (path) ->
     # TODO: lstat
     @stat(path)
 
   read: (path) ->
-    @getNode(path)
+    @getEntry(path)
 
   readdir: (path) ->
-    @getNode(path).entries
+    @getEntry(path).entries
 
   realpath: (path) ->
     # TODO: realpath
     path
 
   stat: (path) ->
-    @getNode(path)
+    @getEntry(path)
 
   # ----------
   # Operations
