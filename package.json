@@ -69,6 +69,10 @@
     "alwaysOpenExisting": {
       "type": "boolean",
       "default": false
+    },
+    "clickFocusesEditor": {
+      "type": "boolean",
+      "default": false
     }
   }
 }
