@@ -1,11 +1,11 @@
 path = require 'path'
-{shell} = require '../learn-ide/store'
+{shell} = require '../virtual-file-system/main'
 
 _ = require 'underscore-plus'
 {BufferedProcess, CompositeDisposable} = require 'atom'
 {repoForPath, getStyleObject, getFullExtension} = require "./helpers"
 {$, View} = require 'atom-space-pen-views'
-{fs} = require '../learn-ide/store'
+{fs} = require '../virtual-file-system/main'
 
 AddDialog = null  # Defer requiring until actually needed
 MoveDialog = null # Defer requiring until actually needed

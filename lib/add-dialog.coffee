@@ -1,5 +1,5 @@
 path = require 'path'
-{fs} = require '../learn-ide/store'
+{fs} = require '../virtual-file-system/main'
 Dialog = require './dialog'
 {repoForPath} = require './helpers'
 

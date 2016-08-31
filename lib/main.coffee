@@ -6,7 +6,7 @@ module.exports =
   treeView: null
 
   activate: (@state) ->
-    learnStore = require '../learn-ide/store'
+    learnStore = require '../virtual-file-system/main'
     @disposables = new CompositeDisposable
     @disposables.add learnStore
     @state.attached ?= true if @shouldAttach()

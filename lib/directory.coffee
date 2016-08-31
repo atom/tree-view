@@ -1,7 +1,7 @@
 path = require 'path'
 _ = require 'underscore-plus'
 {CompositeDisposable, Emitter} = require 'event-kit'
-{fs} = require '../learn-ide/store'
+{fs} = require '../virtual-file-system/main'
 PathWatcher = require 'pathwatcher'
 File = require './file'
 {repoForPath} = require './helpers'
