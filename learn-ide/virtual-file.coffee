@@ -1,15 +1,17 @@
+Stats = require './stats'
+
 module.exports =
 class VirtualFile
-  constructor: ({@name, @path, @size, @digest, @symlink, @directory, @entries, atime, ctime, mtime, birthtime}) ->
-    @atime = new Date(atime)
-    @ctime = new Date(ctime)
-    @mtime = new Date(mtime)
-    @birthtime = new Date(birthtime)
+  constructor: ({@name, @path, @entries, @digest, @content, stat}) ->
+    @stats = new Stats(stat)
 
-  setContents: (@contents) ->
-    # noop
+  addContents: (@content) ->
+    # base64 vs utf8?
+
+  addDigest: (@digest) ->
 
   read: ->
+    # base64 vs utf8?
     @contents
 
   list: (extension) ->
@@ -17,13 +19,4 @@ class VirtualFile
       entries = @entries.filter (entry) -> entry.endsWith(".#{extension}")
 
     (entries or @entries).map (entry) => "#{@path}/#{entry}"
-
-  isDirectory: ->
-    @directory
-
-  isFile: ->
-    not @directory
-
-  isSymbolicLink: ->
-    @symlink
 

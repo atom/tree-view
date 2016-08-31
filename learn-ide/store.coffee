@@ -120,7 +120,7 @@ class LearnStore
     @virtualEntries.get(path)
 
   hasPath: (path) ->
-    @virtualEntries.include(path)
+    @virtualEntries.has(path)
 
   isDirectory: (path) ->
     @stat(path).isDirectory()
@@ -149,7 +149,7 @@ class LearnStore
     path
 
   stat: (path) ->
-    @getEntry(path)
+    @getEntry(path).stats
 
   # ----------
   # Operations

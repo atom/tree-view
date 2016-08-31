@@ -6,9 +6,9 @@ class VirtualEntries
     @update(pathsWithAttributes)
 
   get: (path) ->
-    @entries[path]
+    @has(path) and @entries[path]
 
-  include: (path) ->
+  has: (path) ->
     @entries.hasOwnProperty(path)
 
   update: (pathsWithAttributes) ->
