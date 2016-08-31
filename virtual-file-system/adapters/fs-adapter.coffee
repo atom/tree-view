@@ -60,7 +60,7 @@ class FSAdapter
     @virtualFileSystem.stat(path)
 
   absolute: -> # currently used only in spec
-    atom.notifications.addWarning('Unimplemented fs-override', detail: 'absolute')
+    atom.notifications.addWarning('Unadapted fs function', detail: 'absolute')
 
   copy: (source, destination) ->
     @virtualFileSystem.cp(source, destination)
@@ -78,11 +78,11 @@ class FSAdapter
     @virtualFileSystem.touch(path)
 
   mkdirSync: -> # currently used only in spec
-    atom.notifications.addWarning('Unimplemented fs-override', detail: 'mkdirSync')
+    atom.notifications.addWarning('Unadapted fs function', detail: 'mkdirSync')
 
   removeSync: -> # currently used only in spec
-    atom.notifications.addWarning('Unimplemented fs-override', detail: 'removeSync')
+    atom.notifications.addWarning('Unadapted fs function', detail: 'removeSync')
 
   symlinkSync: -> # currently used only in spec
-    atom.notifications.addWarning('Unimplemented fs-override', detail: 'symlinkSync')
+    atom.notifications.addWarning('Unadapted fs function', detail: 'symlinkSync')
 

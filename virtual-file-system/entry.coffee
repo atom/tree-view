@@ -1,11 +1,11 @@
-Stats = require './stats'
+Stat = require './stat'
 
 module.exports =
-class VirtualFile
+class Entry
   constructor: ({@name, @path, @entries, @digest, @content, stat}) ->
-    @stats = new Stats(stat)
+    @stats = new Stat(stat)
 
-  addContents: (@content) ->
+  addContent: (@content) ->
     # base64 vs utf8?
 
   addDigest: (@digest) ->

@@ -1,5 +1,5 @@
 module.exports =
-class Stats
+class Stat
   constructor: (attributes) ->
     for own key, value of attributes
       if key.endsWith('time')

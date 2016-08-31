@@ -1,10 +1,10 @@
 fs = require 'fs-plus'
 _ = require 'underscore-plus'
-VirtualFile = require './virtual-file'
+Entry = require './entry'
 
 module.exports =
-class VirtualTree
-  constructor: (pathsWithAttributes = {}, @virtualRoot,  @converter) ->
+class Tree
+  constructor: (pathsWithAttributes = {}, @physicalRoot,  @converter) ->
     @update(pathsWithAttributes)
 
   get: (path) ->
@@ -18,7 +18,7 @@ class VirtualTree
 
     for own remotePath, attributes of pathsWithAttributes
       path = @converter.remoteToLocal(remotePath)
-      @entries[path] = new VirtualFile(attributes)
+      @entries[path] = new Entry(attributes)
 
   paths: ->
     Object.keys(@entries)
@@ -34,7 +34,7 @@ class VirtualTree
       @get(path).addContent(content)
 
   getPathsToRemove: ->
-    _.difference(fs.listTreeSync(@virtualRoot), @paths())
+    _.difference(fs.listTreeSync(@physicalRoot), @paths())
 
   getPathsToSync: ->
     pathsToSync = []

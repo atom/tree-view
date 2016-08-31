@@ -1,8 +1,8 @@
 fs = require 'fs-plus'
 shell = require 'shell'
 _path = require 'path'
-VirtualFile = require './virtual-file'
-VirtualTree = require './virtual-tree'
+Entry = require './entry'
+Tree = require './tree'
 ShellAdapter = require './adapters/shell-adapter'
 FSAdapter = require './adapters/fs-adapter'
 PathConverter = require './util/path-converter'
@@ -10,14 +10,14 @@ PathConverter = require './util/path-converter'
 serverURI = 'ws://vm02.students.learn.co:3304/background_sync'
 token     = atom.config.get('integrated-learn-environment.oauthToken')
 
-class LearnStore
+class VirtualFileSystem
   constructor: ->
     @projectPaths = atom.project.getPaths()
     @projectPaths.forEach (path) -> atom.project.removePath(path)
 
-    @localRoot = _path.join(atom.configDirPath, '.learn-ide')
-    @convert = new PathConverter(@localRoot)
-    @virtualTree = new VirtualTree({}, @localRoot, @convert)
+    @physicalRoot = _path.join(atom.configDirPath, '.learn-ide')
+    @convert = new PathConverter(@physicalRoot)
+    @tree = new Tree({}, @physicalRoot, @convert)
 
     @fs = new FSAdapter(this)
     @shell = new ShellAdapter(this)
@@ -50,13 +50,13 @@ class LearnStore
     atom.packages.getActivePackage('tree-view')
 
   treeView: ->
-    @package()?.mainModule?.treeView
+    @package()?.mainModule.treeView
 
   send: (msg) ->
     convertedMsg = {}
 
     for own key, value of msg
-      if typeof value is 'string' and value.startsWith(@localRoot)
+      if typeof value is 'string' and value.startsWith(@physicalRoot)
         convertedMsg[key] = @convert.localToRemote(value)
       else
         convertedMsg[key] = value
@@ -70,21 +70,21 @@ class LearnStore
   # -------------------
 
   onBuild: ({entries, root}) =>
-    @virtualRoot = @convert.remoteToLocal(root)
-    @virtualTree.update(entries)
-    atom.project.addPath(@virtualRoot)
+    @root = @convert.remoteToLocal(root)
+    @tree.update(entries)
+    atom.project.addPath(@root)
     # TODO: persist title change, maybe use custom-title package
-    document.title = 'Learn IDE - ' + @virtualRoot.replace("#{@localRoot}/", '')
+    document.title = "Learn IDE - #{@convert.localToRemote(@root).substr(1)}"
     @send {command: 'sync'}
     @treeView()?.updateRoots()
 
   onSync: ({entries}) =>
-    @virtualTree.addDigests(entries)
+    @tree.addDigests(entries)
     @sync()
 
   onChange: ({entries, path, parent}) =>
     console.log 'CHANGE:', path
-    @virtualTree.update(entries)
+    @tree.update(entries)
 
     parent = @convert.remoteToLocal(parent)
     @treeView()?.entryForPath(parent).reload()
@@ -109,9 +109,9 @@ class LearnStore
   # ------------------
 
   sync: ->
-    fs.makeTreeSync(@localRoot) unless fs.existsSync(@localRoot)
-    @virtualTree.getPathsToRemove().forEach (path) -> shell.moveItemToTrash(path)
-    @virtualTree.getPathsToSync().then (paths) => @fetch(paths)
+    fs.makeTreeSync(@physicalRoot) unless fs.existsSync(@physicalRoot)
+    @tree.getPathsToRemove().forEach (path) -> shell.moveItemToTrash(path)
+    @tree.getPathsToSync().then (paths) => @fetch(paths)
 
   fetch: (paths) ->
     pathsToFetch = paths.map (path) => @convert.localToRemote(path)
@@ -122,10 +122,10 @@ class LearnStore
   # ------------------
 
   getEntry: (path) ->
-    @virtualTree.get(path)
+    @tree.get(path)
 
   hasPath: (path) ->
-    @virtualTree.has(path)
+    @tree.has(path)
 
   isDirectory: (path) ->
     @stat(path).isDirectory()
@@ -175,5 +175,5 @@ class LearnStore
   trash: (path) ->
     @send {command: 'trash', path}
 
-module.exports = new LearnStore
+module.exports = new VirtualFileSystem
 
