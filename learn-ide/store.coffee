@@ -1,7 +1,8 @@
 fs = require 'fs-plus'
+shell = require 'shell'
 _path = require 'path'
 VirtualFile = require './virtual-file'
-VirtualEntries = require './virtual-entries'
+VirtualTree = require './virtual-tree'
 ShellAdapter = require './adapters/shell-adapter'
 FSAdapter = require './adapters/fs-adapter'
 PathConverter = require './util/path-converter'
@@ -16,7 +17,7 @@ class LearnStore
 
     @localRoot = _path.join(atom.configDirPath, '.learn-ide')
     @convert = new PathConverter(@localRoot)
-    @virtualEntries = new VirtualEntries({}, @convert)
+    @virtualTree = new VirtualTree({}, @localRoot, @convert)
 
     @fs = new FSAdapter(this)
     @shell = new ShellAdapter(this)
@@ -64,35 +65,26 @@ class LearnStore
     payload = JSON.stringify(convertedMsg)
     @websocket.send(payload)
 
-  # ------------
-  # initial sync
-  # ------------
-
-  fetch: (paths) ->
-    pathsToFetch = paths.map (path) => @convert.localToRemote(path)
-    @send {command: 'fetch', paths: pathsToFetch}
-
   # -------------------
   # onmessage callbacks
   # -------------------
 
   onBuild: ({entries, root}) =>
     @virtualRoot = @convert.remoteToLocal(root)
-    @virtualEntries.update(entries)
+    @virtualTree.update(entries)
     atom.project.addPath(@virtualRoot)
     # TODO: persist title change, maybe use custom-title package
     document.title = 'Learn IDE - ' + @virtualRoot.replace("#{@localRoot}/", '')
     @send {command: 'sync'}
     @treeView()?.updateRoots()
 
-  onSync: ({entries, root}) ->
-    #virtualEntries = convert.remoteEntries(entries, @localRoot)
-    #sync = new Sync(virtualEntries, "#{@localRoot}/#{root}")
-    #sync.execute()
+  onSync: ({entries}) =>
+    @virtualTree.addDigests(entries)
+    @sync()
 
   onChange: ({entries, path, parent}) =>
     console.log 'CHANGE:', path
-    @virtualEntries.update(entries)
+    @virtualTree.update(entries)
 
     parent = @convert.remoteToLocal(parent)
     @treeView()?.entryForPath(parent).reload()
@@ -101,7 +93,7 @@ class LearnStore
     @treeView()?.selectEntryForPath(path)
 
   onFetch: ({path, attributes, contents}) =>
-    # TODO: include mode and shiz?
+    # TODO: preserve full stats
     localPath = @convert.remoteToLocal(path)
     dirname = _path.dirname(localPath)
     return unless localPath? and dirname?
@@ -112,15 +104,28 @@ class LearnStore
   onRescue: ({message, backtrace}) ->
     console.log 'RESCUE:', message, backtrace
 
-  # -------------
-  # Introspection
-  # -------------
+  # ------------------
+  # Background syncing
+  # ------------------
+
+  sync: ->
+    fs.makeTreeSync(@localRoot) unless fs.existsSync(@localRoot)
+    @virtualTree.getPathsToRemove().forEach (path) -> shell.moveItemToTrash(path)
+    @virtualTree.getPathsToSync().then (paths) => @fetch(paths)
+
+  fetch: (paths) ->
+    pathsToFetch = paths.map (path) => @convert.localToRemote(path)
+    @send {command: 'fetch', paths: pathsToFetch}
+
+  # ------------------
+  # File introspection
+  # ------------------
 
   getEntry: (path) ->
-    @virtualEntries.get(path)
+    @virtualTree.get(path)
 
   hasPath: (path) ->
-    @virtualEntries.has(path)
+    @virtualTree.has(path)
 
   isDirectory: (path) ->
     @stat(path).isDirectory()
@@ -151,9 +156,9 @@ class LearnStore
   stat: (path) ->
     @getEntry(path).stats
 
-  # ----------
-  # Operations
-  # ----------
+  # ---------------
+  # File operations
+  # ---------------
 
   cp: (source, destination) ->
     @send {command: 'cp', source, destination}
