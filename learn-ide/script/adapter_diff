@@ -1,0 +1,16 @@
+#!/bin/bash
+
+grep -ohr "fs\.\w*[(| ]" * --exclude-dir=node_modules --exclude-dir=learn-ide | sed 's/^fs\.\(.*\).$/\1/' | sort -u > fs_occurences
+grep -ohr "shell\.\w*[(| ]" * --exclude-dir=node_modules --exclude-dir=learn-ide | sed 's/^shell\.\(.*\).$/\1/' | sort -u > shell_occurences
+cat fs_occurences shell_occurences | sort -u > occurences
+grep -ohr "\w*: [(|-]" learn-ide/adapters/* | sed 's/.\{3\}$//' | grep -v "constructor" | sort -u > coverage
+
+echo "Taking diff of adapter usage..."
+diff occurences coverage
+rm fs_occurences shell_occurences occurences coverage
+
+echo "Checking for 'fs-plus' references..."
+ag 'fs-plus' --ignore-dir=spec --ignore-dir=learn-ide --ignore=package.json
+
+echo "Done."
+
