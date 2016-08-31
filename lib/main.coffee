@@ -1,14 +1,13 @@
 {CompositeDisposable} = require 'event-kit'
 path = require 'path'
+
 FileIcons = require './file-icons'
 
 module.exports =
   treeView: null
 
   activate: (@state) ->
-    learnStore = require '../virtual-file-system/main'
     @disposables = new CompositeDisposable
-    @disposables.add learnStore
     @state.attached ?= true if @shouldAttach()
 
     @createView() if @state.attached
