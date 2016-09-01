@@ -33,11 +33,11 @@ class VirtualFileSystem
 
   handleEvents: ->
     messageCallbacks =
-      sync: @onSync
-      build: @onBuild
-      fetch: @onFetch
-      change: @onChange
-      rescue: @onRescue
+      sync: @onRecievedSync
+      build: @onRecievedBuild
+      fetch: @onRecievedFetch
+      change: @onRecievedChange
+      rescue: @onRecievedRescue
 
     @websocket.onopen = (event) =>
       @send {command: 'build'}
@@ -75,22 +75,25 @@ class VirtualFileSystem
   # onmessage callbacks
   # -------------------
 
-  onBuild: ({entries, root}) =>
+  onRecievedBuild: ({entries, root}) =>
     @root = @convert.remoteToLocal(root)
     @tree.update(entries)
     atom.project.addPath(@root)
     # TODO: persist title change, maybe use custom-title package
     document.title = "Learn IDE - #{@convert.localToRemote(@root).substr(1)}"
-    @send {command: 'sync'}
+    @sync()
     @treeView()?.updateRoots()
 
-  onSync: ({entries}) =>
+  onRecievedSync: ({entries}) =>
     @tree.addDigests(entries)
-    @sync()
+    fs.makeTreeSync(@physicalRoot) unless fs.existsSync(@physicalRoot)
+    @tree.getPathsToRemove().forEach (path) -> shell.moveItemToTrash(path)
+    @tree.getPathsToSync().then (paths) => @fetch(paths)
 
-  onChange: ({entries, path, parent}) =>
+  onRecievedChange: ({entries, path, parent}) =>
     console.log 'CHANGE:', path
     @tree.update(entries)
+    @sync()
 
     parent = @convert.remoteToLocal(parent)
     @treeView()?.entryForPath(parent).reload()
@@ -98,7 +101,7 @@ class VirtualFileSystem
     path = @convert.remoteToLocal(path)
     @treeView()?.selectEntryForPath(path)
 
-  onFetch: ({path, attributes, contents}) =>
+  onRecievedFetch: ({path, attributes, contents}) =>
     # TODO: preserve full stats
     localPath = @convert.remoteToLocal(path)
     dirname = _path.dirname(localPath)
@@ -107,7 +110,7 @@ class VirtualFileSystem
     decoded = new Buffer(contents, 'base64').toString('utf8')
     fs.writeFile(localPath, decoded)
 
-  onRescue: ({message, backtrace}) ->
+  onRecievedRescue: ({message, backtrace}) ->
     console.log 'RESCUE:', message, backtrace
 
   # ------------------
@@ -115,9 +118,7 @@ class VirtualFileSystem
   # ------------------
 
   sync: ->
-    fs.makeTreeSync(@physicalRoot) unless fs.existsSync(@physicalRoot)
-    @tree.getPathsToRemove().forEach (path) -> shell.moveItemToTrash(path)
-    @tree.getPathsToSync().then (paths) => @fetch(paths)
+    @send {command: 'sync'}
 
   fetch: (paths) ->
     pathsToFetch = paths.map (path) => @convert.localToRemote(path)
