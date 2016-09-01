@@ -1,10 +1,11 @@
 fs = require 'fs-plus'
 _ = require 'underscore-plus'
+crypto = require 'crypto'
 Entry = require './entry'
 
 module.exports =
 class Tree
-  constructor: (pathsWithAttributes = {}, @physicalRoot,  @converter) ->
+  constructor: (pathsWithAttributes = {},  @converter) ->
     @update(pathsWithAttributes)
 
   get: (path) ->
@@ -13,7 +14,10 @@ class Tree
   has: (path) ->
     @entries.hasOwnProperty(path)
 
-  update: (pathsWithAttributes) ->
+  update: (pathsWithAttributes, projectRoot) ->
+    if projectRoot?
+      @projectRoot = projectRoot
+
     @entries = {}
 
     for own remotePath, attributes of pathsWithAttributes
@@ -34,7 +38,8 @@ class Tree
       @get(path).addContent(content)
 
   getPathsToRemove: ->
-    _.difference(fs.listTreeSync(@physicalRoot), @paths())
+    return [] unless @projectRoot?
+    _.difference(fs.listTreeSync(@projectRoot), @paths())
 
   getPathsToSync: ->
     pathsToSync = []
@@ -51,21 +56,27 @@ class Tree
     return new Error('virtual digest must be defined') unless virtualDigest?
 
     new Promise (resolve) ->
-      resolve true unless fs.existsSync(path)
+      fs.stat path, (err, stats) ->
+        if err?
+          return resolve true
 
-      if fs.isDirectorySync(path)
-        str = fs.readdirSync(path).join('')
-        digest = crypto.createHash('md5').update(str, 'utf8').digest('hex')
+        if stats.isDirectory()
+          str = fs.readdirSync(path).join('')
+          digest = crypto.createHash('md5').update(str, 'utf8').digest('hex')
 
-        resolve virtualDigest is digest
-      else
-        hash = crypto.createHash('md5')
-        stream = fs.createReadStream(path)
+          console.log "PATH: #{path} // REMOTE: #{virtualDigest} // LOCAL: #{digest}"
 
-        stream.on 'data', (data) ->
-          hash.update(data, 'utf8')
+          return resolve virtualDigest is digest
+        else
+          hash = crypto.createHash('md5')
+          stream = fs.createReadStream(path)
 
-        stream.on 'end', ->
-          digest = hash.digest('hex')
-          resolve virtualDigest is digest
+          stream.on 'data', (data) ->
+            hash.update(data, 'utf8')
+
+          stream.on 'end', ->
+            digest = hash.digest('hex')
+            console.log "PATH: #{path} // REMOTE: #{virtualDigest} // LOCAL: #{digest}"
+
+            return resolve virtualDigest is digest
 

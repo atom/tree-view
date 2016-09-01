@@ -17,7 +17,7 @@ class VirtualFileSystem
 
     @physicalRoot = _path.join(atom.configDirPath, '.learn-ide')
     @convert = new PathConverter(@physicalRoot)
-    @tree = new Tree({}, @physicalRoot, @convert)
+    @tree = new Tree({}, @convert)
 
     @fs = new FSAdapter(this)
     @shell = new ShellAdapter(this)
@@ -77,7 +77,7 @@ class VirtualFileSystem
 
   onRecievedBuild: ({entries, root}) =>
     @root = @convert.remoteToLocal(root)
-    @tree.update(entries)
+    @tree.update(entries, root)
     atom.project.addPath(@root)
     # TODO: persist title change, maybe use custom-title package
     document.title = "Learn IDE - #{@convert.localToRemote(@root).substr(1)}"
