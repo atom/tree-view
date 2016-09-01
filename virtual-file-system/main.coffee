@@ -23,7 +23,13 @@ class VirtualFileSystem
     @shell = new ShellAdapter(this)
 
     @websocket = new WebSocket("#{serverURI}?token=#{token}")
+    @observeSave()
     @handleEvents()
+
+  observeSave: ->
+    atom.workspace.observeTextEditors (editor) =>
+      editor.getBuffer()?.onWillSave ({path}) =>
+        @save(path)
 
   handleEvents: ->
     messageCallbacks =
@@ -174,6 +180,11 @@ class VirtualFileSystem
 
   trash: (path) ->
     @send {command: 'trash', path}
+
+  save: (path) ->
+    atom.project.bufferForPath(path).then (textBuffer) =>
+      content = new Buffer(textBuffer.getText()).toString('base64')
+      @send {command: 'save', path, content}
 
 module.exports = new VirtualFileSystem
 
