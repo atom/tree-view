@@ -866,6 +866,16 @@ class TreeView extends View
   onDragOver: (e) ->
     e.preventDefault()
     e.stopPropagation()
+    
+    # Toggle Expand/Collapse with Ctrl Key
+    target = e.currentTarget
+    return unless target instanceof DirectoryView
+
+    if e.ctrlKey
+      if not target.classList.contains "expanded"
+        target.expand()
+      else
+        target.collapse()
 
   # Handle entry drop event
   onDrop: (e) ->
