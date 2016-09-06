@@ -30,7 +30,6 @@ class Entry
 
         if stats.isDirectory()
           str = fs.readdirSync(@localPath).sort().join('')
-          console.log "STR", str
           localDigest = crypto.createHash('md5').update(str, 'utf8').digest('hex')
           return resolve(@digest isnt localDigest)
         else

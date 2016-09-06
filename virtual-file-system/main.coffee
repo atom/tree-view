@@ -48,8 +48,10 @@ class VirtualFileSystem
       messageCallbacks[type]?(payload)
 
     @websocket.onerror = (err) ->
-      console.error('error with the websocket')
-      console.log(err)
+      console.log 'ERROR:', err
+
+    @websocket.onclose = (event) ->
+      console.log 'CLOSED:', event
 
   package: ->
     # todo: update package name
@@ -101,14 +103,19 @@ class VirtualFileSystem
     path = @convert.remoteToLocal(path)
     @treeView()?.selectEntryForPath(path)
 
-  onRecievedFetch: ({path, attributes, content}) =>
+  onRecievedFetch: ({path, attributes, content, directory}) =>
     # TODO: preserve full stats
     localPath = @convert.remoteToLocal(path)
     dirname = _path.dirname(localPath)
     return unless localPath? and dirname?
+
     fs.makeTreeSync(dirname) unless fs.existsSync(dirname)
-    decoded = new Buffer(content, 'base64').toString('utf8')
-    fs.writeFile(localPath, decoded)
+
+    if directory?
+      fs.makeTreeSync(localPath)
+    else
+      decoded = new Buffer(content, 'base64').toString('utf8')
+      fs.writeFile(localPath, decoded)
 
   onRecievedRescue: ({message, backtrace}) ->
     console.log 'RESCUE:', message, backtrace
