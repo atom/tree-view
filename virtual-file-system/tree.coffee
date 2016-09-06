@@ -1,6 +1,5 @@
 fs = require 'fs-plus'
 _ = require 'underscore-plus'
-crypto = require 'crypto'
 Entry = require './entry'
 
 module.exports =
@@ -22,7 +21,7 @@ class Tree
 
     for own remotePath, attributes of pathsWithAttributes
       path = @converter.remoteToLocal(remotePath)
-      @entries[path] = new Entry(attributes)
+      @entries[path] = new Entry(attributes, path)
 
   paths: ->
     Object.keys(@entries)
@@ -45,33 +44,9 @@ class Tree
     pathsToSync = []
 
     digestPromises = @paths().map (path) =>
-      @needsSync(path).then (shouldSync) ->
+      @get(path).needsSync().then (shouldSync) ->
         pathsToSync.push(path) if shouldSync
 
     Promise.all(digestPromises).then ->
       pathsToSync
-
-  needsSync: (path) ->
-    virtualDigest = @get(path).digest
-    return new Error('virtual digest must be defined') unless virtualDigest?
-
-    new Promise (resolve) ->
-      fs.stat path, (err, stats) ->
-        if err?
-          return resolve true
-
-        if stats.isDirectory()
-          str = fs.readdirSync(path).join('')
-          digest = crypto.createHash('md5').update(str, 'utf8').digest('hex')
-          return resolve virtualDigest is digest
-        else
-          hash = crypto.createHash('md5')
-          stream = fs.createReadStream(path)
-
-          stream.on 'data', (data) ->
-            hash.update(data, 'utf8')
-
-          stream.on 'end', ->
-            digest = hash.digest('hex')
-            return resolve virtualDigest is digest
 
