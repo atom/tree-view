@@ -101,13 +101,13 @@ class VirtualFileSystem
     path = @convert.remoteToLocal(path)
     @treeView()?.selectEntryForPath(path)
 
-  onRecievedFetch: ({path, attributes, contents}) =>
+  onRecievedFetch: ({path, attributes, content}) =>
     # TODO: preserve full stats
     localPath = @convert.remoteToLocal(path)
     dirname = _path.dirname(localPath)
     return unless localPath? and dirname?
     fs.makeTreeSync(dirname) unless fs.existsSync(dirname)
-    decoded = new Buffer(contents, 'base64').toString('utf8')
+    decoded = new Buffer(content, 'base64').toString('utf8')
     fs.writeFile(localPath, decoded)
 
   onRecievedRescue: ({message, backtrace}) ->

@@ -63,9 +63,6 @@ class Tree
         if stats.isDirectory()
           str = fs.readdirSync(path).join('')
           digest = crypto.createHash('md5').update(str, 'utf8').digest('hex')
-
-          console.log "PATH: #{path} // REMOTE: #{virtualDigest} // LOCAL: #{digest}"
-
           return resolve virtualDigest is digest
         else
           hash = crypto.createHash('md5')
@@ -76,7 +73,5 @@ class Tree
 
           stream.on 'end', ->
             digest = hash.digest('hex')
-            console.log "PATH: #{path} // REMOTE: #{virtualDigest} // LOCAL: #{digest}"
-
             return resolve virtualDigest is digest
 
