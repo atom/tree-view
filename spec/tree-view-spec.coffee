@@ -2820,7 +2820,7 @@ describe "TreeView", ->
       fileView3 = treeView.find('.file:contains(test-file3.txt)')
 
     describe 'selecting multiple items', ->
-      it 'switches the contextual menu to muli-select mode', ->
+      it 'switches the contextual menu to multi-select mode', ->
         fileView1.click()
         fileView2.trigger($.Event('mousedown', {shiftKey: true}))
         expect(treeView.find('.tree-view')).toHaveClass('multi-select')
@@ -2828,13 +2828,13 @@ describe "TreeView", ->
         expect(treeView.find('.tree-view')).toHaveClass('full-menu')
 
     describe 'selecting multiple items', ->
-      it 'switches the contextual menu to muli-select mode', ->
+      it 'switches the contextual menu to multi-select mode', ->
         fileView1.click()
         fileView2.trigger($.Event('mousedown', {shiftKey: true}))
         expect(treeView.find('.tree-view')).toHaveClass('multi-select')
 
       describe 'using the shift key', ->
-        it 'selects the items between the already selected item and the shift clicked item', ->
+        it 'selects the items between the already selected item and the shift-clicked item', ->
           fileView1.click()
           fileView3.trigger($.Event('mousedown', {shiftKey: true}))
           expect(fileView1).toHaveClass('selected')
@@ -2842,7 +2842,7 @@ describe "TreeView", ->
           expect(fileView3).toHaveClass('selected')
 
       describe 'using the metakey(cmd) key', ->
-        it 'selects the cmd clicked item in addition to the original selected item', ->
+        it 'selects the cmd-clicked item in addition to the original selected item', ->
           fileView1.click()
           fileView3.trigger($.Event('mousedown', {metaKey: true}))
           expect(fileView1).toHaveClass('selected')
@@ -2861,7 +2861,7 @@ describe "TreeView", ->
           Object.defineProperty(process, "platform", {__proto__: null, value: originalPlatform})
 
         describe 'using the ctrl key', ->
-          it 'selects the ctrl clicked item in addition to the original selected item', ->
+          it 'selects the ctrl-clicked item in addition to the original selected item', ->
             fileView1.click()
             fileView3.trigger($.Event('mousedown', {ctrlKey: true}))
             expect(fileView1).toHaveClass('selected')
@@ -2880,7 +2880,7 @@ describe "TreeView", ->
           Object.defineProperty(process, "platform", {__proto__: null, value: originalPlatform})
 
         describe 'using the ctrl key', ->
-          describe "previous item is selected but the ctrl clicked item is not", ->
+          describe "previous item is selected but the ctrl-clicked item is not", ->
             it 'selects the clicked item, but deselects the previous item', ->
               fileView1.click()
               fileView3.trigger($.Event('mousedown', {ctrlKey: true}))
@@ -2894,7 +2894,7 @@ describe "TreeView", ->
               expect(treeView.list).toHaveClass('full-menu')
               expect(treeView.list).not.toHaveClass('multi-select')
 
-          describe 'previous item is selected including the ctrl clicked', ->
+          describe 'previous item is selected including the ctrl-clicked', ->
             it 'displays the multi-select menu', ->
               fileView1.click()
               fileView3.trigger($.Event('mousedown', {metaKey: true}))
@@ -2917,7 +2917,7 @@ describe "TreeView", ->
               expect(treeView.list).not.toHaveClass('multi-select')
 
           describe 'when no item is selected', ->
-            it 'selects the ctrl clicked item', ->
+            it 'selects the ctrl-clicked item', ->
               fileView3.trigger($.Event('mousedown', {ctrlKey: true}))
               expect(fileView3).toHaveClass('selected')
 
@@ -2944,18 +2944,18 @@ describe "TreeView", ->
               expect(treeView.list).toHaveClass('full-menu')
               expect(treeView.list).not.toHaveClass('multi-select')
 
-            it 'selects right clicked item', ->
+            it 'selects right-clicked item', ->
               fileView1.click()
               fileView3.trigger($.Event('mousedown', {button: 2}))
               expect(fileView3).toHaveClass('selected')
 
-            it 'de-selects the previously selected item', ->
+            it 'deselects the previously selected item', ->
               fileView1.click()
               fileView3.trigger($.Event('mousedown', {button: 2}))
               expect(fileView1).not.toHaveClass('selected')
 
           describe 'when no item is selected', ->
-            it 'selects the right clicked item', ->
+            it 'selects the right-clicked item', ->
               fileView3.trigger($.Event('mousedown', {button: 2}))
               expect(fileView3).toHaveClass('selected')
 
