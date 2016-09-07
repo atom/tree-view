@@ -36,11 +36,11 @@ class Tree
       path = @converter.remoteToLocal(remotePath)
       @get(path).addContent(content)
 
-  getPathsToRemove: ->
+  getLocalPathsToRemove: ->
     return [] unless @projectRoot?
     _.difference(fs.listTreeSync(@projectRoot), @paths())
 
-  getPathsToSync: ->
+  getLocalPathsToSync: ->
     pathsToSync = []
 
     digestPromises = @paths().map (path) =>

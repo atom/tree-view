@@ -96,8 +96,8 @@ class VirtualFileSystem
   onRecievedSync: ({entries}) =>
     @tree.addDigests(entries)
     fs.makeTreeSync(@physicalRoot) unless fs.existsSync(@physicalRoot)
-    @tree.getPathsToRemove().forEach (path) -> shell.moveItemToTrash(path)
-    @tree.getPathsToSync().then (paths) => @fetch(paths)
+    @tree.getLocalPathsToRemove().forEach (path) -> shell.moveItemToTrash(path)
+    @tree.getLocalPathsToSync().then (paths) => @fetch(paths)
 
   onRecievedChange: ({entries, path, parent}) =>
     console.log 'CHANGE:', path
