@@ -54,7 +54,8 @@ class FSAdapter
     @virtualFileSystem.realpath(path)
 
   statSync: (path) ->
-    @virtualFileSystem.stat(path)
+    @virtualFileSystem.stat(path) or
+      throw new Error("No virtual entry (file or directory) could be found by the given path '#{path}'")
 
   statSyncNoException: (path) ->
     @virtualFileSystem.stat(path)
