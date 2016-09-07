@@ -23,17 +23,24 @@ class VirtualFileSystem
     @shell = new ShellAdapter(this)
 
     @websocket = new WebSocket("#{serverURI}?token=#{token}")
+    @addOpener()
     @observeSave()
     @handleEvents()
 
+  addOpener: ->
+    atom.workspace.addOpener (uri) =>
+      if @hasPath(uri) and not fs.existsSync(uri)
+        @open(uri)
+
   observeSave: ->
     atom.workspace.observeTextEditors (editor) =>
-      editor.getBuffer()?.onWillSave ({path}) =>
+      editor.onDidSave ({path}) =>
         @save(path)
 
   handleEvents: ->
     messageCallbacks =
       sync: @onRecievedSync
+      open: @onRecievedOpen
       build: @onRecievedBuild
       fetch: @onRecievedFetch
       change: @onRecievedChange
@@ -117,6 +124,20 @@ class VirtualFileSystem
       decoded = new Buffer(content, 'base64').toString('utf8')
       fs.writeFile(localPath, decoded)
 
+  onRecievedOpen: ({path, attributes, content}) =>
+    localPath = @convert.remoteToLocal(path)
+    dirname = _path.dirname(localPath)
+    return unless localPath? and dirname?
+    return if fs.existsSync(localPath)
+
+    fs.makeTreeSync(dirname) unless fs.existsSync(dirname)
+    decoded = new Buffer(content, 'base64').toString('utf8')
+    fs.writeFileSync(localPath, decoded)
+
+    buffer = atom.project.findBufferForPath(localPath)
+    buffer.updateCachedDiskContentsSync()
+    buffer.reload()
+
   onRecievedRescue: ({message, backtrace}) ->
     console.log 'RESCUE:', message, backtrace
 
@@ -188,6 +209,9 @@ class VirtualFileSystem
 
   trash: (path) ->
     @send {command: 'trash', path}
+
+  open: (path) ->
+    @send {command: 'open', path}
 
   save: (path) ->
     atom.project.bufferForPath(path).then (textBuffer) =>
