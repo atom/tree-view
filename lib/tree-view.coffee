@@ -88,6 +88,21 @@ class TreeView extends View
     @disposables.dispose()
     @detach() if @panel?
 
+  onDirectoryCreated: (callback) ->
+    @emitter.on('directory-created', callback)
+
+  onEntryCopied: (callback) ->
+    @emitter.on('entry-copied', callback)
+
+  onEntryDeleted: (callback) ->
+    @emitter.on('entry-deleted', callback)
+
+  onEntryMoved: (callback) ->
+    @emitter.on('entry-moved', callback)
+
+  onFileCreated: (callback) ->
+    @emitter.on('file-created', callback)
+
   handleEvents: ->
     @on 'dblclick', '.tree-view-resize-handle', =>
       @resizeToFitContent()
