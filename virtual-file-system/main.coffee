@@ -1,4 +1,5 @@
 fs = require 'fs-plus'
+_ = require 'underscore-plus'
 shell = require 'shell'
 _path = require 'path'
 FileSystemNode = require './file-system-node'
@@ -83,17 +84,25 @@ class VirtualFileSystem
   # -------------------
 
   onRecievedInit: ({project}) =>
-    console.log 'yo yo yo'
     @rootNode = new FileSystemNode(project)
     @convert.setProject(@rootNode.localPath())
     @treeView()?.updateRoots()
-    #@sync()
+    @sync(@rootNode.path)
 
-  onRecievedSync: ({entries}) =>
-    @tree.addDigests(entries)
-    fs.makeTreeSync(@physicalRoot) unless fs.existsSync(@physicalRoot)
-    @tree.getLocalPathsToRemove().forEach (path) -> shell.moveItemToTrash(path)
-    @tree.getLocalPathsToSync().then (paths) => @fetch(paths)
+  onRecievedSync: ({root, digests}) =>
+    node = @rootNode.get(root)
+    localPath = node.localPath()
+
+    node.traverse (entry) ->
+      entry.setDigest(digests[entry.path])
+
+    if fs.existsSync(localPath)
+      virtualPaths = node.map (e) -> e.localPath()
+      physicalPaths = fs.listTreeSync(localPath)
+      pathsToRemove = _.difference(physicalPaths, virtualPaths)
+      pathsToRemove.forEach (path) -> shell.moveItemToTrash(path)
+
+    node.findPathsToSync().then (paths) => @fetch(paths)
 
   onRecievedChange: ({entries, path, parent}) =>
     console.log 'CHANGE:', path
@@ -140,9 +149,6 @@ class VirtualFileSystem
   # ------------------
   # Background syncing
   # ------------------
-
-  sync: ->
-    @send {command: 'sync'}
 
   fetch: (paths) ->
     pathsToFetch = paths.map (path) => @convert.localToRemote(path)
@@ -205,6 +211,9 @@ class VirtualFileSystem
 
   trash: (path) ->
     @send {command: 'trash', path}
+
+  sync: (path) ->
+    @send {command: 'sync', path}
 
   open: (path) ->
     @send {command: 'open', path}
