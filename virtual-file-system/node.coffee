@@ -1,11 +1,44 @@
 Stat = require './stat'
 fs = require 'fs-plus'
+_ = require 'underscore-plus'
 crypto = require 'crypto'
+convert = require './util/path-converter'
 
 module.exports =
-class Entry
-  constructor: ({@name, @path, @entries, @digest, @content, stat}, @localPath) ->
+class Node
+  constructor: ({@name, @path, @entries, @digest, @content, @tree, stat}, @parent) ->
     @stats = new Stat(stat)
+
+  get: (path) ->
+    if path is @path or path is @localPath()
+      this
+    else
+      node = _.find @children(), (node) -> path.startsWith(node.path) or path.startsWith(node.localPath())
+      node.get(path) if node?
+
+  has: (path) ->
+    @get(path)?
+
+  children: ->
+    return [] unless @tree?
+    @tree.map (leaf) => new Node(leaf, this)
+
+  localPath: ->
+    return unless @path?
+    convert.remoteToLocal(@path)
+
+  forEach: (callback) ->
+    callback(this)
+    @children().forEach (node) -> node.forEach(callback)
+
+  map: (callback) ->
+    initialValue = [callback(this)]
+
+    @children().reduce (mapped, node) ->
+      mapped.concat(node.map(callback))
+    , initialValue
+
+  updateTree: (@tree) ->
 
   addContent: (@content) ->
     # base64 vs utf8?
@@ -21,6 +54,16 @@ class Entry
       entries = @entries.filter (entry) -> entry.endsWith(".#{extension}")
 
     (entries or @entries).map (entry) => "#{@path}/#{entry}"
+
+  findPathsToSync: ->
+    pathsToSync = []
+
+    syncPromises = @map (node) ->
+      node.needsSync().then (shouldSync) ->
+        pathsToSync.push(path) if shouldSync
+
+    Promise.all(syncPromises).then ->
+      pathsToSync
 
   needsSync: ->
     new Promise (resolve) =>

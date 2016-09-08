@@ -1,13 +1,12 @@
 fs = require 'fs-plus'
 shell = require 'shell'
 _path = require 'path'
-Entry = require './entry'
 Tree = require './tree'
+BetterTree = require './node'
 ShellAdapter = require './adapters/shell-adapter'
 FSAdapter = require './adapters/fs-adapter'
-PathConverter = require './util/path-converter'
 
-serverURI = 'ws://vm02.students.learn.co:3304/background_sync'
+serverURI = 'ws://vm02.students.learn.co:3304/tree'
 token     = atom.config.get('integrated-learn-environment.oauthToken')
 
 class VirtualFileSystem
@@ -16,8 +15,9 @@ class VirtualFileSystem
     @projectPaths.forEach (path) -> atom.project.removePath(path)
 
     @physicalRoot = _path.join(atom.configDirPath, '.learn-ide')
-    @convert = new PathConverter(@physicalRoot)
+    @convert = require './util/path-converter'
     @tree = new Tree({}, @convert)
+    @professorOak = new BetterTree({})
 
     @fs = new FSAdapter(this)
     @shell = new ShellAdapter(this)
@@ -41,13 +41,14 @@ class VirtualFileSystem
     messageCallbacks =
       sync: @onRecievedSync
       open: @onRecievedOpen
+      tree: @onRecievedTree
       build: @onRecievedBuild
       fetch: @onRecievedFetch
       change: @onRecievedChange
       rescue: @onRecievedRescue
 
     @websocket.onopen = (event) =>
-      @send {command: 'build'}
+      @send {command: 'tree'}
 
     @websocket.onmessage = (event) ->
       {type, payload} = JSON.parse(event.data)
@@ -138,6 +139,11 @@ class VirtualFileSystem
     buffer.updateCachedDiskContentsSync()
     buffer.reload()
 
+  onRecievedTree: ({tree}) =>
+    @professorOak = new BetterTree(tree)
+    window.oak = @professorOak
+    atom.project.addPath(@professorOak.localPath())
+
   onRecievedRescue: ({message, backtrace}) ->
     console.log 'RESCUE:', message, backtrace
 
@@ -157,10 +163,10 @@ class VirtualFileSystem
   # ------------------
 
   getEntry: (path) ->
-    @tree.get(path)
+    @professorOak.get(path)
 
   hasPath: (path) ->
-    @tree.has(path)
+    @professorOak.has(path)
 
   isDirectory: (path) ->
     @stat(path).isDirectory()
@@ -189,7 +195,7 @@ class VirtualFileSystem
     path
 
   stat: (path) ->
-    @getEntry(path).stats
+    @getEntry(path)?.stats
 
   # ---------------
   # File operations

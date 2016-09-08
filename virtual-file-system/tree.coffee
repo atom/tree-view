@@ -1,6 +1,6 @@
 fs = require 'fs-plus'
 _ = require 'underscore-plus'
-Entry = require './entry'
+Entry = require './node'
 
 module.exports =
 class Tree
