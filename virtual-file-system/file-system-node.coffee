@@ -5,7 +5,7 @@ crypto = require 'crypto'
 convert = require './util/path-converter'
 
 module.exports =
-class Node
+class FileSystemNode
   constructor: ({@name, @path, @entries, @digest, @content, @tree, stat}, @parent) ->
     @stats = new Stat(stat)
 
@@ -21,7 +21,7 @@ class Node
 
   children: ->
     return [] unless @tree?
-    @tree.map (leaf) => new Node(leaf, this)
+    @tree.map (leaf) => new FileSystemNode(leaf, this)
 
   localPath: ->
     return unless @path?

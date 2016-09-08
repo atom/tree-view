@@ -1,8 +1,7 @@
 fs = require 'fs-plus'
 shell = require 'shell'
 _path = require 'path'
-Tree = require './tree'
-BetterTree = require './node'
+FileSystemNode = require './file-system-node'
 ShellAdapter = require './adapters/shell-adapter'
 FSAdapter = require './adapters/fs-adapter'
 
@@ -16,8 +15,7 @@ class VirtualFileSystem
 
     @physicalRoot = _path.join(atom.configDirPath, '.learn-ide')
     @convert = require './util/path-converter'
-    @tree = new Tree({}, @convert)
-    @professorOak = new BetterTree({})
+    @rootNode = new FileSystemNode({})
 
     @fs = new FSAdapter(this)
     @shell = new ShellAdapter(this)
@@ -39,16 +37,15 @@ class VirtualFileSystem
 
   handleEvents: ->
     messageCallbacks =
+      init: @onRecievedInit
       sync: @onRecievedSync
       open: @onRecievedOpen
-      tree: @onRecievedTree
-      build: @onRecievedBuild
       fetch: @onRecievedFetch
       change: @onRecievedChange
       rescue: @onRecievedRescue
 
     @websocket.onopen = (event) =>
-      @send {command: 'tree'}
+      @send {command: 'init'}
 
     @websocket.onmessage = (event) ->
       {type, payload} = JSON.parse(event.data)
@@ -85,14 +82,12 @@ class VirtualFileSystem
   # onmessage callbacks
   # -------------------
 
-  onRecievedBuild: ({entries, root}) =>
-    @root = @convert.remoteToLocal(root)
-    @tree.update(entries, root)
-    atom.project.addPath(@root)
-    # TODO: persist title change, maybe use custom-title package
-    document.title = "Learn IDE - #{@convert.localToRemote(@root).substr(1)}"
-    @sync()
+  onRecievedInit: ({project}) =>
+    console.log 'yo yo yo'
+    @rootNode = new FileSystemNode(project)
+    @convert.setProject(@rootNode.localPath())
     @treeView()?.updateRoots()
+    #@sync()
 
   onRecievedSync: ({entries}) =>
     @tree.addDigests(entries)
@@ -139,11 +134,6 @@ class VirtualFileSystem
     buffer.updateCachedDiskContentsSync()
     buffer.reload()
 
-  onRecievedTree: ({tree}) =>
-    @professorOak = new BetterTree(tree)
-    window.oak = @professorOak
-    atom.project.addPath(@professorOak.localPath())
-
   onRecievedRescue: ({message, backtrace}) ->
     console.log 'RESCUE:', message, backtrace
 
@@ -162,11 +152,11 @@ class VirtualFileSystem
   # File introspection
   # ------------------
 
-  getEntry: (path) ->
-    @professorOak.get(path)
+  getNode: (path) ->
+    @rootNode.get(path)
 
   hasPath: (path) ->
-    @professorOak.has(path)
+    @rootNode.has(path)
 
   isDirectory: (path) ->
     @stat(path).isDirectory()
@@ -178,24 +168,24 @@ class VirtualFileSystem
     @stat(path).isSymbolicLink()
 
   list: (path, extension) ->
-    @getEntry(path).list(extension)
+    @getNode(path).list(extension)
 
   lstat: (path) ->
     # TODO: lstat
     @stat(path)
 
   read: (path) ->
-    @getEntry(path)
+    @getNode(path)
 
   readdir: (path) ->
-    @getEntry(path).entries
+    @getNode(path).entries
 
   realpath: (path) ->
     # TODO: realpath
     path
 
   stat: (path) ->
-    @getEntry(path)?.stats
+    @getNode(path)?.stats
 
   # ---------------
   # File operations
