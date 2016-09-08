@@ -23,6 +23,11 @@ class FileSystemNode
     return unless @path?
     convert.remoteToLocal(@path)
 
+  update: (serializedNode) ->
+    node = @get(serializedNode.path)
+    node.constructor(serializedNode)
+    node
+
   setTree: (tree) ->
     @tree =
       if tree?

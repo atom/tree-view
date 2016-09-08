@@ -104,16 +104,14 @@ class VirtualFileSystem
 
     node.findPathsToSync().then (paths) => @fetch(paths)
 
-  onRecievedChange: ({entries, path, parent}) =>
+  onRecievedChange: ({path, parent}) =>
+    # TODO: test moves & removals, see if we need parent or not
     console.log 'CHANGE:', path
-    @tree.update(entries)
-    @sync()
+    node = @rootNode.update(parent)
 
-    parent = @convert.remoteToLocal(parent)
-    @treeView()?.entryForPath(parent).reload()
-
-    path = @convert.remoteToLocal(path)
+    @treeView()?.entryForPath(node.localPath()).reload()
     @treeView()?.selectEntryForPath(path)
+    @sync(parent)
 
   onRecievedFetch: ({path, attributes, content, directory}) =>
     # TODO: preserve full stats
