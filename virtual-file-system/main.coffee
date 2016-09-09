@@ -123,8 +123,15 @@ class VirtualFileSystem
     if parent? and not fs.existsSync(parent.localPath())
       fs.makeTreeSync(parent.localPath())
 
-    if node.stats.isDirectory()
+    stats = node.stats
+    buffer = atom.project.findBufferForPath(node.localPath())
+
+    if stats.isDirectory()
       fs.makeTreeSync(node.localPath())
+    else if buffer?
+      fs.writeFileSync(node.localPath(), node.read())
+      buffer.updateCachedDiskContentsSync()
+      buffer.reload()
     else
       fs.writeFile(node.localPath(), node.read())
 
