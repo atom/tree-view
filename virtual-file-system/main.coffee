@@ -2,6 +2,7 @@ fs = require 'fs-plus'
 _ = require 'underscore-plus'
 shell = require 'shell'
 _path = require 'path'
+convert = require './util/path-converter'
 FileSystemNode = require './file-system-node'
 ShellAdapter = require './adapters/shell-adapter'
 FSAdapter = require './adapters/fs-adapter'
@@ -11,11 +12,12 @@ token     = atom.config.get('integrated-learn-environment.oauthToken')
 
 class VirtualFileSystem
   constructor: ->
-    @projectPaths = atom.project.getPaths()
-    @projectPaths.forEach (path) -> atom.project.removePath(path)
+    @initialProjectPaths = atom.project.getPaths()
+    @initialProjectPaths.forEach (path) -> atom.project.removePath(path)
 
-    @physicalRoot = _path.join(atom.configDirPath, '.learn-ide')
-    @convert = require './util/path-converter'
+    @localRoot = _path.join(atom.configDirPath, '.learn-ide')
+    convert.configure({@localRoot})
+
     @rootNode = new FileSystemNode({})
 
     @fs = new FSAdapter(this)
@@ -67,17 +69,16 @@ class VirtualFileSystem
     @package()?.mainModule.treeView
 
   send: (msg) ->
-    convertedMsg = {}
+    payload = {}
 
     for own key, value of msg
-      if typeof value is 'string' and value.startsWith(@physicalRoot)
-        convertedMsg[key] = @convert.localToRemote(value)
+      if typeof value is 'string' and value.startsWith(@localRoot)
+        payload[key] = convert.localToRemote(value)
       else
-        convertedMsg[key] = value
+        payload[key] = value
 
-    console.log 'SEND:', convertedMsg
-    payload = JSON.stringify(convertedMsg)
-    @websocket.send(payload)
+    console.log 'SEND:', payload
+    @websocket.send JSON.stringify(payload)
 
   # -------------------
   # onmessage callbacks
@@ -85,11 +86,12 @@ class VirtualFileSystem
 
   onRecievedInit: ({project}) =>
     @rootNode = new FileSystemNode(project)
-    @convert.setProject(@rootNode.localPath())
+    atom.project.addPath(@rootNode.localPath())
     @treeView()?.updateRoots()
     @sync(@rootNode.path)
 
   onRecievedSync: ({root, digests}) =>
+    console.log 'SYNC:', root
     node = @rootNode.get(root)
     localPath = node.localPath()
 
@@ -97,25 +99,24 @@ class VirtualFileSystem
       entry.setDigest(digests[entry.path])
 
     if fs.existsSync(localPath)
-      virtualPaths = node.map (e) -> e.localPath()
-      physicalPaths = fs.listTreeSync(localPath)
-      pathsToRemove = _.difference(physicalPaths, virtualPaths)
+      remotePaths = node.map (e) -> e.localPath()
+      localPaths = fs.listTreeSync(localPath)
+      pathsToRemove = _.difference(localPaths, remotePaths)
       pathsToRemove.forEach (path) -> shell.moveItemToTrash(path)
 
     node.findPathsToSync().then (paths) => @fetch(paths)
 
   onRecievedChange: ({path, parent}) =>
-    # TODO: test moves & removals, see if we need parent or not
     console.log 'CHANGE:', path
     node = @rootNode.update(parent)
 
     @treeView()?.entryForPath(node.localPath()).reload()
     @treeView()?.selectEntryForPath(path)
-    @sync(parent)
+    @sync(parent.path)
 
   onRecievedFetch: ({path, attributes, content, directory}) =>
     # TODO: preserve full stats
-    localPath = @convert.remoteToLocal(path)
+    localPath = convert.remoteToLocal(path)
     dirname = _path.dirname(localPath)
     return unless localPath? and dirname?
 
@@ -128,7 +129,7 @@ class VirtualFileSystem
       fs.writeFile(localPath, decoded)
 
   onRecievedOpen: ({path, attributes, content}) =>
-    localPath = @convert.remoteToLocal(path)
+    localPath = convert.remoteToLocal(path)
     dirname = _path.dirname(localPath)
     return unless localPath? and dirname?
     return if fs.existsSync(localPath)
@@ -143,14 +144,6 @@ class VirtualFileSystem
 
   onRecievedRescue: ({message, backtrace}) ->
     console.log 'RESCUE:', message, backtrace
-
-  # ------------------
-  # Background syncing
-  # ------------------
-
-  fetch: (paths) ->
-    pathsToFetch = paths.map (path) => @convert.localToRemote(path)
-    @send {command: 'fetch', paths: pathsToFetch}
 
   # ------------------
   # File introspection
@@ -215,6 +208,9 @@ class VirtualFileSystem
 
   open: (path) ->
     @send {command: 'open', path}
+
+  fetch: (paths) ->
+    @send {command: 'fetch', paths}
 
   save: (path) ->
     atom.project.bufferForPath(path).then (textBuffer) =>

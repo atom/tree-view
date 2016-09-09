@@ -1,14 +1,11 @@
 _path = require 'path'
 
-class PathManager
-  constructor: (@remotePlatform = 'posix') ->
-    @initialProjectPaths = atom.project.getPaths()
-    @initialProjectPaths.forEach (path) -> atom.project.removePath(path)
+class PathConverter
+  constructor: (@localRoot, @remotePlatform = 'posix') ->
 
-    @localRoot = _path.join(atom.configDirPath, '.learn-ide')
-
-  setProject: (@projectPath) ->
-    atom.project.addPath(@projectPath)
+  configure: ({localRoot, remotePlatform}) ->
+    @localRoot = localRoot if localRoot?
+    @remotePlatform = remotePlatform if remotePlatform?
 
   localToRemote: (localPath) ->
     remotePath = localPath.replace(@localRoot, '')
@@ -24,5 +21,5 @@ class PathManager
 
     _path.join(@localRoot, remotePath)
 
-module.exports = new PathManager
+module.exports = new PathConverter
 
