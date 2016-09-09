@@ -124,13 +124,13 @@ class VirtualFileSystem
       return fs.makeTreeSync(node.localPath())
 
     mode = stats.mode
-    buffer = atom.project.findBufferForPath(node.localPath())
-    if buffer?
-      fs.writeFileSync(node.localPath(), node.read(), {mode})
-      buffer.updateCachedDiskContentsSync()
-      buffer.reload()
+    textBuffer = atom.project.findBufferForPath(node.localPath())
+    if textBuffer?
+      fs.writeFileSync(node.localPath(), node.buffer(), {mode})
+      textBuffer.updateCachedDiskContentsSync()
+      textBuffer.reload()
     else
-      fs.writeFile(node.localPath(), node.read(), {mode})
+      fs.writeFile(node.localPath(), node.buffer(), {mode})
 
   onRecievedRescue: ({message, backtrace}) ->
     console.log 'RESCUE:', message, backtrace

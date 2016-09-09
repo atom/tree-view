@@ -48,7 +48,10 @@ class FileSystemNode
     @digest = digest
 
   read: ->
-    new Buffer(@content, 'base64').toString('utf8')
+    @buffer().toString('utf8')
+
+  buffer: ->
+    new Buffer(@content, 'base64')
 
   list: (extension) ->
     if extension?
