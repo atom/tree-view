@@ -1,9 +1,11 @@
 _path = require 'path'
 
-module.exports =
 class PathConverter
   constructor: (@localRoot, @remotePlatform = 'posix') ->
-    # noop
+
+  configure: ({localRoot, remotePlatform}) ->
+    @localRoot = localRoot if localRoot?
+    @remotePlatform = remotePlatform if remotePlatform?
 
   localToRemote: (localPath) ->
     remotePath = localPath.replace(@localRoot, '')
@@ -18,4 +20,6 @@ class PathConverter
       remotePath = remotePath.split(_path[@remotePlatform].sep).join(_path.sep)
 
     _path.join(@localRoot, remotePath)
+
+module.exports = new PathConverter
 

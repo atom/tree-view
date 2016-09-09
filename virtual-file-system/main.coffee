@@ -1,23 +1,24 @@
 fs = require 'fs-plus'
+_ = require 'underscore-plus'
 shell = require 'shell'
 _path = require 'path'
-Entry = require './entry'
-Tree = require './tree'
+convert = require './util/path-converter'
+FileSystemNode = require './file-system-node'
 ShellAdapter = require './adapters/shell-adapter'
 FSAdapter = require './adapters/fs-adapter'
-PathConverter = require './util/path-converter'
 
-serverURI = 'ws://vm02.students.learn.co:3304/background_sync'
+serverURI = 'ws://vm02.students.learn.co:3304/tree'
 token     = atom.config.get('integrated-learn-environment.oauthToken')
 
 class VirtualFileSystem
   constructor: ->
-    @projectPaths = atom.project.getPaths()
-    @projectPaths.forEach (path) -> atom.project.removePath(path)
+    @initialProjectPaths = atom.project.getPaths()
+    @initialProjectPaths.forEach (path) -> atom.project.removePath(path)
 
-    @physicalRoot = _path.join(atom.configDirPath, '.learn-ide')
-    @convert = new PathConverter(@physicalRoot)
-    @tree = new Tree({}, @convert)
+    @localRoot = _path.join(atom.configDirPath, '.learn-ide')
+    convert.configure({@localRoot})
+
+    @rootNode = new FileSystemNode({})
 
     @fs = new FSAdapter(this)
     @shell = new ShellAdapter(this)
@@ -39,15 +40,15 @@ class VirtualFileSystem
 
   handleEvents: ->
     messageCallbacks =
+      init: @onRecievedInit
       sync: @onRecievedSync
-      open: @onRecievedOpen
-      build: @onRecievedBuild
-      fetch: @onRecievedFetch
+      open: @onRecievedFetchOrOpen
+      fetch: @onRecievedFetchOrOpen
       change: @onRecievedChange
       rescue: @onRecievedRescue
 
     @websocket.onopen = (event) =>
-      @send {command: 'build'}
+      @send {command: 'init'}
 
     @websocket.onmessage = (event) ->
       {type, payload} = JSON.parse(event.data)
@@ -68,99 +69,84 @@ class VirtualFileSystem
     @package()?.mainModule.treeView
 
   send: (msg) ->
-    convertedMsg = {}
+    payload = {}
 
     for own key, value of msg
-      if typeof value is 'string' and value.startsWith(@physicalRoot)
-        convertedMsg[key] = @convert.localToRemote(value)
+      if typeof value is 'string' and value.startsWith(@localRoot)
+        payload[key] = convert.localToRemote(value)
       else
-        convertedMsg[key] = value
+        payload[key] = value
 
-    console.log 'SEND:', convertedMsg
-    payload = JSON.stringify(convertedMsg)
-    @websocket.send(payload)
+    console.log 'SEND:', payload
+    @websocket.send JSON.stringify(payload)
 
   # -------------------
   # onmessage callbacks
   # -------------------
 
-  onRecievedBuild: ({entries, root}) =>
-    @root = @convert.remoteToLocal(root)
-    @tree.update(entries, root)
-    atom.project.addPath(@root)
-    # TODO: persist title change, maybe use custom-title package
-    document.title = "Learn IDE - #{@convert.localToRemote(@root).substr(1)}"
-    @sync()
+  onRecievedInit: ({project}) =>
+    @rootNode = new FileSystemNode(project)
+    atom.project.addPath(@rootNode.localPath())
     @treeView()?.updateRoots()
+    @sync(@rootNode.path)
 
-  onRecievedSync: ({entries}) =>
-    @tree.addDigests(entries)
-    fs.makeTreeSync(@physicalRoot) unless fs.existsSync(@physicalRoot)
-    @tree.getLocalPathsToRemove().forEach (path) -> shell.moveItemToTrash(path)
-    @tree.getLocalPathsToSync().then (paths) => @fetch(paths)
+  onRecievedSync: ({root, digests}) =>
+    console.log 'SYNC:', root
+    node = @getNode(root)
+    localPath = node.localPath()
 
-  onRecievedChange: ({entries, path, parent}) =>
+    node.traverse (entry) ->
+      entry.setDigest(digests[entry.path])
+
+    if fs.existsSync(localPath)
+      remotePaths = node.map (e) -> e.localPath()
+      localPaths = fs.listTreeSync(localPath)
+      pathsToRemove = _.difference(localPaths, remotePaths)
+      pathsToRemove.forEach (path) -> shell.moveItemToTrash(path)
+
+    node.findPathsToSync().then (paths) => @fetch(paths)
+
+  onRecievedChange: ({path, parent}) =>
     console.log 'CHANGE:', path
-    @tree.update(entries)
-    @sync()
+    node = @rootNode.update(parent)
 
-    parent = @convert.remoteToLocal(parent)
-    @treeView()?.entryForPath(parent).reload()
-
-    path = @convert.remoteToLocal(path)
+    @treeView()?.entryForPath(node.localPath()).reload()
     @treeView()?.selectEntryForPath(path)
+    @sync(parent.path)
 
-  onRecievedFetch: ({path, attributes, content, directory}) =>
+  onRecievedFetchOrOpen: ({path, content}) =>
     # TODO: preserve full stats
-    localPath = @convert.remoteToLocal(path)
-    dirname = _path.dirname(localPath)
-    return unless localPath? and dirname?
+    node = @getNode(path)
+    node.setContent(content)
 
-    fs.makeTreeSync(dirname) unless fs.existsSync(dirname)
+    parent = node.parent
+    if parent? and not fs.existsSync(parent.localPath())
+      fs.makeTreeSync(parent.localPath())
 
-    if directory?
-      fs.makeTreeSync(localPath)
+    stats = node.stats
+    buffer = atom.project.findBufferForPath(node.localPath())
+
+    if stats.isDirectory()
+      fs.makeTreeSync(node.localPath())
+    else if buffer?
+      fs.writeFileSync(node.localPath(), node.read())
+      buffer.updateCachedDiskContentsSync()
+      buffer.reload()
     else
-      decoded = new Buffer(content, 'base64').toString('utf8')
-      fs.writeFile(localPath, decoded)
-
-  onRecievedOpen: ({path, attributes, content}) =>
-    localPath = @convert.remoteToLocal(path)
-    dirname = _path.dirname(localPath)
-    return unless localPath? and dirname?
-    return if fs.existsSync(localPath)
-
-    fs.makeTreeSync(dirname) unless fs.existsSync(dirname)
-    decoded = new Buffer(content, 'base64').toString('utf8')
-    fs.writeFileSync(localPath, decoded)
-
-    buffer = atom.project.findBufferForPath(localPath)
-    buffer.updateCachedDiskContentsSync()
-    buffer.reload()
+      fs.writeFile(node.localPath(), node.read())
 
   onRecievedRescue: ({message, backtrace}) ->
     console.log 'RESCUE:', message, backtrace
 
   # ------------------
-  # Background syncing
-  # ------------------
-
-  sync: ->
-    @send {command: 'sync'}
-
-  fetch: (paths) ->
-    pathsToFetch = paths.map (path) => @convert.localToRemote(path)
-    @send {command: 'fetch', paths: pathsToFetch}
-
-  # ------------------
   # File introspection
   # ------------------
 
-  getEntry: (path) ->
-    @tree.get(path)
+  getNode: (path) ->
+    @rootNode.get(path)
 
   hasPath: (path) ->
-    @tree.has(path)
+    @rootNode.has(path)
 
   isDirectory: (path) ->
     @stat(path).isDirectory()
@@ -172,24 +158,24 @@ class VirtualFileSystem
     @stat(path).isSymbolicLink()
 
   list: (path, extension) ->
-    @getEntry(path).list(extension)
+    @getNode(path).list(extension)
 
   lstat: (path) ->
     # TODO: lstat
     @stat(path)
 
   read: (path) ->
-    @getEntry(path)
+    @getNode(path)
 
   readdir: (path) ->
-    @getEntry(path).entries
+    @getNode(path).entries
 
   realpath: (path) ->
     # TODO: realpath
     path
 
   stat: (path) ->
-    @getEntry(path).stats
+    @getNode(path)?.stats
 
   # ---------------
   # File operations
@@ -210,8 +196,14 @@ class VirtualFileSystem
   trash: (path) ->
     @send {command: 'trash', path}
 
+  sync: (path) ->
+    @send {command: 'sync', path}
+
   open: (path) ->
     @send {command: 'open', path}
+
+  fetch: (paths) ->
+    @send {command: 'fetch', paths}
 
   save: (path) ->
     atom.project.bufferForPath(path).then (textBuffer) =>
