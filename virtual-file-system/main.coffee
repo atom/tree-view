@@ -42,8 +42,8 @@ class VirtualFileSystem
     messageCallbacks =
       init: @onRecievedInit
       sync: @onRecievedSync
-      open: @onRecievedOpen
-      fetch: @onRecievedFetch
+      open: @onRecievedFetchOrOpen
+      fetch: @onRecievedFetchOrOpen
       change: @onRecievedChange
       rescue: @onRecievedRescue
 
@@ -114,7 +114,7 @@ class VirtualFileSystem
     @treeView()?.selectEntryForPath(path)
     @sync(parent.path)
 
-  onRecievedFetch: ({path, content}) =>
+  onRecievedFetchOrOpen: ({path, content}) =>
     # TODO: preserve full stats
     node = @getNode(path)
     node.setContent(content)
@@ -134,20 +134,6 @@ class VirtualFileSystem
       buffer.reload()
     else
       fs.writeFile(node.localPath(), node.read())
-
-  onRecievedOpen: ({path, attributes, content}) =>
-    localPath = convert.remoteToLocal(path)
-    dirname = _path.dirname(localPath)
-    return unless localPath? and dirname?
-    return if fs.existsSync(localPath)
-
-    fs.makeTreeSync(dirname) unless fs.existsSync(dirname)
-    decoded = new Buffer(content, 'base64').toString('utf8')
-    fs.writeFileSync(localPath, decoded)
-
-    buffer = atom.project.findBufferForPath(localPath)
-    buffer.updateCachedDiskContentsSync()
-    buffer.reload()
 
   onRecievedRescue: ({message, backtrace}) ->
     console.log 'RESCUE:', message, backtrace
