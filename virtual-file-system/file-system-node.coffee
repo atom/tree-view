@@ -37,7 +37,7 @@ class FileSystemNode
   setTree: (tree) ->
     @tree =
       if tree?
-        tree.map (entry) -> new FileSystemNode(entry, this)
+        tree.map (entry) => new FileSystemNode(entry, this)
       else
         []
 
@@ -48,7 +48,7 @@ class FileSystemNode
     @digest = digest
 
   read: ->
-    @contents
+    new Buffer(@content, 'base64').toString('utf8')
 
   list: (extension) ->
     if extension?

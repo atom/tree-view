@@ -92,7 +92,7 @@ class VirtualFileSystem
 
   onRecievedSync: ({root, digests}) =>
     console.log 'SYNC:', root
-    node = @rootNode.get(root)
+    node = @getNode(root)
     localPath = node.localPath()
 
     node.traverse (entry) ->
@@ -114,19 +114,19 @@ class VirtualFileSystem
     @treeView()?.selectEntryForPath(path)
     @sync(parent.path)
 
-  onRecievedFetch: ({path, attributes, content, directory}) =>
+  onRecievedFetch: ({path, content}) =>
     # TODO: preserve full stats
-    localPath = convert.remoteToLocal(path)
-    dirname = _path.dirname(localPath)
-    return unless localPath? and dirname?
+    node = @getNode(path)
+    node.setContent(content)
 
-    fs.makeTreeSync(dirname) unless fs.existsSync(dirname)
+    parent = node.parent
+    if parent? and not fs.existsSync(parent.localPath())
+      fs.makeTreeSync(parent.localPath())
 
-    if directory?
-      fs.makeTreeSync(localPath)
+    if node.stats.isDirectory()
+      fs.makeTreeSync(node.localPath())
     else
-      decoded = new Buffer(content, 'base64').toString('utf8')
-      fs.writeFile(localPath, decoded)
+      fs.writeFile(node.localPath(), node.read())
 
   onRecievedOpen: ({path, attributes, content}) =>
     localPath = convert.remoteToLocal(path)
