@@ -7,6 +7,8 @@ module.exports =
   treeView: null
 
   activate: (@state) ->
+    virtualFileSystem = require '../virtual-file-system/main'
+    virtualFileSystem.activationState = @state
     @disposables = new CompositeDisposable
     @state.attached ?= true if @shouldAttach()
 

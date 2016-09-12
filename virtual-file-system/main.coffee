@@ -87,7 +87,7 @@ class VirtualFileSystem
   onRecievedInit: ({project}) =>
     @rootNode = new FileSystemNode(project)
     atom.project.addPath(@rootNode.localPath())
-    @treeView()?.updateRoots()
+    @treeView()?.updateRoots(@activationState?.directoryExpansionStates)
     @sync(@rootNode.path)
 
   onRecievedSync: ({root, digests}) =>
