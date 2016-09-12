@@ -6,9 +6,10 @@ convert = require './util/path-converter'
 FileSystemNode = require './file-system-node'
 ShellAdapter = require './adapters/shell-adapter'
 FSAdapter = require './adapters/fs-adapter'
+SingleSocket = require 'single-socket'
 
 serverURI = 'ws://vm02.students.learn.co:3304/tree'
-token     = atom.config.get('integrated-learn-environment.oauthToken')
+token     = atom.config.get('learn-ide.oauthToken')
 
 class VirtualFileSystem
   constructor: ->
@@ -23,10 +24,30 @@ class VirtualFileSystem
     @fs = new FSAdapter(this)
     @shell = new ShellAdapter(this)
 
-    @websocket = new WebSocket("#{serverURI}?token=#{token}")
+    @connect()
     @addOpener()
     @observeSave()
-    @handleEvents()
+
+  connect: ->
+    messageCallbacks =
+      init: @onRecievedInit
+      sync: @onRecievedSync
+      open: @onRecievedFetchOrOpen
+      fetch: @onRecievedFetchOrOpen
+      change: @onRecievedChange
+      rescue: @onRecievedRescue
+
+    @websocket = new SingleSocket "#{serverURI}?token=#{token}",
+      onopen: (event) =>
+        @send {command: 'init'}
+      onmessage: (data) ->
+        {type, payload} = JSON.parse(data)
+        console.log 'RECEIVED:', type
+        messageCallbacks[type]?(payload)
+      onerror: (err) ->
+        console.log 'ERROR:', err
+      onclose: (event) ->
+        console.log 'CLOSED:', event
 
   addOpener: ->
     atom.workspace.addOpener (uri) =>
@@ -37,29 +58,6 @@ class VirtualFileSystem
     atom.workspace.observeTextEditors (editor) =>
       editor.onDidSave ({path}) =>
         @save(path)
-
-  handleEvents: ->
-    messageCallbacks =
-      init: @onRecievedInit
-      sync: @onRecievedSync
-      open: @onRecievedFetchOrOpen
-      fetch: @onRecievedFetchOrOpen
-      change: @onRecievedChange
-      rescue: @onRecievedRescue
-
-    @websocket.onopen = (event) =>
-      @send {command: 'init'}
-
-    @websocket.onmessage = (event) ->
-      {type, payload} = JSON.parse(event.data)
-      console.log 'RECEIVED:', type
-      messageCallbacks[type]?(payload)
-
-    @websocket.onerror = (err) ->
-      console.log 'ERROR:', err
-
-    @websocket.onclose = (event) ->
-      console.log 'CLOSED:', event
 
   package: ->
     # todo: update package name
