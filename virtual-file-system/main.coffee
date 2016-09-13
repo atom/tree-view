@@ -8,8 +8,27 @@ ShellAdapter = require './adapters/shell-adapter'
 FSAdapter = require './adapters/fs-adapter'
 SingleSocket = require 'single-socket'
 
-serverURI = 'ws://vm02.students.learn.co:3304/tree'
-token     = atom.config.get('learn-ide.oauthToken')
+require('dotenv').config({
+  path: _path.join(__dirname, '../.env'),
+  silent: true
+});
+
+WS_SERVER_URL = (->
+  config = _.defaults
+    host: process.env['IDE_WS_HOST'],
+    port: process.env['IDE_WS_PORT']
+  ,
+    host: 'ile.learn.co',
+    port: 443,
+    protocol: 'wss'
+
+  if config.port != 443
+    config.protocol = 'ws'
+
+  "#{config.protocol}://#{config.host}:#{config.port}"
+)()
+
+token = atom.config.get('learn-ide.oauthToken')
 
 class VirtualFileSystem
   constructor: ->
@@ -37,15 +56,15 @@ class VirtualFileSystem
       change: @onRecievedChange
       rescue: @onRecievedRescue
 
-    @websocket = new SingleSocket "#{serverURI}?token=#{token}",
-      onopen: (event) =>
+    @websocket = new SingleSocket "#{WS_SERVER_URL}/tree?token=#{token}",
+      onopen: () =>
         @send {command: 'init'}
       onmessage: (data) ->
         {type, payload} = JSON.parse(data)
         console.log 'RECEIVED:', type
         messageCallbacks[type]?(payload)
       onerror: (err) ->
-        console.log 'ERROR:', err
+        console.error 'ERROR:', err
       onclose: (event) ->
         console.log 'CLOSED:', event
 
