@@ -56,17 +56,21 @@ class VirtualFileSystem
       change: @onRecievedChange
       rescue: @onRecievedRescue
 
-    @websocket = new SingleSocket "#{WS_SERVER_URL}/go_fs_server?token=#{token}",
-      onopen: =>
-        @send {command: 'init'}
-      onmessage: (data) ->
-        {type, data} = JSON.parse(data)
-        console.log 'RECEIVED:', type
-        messageCallbacks[type]?(data)
-      onerror: (err) ->
-        console.error 'ERROR:', err
-      onclose: (event) ->
-        console.log 'CLOSED:', event
+    @websocket = new WebSocket "#{WS_SERVER_URL}/go_fs_server?token=#{token}"
+
+    @websocket.onopen = =>
+      @send {command: 'init'}
+
+    @websocket.onmessage = ({data}) ->
+      {type, data} = JSON.parse(data)
+      console.log 'RECEIVED:', type
+      messageCallbacks[type]?(data)
+
+    @websocket.onerror = (err) ->
+      console.error 'ERROR:', err
+
+    @websocket.onclose = (event) ->
+      console.log 'CLOSED:', event
 
   addOpener: ->
     atom.workspace.addOpener (uri) =>
@@ -107,13 +111,13 @@ class VirtualFileSystem
     @treeView()?.updateRoots(@activationState?.directoryExpansionStates)
     @sync(@rootNode.path)
 
-  onRecievedSync: ({root, digests}) =>
-    console.log 'SYNC:', root
-    node = @getNode(root)
+  onRecievedSync: ({path, pathAttributes}) =>
+    console.log 'SYNC:', path
+    node = @getNode(path)
     localPath = node.localPath()
 
     node.traverse (entry) ->
-      entry.setDigest(digests[entry.path])
+      entry.setDigest(pathAttributes[entry.path])
 
     if fs.existsSync(localPath)
       remotePaths = node.map (e) -> e.localPath()
