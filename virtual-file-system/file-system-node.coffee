@@ -10,11 +10,12 @@ class FileSystemNode
     @setTree(tree)
 
   get: (path) ->
+    return unless @mayContain(path)
+
     if @pathEquals(path)
       this
     else
-      node = @tree.find (node) -> node.mayContain(path)
-      node?.get(path)
+      @tree.find (node) -> node.get(path)
 
   pathEquals: (path) ->
     path is @path or path is @localPath()

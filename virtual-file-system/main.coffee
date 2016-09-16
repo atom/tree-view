@@ -56,13 +56,13 @@ class VirtualFileSystem
       change: @onRecievedChange
       rescue: @onRecievedRescue
 
-    @websocket = new SingleSocket "#{WS_SERVER_URL}/tree?token=#{token}",
-      onopen: () =>
+    @websocket = new SingleSocket "#{WS_SERVER_URL}/go_fs_server?token=#{token}",
+      onopen: =>
         @send {command: 'init'}
       onmessage: (data) ->
-        {type, payload} = JSON.parse(data)
+        {type, data} = JSON.parse(data)
         console.log 'RECEIVED:', type
-        messageCallbacks[type]?(payload)
+        messageCallbacks[type]?(data)
       onerror: (err) ->
         console.error 'ERROR:', err
       onclose: (event) ->
@@ -101,8 +101,8 @@ class VirtualFileSystem
   # onmessage callbacks
   # -------------------
 
-  onRecievedInit: ({project}) =>
-    @rootNode = new FileSystemNode(project)
+  onRecievedInit: ({virtualFile}) =>
+    @rootNode = new FileSystemNode(virtualFile)
     atom.project.addPath(@rootNode.localPath())
     @treeView()?.updateRoots(@activationState?.directoryExpansionStates)
     @sync(@rootNode.path)
