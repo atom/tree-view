@@ -8,24 +8,27 @@ ShellAdapter = require './adapters/shell-adapter'
 FSAdapter = require './adapters/fs-adapter'
 SingleSocket = require 'single-socket'
 
-require('dotenv').config({
+require('dotenv').config
   path: _path.join(__dirname, '../.env'),
   silent: true
-});
 
 WS_SERVER_URL = (->
   config = _.defaults
-    host: process.env['IDE_WS_HOST'],
+    host: process.env['IDE_WS_HOST']
     port: process.env['IDE_WS_PORT']
+    path: process.env['IDE_WS_PATH']
   ,
     host: 'ile.learn.co',
     port: 443,
+    path: 'go_fs_server'
     protocol: 'wss'
 
-  if config.port != 443
+  if config.port isnt 443
     config.protocol = 'ws'
 
-  "#{config.protocol}://#{config.host}:#{config.port}"
+  {protocol, host, port, path} = config
+
+  "#{protocol}://#{host}:#{port}/#{path}"
 )()
 
 token = atom.config.get('learn-ide.oauthToken')
@@ -56,8 +59,8 @@ class VirtualFileSystem
       change: @onRecievedChange
       rescue: @onRecievedRescue
 
-    @websocket = new SingleSocket "#{WS_SERVER_URL}/tree?token=#{token}",
-      onopen: () =>
+    @websocket = new SingleSocket "#{WS_SERVER_URL}?token=#{token}",
+      onopen: =>
         @send {command: 'init'}
       onmessage: (data) ->
         {type, payload} = JSON.parse(data)
