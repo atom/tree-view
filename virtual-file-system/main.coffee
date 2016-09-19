@@ -59,14 +59,20 @@ class VirtualFileSystem
       change: @onRecievedChange
       rescue: @onRecievedRescue
 
-    @websocket = new WebSocket "#{WS_SERVER_URL}/go_fs_server?token=#{token}"
+    @websocket = new WebSocket "#{WS_SERVER_URL}?token=#{token}"
 
     @websocket.onopen = =>
       @send {command: 'init'}
 
-    @websocket.onmessage = ({data}) ->
-      {type, data} = JSON.parse(data)
-      console.log 'RECEIVED:', type
+    @websocket.onmessage = (event) ->
+      message = event.data
+
+      try
+        {type, data} = JSON.parse(message)
+        console.log 'RECEIVED:', type
+      catch err
+        console.log 'ERROR PARSING MESSAGE:', message, err
+
       messageCallbacks[type]?(data)
 
     @websocket.onerror = (err) ->

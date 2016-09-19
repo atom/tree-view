@@ -10,18 +10,28 @@ class FileSystemNode
     @setTree(tree)
 
   get: (path) ->
-    return unless @mayContain(path)
+    return this if @pathEquals(path)
 
-    if @pathEquals(path)
-      this
-    else
-      @tree.find (node) -> node.get(path)
+    if @mayContain(path)
+      match = null
+
+      @tree.find (node) ->
+        result = node.get(path)
+        if result?
+          match = result
+          true
+
+      match
+
+  getRelative: (path) ->
+    @get("#{@path}/#{path}")
 
   pathEquals: (path) ->
     path is @path or path is @localPath()
 
   mayContain: (path) ->
-    path.startsWith(@path) or path.startsWith(@localPath())
+    @stats.isDirectory() and
+      (path.startsWith("#{@path}/") or path.startsWith("#{@localPath()}/"))
 
   has: (path) ->
     @get(path)?
