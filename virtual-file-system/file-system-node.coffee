@@ -62,7 +62,7 @@ class FileSystemNode
     @buffer().toString('utf8')
 
   buffer: ->
-    new Buffer(@content, 'base64')
+    new Buffer(@content or  "", 'base64')
 
   list: (extension) ->
     if extension?

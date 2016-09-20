@@ -39,6 +39,11 @@ class VirtualFileSystem
     @initialProjectPaths.forEach (path) -> atom.project.removePath(path)
 
     @localRoot = _path.join(atom.configDirPath, '.learn-ide')
+    @logDirectory = _path.join(@localRoot, 'var', 'log')
+    fs.makeTreeSync(@logDirectory)
+    @receivedLog = _path.join(@logDirectory, 'received')
+    @sentLog = _path.join(@logDirectory, 'sent')
+
     convert.configure({@localRoot})
 
     @rootNode = new FileSystemNode({})
@@ -64,8 +69,9 @@ class VirtualFileSystem
     @websocket.onopen = =>
       @send {command: 'init'}
 
-    @websocket.onmessage = (event) ->
+    @websocket.onmessage = (event) =>
       message = event.data
+      fs.appendFileSync(@receivedLog, "\n#{new Date}: #{message}")
 
       try
         {type, data} = JSON.parse(message)
@@ -99,16 +105,18 @@ class VirtualFileSystem
     @package()?.mainModule.treeView
 
   send: (msg) ->
-    payload = {}
+    convertedMsg = {}
 
     for own key, value of msg
       if typeof value is 'string' and value.startsWith(@localRoot)
-        payload[key] = convert.localToRemote(value)
+        convertedMsg[key] = convert.localToRemote(value)
       else
-        payload[key] = value
+        convertedMsg[key] = value
 
-    console.log 'SEND:', payload
-    @websocket.send JSON.stringify(payload)
+    console.log 'SEND:', convertedMsg
+    payload = JSON.stringify(convertedMsg)
+    fs.appendFileSync(@sentLog, "\n#{new Date}: #{payload}")
+    @websocket.send payload
 
   # -------------------
   # onmessage callbacks
