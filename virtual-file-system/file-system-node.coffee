@@ -74,11 +74,14 @@ class FileSystemNode
     callback(this)
     @tree.forEach (node) -> node.traverse(callback)
 
-  map: (callback) ->
+  map: (callback, excluded) ->
     initialValue = [callback(this)]
 
     @tree.reduce (mapped, node) ->
-      mapped.concat(node.map(callback))
+      if excluded? and node.path.match(excluded)
+        return mapped
+
+      mapped.concat(node.map(callback, excluded))
     , initialValue
 
   findPathsToSync: ->
@@ -87,6 +90,7 @@ class FileSystemNode
     syncPromises = @map (node) ->
       node.needsSync().then (shouldSync) ->
         pathsToSync.push(node.path) if shouldSync
+    , /node_modules$|.git$/
 
     Promise.all(syncPromises).then ->
       pathsToSync
