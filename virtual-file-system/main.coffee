@@ -96,6 +96,8 @@ class VirtualFileSystem
     @projectNode.serialize()
 
   activate: (@activationState) ->
+    return @atomHelper.loading() unless @activationState.virtualProject?
+
     @projectNode = new FileSystemNode(@activationState.virtualProject)
 
     if not @projectNode.path?

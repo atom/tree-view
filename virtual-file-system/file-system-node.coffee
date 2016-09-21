@@ -61,6 +61,7 @@ class FileSystemNode
     if parent?
       node = new FileSystemNode(serializedNode, parent)
       parent.tree.push(node)
+      node
 
   setTree: (tree) ->
     @tree =
