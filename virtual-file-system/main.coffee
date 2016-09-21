@@ -12,6 +12,13 @@ require('dotenv').config
   path: _path.join(__dirname, '../.env'),
   silent: true
 
+notifyOfLoad = ->
+  atom.notifications.addInfo 'Learn IDE: loading your remote code...',
+    detail: """
+            This may take a moment, but you likely won't need
+            to wait again on this computer.
+            """
+
 WS_SERVER_URL = (->
   config = _.defaults
     host: process.env['IDE_WS_HOST']
@@ -35,25 +42,30 @@ token = atom.config.get('learn-ide.oauthToken')
 
 class VirtualFileSystem
   constructor: ->
-    @initialProjectPaths = atom.project.getPaths()
-    @initialProjectPaths.forEach (path) -> atom.project.removePath(path)
-
-    @localRoot = _path.join(atom.configDirPath, '.learn-ide')
-    @logDirectory = _path.join(@localRoot, 'var', 'log')
-    fs.makeTreeSync(@logDirectory)
-    @receivedLog = _path.join(@logDirectory, 'received')
-    @sentLog = _path.join(@logDirectory, 'sent')
-
-    convert.configure({@localRoot})
-
+    @setLocalPaths()
     @rootNode = new FileSystemNode({})
 
     @fs = new FSAdapter(this)
     @shell = new ShellAdapter(this)
 
+    @initialProjectPaths = atom.project.getPaths()
+    @initialProjectPaths.forEach (path) -> atom.project.removePath(path)
+
     @connect()
     @addOpener()
     @observeSave()
+
+  setLocalPaths: ->
+    @localRoot = _path.join(atom.configDirPath, '.learn-ide')
+    @logDirectory = _path.join(@localRoot, 'var', 'log')
+    @cacheDirectory = _path.join(@localRoot, 'var', 'cache')
+    @cachedRootNode = _path.join(@cacheDirectory, 'root_node')
+    @receivedLog = _path.join(@logDirectory, 'received')
+    @sentLog = _path.join(@logDirectory, 'sent')
+    convert.configure({@localRoot})
+
+    fs.makeTreeSync(@logDirectory)
+    fs.makeTreeSync(@cacheDirectory)
 
   connect: ->
     messageCallbacks =
@@ -96,6 +108,25 @@ class VirtualFileSystem
     atom.workspace.observeTextEditors (editor) =>
       editor.onDidSave ({path}) =>
         @save(path)
+
+  deactivate: ->
+    if @rootNode.path?
+      data = JSON.stringify(@rootNode.serialize())
+      fs.writeFileSync(@cachedRootNode, data)
+
+  activate: (@activationState) ->
+    fs.readFile @cachedRootNode, (err, data) =>
+      if err?
+        notifyOfLoad()
+
+      try
+        virtualFile = JSON.parse(data)
+        @rootNode = new FileSystemNode(virtualFile)
+        if @rootNode.path?
+          atom.project.addPath(@rootNode.localPath())
+          @treeView()?.updateRoots(@activationState?.directoryExpansionStates)
+      catch err
+        notifyOfLoad()
 
   package: ->
     # todo: update package name

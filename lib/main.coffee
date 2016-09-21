@@ -8,7 +8,8 @@ module.exports =
 
   activate: (@state) ->
     virtualFileSystem = require '../virtual-file-system/main'
-    virtualFileSystem.activationState = @state
+    virtualFileSystem.activate(@state)
+
     @disposables = new CompositeDisposable
     @state.attached ?= true if @shouldAttach()
 
@@ -28,6 +29,9 @@ module.exports =
     })
 
   deactivate: ->
+    virtualFileSystem = require '../virtual-file-system/main'
+    virtualFileSystem.deactivate()
+
     @disposables.dispose()
     @fileIconsDisposable?.dispose()
     @treeView?.deactivate()

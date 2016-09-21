@@ -1,5 +1,5 @@
 Stat = require './stat'
-fs = require 'fs-plus'
+fs = require 'graceful-fs'
 crypto = require 'crypto'
 convert = require './util/path-converter'
 
@@ -90,7 +90,7 @@ class FileSystemNode
     syncPromises = @map (node) ->
       node.needsSync().then (shouldSync) ->
         pathsToSync.push(node.path) if shouldSync
-    , /node_modules$|.git$/
+    , /node_modules$|.git$|tmp$|vendor$|\.db$/
 
     Promise.all(syncPromises).then ->
       pathsToSync
@@ -102,17 +102,22 @@ class FileSystemNode
           return resolve(true)
 
         if stats.isDirectory()
-          str = fs.readdirSync(@localPath()).sort().join('')
-          localDigest = crypto.createHash('md5').update(str, 'utf8').digest('hex')
+          return resolve(false)
+
+        hash = crypto.createHash('md5')
+        stream = fs.createReadStream(@localPath())
+
+        stream.on 'data', (data) ->
+          hash.update(data, 'utf8')
+
+        stream.on 'end', =>
+          stream.close()
+          localDigest = hash.digest('hex')
           return resolve(@digest isnt localDigest)
-        else
-          hash = crypto.createHash('md5')
-          stream = fs.createReadStream(@localPath())
 
-          stream.on 'data', (data) ->
-            hash.update(data, 'utf8')
+  serialize: ->
+    tree = @tree.map (node) -> node.serialize()
+    stat = @stats.serialize()
 
-          stream.on 'end', =>
-            localDigest = hash.digest('hex')
-            return resolve(@digest isnt localDigest)
+    {@name, @path, @entries, @digest, @content, tree, stat}
 

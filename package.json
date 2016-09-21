@@ -14,6 +14,7 @@
     "dotenv": "2.0.0",
     "event-kit": "^1.0.0",
     "fs-plus": "^2.3.0",
+    "graceful-fs": "^4.1.6",
     "minimatch": "~0.3.0",
     "pathwatcher": "^6.2",
     "shell": "^0.3.2",
