@@ -3,6 +3,7 @@ _ = require 'underscore-plus'
 shell = require 'shell'
 _path = require 'path'
 convert = require './util/path-converter'
+AtomHelper = require './util/atom-helper'
 FileSystemNode = require './file-system-node'
 ShellAdapter = require './adapters/shell-adapter'
 FSAdapter = require './adapters/fs-adapter'
@@ -11,13 +12,6 @@ SingleSocket = require 'single-socket'
 require('dotenv').config
   path: _path.join(__dirname, '../.env'),
   silent: true
-
-notifyOfLoad = ->
-  atom.notifications.addInfo 'Learn IDE: loading your remote code...',
-    detail: """
-            This may take a moment, but you likely won't need
-            to wait again on this computer.
-            """
 
 WS_SERVER_URL = (->
   config = _.defaults
@@ -38,34 +32,28 @@ WS_SERVER_URL = (->
   "#{protocol}://#{host}:#{port}/#{path}"
 )()
 
-token = atom.config.get('learn-ide.oauthToken')
-
 class VirtualFileSystem
   constructor: ->
-    @setLocalPaths()
-    @rootNode = new FileSystemNode({})
-
+    @atomHelper = new AtomHelper(this)
     @fs = new FSAdapter(this)
     @shell = new ShellAdapter(this)
+    @projectNode = new FileSystemNode({})
 
-    @initialProjectPaths = atom.project.getPaths()
-    @initialProjectPaths.forEach (path) -> atom.project.removePath(path)
+    @setLocalPaths()
+
+    @atomHelper.clearProjects()
 
     @connect()
     @addOpener()
-    @observeSave()
 
   setLocalPaths: ->
-    @localRoot = _path.join(atom.configDirPath, '.learn-ide')
+    @localRoot = _path.join(@atomHelper.configPath(), '.learn-ide')
     @logDirectory = _path.join(@localRoot, 'var', 'log')
-    @cacheDirectory = _path.join(@localRoot, 'var', 'cache')
-    @cachedRootNode = _path.join(@cacheDirectory, 'root_node')
     @receivedLog = _path.join(@logDirectory, 'received')
     @sentLog = _path.join(@logDirectory, 'sent')
     convert.configure({@localRoot})
 
     fs.makeTreeSync(@logDirectory)
-    fs.makeTreeSync(@cacheDirectory)
 
   connect: ->
     messageCallbacks =
@@ -76,7 +64,7 @@ class VirtualFileSystem
       change: @onRecievedChange
       rescue: @onRecievedRescue
 
-    @websocket = new WebSocket "#{WS_SERVER_URL}?token=#{token}"
+    @websocket = new WebSocket "#{WS_SERVER_URL}?token=#{@atomHelper.token()}"
 
     @websocket.onopen = =>
       @send {command: 'init'}
@@ -100,57 +88,23 @@ class VirtualFileSystem
       console.log 'CLOSED:', event
 
   addOpener: ->
-    atom.workspace.addOpener (uri) =>
+    @atomHelper.addOpener (uri) =>
       if @hasPath(uri) and not fs.existsSync(uri)
         @open(uri)
 
-  observeSave: ->
-    body = document.body
-    body.classList.add('learn-ide')
-
-    atom.commands.add body, 'learn-ide:save', (e) ->
-      console.log 'SAVE!', e
-
-    # atom.commands.onWillDispatch (e) =>
-    #   {type, target} = e
-
-    #   if type is 'core:save'
-    #     textEditor = atom.workspace.getTextEditors().find (editor) ->
-    #       editor.element is target
-
-    #   if textEditor?
-    #     e.preventDefault()
-    #     e.stopPropagation()
-    #     @save(textEditor.getPath())
-    # atom.workspace.observeTextEditors (editor) =>
-    #   editor.onDidSave ({path}) =>
-    #     @save(path)
-
-  deactivate: ->
-    if @rootNode.path?
-      data = JSON.stringify(@rootNode.serialize())
-      fs.writeFileSync(@cachedRootNode, data)
+  serialize: ->
+    @projectNode.serialize()
 
   activate: (@activationState) ->
-    fs.readFile @cachedRootNode, (err, data) =>
-      if err?
-        notifyOfLoad()
+    @projectNode = new FileSystemNode(@activationState.virtualProject)
 
-      try
-        virtualFile = JSON.parse(data)
-        @rootNode = new FileSystemNode(virtualFile)
-        if @rootNode.path?
-          atom.project.addPath(@rootNode.localPath())
-          @treeView()?.updateRoots(@activationState?.directoryExpansionStates)
-      catch err
-        notifyOfLoad()
+    if not @projectNode.path?
+      return @atomHelper.loading()
 
-  package: ->
-    # todo: update package name
-    atom.packages.getActivePackage('tree-view')
+    @atomHelper.updateProject(@projectNode.localPath(), @expansionState())
 
-  treeView: ->
-    @package()?.mainModule.treeView
+  expansionState: ->
+    @activationState?.directoryExpansionStates
 
   send: (msg) ->
     convertedMsg = {}
@@ -171,10 +125,9 @@ class VirtualFileSystem
   # -------------------
 
   onRecievedInit: ({virtualFile}) =>
-    @rootNode = new FileSystemNode(virtualFile)
-    atom.project.addPath(@rootNode.localPath())
-    @treeView()?.updateRoots(@activationState?.directoryExpansionStates)
-    @sync(@rootNode.path)
+    @projectNode = new FileSystemNode(virtualFile)
+    @atomHelper.updateProject(@projectNode.localPath(), @expansionState())
+    @sync(@projectNode.path)
 
   onRecievedSync: ({path, pathAttributes}) =>
     console.log 'SYNC:', path
@@ -194,10 +147,9 @@ class VirtualFileSystem
 
   onRecievedChange: ({path, isDir}) =>
     console.log 'CHANGE:', path
-    node = @rootNode.update(parent)
+    node = @projectNode.update(parent)
 
-    @treeView()?.entryForPath(node.localPath()).reload()
-    @treeView()?.selectEntryForPath(path)
+    @atomHelper.reloadTreeView(node.localPath())
     @sync(parent.path)
 
   onRecievedFetchOrOpen: ({path, content}) =>
@@ -210,7 +162,7 @@ class VirtualFileSystem
       return fs.makeTreeSync(node.localPath())
 
     mode = stats.mode
-    textBuffer = atom.project.findBufferForPath(node.localPath())
+    textBuffer = @atomHelper.findBuffer(node.localPath())
     if textBuffer?
       fs.writeFileSync(node.localPath(), node.buffer(), {mode})
       textBuffer.updateCachedDiskContentsSync()
@@ -226,10 +178,10 @@ class VirtualFileSystem
   # ------------------
 
   getNode: (path) ->
-    @rootNode.get(path)
+    @projectNode.get(path)
 
   hasPath: (path) ->
-    @rootNode.has(path)
+    @projectNode.has(path)
 
   isDirectory: (path) ->
     @stat(path).isDirectory()
@@ -289,7 +241,7 @@ class VirtualFileSystem
     @send {command: 'fetch', paths}
 
   save: (path) ->
-    atom.project.bufferForPath(path).then (textBuffer) =>
+    @atomHelper.findOrCreateBuffer(path).then (textBuffer) =>
       content = new Buffer(textBuffer.getText()).toString('base64')
       @send {command: 'save', path, content}
 
