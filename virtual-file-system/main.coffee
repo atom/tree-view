@@ -105,9 +105,26 @@ class VirtualFileSystem
         @open(uri)
 
   observeSave: ->
-    atom.workspace.observeTextEditors (editor) =>
-      editor.onDidSave ({path}) =>
-        @save(path)
+    body = document.body
+    body.classList.add('learn-ide')
+
+    atom.commands.add body, 'learn-ide:save', (e) ->
+      console.log 'SAVE!', e
+
+    # atom.commands.onWillDispatch (e) =>
+    #   {type, target} = e
+
+    #   if type is 'core:save'
+    #     textEditor = atom.workspace.getTextEditors().find (editor) ->
+    #       editor.element is target
+
+    #   if textEditor?
+    #     e.preventDefault()
+    #     e.stopPropagation()
+    #     @save(textEditor.getPath())
+    # atom.workspace.observeTextEditors (editor) =>
+    #   editor.onDidSave ({path}) =>
+    #     @save(path)
 
   deactivate: ->
     if @rootNode.path?
@@ -175,7 +192,7 @@ class VirtualFileSystem
 
     node.findPathsToSync().then (paths) => @fetch(paths)
 
-  onRecievedChange: ({path, parent}) =>
+  onRecievedChange: ({path, isDir}) =>
     console.log 'CHANGE:', path
     node = @rootNode.update(parent)
 
