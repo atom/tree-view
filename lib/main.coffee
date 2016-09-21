@@ -3,12 +3,14 @@ path = require 'path'
 
 FileIcons = require './file-icons'
 
+virtualFileSystem = require '../virtual-file-system/main'
+
 module.exports =
   treeView: null
 
   activate: (@state) ->
-    virtualFileSystem = require '../virtual-file-system/main'
-    virtualFileSystem.activationState = @state
+    virtualFileSystem.activate(@state)
+
     @disposables = new CompositeDisposable
     @state.attached ?= true if @shouldAttach()
 
@@ -42,7 +44,9 @@ module.exports =
 
   serialize: ->
     if @treeView?
-      @treeView.serialize()
+      serialized = @treeView.serialize()
+      serialized.virtualProject = virtualFileSystem.serialize()
+      serialized
     else
       @state
 

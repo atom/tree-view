@@ -1,3 +1,6 @@
+'body.learn-ide':
+  'cmd-s': 'learn-ide:save'
+
 '.platform-darwin':
   'cmd-\\': 'tree-view:toggle'
   'cmd-k cmd-b': 'tree-view:toggle'

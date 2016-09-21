@@ -25,3 +25,15 @@ class Stat
   isSocket: ->
     @socket
 
+  serialize: ->
+    serialized = {}
+
+    for own key, value of this
+      if key.endsWith('time')
+        serialized[key] = value.toString()
+      else
+        serialized[key] = value
+
+    serialized
+
+

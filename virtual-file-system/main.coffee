@@ -3,6 +3,7 @@ _ = require 'underscore-plus'
 shell = require 'shell'
 _path = require 'path'
 convert = require './util/path-converter'
+AtomHelper = require './util/atom-helper'
 FileSystemNode = require './file-system-node'
 ShellAdapter = require './adapters/shell-adapter'
 FSAdapter = require './adapters/fs-adapter'
@@ -31,24 +32,28 @@ WS_SERVER_URL = (->
   "#{protocol}://#{host}:#{port}/#{path}"
 )()
 
-token = atom.config.get('learn-ide.oauthToken')
-
 class VirtualFileSystem
   constructor: ->
-    @initialProjectPaths = atom.project.getPaths()
-    @initialProjectPaths.forEach (path) -> atom.project.removePath(path)
-
-    @localRoot = _path.join(atom.configDirPath, '.learn-ide')
-    convert.configure({@localRoot})
-
-    @rootNode = new FileSystemNode({})
-
+    @atomHelper = new AtomHelper(this)
     @fs = new FSAdapter(this)
     @shell = new ShellAdapter(this)
+    @projectNode = new FileSystemNode({})
+
+    @setLocalPaths()
+
+    @atomHelper.clearProjects()
 
     @connect()
     @addOpener()
-    @observeSave()
+
+  setLocalPaths: ->
+    @localRoot = _path.join(@atomHelper.configPath(), '.learn-ide')
+    @logDirectory = _path.join(@localRoot, 'var', 'log')
+    @receivedLog = _path.join(@logDirectory, 'received')
+    @sentLog = _path.join(@logDirectory, 'sent')
+    convert.configure({@localRoot})
+
+    fs.makeTreeSync(@logDirectory)
 
   connect: ->
     messageCallbacks =
@@ -59,64 +64,78 @@ class VirtualFileSystem
       change: @onRecievedChange
       rescue: @onRecievedRescue
 
-    @websocket = new SingleSocket "#{WS_SERVER_URL}?token=#{token}",
-      onopen: =>
-        @send {command: 'init'}
-      onmessage: (data) ->
-        {type, payload} = JSON.parse(data)
+    @websocket = new WebSocket "#{WS_SERVER_URL}?token=#{@atomHelper.token()}"
+
+    @websocket.onopen = =>
+      @send {command: 'init'}
+
+    @websocket.onmessage = (event) =>
+      message = event.data
+      fs.appendFileSync(@receivedLog, "\n#{new Date}: #{message}")
+
+      try
+        {type, data} = JSON.parse(message)
         console.log 'RECEIVED:', type
-        messageCallbacks[type]?(payload)
-      onerror: (err) ->
-        console.error 'ERROR:', err
-      onclose: (event) ->
-        console.log 'CLOSED:', event
+      catch err
+        console.log 'ERROR PARSING MESSAGE:', message, err
+
+      messageCallbacks[type]?(data)
+
+    @websocket.onerror = (err) ->
+      console.error 'ERROR:', err
+
+    @websocket.onclose = (event) ->
+      console.log 'CLOSED:', event
 
   addOpener: ->
-    atom.workspace.addOpener (uri) =>
+    @atomHelper.addOpener (uri) =>
       if @hasPath(uri) and not fs.existsSync(uri)
         @open(uri)
 
-  observeSave: ->
-    atom.workspace.observeTextEditors (editor) =>
-      editor.onDidSave ({path}) =>
-        @save(path)
+  serialize: ->
+    @projectNode.serialize()
 
-  package: ->
-    # todo: update package name
-    atom.packages.getActivePackage('tree-view')
+  activate: (@activationState) ->
+    @projectNode = new FileSystemNode(@activationState.virtualProject)
 
-  treeView: ->
-    @package()?.mainModule.treeView
+    if not @projectNode.path?
+      return @atomHelper.loading()
+
+    @atomHelper.updateProject(@projectNode.localPath(), @expansionState())
+
+  expansionState: ->
+    @activationState?.directoryExpansionStates
 
   send: (msg) ->
-    payload = {}
+    convertedMsg = {}
 
     for own key, value of msg
       if typeof value is 'string' and value.startsWith(@localRoot)
-        payload[key] = convert.localToRemote(value)
+        convertedMsg[key] = convert.localToRemote(value)
       else
-        payload[key] = value
+        convertedMsg[key] = value
 
-    console.log 'SEND:', payload
-    @websocket.send JSON.stringify(payload)
+    console.log 'SEND:', convertedMsg
+    payload = JSON.stringify(convertedMsg)
+    fs.appendFileSync(@sentLog, "\n#{new Date}: #{payload}")
+    @websocket.send payload
 
   # -------------------
   # onmessage callbacks
   # -------------------
 
-  onRecievedInit: ({project}) =>
-    @rootNode = new FileSystemNode(project)
-    atom.project.addPath(@rootNode.localPath())
-    @treeView()?.updateRoots(@activationState?.directoryExpansionStates)
-    @sync(@rootNode.path)
+  onRecievedInit: ({virtualFile}) =>
+    @projectNode = new FileSystemNode(virtualFile)
+    @atomHelper.updateProject(@projectNode.localPath(), @expansionState())
+    @sync(@projectNode.path)
 
-  onRecievedSync: ({root, digests}) =>
-    console.log 'SYNC:', root
-    node = @getNode(root)
+  onRecievedSync: ({path, pathAttributes}) =>
+    console.log 'SYNC:', path
+    node = @getNode(path)
     localPath = node.localPath()
 
     node.traverse (entry) ->
-      entry.setDigest(digests[entry.path])
+      entry.setDigest(pathAttributes[entry.path])
 
     if fs.existsSync(localPath)
       remotePaths = node.map (e) -> e.localPath()
@@ -126,13 +145,23 @@ class VirtualFileSystem
 
     node.findPathsToSync().then (paths) => @fetch(paths)
 
-  onRecievedChange: ({path, parent}) =>
-    console.log 'CHANGE:', path
-    node = @rootNode.update(parent)
+  onRecievedChange: ({event, path, virtualFile}) =>
+    node =
+      switch event
+        when 'moved_from', 'delete'
+          @projectNode.remove(path)
+        when 'moved_to', 'create'
+          @projectNode.add(virtualFile)
+        when 'modify'
+          @projectNode.update(virtualFile)
+        else
+          console.log 'UNKNOWN CHANGE:', event, path
 
-    @treeView()?.entryForPath(node.localPath()).reload()
-    @treeView()?.selectEntryForPath(path)
-    @sync(parent.path)
+    if node?
+      parent = node.parent
+      @atomHelper.reloadTreeView(parent.localPath(), node.localPath())
+      # TODO: sync again?
+      # @sync(parent.path)
 
   onRecievedFetchOrOpen: ({path, content}) =>
     # TODO: preserve full stats
@@ -144,7 +173,7 @@ class VirtualFileSystem
       return fs.makeTreeSync(node.localPath())
 
     mode = stats.mode
-    textBuffer = atom.project.findBufferForPath(node.localPath())
+    textBuffer = @atomHelper.findBuffer(node.localPath())
     if textBuffer?
       fs.writeFileSync(node.localPath(), node.buffer(), {mode})
       textBuffer.updateCachedDiskContentsSync()
@@ -160,10 +189,10 @@ class VirtualFileSystem
   # ------------------
 
   getNode: (path) ->
-    @rootNode.get(path)
+    @projectNode.get(path)
 
   hasPath: (path) ->
-    @rootNode.has(path)
+    @projectNode.has(path)
 
   isDirectory: (path) ->
     @stat(path).isDirectory()
@@ -185,7 +214,7 @@ class VirtualFileSystem
     @getNode(path)
 
   readdir: (path) ->
-    @getNode(path).entries
+    @getNode(path).entries()
 
   realpath: (path) ->
     # TODO: realpath
@@ -223,7 +252,7 @@ class VirtualFileSystem
     @send {command: 'fetch', paths}
 
   save: (path) ->
-    atom.project.bufferForPath(path).then (textBuffer) =>
+    @atomHelper.findOrCreateBuffer(path).then (textBuffer) =>
       content = new Buffer(textBuffer.getText()).toString('base64')
       @send {command: 'save', path, content}
 
