@@ -57,12 +57,14 @@ class VirtualFileSystem
 
   connect: ->
     messageCallbacks =
-      init: @onRecievedInit
-      sync: @onRecievedSync
-      open: @onRecievedFetchOrOpen
-      fetch: @onRecievedFetchOrOpen
-      change: @onRecievedChange
-      rescue: @onRecievedRescue
+      init: @onReceivedInit
+      sync: @onReceivedSync
+      open: @onReceivedFetchOrOpen
+      fetch: @onReceivedFetchOrOpen
+      change: @onReceivedChange
+      error: @onReceivedError
+      learnSave: @onReceivedLearnSave
+      coreSave: @onReceivedCoreSave
 
     @websocket = new WebSocket "#{WS_SERVER_URL}?token=#{@atomHelper.token()}"
 
@@ -126,12 +128,12 @@ class VirtualFileSystem
   # onmessage callbacks
   # -------------------
 
-  onRecievedInit: ({virtualFile}) =>
+  onReceivedInit: ({virtualFile}) =>
     @projectNode = new FileSystemNode(virtualFile)
     @atomHelper.updateProject(@projectNode.localPath(), @expansionState())
     @sync(@projectNode.path)
 
-  onRecievedSync: ({path, pathAttributes}) =>
+  onReceivedSync: ({path, pathAttributes}) =>
     console.log 'SYNC:', path
     node = @getNode(path)
     localPath = node.localPath()
@@ -147,7 +149,7 @@ class VirtualFileSystem
 
     node.findPathsToSync().then (paths) => @fetch(paths)
 
-  onRecievedChange: ({event, path, virtualFile}) =>
+  onReceivedChange: ({event, path, virtualFile}) =>
     node =
       switch event
         when 'moved_from', 'delete'
@@ -165,7 +167,7 @@ class VirtualFileSystem
       # TODO: sync again?
       # @sync(parent.path)
 
-  onRecievedFetchOrOpen: ({path, content}) =>
+  onReceivedFetchOrOpen: ({path, content}) =>
     # TODO: preserve full stats
     node = @getNode(path)
     node.setContent(content)
@@ -183,8 +185,15 @@ class VirtualFileSystem
     else
       fs.writeFile(node.localPath(), node.buffer(), {mode})
 
-  onRecievedRescue: ({message, backtrace}) ->
-    console.log 'RESCUE:', message, backtrace
+  onReceivedLearnSave: ({path}) =>
+    node = @getNode(path)
+    @atomHelper.save(node.localPath())
+
+  onReceivedCoreSave: ({path}) =>
+    @sync(path)
+
+  onReceivedError: ({event, error}) ->
+    console.log 'Error:', event, error
 
   # ------------------
   # File introspection
@@ -251,12 +260,14 @@ class VirtualFileSystem
     @send {command: 'open', path}
 
   fetch: (paths) ->
-    @send {command: 'fetch', paths}
+    if paths.length
+      @send {command: 'fetch', paths}
 
-  save: (path) ->
-    @atomHelper.findOrCreateBuffer(path).then (textBuffer) =>
-      content = new Buffer(textBuffer.getText()).toString('base64')
-      @send {command: 'save', path, content}
+  learnSave: (path, content) ->
+    @send {command: 'learnSave', path, content}
+
+  coreSave: (path, content) ->
+    @send {command: 'coreSave', path, content}
 
 module.exports = new VirtualFileSystem
 

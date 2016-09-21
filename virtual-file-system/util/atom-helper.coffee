@@ -11,16 +11,11 @@ class AtomHelper
 
     @disposables = new CompositeDisposable
 
-   # @disposables.add @package().onDidDeactivate =>
-   #   @virtualFileSystem.deactivate()
-   #   @disposables.dispose()
-
     @disposables.add atom.commands.add body,
-      'learn-ide:save': (e) => @virtualFileSystem.initSave(e)
+      'learn-ide:save': @onLearnSave
 
     @disposables.add atom.workspace.observeTextEditors (editor) =>
-      editor.onDidSave ({path}) =>
-        @virtualFileSystem.save(path)
+      editor.onDidSave(@onCoreSave)
 
   configPath: ->
     atom.configDirPath
@@ -62,4 +57,23 @@ class AtomHelper
               This may take a moment, but you likely won't need
               to wait again on this computer.
               """
+
+  onLearnSave: ({target}) =>
+    textEditor = atom.workspace.getTextEditors().find (editor) ->
+      editor.element is target
+
+    content = new Buffer(textEditor.getText()).toString('base64')
+    @virtualFileSystem.learnSave(textEditor.getPath(), content)
+
+  onCoreSave: ({path}) =>
+    @findOrCreateBuffer(path).then (textBuffer) =>
+      content = new Buffer(textBuffer.getText()).toString('base64')
+      @virtualFileSystem.coreSave(path, content)
+
+  save: (path) ->
+    textEditor = atom.workspace.getTextEditors().find (editor) ->
+      editor.getPath() is path
+
+    if textEditor?
+      atom.commands.dispatch(textEditor.element, 'core:save')
 
