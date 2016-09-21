@@ -1,11 +1,12 @@
 Stat = require './stat'
 fs = require 'graceful-fs'
+_path = require 'path'
 crypto = require 'crypto'
 convert = require './util/path-converter'
 
 module.exports =
 class FileSystemNode
-  constructor: ({@name, @path, @entries, @digest, @content, tree, stat}, @parent) ->
+  constructor: ({@name, @path, @digest, @content, tree, stat}, @parent) ->
     @stats = new Stat(stat)
     @setTree(tree)
 
@@ -42,8 +43,24 @@ class FileSystemNode
 
   update: (serializedNode) ->
     node = @get(serializedNode.path)
-    node.constructor(serializedNode)
+    node.constructor(serializedNode, node.parent)
     node
+
+  remove: (path) ->
+    node = @get(path)
+    parent = node.parent
+
+    if parent?
+      i = parent.tree.indexOf(node)
+      parent.tree.splice(i, 1)[0]
+
+  add: (serializedNode) ->
+    parentPath = _path.dirname(serializedNode.path)
+    parent = @get(parentPath)
+
+    if parent?
+      node = new FileSystemNode(serializedNode, parent)
+      parent.tree.push(node)
 
   setTree: (tree) ->
     @tree =
@@ -64,11 +81,15 @@ class FileSystemNode
   buffer: ->
     new Buffer(@content or  "", 'base64')
 
+  entries: ->
+    @tree.map (node) ->
+      node.name
+
   list: (extension) ->
     if extension?
-      entries = @entries.filter (entry) -> entry.endsWith(".#{extension}")
+      entries = @entries().filter (entry) -> entry.endsWith(".#{extension}")
 
-    (entries or @entries).map (entry) => "#{@path}/#{entry}"
+    (entries or @entries()).map (entry) => "#{@path}/#{entry}"
 
   traverse: (callback) ->
     callback(this)
@@ -119,5 +140,5 @@ class FileSystemNode
     tree = @tree.map (node) -> node.serialize()
     stat = @stats.serialize()
 
-    {@name, @path, @entries, @digest, @content, tree, stat}
+    {@name, @path, @digest, @content, tree, stat}
 

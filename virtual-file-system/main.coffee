@@ -145,12 +145,23 @@ class VirtualFileSystem
 
     node.findPathsToSync().then (paths) => @fetch(paths)
 
-  onRecievedChange: ({path, isDir}) =>
-    console.log 'CHANGE:', path
-    node = @projectNode.update(parent)
+  onRecievedChange: ({event, path, virtualFile}) =>
+    node =
+      switch event
+        when 'moved_from', 'delete'
+          @projectNode.remove(path)
+        when 'moved_to', 'create'
+          @projectNode.add(virtualFile)
+        when 'modify'
+          @projectNode.update(virtualFile)
+        else
+          console.log 'UNKNOWN CHANGE:', event, path
 
-    @atomHelper.reloadTreeView(node.localPath())
-    @sync(parent.path)
+    if node?
+      parent = node.parent
+      @atomHelper.reloadTreeView(parent.localPath(), node.localPath())
+      # TODO: sync again?
+      # @sync(parent.path)
 
   onRecievedFetchOrOpen: ({path, content}) =>
     # TODO: preserve full stats
@@ -203,7 +214,7 @@ class VirtualFileSystem
     @getNode(path)
 
   readdir: (path) ->
-    @getNode(path).entries
+    @getNode(path).entries()
 
   realpath: (path) ->
     # TODO: realpath
