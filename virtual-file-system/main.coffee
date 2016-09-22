@@ -260,6 +260,10 @@ class VirtualFileSystem
       @send {command: 'fetch', paths}
 
   learnSave: (path, content) ->
+    if not path?
+      # TODO: this happens if an untitled editor is saved—need to incorporate into a Save As...
+      return console.log 'Cannot save file without path'
+
     @send {command: 'learnSave', path, content}
 
   editorSave: (path, content) ->
