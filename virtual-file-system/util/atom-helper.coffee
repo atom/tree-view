@@ -67,6 +67,13 @@ class AtomHelper
   findOrCreateBuffer: (path) ->
     atom.project.bufferForPath(path)
 
+  reloadTextBuffer: (path) ->
+    buffer = @findBuffer(path)
+
+    if buffer?
+      buffer.updateCachedDiskContentsSync()
+      buffer.reload()
+
   loading: ->
     atom.notifications.addInfo 'Learn IDE: loading your remote code...',
       detail: """

@@ -166,24 +166,21 @@ class VirtualFileSystem
       @atomHelper.reloadTreeView(parent.localPath(), node.localPath())
 
   onReceivedFetchOrOpen: ({path, content}) =>
-    # TODO: preserve full stats
     node = @getNode(path)
-
+    parent = node.parent
     stats = node.stats
-    if stats.isDirectory()
-      return fs.makeTreeSync(node.localPath())
-
     contentBuffer = new Buffer(content or '', 'base64')
 
-    mode = stats.mode
-    textBuffer = @atomHelper.findBuffer(node.localPath())
-    if textBuffer?
-      # TODO: remove sync && @atomHelper.reloadTextBuffer(path)
-      fs.writeFileSync(node.localPath(), contentBuffer, {mode})
-      textBuffer.updateCachedDiskContentsSync()
-      textBuffer.reload()
-    else
-      fs.writeFile(node.localPath(), contentBuffer, {mode})
+    if stats.isDirectory()
+      return fs.makeTree(node.localPath())
+
+    fs.makeTree parent.localPath(), =>
+      fs.writeFile node.localPath(), contentBuffer, {mode: stats.mode}, (err) =>
+        if err?
+          return console.log "WRITE ERR", err
+
+        @atomHelper.reloadTextBuffer(node.localPath())
+
 
   onReceivedLearnSave: ({path}) =>
     node = @getNode(path)
