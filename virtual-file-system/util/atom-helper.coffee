@@ -1,11 +1,12 @@
+fs = require 'graceful-fs'
 {CompositeDisposable} = require 'atom'
 
 module.exports =
 class AtomHelper
   constructor: (@virtualFileSystem) ->
-    @handleEvents()
+    atom.packages.onDidActivateInitialPackages(@handleEvents)
 
-  handleEvents: ->
+  handleEvents: =>
     body = document.body
     body.classList.add('learn-ide')
 
@@ -16,6 +17,15 @@ class AtomHelper
 
     @disposables.add atom.workspace.observeTextEditors (editor) =>
       editor.onDidSave(@onCoreSave)
+
+    @disposables.add atom.packages.onDidActivatePackage (pkg) =>
+      return unless pkg.name is 'find-and-replace'
+
+      projectFindView = pkg.mainModule.projectFindView
+      resultModel = projectFindView.model
+
+      @disposables.add resultModel.onDidReplacePath ({filePath}) =>
+        @saveAfterProjectReplace(filePath)
 
   configPath: ->
     atom.configDirPath
@@ -32,6 +42,12 @@ class AtomHelper
 
   addOpener: (opener) ->
     atom.workspace.addOpener(opener)
+
+  projectFindAndReplace: ->
+    findAndReplace = atom.packages.getActivePackage('find-and-replace')
+    projectFindView = findAndReplace.mainModule.projectFindView
+    console.log projectFindView.model
+    projectFindView.model
 
   clearProjects: ->
     @initialProjectPaths = atom.project.getPaths()
@@ -70,10 +86,17 @@ class AtomHelper
       content = new Buffer(textBuffer.getText()).toString('base64')
       @virtualFileSystem.coreSave(path, content)
 
-  save: (path) ->
+  saveEditorForPath: (path) ->
     textEditor = atom.workspace.getTextEditors().find (editor) ->
       editor.getPath() is path
 
     if textEditor?
-      atom.commands.dispatch(textEditor.element, 'core:save')
+      textEditor.save()
+
+  saveAfterProjectReplace: (path) =>
+    fs.readFile path, 'base64', (err, content) =>
+      if err
+        return console.log "Project Replace Error", err
+
+      @virtualFileSystem.coreSave(path, content)
 

@@ -187,7 +187,7 @@ class VirtualFileSystem
 
   onReceivedLearnSave: ({path}) =>
     node = @getNode(path)
-    @atomHelper.save(node.localPath())
+    @atomHelper.saveEditorForPath(node.localPath())
 
   onReceivedCoreSave: ({path}) =>
     @sync(path)
