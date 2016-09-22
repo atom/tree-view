@@ -1,6 +1,9 @@
 fs = require 'graceful-fs'
 {CompositeDisposable} = require 'atom'
 
+convertEOL = (text) ->
+  text.replace(/\r\n|\n|\r/g, '\n')
+
 module.exports =
 class AtomHelper
   constructor: (@virtualFileSystem) ->
@@ -16,7 +19,7 @@ class AtomHelper
       'learn-ide:save': @onLearnSave
 
     @disposables.add atom.workspace.observeTextEditors (editor) =>
-      editor.onDidSave(@onCoreSave)
+      editor.onDidSave(@onEditorSave)
 
     @disposables.add atom.packages.onDidActivatePackage (pkg) =>
       return unless pkg.name is 'find-and-replace'
@@ -90,10 +93,11 @@ class AtomHelper
     content = new Buffer(textEditor.getText()).toString('base64')
     @virtualFileSystem.learnSave(textEditor.getPath(), content)
 
-  onCoreSave: ({path}) =>
+  onEditorSave: ({path}) =>
     @findOrCreateBuffer(path).then (textBuffer) =>
-      content = new Buffer(textBuffer.getText()).toString('base64')
-      @virtualFileSystem.coreSave(path, content)
+      text = convertEOL(textbuffer.getText())
+      content = new Buffer(text).toString('base64')
+      @virtualFileSystem.editorSave(path, content)
 
   saveEditorForPath: (path) ->
     textEditor = atom.workspace.getTextEditors().find (editor) ->
@@ -103,9 +107,11 @@ class AtomHelper
       textEditor.save()
 
   saveAfterProjectReplace: (path) =>
-    fs.readFile path, 'base64', (err, content) =>
+    fs.readFile path, (err, data) =>
       if err
         return console.log "Project Replace Error", err
 
-      @virtualFileSystem.coreSave(path, content)
+      text = convertEOL(data)
+      content = new Buffer(text).toString('base64')
+      @virtualFileSystem.editorSave(path, content)
 

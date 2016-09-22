@@ -62,7 +62,7 @@ class VirtualFileSystem
       change: @onReceivedChange
       error: @onReceivedError
       learnSave: @onReceivedLearnSave
-      coreSave: @onReceivedCoreSave
+      editorSave: @onReceivedEditorSave
 
     @websocket = new WebSocket "#{WS_SERVER_URL}?token=#{@atomHelper.token()}"
 
@@ -185,7 +185,7 @@ class VirtualFileSystem
     node = @getNode(path)
     @atomHelper.saveEditorForPath(node.localPath())
 
-  onReceivedCoreSave: ({path}) =>
+  onReceivedEditorSave: ({path}) =>
     @sync(path)
 
   onReceivedError: ({event, error}) ->
@@ -262,8 +262,8 @@ class VirtualFileSystem
   learnSave: (path, content) ->
     @send {command: 'learnSave', path, content}
 
-  coreSave: (path, content) ->
-    @send {command: 'coreSave', path, content}
+  editorSave: (path, content) ->
+    @send {command: 'editorSave', path, content}
 
 module.exports = new VirtualFileSystem
 
