@@ -50,10 +50,12 @@ class AtomHelper
     projectFindView.model
 
   clearProjects: ->
-    @initialProjectPaths = atom.project.getPaths()
-    @initialProjectPaths.forEach (path) -> atom.project.removePath(path)
+    # TODO: add these paths to localStorage to replace them on deactivation
+    initialProjectPaths = atom.project.getPaths()
+    initialProjectPaths.forEach (path) -> atom.project.removePath(path)
 
   updateProject: (path, directoryExpansionStates) ->
+    @clearProjects()
     atom.project.addPath(path)
     @treeView()?.updateRoots(directoryExpansionStates)
 

@@ -41,8 +41,6 @@ class VirtualFileSystem
 
     @setLocalPaths()
 
-    @atomHelper.clearProjects()
-
     @connect()
     @addOpener()
 
@@ -131,6 +129,7 @@ class VirtualFileSystem
   onReceivedInit: ({virtualFile}) =>
     @projectNode = new FileSystemNode(virtualFile)
     @atomHelper.updateProject(@projectNode.localPath(), @expansionState())
+    @activationState = undefined
     @sync(@projectNode.path)
 
   onReceivedSync: ({path, pathAttributes}) =>
