@@ -6,7 +6,7 @@ convert = require './util/path-converter'
 
 module.exports =
 class FileSystemNode
-  constructor: ({@name, @path, @digest, @content, tree, stat}, @parent) ->
+  constructor: ({@name, @path, @digest, tree, stat}, @parent) ->
     @stats = new Stat(stat)
     @setTree(tree)
 
@@ -70,17 +70,8 @@ class FileSystemNode
       else
         []
 
-  setContent: (content) ->
-    @content = content
-
   setDigest: (digest) ->
     @digest = digest
-
-  read: ->
-    @buffer().toString('utf8')
-
-  buffer: ->
-    new Buffer(@content or  "", 'base64')
 
   entries: ->
     @tree.map (node) ->
@@ -141,5 +132,5 @@ class FileSystemNode
     tree = @tree.map (node) -> node.serialize()
     stat = @stats.serialize()
 
-    {@name, @path, @digest, @content, tree, stat}
+    {@name, @path, @digest, tree, stat}
 

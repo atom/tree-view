@@ -142,10 +142,10 @@ class VirtualFileSystem
       entry.setDigest(pathAttributes[entry.path])
 
     if fs.existsSync(localPath)
-      remotePaths = node.map (e) -> e.localPath()
-      localPaths = fs.listTreeSync(localPath)
-      pathsToRemove = _.difference(localPaths, remotePaths)
-      pathsToRemove.forEach (path) -> shell.moveItemToTrash(path)
+      existingRemotePaths = node.map (e) -> e.localPath()
+      existingLocalPaths = fs.listTreeSync(localPath)
+      localPathsToRemove = _.difference(existingLocalPaths, existingRemotePaths)
+      localPathsToRemove.forEach (path) -> shell.moveItemToTrash(path)
 
     node.findPathsToSync().then (paths) => @fetch(paths)
 
@@ -164,26 +164,26 @@ class VirtualFileSystem
     if node?
       parent = node.parent
       @atomHelper.reloadTreeView(parent.localPath(), node.localPath())
-      # TODO: sync again?
-      # @sync(parent.path)
 
   onReceivedFetchOrOpen: ({path, content}) =>
     # TODO: preserve full stats
     node = @getNode(path)
-    node.setContent(content)
 
     stats = node.stats
     if stats.isDirectory()
       return fs.makeTreeSync(node.localPath())
 
+    contentBuffer = new Buffer(content or '', 'base64')
+
     mode = stats.mode
     textBuffer = @atomHelper.findBuffer(node.localPath())
     if textBuffer?
-      fs.writeFileSync(node.localPath(), node.buffer(), {mode})
+      # TODO: remove sync && @atomHelper.reloadTextBuffer(path)
+      fs.writeFileSync(node.localPath(), contentBuffer, {mode})
       textBuffer.updateCachedDiskContentsSync()
       textBuffer.reload()
     else
-      fs.writeFile(node.localPath(), node.buffer(), {mode})
+      fs.writeFile(node.localPath(), contentBuffer, {mode})
 
   onReceivedLearnSave: ({path}) =>
     node = @getNode(path)
