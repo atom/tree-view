@@ -90,6 +90,10 @@ class AtomHelper
     textEditor = atom.workspace.getTextEditors().find (editor) ->
       editor.element is target
 
+    if not textEditor.getPath()?
+      # TODO: this happens if an untitled editor is saved. need to build a 'Save As' or sorts
+      return console.log 'Cannot save file without path'
+
     content = new Buffer(textEditor.getText()).toString('base64')
     @virtualFileSystem.learnSave(textEditor.getPath(), content)
 
