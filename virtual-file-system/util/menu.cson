@@ -1,0 +1,8 @@
+[
+    'label': 'File'
+    'submenu': [
+      {'label': 'Save', 'command': 'learn-ide:save'}
+      {'label': 'Save As…', 'command': 'learn-ide:save-as'}
+      {'label': 'Save All', 'command': 'learn-ide:save-all'}
+    ]
+]

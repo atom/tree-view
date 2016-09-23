@@ -1,0 +1,5 @@
+'body.learn-ide.platform-darwin':
+  'cmd-s': 'learn-ide:save'
+  'cmd-S': 'learn-ide:save-as'
+  'cmd-alt-s': 'learn-ide:save-all'
+

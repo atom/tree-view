@@ -1,12 +1,19 @@
 fs = require 'graceful-fs'
+CSON = require 'cson'
+_path = require 'path'
 {CompositeDisposable} = require 'atom'
 
 convertEOL = (text) ->
   text.replace(/\r\n|\n|\r/g, '\n')
 
+utilPath = _path.join(__dirname, 'util')
+
 module.exports =
 class AtomHelper
   constructor: (@virtualFileSystem) ->
+    @addKeymaps()
+    @addMenu()
+    @addContextMenus()
     atom.packages.onDidActivateInitialPackages(@handleEvents)
 
   handleEvents: =>
@@ -17,6 +24,8 @@ class AtomHelper
 
     @disposables.add atom.commands.add body,
       'learn-ide:save': @onLearnSave
+      'learn-ide:save-as': @unimplemented
+      'learn-ide:save-all': @unimplemented
 
     @disposables.add atom.workspace.observeTextEditors (editor) =>
       editor.onDidSave(@onEditorSave)
@@ -86,6 +95,14 @@ class AtomHelper
               to wait again on this computer.
               """
 
+  unimplemented: ({type}) ->
+    command = type.replace(/^learn-ide:/, '').replace(/-/g, ' ')
+
+    atom.notifications.addWarning 'Learn IDE: coming soon!',
+      detail: """
+              Sorry, '#{command}' is not yet available.
+              """
+
   onLearnSave: ({target}) =>
     textEditor = atom.workspace.getTextEditors().find (editor) ->
       editor.element is target
@@ -119,4 +136,31 @@ class AtomHelper
       text = convertEOL(data)
       content = new Buffer(text).toString('base64')
       @virtualFileSystem.editorSave(path, content)
+
+  addMenu: ->
+    path = _path.join(utilPath, 'menu.cson')
+
+    fs.readFile path, (err, data) ->
+      if err?
+        return console.error "Unable to add menu:", err
+
+      atom.menu.add CSON.parse(data)
+
+  addKeymaps: ->
+    path = _path.join(utilPath, 'keymaps.cson')
+
+    fs.readFile path, (err, data) ->
+      if err?
+        return console.error "Unable to add keymaps:", err
+
+      atom.keymaps.add path, CSON.parse(data)
+
+  addContextMenus: ->
+    path = _path.join(utilPath, 'context-menus.cson')
+
+    fs.readFile path, (err, data) ->
+      if err?
+        return console.error "Unable to add context-menus:", err
+
+      atom.contextMenu.add CSON.parse(data)
 
