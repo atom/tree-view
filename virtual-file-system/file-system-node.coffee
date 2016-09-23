@@ -101,14 +101,14 @@ class FileSystemNode
     pathsToSync = []
 
     syncPromises = @map (node) ->
-      node.needsSync().then (shouldSync) ->
+      node.determineSync().then (shouldSync) ->
         pathsToSync.push(node.path) if shouldSync
-    , /node_modules$|.git$|tmp$|vendor$|\.db$/
+    , /node_modules$|.git$|tmp$|vendor$|\.db$|\.swp/
 
     Promise.all(syncPromises).then ->
       pathsToSync
 
-  needsSync: ->
+  determineSync: ->
     new Promise (resolve) =>
       fs.stat @localPath(), (err, stats) =>
         if err? or not @digest?

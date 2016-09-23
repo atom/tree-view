@@ -81,13 +81,6 @@ class AtomHelper
   findOrCreateBuffer: (path) ->
     atom.project.bufferForPath(path)
 
-  reloadTextBuffer: (path) ->
-    buffer = @findBuffer(path)
-
-    if buffer?
-      buffer.updateCachedDiskContentsSync()
-      buffer.reload()
-
   loading: ->
     atom.notifications.addInfo 'Learn IDE: loading your remote code...',
       detail: """
@@ -116,10 +109,14 @@ class AtomHelper
     @virtualFileSystem.learnSave(textEditor.getPath(), content)
 
   onEditorSave: ({path}) =>
-    @findOrCreateBuffer(path).then (textBuffer) =>
-      text = convertEOL(textBuffer.getText())
-      content = new Buffer(text).toString('base64')
-      @virtualFileSystem.editorSave(path, content)
+    node = @virtualFileSystem.getNode(path)
+
+    node.determineSync().then (shouldSync) =>
+      if shouldSync
+        @findOrCreateBuffer(path).then (textBuffer) =>
+          text = convertEOL(textBuffer.getText())
+          content = new Buffer(text).toString('base64')
+          @virtualFileSystem.editorSave(path, content)
 
   saveEditorForPath: (path) ->
     textEditor = atom.workspace.getTextEditors().find (editor) ->

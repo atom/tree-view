@@ -10,7 +10,7 @@ FSAdapter = require './adapters/fs-adapter'
 SingleSocket = require 'single-socket'
 
 require('dotenv').config
-  path: _path.join(__dirname, '../.env'),
+  path: _path.join(__dirname, '..', '.env'),
   silent: true
 
 WS_SERVER_URL = (->
@@ -149,20 +149,29 @@ class VirtualFileSystem
     node.findPathsToSync().then (paths) => @fetch(paths)
 
   onReceivedChange: ({event, path, virtualFile}) =>
+    console.log "#{event.toUpperCase()}:", path
+
     node =
       switch event
         when 'moved_from', 'delete'
           @projectNode.remove(path)
         when 'moved_to', 'create'
           @projectNode.add(virtualFile)
-        when 'modify'
+        when 'close_write'
           @projectNode.update(virtualFile)
         else
           console.log 'UNKNOWN CHANGE:', event, path
 
-    if node?
-      parent = node.parent
-      @atomHelper.reloadTreeView(parent.localPath(), node.localPath())
+    if not node?
+      return
+
+    parent = node.parent
+    @atomHelper.reloadTreeView(parent.localPath(), node.localPath())
+
+    if event is 'close_write'
+      node.determineSync().then (shouldSync) =>
+        if shouldSync
+          @fetch(node.path)
 
   onReceivedFetchOrOpen: ({path, content}) =>
     node = @getNode(path)
@@ -173,12 +182,10 @@ class VirtualFileSystem
     if stats.isDirectory()
       return fs.makeTree(node.localPath())
 
-    fs.makeTree parent.localPath(), =>
-      fs.writeFile node.localPath(), contentBuffer, {mode: stats.mode}, (err) =>
+    fs.makeTree parent.localPath(), ->
+      fs.writeFile node.localPath(), contentBuffer, {mode: stats.mode}, (err) ->
         if err?
           return console.log "WRITE ERR", err
-
-        @atomHelper.reloadTextBuffer(node.localPath())
 
 
   onReceivedLearnSave: ({path}) =>
@@ -256,6 +263,8 @@ class VirtualFileSystem
     @send {command: 'open', path}
 
   fetch: (paths) ->
+    paths = [paths] if typeof paths is 'string'
+
     if paths.length
       @send {command: 'fetch', paths}
 
