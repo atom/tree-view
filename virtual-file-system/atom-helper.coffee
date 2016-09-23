@@ -1,6 +1,7 @@
 fs = require 'graceful-fs'
 CSON = require 'cson'
 _path = require 'path'
+crypto = require 'crypto'
 LocalStorage = window.localStorage
 {CompositeDisposable} = require 'atom'
 
@@ -8,6 +9,9 @@ convertEOL = (text) ->
   text.replace(/\r\n|\n|\r/g, '\n')
 
 utilPath = _path.join(__dirname, 'util')
+
+digest = (str) ->
+  crypto.createHash('md5').update(str, 'utf8').digest('hex')
 
 module.exports =
 class AtomHelper
@@ -157,8 +161,14 @@ class AtomHelper
 
     return false unless textEditor?
 
-    textEditor.save()
-    true
+    if not textEditor.isModified()
+      false
+    else
+      node = @virtualFileSystem.getNode(path)
+      if node.digest is digest(textEditor.getText())
+        textEditor.save()
+        true
+      false
 
   saveAfterProjectReplace: (path) =>
     fs.readFile path, (err, data) =>
