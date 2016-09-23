@@ -94,12 +94,13 @@ class AtomHelper
       # TODO: this happens if an untitled editor is saved. need to build a 'Save As' or sorts
       return console.log 'Cannot save file without path'
 
-    content = new Buffer(textEditor.getText()).toString('base64')
+    text = convertEOL(textEditor.getText())
+    content = new Buffer(text).toString('base64')
     @virtualFileSystem.learnSave(textEditor.getPath(), content)
 
   onEditorSave: ({path}) =>
     @findOrCreateBuffer(path).then (textBuffer) =>
-      text = convertEOL(textbuffer.getText())
+      text = convertEOL(textBuffer.getText())
       content = new Buffer(text).toString('base64')
       @virtualFileSystem.editorSave(path, content)
 
