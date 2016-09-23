@@ -1,6 +1,7 @@
 fs = require 'graceful-fs'
 CSON = require 'cson'
 _path = require 'path'
+LocalStorage = window.localStorage
 {CompositeDisposable} = require 'atom'
 
 convertEOL = (text) ->
@@ -11,9 +12,10 @@ utilPath = _path.join(__dirname, 'util')
 module.exports =
 class AtomHelper
   constructor: (@virtualFileSystem) ->
-    @addKeymaps()
     @addMenu()
+    @addKeymaps()
     @addContextMenus()
+    @replaceTitleUpdater()
     atom.packages.onDidActivateInitialPackages(@handleEvents)
 
   handleEvents: =>
@@ -28,7 +30,9 @@ class AtomHelper
       'learn-ide:save-all': @unimplemented
 
     @disposables.add atom.workspace.observeTextEditors (editor) =>
-      editor.onDidSave(@onEditorSave)
+      editor.onDidSave (e) =>
+        @onEditorSave(e)
+        @updateTitle()
 
     @disposables.add atom.packages.onDidActivatePackage (pkg) =>
       return unless pkg.name is 'find-and-replace'
@@ -38,6 +42,34 @@ class AtomHelper
 
       @disposables.add resultModel.onDidReplacePath ({filePath}) =>
         @saveAfterProjectReplace(filePath)
+
+    @disposables.add @package().onDidDeactivate =>
+      atom.workspace.updateWindowTitle = LocalStorage.getItem('workspace:updateTitle')
+      LocalStorage.removeItem('workspace:updateTitle')
+      @disposables.dispose()
+
+  replaceTitleUpdater: ->
+    if not LocalStorage.getItem('workspace:updateTitle')
+      LocalStorage.setItem('workspace:updateTitle', atom.workspace.updateWindowTitle)
+      atom.workspace.updateWindowTitle = @updateTitle
+
+  updateTitle: =>
+    itemPath = atom.workspace.getActivePaneItem()?.getPath?()
+
+    node =
+      if itemPath?
+        @virtualFileSystem.getNode(itemPath)
+      else
+        @virtualFileSystem.projectNode
+
+    title =
+      if node? and node.path?
+        "Learn IDE — #{node.path.replace(/^\//, '')}"
+      else
+        'Learn IDE'
+
+    document.title = title
+    atom.applicationDelegate.setRepresentedFilename(node.localPath())
 
   configPath: ->
     atom.configDirPath
@@ -70,6 +102,7 @@ class AtomHelper
     @clearProjects()
     atom.project.addPath(path)
     @treeView()?.updateRoots(directoryExpansionStates)
+    @updateTitle()
 
   reloadTreeView: (path, pathToSelect) ->
     @treeView()?.entryForPath(path).reload()
