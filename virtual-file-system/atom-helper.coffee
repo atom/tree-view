@@ -139,7 +139,7 @@ class AtomHelper
 
     text = convertEOL(textEditor.getText())
     content = new Buffer(text).toString('base64')
-    @virtualFileSystem.learnSave(textEditor.getPath(), content)
+    @virtualFileSystem.save(textEditor.getPath(), content)
 
   onEditorSave: ({path}) =>
     node = @virtualFileSystem.getNode(path)
@@ -149,23 +149,25 @@ class AtomHelper
         @findOrCreateBuffer(path).then (textBuffer) =>
           text = convertEOL(textBuffer.getText())
           content = new Buffer(text).toString('base64')
-          @virtualFileSystem.editorSave(path, content)
+          @virtualFileSystem.save(path, content)
 
   saveEditorForPath: (path) ->
     textEditor = atom.workspace.getTextEditors().find (editor) ->
       editor.getPath() is path
 
-    if textEditor?
-      textEditor.save()
+    return false unless textEditor?
+
+    textEditor.save()
+    true
 
   saveAfterProjectReplace: (path) =>
     fs.readFile path, (err, data) =>
       if err
-        return console.log "Project Replace Error", err
+        return console.error "Project Replace Error", err
 
       text = convertEOL(data)
       content = new Buffer(text).toString('base64')
-      @virtualFileSystem.editorSave(path, content)
+      @virtualFileSystem.save(path, content)
 
   addMenu: ->
     path = _path.join(utilPath, 'menu.cson')

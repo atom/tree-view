@@ -61,8 +61,6 @@ class VirtualFileSystem
       fetch: @onReceivedFetchOrOpen
       change: @onReceivedChange
       error: @onReceivedError
-      learnSave: @onReceivedLearnSave
-      editorSave: @onReceivedEditorSave
 
     @websocket = new WebSocket "#{WS_SERVER_URL}?token=#{@atomHelper.token()}"
 
@@ -162,16 +160,16 @@ class VirtualFileSystem
         else
           console.log 'UNKNOWN CHANGE:', event, path
 
-    if not node?
-      return
+    return unless node?
 
     parent = node.parent
     @atomHelper.reloadTreeView(parent.localPath(), node.localPath())
 
     if event is 'close_write'
-      node.determineSync().then (shouldSync) =>
-        if shouldSync
-          @fetch(node.path)
+      if not @atomHelper.saveEditorForPath(node.localPath())
+        node.determineSync().then (shouldSync) =>
+          if shouldSync
+            @fetch(node.path)
 
   onReceivedFetchOrOpen: ({path, content}) =>
     node = @getNode(path)
@@ -186,14 +184,6 @@ class VirtualFileSystem
       fs.writeFile node.localPath(), contentBuffer, {mode: stats.mode}, (err) ->
         if err?
           return console.log "WRITE ERR", err
-
-
-  onReceivedLearnSave: ({path}) =>
-    node = @getNode(path)
-    @atomHelper.saveEditorForPath(node.localPath())
-
-  onReceivedEditorSave: ({path}) =>
-    @sync(path)
 
   onReceivedError: ({event, error}) ->
     console.log 'Error:', event, error
@@ -268,11 +258,8 @@ class VirtualFileSystem
     if paths.length
       @send {command: 'fetch', paths}
 
-  learnSave: (path, content) ->
-    @send {command: 'learnSave', path, content}
-
-  editorSave: (path, content) ->
-    @send {command: 'editorSave', path, content}
+  save: (path, content) ->
+    @send {command: 'save', path, content}
 
 module.exports = new VirtualFileSystem
 
