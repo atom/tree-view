@@ -77,8 +77,13 @@ class FileSystemNode
     @digest = digest
 
   entries: ->
-    @tree.map (node) ->
-      node.name
+    entries = []
+
+    @tree.forEach (node) ->
+      unless node.name.endsWith('.swp')
+        entries.push(node.name)
+
+    entries
 
   list: (extension) ->
     if extension?
