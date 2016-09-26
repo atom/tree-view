@@ -43,8 +43,11 @@ class FileSystemNode
 
   update: (serializedNode) ->
     node = @get(serializedNode.path)
-    node.constructor(serializedNode, node.parent)
-    node
+    if node?
+      node.constructor(serializedNode, node.parent)
+      node
+    else
+      @add(serializedNode)
 
   remove: (path) ->
     node = @get(path)

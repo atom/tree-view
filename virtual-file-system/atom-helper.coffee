@@ -66,14 +66,13 @@ class AtomHelper
       else
         @virtualFileSystem.projectNode
 
-    title =
-      if node? and node.path?
-        "Learn IDE — #{node.path.replace(/^\//, '')}"
-      else
-        'Learn IDE'
+    title = 'Learn IDE'
+
+    if node? and node.path?
+      title += " — #{node.path.replace(/^\//, '')}"
+      atom.applicationDelegate.setRepresentedFilename(node.localPath())
 
     document.title = title
-    atom.applicationDelegate.setRepresentedFilename(node.localPath())
 
   configPath: ->
     atom.configDirPath
