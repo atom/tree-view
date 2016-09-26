@@ -133,6 +133,20 @@ class AtomHelper
               Sorry, '#{command}' is not yet available.
               """
 
+  disconnected: ->
+    atom.notifications.addError 'Learn IDE: connection lost',
+      detail: """
+              The connection with the remote server has been lost.
+              """
+
+  cannotConnect: ->
+    atom.notifications.addError 'Learn IDE: unable to connect!',
+      detail: """
+              Please make sure you are connected to the internet. Once
+              you've verified your connection, restart the IDE.
+              """
+      dismissable: true
+
   onLearnSave: ({target}) =>
     textEditor = atom.workspace.getTextEditors().find (editor) ->
       editor.element is target

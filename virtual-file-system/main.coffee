@@ -65,6 +65,7 @@ class VirtualFileSystem
     @websocket = new WebSocket "#{WS_SERVER_URL}?token=#{@atomHelper.token()}"
 
     @websocket.onopen = =>
+      @activate()
       @send {command: 'init'}
 
     @websocket.onmessage = (event) =>
@@ -79,11 +80,13 @@ class VirtualFileSystem
 
       messageCallbacks[type]?(data)
 
-    @websocket.onerror = (err) ->
+    @websocket.onerror = (err) =>
       console.error 'ERROR:', err
+      @atomHelper.cannotConnect()
 
     @websocket.onclose = (event) ->
       console.log 'CLOSED:', event
+      @atomHelper.disconnected()
 
   addOpener: ->
     @atomHelper.addOpener (uri) =>
@@ -93,7 +96,10 @@ class VirtualFileSystem
   serialize: ->
     @projectNode.serialize()
 
-  activate: (@activationState) ->
+  setActivationState: (activationState) ->
+    @activationState = activationState
+
+  activate: ->
     return @atomHelper.loading() unless @activationState.virtualProject?
 
     @projectNode = new FileSystemNode(@activationState.virtualProject)

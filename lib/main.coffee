@@ -9,7 +9,7 @@ module.exports =
   treeView: null
 
   activate: (@state) ->
-    virtualFileSystem.activate(@state)
+    virtualFileSystem.setActivationState(@state)
 
     @disposables = new CompositeDisposable
     @state.attached ?= true if @shouldAttach()
