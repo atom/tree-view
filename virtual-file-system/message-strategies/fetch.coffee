@@ -9,8 +9,7 @@ module.exports = fetch = (virtualFileSystem, {path, content}) ->
   if stats.isDirectory()
     return fs.makeTree(node.localPath())
 
-  fs.makeTree parent.localPath(), ->
-    fs.writeFile node.localPath(), contentBuffer, {mode: stats.mode}, (err) ->
-      if err?
-        return console.error "WRITE ERR", err
+  fs.writeFile node.localPath(), contentBuffer, {mode: stats.mode}, (err) ->
+    if err?
+      return console.error "WRITE ERR", err
 

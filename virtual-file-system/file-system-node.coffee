@@ -85,6 +85,13 @@ class FileSystemNode
 
     entries
 
+  siblings: ->
+    if not @parent?
+      []
+    else
+      @parent.tree.filter (node) =>
+        node isnt this
+
   list: (extension) ->
     if extension?
       entries = @entries().filter (entry) -> entry.endsWith(".#{extension}")
