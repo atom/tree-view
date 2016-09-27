@@ -1,13 +1,28 @@
 shell = require 'shell'
 
-module.exports = customCommand = (virtualFileSystem, {payload}) ->
-  payload = JSON.parse(payload)
+commandStrategies = {
+  browser_open: ({url}) ->
+    shell.openExternal(url)
 
-  switch payload.command
-    when 'browser_open'
-      shell.openExternal(payload.url)
-    when 'learn_submit'
-      # open atom browser window
-    else
-      console.log 'Unhandled custom command:', payload.command
+  atom_open: ({path}, virtualFileSystem) ->
+    # node = virtualFileSystem.getNode(path)
+    # open node.localPath()
+
+  learn_submit: ({url}) ->
+    # open BrowserWindow to url
+}
+
+module.exports = customCommand = (virtualFileSystem, {payload}) ->
+  try
+    data = JSON.parse(payload)
+  catch
+    return console.error 'Unable to parse customCommand payload:', payload
+
+  {command} = data
+  strategy = commandStrategies[command]
+
+  if not strategy?
+    console.warn 'No strategy for custom command:', command, data
+  else
+    strategy(data, virtualFileSystem)
 
