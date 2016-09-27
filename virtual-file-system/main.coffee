@@ -3,11 +3,11 @@ _ = require 'underscore-plus'
 shell = require 'shell'
 _path = require 'path'
 convert = require './util/path-converter'
+onmessage= require './onmessage'
 AtomHelper = require './atom-helper'
 FileSystemNode = require './file-system-node'
 ShellAdapter = require './adapters/shell-adapter'
 FSAdapter = require './adapters/fs-adapter'
-MessageHandler = require './message-handler'
 SingleSocket = require 'single-socket'
 
 require('dotenv').config
@@ -62,7 +62,7 @@ class VirtualFileSystem
       @send {command: 'init'}
 
     @websocket.onmessage = (event) =>
-      new MessageHandler(event, this)
+      onmessage(event, this)
 
     @websocket.onerror = (err) =>
       console.error 'ERROR:', err
@@ -82,6 +82,13 @@ class VirtualFileSystem
 
   setActivationState: (activationState) ->
     @activationState = activationState
+
+  setProjectNode: (serializedNode) ->
+    @projectNode = new FileSystemNode(serializedNode)
+    @atomHelper.updateProject(@projectNode.localPath(), @expansionState())
+    @sync(@projectNode.path)
+
+    @activationState = undefined
 
   activate: ->
     return @atomHelper.loading() unless @activationState.virtualProject?
