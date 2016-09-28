@@ -1,0 +1,1 @@
+'li[is="tree-view-directory"': [{label: 'Import', command: 'learn-ide:import'}]

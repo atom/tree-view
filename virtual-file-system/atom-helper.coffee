@@ -4,6 +4,8 @@ _path = require 'path'
 crypto = require 'crypto'
 LocalStorage = window.localStorage
 {CompositeDisposable} = require 'atom'
+remote = require 'remote'
+dialog = remote.require 'dialog'
 
 convertEOL = (text) ->
   text.replace(/\r\n|\n|\r/g, '\n')
@@ -32,6 +34,7 @@ class AtomHelper
       'learn-ide:save': @onLearnSave
       'learn-ide:save-as': @unimplemented
       'learn-ide:save-all': @unimplemented
+      'learn-ide:import': @onImport
 
     @disposables.add atom.workspace.observeTextEditors (editor) =>
       editor.onDidSave (e) =>
@@ -219,4 +222,29 @@ class AtomHelper
         return console.error "Unable to add context-menus:", err
 
       atom.contextMenu.add CSON.parse(data)
+
+  onImport: =>
+    dialog.showOpenDialog
+      title: 'Import Files',
+      properties: ['openFile', 'multiSelections']
+    , (paths) => @importLocalPaths(paths)
+
+
+  importLocalPaths: (localPaths) ->
+    localPaths = [localPaths] if typeof localPaths is 'string'
+    targetPath = @treeView().selectedPath
+    targetNode = @virtualFileSystem.getNode(targetPath)
+
+    localPaths.forEach (path) =>
+      fs.readFile path, 'base64', (err, data) =>
+        if err?
+          return console.error 'Unable to import file:', path, err
+
+        base = _path.basename(path)
+        newPath = _path.posix.join(targetNode.path, base)
+
+        if @virtualFileSystem.hasPath(newPath)
+          return console.error 'Cannot save file, already an existing file with path', newPath
+
+        @virtualFileSystem.save(newPath, data)
 

@@ -140,8 +140,7 @@ class VirtualFileSystem
 
     console.log 'SEND:', convertedMsg
     payload = JSON.stringify(convertedMsg)
-    fs.appendFileSync(@sentLog, "\n#{new Date}: #{payload}")
-    @websocket.send payload
+    @websocket.send(payload)
 
   # ------------------
   # File introspection
