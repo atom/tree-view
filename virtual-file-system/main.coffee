@@ -87,23 +87,30 @@ class VirtualFileSystem
     @projectNode.serialize()
 
   cache: ->
-    data = JSON.stringify(@serialize())
-    fs.writeFile(@cachedProjectNode, data)
+    serializedNode = @serialize()
+
+    if serializedNode.path?
+      data = JSON.stringify(serializedNode)
+      fs.writeFile(@cachedProjectNode, data)
 
   setActivationState: (activationState) ->
     @activationState = activationState
 
-  setProjectNode: (serializedNode, fromCache) ->
+  setProjectNodeFromCache: (serializedNode) ->
+    return if @projectNode.path?
+
     @projectNode = new FileSystemNode(serializedNode)
     expansion = @activationState?.directoryExpansionStates
 
     @atomHelper.updateProject(@projectNode.localPath(), expansion)
 
-    if fromCache
-      return not @projectNode.path? and @atomHelper.loading()
-
-    @sync(@projectNode.path)
+  setProjectNode: (serializedNode) ->
+    @projectNode = new FileSystemNode(serializedNode)
+    expansion = @activationState?.directoryExpansionStates
     @activationState = undefined
+
+    @atomHelper.updateProject(@projectNode.localPath(), expansion)
+    @sync(@projectNode.path)
 
   activate: ->
     fs.readFile @cachedProjectNode, (err, data) =>
@@ -117,7 +124,7 @@ class VirtualFileSystem
         console.error 'Unable to parse cached project node:', error
         return @atomHelper.loading()
 
-      @setProjectNode(serializedNode, true)
+      @setProjectNodeFromCache(serializedNode)
 
   expansionState: ->
     @activationState?.directoryExpansionStates
