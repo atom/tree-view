@@ -47,19 +47,24 @@ class VirtualFileSystem
 
   setLocalPaths: ->
     @localRoot = _path.join(@atomHelper.configPath(), '.learn-ide')
+    convert.configure({@localRoot})
+
     @logDirectory = _path.join(@localRoot, 'var', 'log')
     @receivedLog = _path.join(@logDirectory, 'received')
     @sentLog = _path.join(@logDirectory, 'sent')
-    convert.configure({@localRoot})
+
+    @cacheDirectory = _path.join(@localRoot, 'var', 'cache')
+    @cachedProjectNode = _path.join(@cacheDirectory, 'project-node')
 
     fs.makeTreeSync(@logDirectory)
+    fs.makeTreeSync(@cacheDirectory)
 
   connect: ->
     @websocket = new WebSocket "#{WS_SERVER_URL}?token=#{@atomHelper.token()}"
 
     @websocket.onopen = =>
       @activate()
-      @send {command: 'init'}
+      @init()
 
     @websocket.onmessage = (event) =>
       onmessage(event, this)
@@ -74,31 +79,45 @@ class VirtualFileSystem
 
   addOpener: ->
     @atomHelper.addOpener (uri) =>
-      if @hasPath(uri) and not fs.existsSync(uri)
-        @open(uri)
+      fs.stat uri, (err, stats) =>
+        if err? and @hasPath(uri)
+          @open(uri)
 
   serialize: ->
     @projectNode.serialize()
 
+  cache: ->
+    data = JSON.stringify(@serialize())
+    fs.writeFile(@cachedProjectNode, data)
+
   setActivationState: (activationState) ->
     @activationState = activationState
 
-  setProjectNode: (serializedNode) ->
+  setProjectNode: (serializedNode, fromCache) ->
     @projectNode = new FileSystemNode(serializedNode)
-    @atomHelper.updateProject(@projectNode.localPath(), @expansionState())
-    @sync(@projectNode.path)
+    expansion = @activationState?.directoryExpansionStates
 
+    @atomHelper.updateProject(@projectNode.localPath(), expansion)
+
+    if fromCache
+      return not @projectNode.path? and @atomHelper.loading()
+
+    @sync(@projectNode.path)
     @activationState = undefined
 
   activate: ->
-    return @atomHelper.loading() unless @activationState.virtualProject?
+    fs.readFile @cachedProjectNode, (err, data) =>
+      if err?
+        console.error 'Unable to load cached project node:', err
+        return @atomHelper.loading()
 
-    @projectNode = new FileSystemNode(@activationState.virtualProject)
+      try
+        serializedNode = JSON.parse(data)
+      catch error
+        console.error 'Unable to parse cached project node:', error
+        return @atomHelper.loading()
 
-    if not @projectNode.path?
-      return @atomHelper.loading()
-
-    @atomHelper.updateProject(@projectNode.localPath(), @expansionState())
+      @setProjectNode(serializedNode, true)
 
   expansionState: ->
     @activationState?.directoryExpansionStates
@@ -159,6 +178,9 @@ class VirtualFileSystem
   # ---------------
   # File operations
   # ---------------
+
+  init: ->
+    @send {command: 'init'}
 
   cp: (source, destination) ->
     @send {command: 'cp', source, destination}

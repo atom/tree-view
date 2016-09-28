@@ -44,9 +44,7 @@ module.exports =
 
   serialize: ->
     if @treeView?
-      serialized = @treeView.serialize()
-      serialized.virtualProject = virtualFileSystem.serialize()
-      serialized
+      @treeView.serialize()
     else
       @state
 

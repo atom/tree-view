@@ -48,9 +48,10 @@ class AtomHelper
         @saveAfterProjectReplace(filePath)
 
     @disposables.add @package().onDidDeactivate =>
+      @disposables.dispose()
+      @virtualFileSystem.cache()
       atom.workspace.updateWindowTitle = LocalStorage.getItem('workspace:updateTitle')
       LocalStorage.removeItem('workspace:updateTitle')
-      @disposables.dispose()
 
   replaceTitleUpdater: ->
     if not LocalStorage.getItem('workspace:updateTitle')
