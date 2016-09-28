@@ -1,7 +1,7 @@
 fs = require 'fs-plus'
 
 changeStrategies = {
-  moved_from: ({virtualFileSystem, projectNode, path}) ->
+  delete: ({virtualFileSystem, projectNode, path}) ->
     node = projectNode.remove(path)
 
     # ignore weird vim write events
@@ -14,16 +14,19 @@ changeStrategies = {
 
     node
 
-  delete: (data) ->
-    changeStrategies.moved_from(data)
+  moved_from: (data) ->
+    changeStrategies.delete(data)
 
-  moved_to: ({virtualFileSystem, projectNode, virtualFile}) ->
+  create: ({virtualFileSystem, projectNode, virtualFile}) ->
     node = projectNode.add(virtualFile)
-    virtualFileSystem.sync(node.path)
+
+    node.findPathsToSync().then (paths) ->
+      virtualFileSystem.fetch(paths)
+
     node
 
-  create: (data) ->
-    changeStrategies.moved_to(data)
+  moved_to: (data) ->
+    changeStrategies.create(data)
 
   close_write: ({virtualFileSystem, projectNode, virtualFile, atomHelper}) ->
     node = projectNode.update(virtualFile)
