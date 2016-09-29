@@ -94,6 +94,9 @@ class AtomHelper
         if token? and token.length
           resolve(token)
 
+  open: (path) ->
+    atom.workspace.open(path)
+
   addOpener: (opener) ->
     atom.workspace.addOpener(opener)
 

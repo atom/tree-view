@@ -5,8 +5,8 @@ commandStrategies = {
     shell.openExternal(url)
 
   atom_open: ({path}, virtualFileSystem) ->
-    # node = virtualFileSystem.getNode(path)
-    # open node.localPath()
+    node = virtualFileSystem.getNode(path)
+    virtualFileSystem.atomHelper.open(node.localPath())
 
   learn_submit: ({url}) ->
     # open BrowserWindow to url
