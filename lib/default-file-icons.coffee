@@ -1,4 +1,4 @@
-{fs} = require '../virtual-file-system/main'
+{fs} = require '../virtual-file-system/lib/main'
 path = require 'path'
 
 class DefaultFileIcons

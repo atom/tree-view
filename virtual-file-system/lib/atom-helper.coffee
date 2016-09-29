@@ -10,8 +10,6 @@ dialog = remote.require 'dialog'
 convertEOL = (text) ->
   text.replace(/\r\n|\n|\r/g, '\n')
 
-utilPath = _path.join(__dirname, 'util')
-
 digest = (str) ->
   crypto.createHash('md5').update(str, 'utf8').digest('hex')
 
@@ -203,7 +201,7 @@ class AtomHelper
       @virtualFileSystem.save(path, content)
 
   addMenu: ->
-    path = _path.join(utilPath, 'menu.cson')
+    path = _path.join(__dirname, '..', 'menus', 'menu.cson')
 
     fs.readFile path, (err, data) ->
       if err?
@@ -212,7 +210,7 @@ class AtomHelper
       atom.menu.add CSON.parse(data)
 
   addKeymaps: ->
-    path = _path.join(utilPath, 'keymaps.cson')
+    path = _path.join(__dirname, '..', 'keymaps', 'keymaps.cson')
 
     fs.readFile path, (err, data) ->
       if err?
@@ -221,7 +219,7 @@ class AtomHelper
       atom.keymaps.add path, CSON.parse(data)
 
   addContextMenus: ->
-    path = _path.join(utilPath, 'context-menus.cson')
+    path = _path.join(__dirname, '..', 'menus', 'context-menus.cson')
 
     fs.readFile path, (err, data) ->
       if err?

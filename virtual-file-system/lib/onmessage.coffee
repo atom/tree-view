@@ -1,10 +1,10 @@
-change = require './message-strategies/change'
-customCommand = require './message-strategies/custom-command'
-error = require './message-strategies/error'
-fetch = require './message-strategies/fetch'
-init = require './message-strategies/init'
-open = require './message-strategies/open'
-sync = require './message-strategies/sync'
+change = require './onmessage-strategies/change'
+customCommand = require './onmessage-strategies/custom-command'
+error = require './onmessage-strategies/error'
+fetch = require './onmessage-strategies/fetch'
+init = require './onmessage-strategies/init'
+open = require './onmessage-strategies/open'
+sync = require './onmessage-strategies/sync'
 
 messageStrategies = {
   change,
