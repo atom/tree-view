@@ -5,6 +5,8 @@ changeStrategies = {
   delete: (path, virtualFileSystem) ->
     node = virtualFileSystem.projectNode.remove(path)
 
+    return unless node?
+
     shell.moveItemToTrash node.localPath(), (err) ->
       if err?
         console.error 'Unable to move local file to trash:', err
@@ -13,6 +15,8 @@ changeStrategies = {
 
   moved_from: (path, virtualFileSystem) ->
     node = virtualFileSystem.projectNode.remove(path)
+
+    return unless node?
 
     # ignore weird vim write events
     return node if node.siblings().find (sibling) ->

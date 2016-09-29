@@ -51,17 +51,21 @@ class FileSystemNode
 
   remove: (path) ->
     node = @get(path)
-    parent = node.parent
+    if not node?
+      return
 
+    parent = node.parent
     if parent?
       i = parent.tree.indexOf(node)
       parent.tree.splice(i, 1)[0]
 
   add: (serializedNode) ->
     parentPath = _path.dirname(serializedNode.path)
-    parent = @get(parentPath)
+    parent = @get(parentPath) or @add({path: parentPath})
 
-    if parent?
+    if parent.has(serializedNode.path)
+      return @update(serializedNode)
+    else
       node = new FileSystemNode(serializedNode, parent)
       parent.tree.push(node)
       node
