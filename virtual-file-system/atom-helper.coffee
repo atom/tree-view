@@ -88,8 +88,11 @@ class AtomHelper
   treeView: ->
     @package()?.mainModule.treeView
 
-  token: ->
-    atom.config.get('learn-ide.oauthToken')
+  getToken: ->
+    new Promise (resolve) ->
+      atom.config.observe 'learn-ide.oauthToken', (token) ->
+        if token? and token.length
+          resolve(token)
 
   addOpener: (opener) ->
     atom.workspace.addOpener(opener)

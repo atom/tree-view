@@ -60,22 +60,23 @@ class VirtualFileSystem
     fs.makeTreeSync(@cacheDirectory)
 
   connect: ->
-    @websocket = new WebSocket "#{WS_SERVER_URL}?token=#{@atomHelper.token()}"
+    @atomHelper.getToken().then (token) =>
+      @websocket = new WebSocket "#{WS_SERVER_URL}?token=#{token}"
 
-    @websocket.onopen = =>
-      @activate()
-      @init()
+      @websocket.onopen = =>
+        @activate()
+        @init()
 
-    @websocket.onmessage = (event) =>
-      onmessage(event, this)
+      @websocket.onmessage = (event) =>
+        onmessage(event, this)
 
-    @websocket.onerror = (err) =>
-      console.error 'ERROR:', err
-      @atomHelper.cannotConnect()
+      @websocket.onerror = (err) =>
+        console.error 'ERROR:', err
+        @atomHelper.cannotConnect()
 
-    @websocket.onclose = (event) =>
-      console.log 'CLOSED:', event
-      @atomHelper.disconnected()
+      @websocket.onclose = (event) =>
+        console.log 'CLOSED:', event
+        @atomHelper.disconnected()
 
   addOpener: ->
     @atomHelper.addOpener (uri) =>
