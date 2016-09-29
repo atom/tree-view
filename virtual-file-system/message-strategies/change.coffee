@@ -33,7 +33,7 @@ changeStrategies = {
     node
 
   moved_to: (path, virtualFileSystem, virtualFile) ->
-    changeStrategies.create(path, virtualFileSystem, virtualFiledata)
+    changeStrategies.create(path, virtualFileSystem, virtualFile)
 
   close_write: (path, virtualFileSystem, virtualFile) ->
     node = virtualFileSystem.projectNode.update(virtualFile)
