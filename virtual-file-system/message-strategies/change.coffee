@@ -1,8 +1,18 @@
 fs = require 'fs-plus'
+shell = require 'shell'
 
 changeStrategies = {
-  delete: ({virtualFileSystem, projectNode, path}) ->
-    node = projectNode.remove(path)
+  delete: (path, virtualFileSystem) ->
+    node = virtualFileSystem.projectNode.remove(path)
+
+    shell.moveItemToTrash node.localPath(), (err) ->
+      if err?
+        console.error 'Unable to move local file to trash:', err
+
+    node
+
+  moved_from: (path, virtualFileSystem) ->
+    node = virtualFileSystem.projectNode.remove(path)
 
     # ignore weird vim write events
     return node if node.siblings().find (sibling) ->
@@ -14,24 +24,21 @@ changeStrategies = {
 
     node
 
-  moved_from: (data) ->
-    changeStrategies.delete(data)
-
-  create: ({virtualFileSystem, projectNode, virtualFile}) ->
-    node = projectNode.add(virtualFile)
+  create: (path, virtualFileSystem, virtualFile) ->
+    node = virtualFileSystem.projectNode.add(virtualFile)
 
     node.findPathsToSync().then (paths) ->
       virtualFileSystem.fetch(paths)
 
     node
 
-  moved_to: (data) ->
-    changeStrategies.create(data)
+  moved_to: (path, virtualFileSystem, virtualFile) ->
+    changeStrategies.create(path, virtualFileSystem, virtualFiledata)
 
-  close_write: ({virtualFileSystem, projectNode, virtualFile, atomHelper}) ->
-    node = projectNode.update(virtualFile)
+  close_write: (path, virtualFileSystem, virtualFile) ->
+    node = virtualFileSystem.projectNode.update(virtualFile)
 
-    if not atomHelper.saveEditorForPath(node.localPath())
+    if not virtualFileSystem.atomHelper.saveEditorForPath(node.localPath())
       node.determineSync().then (shouldSync) ->
         if shouldSync
           virtualFileSystem.fetch(node.path)
@@ -47,8 +54,7 @@ module.exports = change = (virtualFileSystem, {event, path, virtualFile}) ->
   if not strategy?
     return console.warn 'No strategy for change event:', event, path
 
-  projectNode = virtualFileSystem.projectNode
-  node = strategy({event, path, virtualFile, virtualFileSystem, projectNode, atomHelper})
+  node = strategy(path, virtualFileSystem, virtualFile)
 
   if not node?
     return console.warn 'Change strategy did not return node:', event, strategy

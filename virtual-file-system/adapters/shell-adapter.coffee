@@ -4,6 +4,6 @@ class ShellAdapter
     # noop
 
   moveItemToTrash: (path) ->
-    @virtualFileSystem.trash(path)
+    @virtualFileSystem.rm(path)
     true
 

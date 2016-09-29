@@ -200,8 +200,8 @@ class VirtualFileSystem
   touch: (path) ->
     @send {command: 'touch', path}
 
-  trash: (path) ->
-    @send {command: 'trash', path}
+  rm: (path) ->
+    @send {command: 'rm', path}
 
   sync: (path) ->
     @send {command: 'sync', path}
