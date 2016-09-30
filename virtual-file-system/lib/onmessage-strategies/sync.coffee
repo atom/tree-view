@@ -19,3 +19,5 @@ module.exports = sync = (virtualFileSystem, {path, pathAttributes}) ->
   node.findPathsToSync().then (paths) ->
     virtualFileSystem.fetch(paths)
 
+  virtualFileSystem.ping()
+
