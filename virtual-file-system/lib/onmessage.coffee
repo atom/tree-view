@@ -18,7 +18,7 @@ messageStrategies = {
   sync,
 }
 
-module.exports = onmessage = (event, virtualFileSystem) ->
+module.exports = onmessage = (event, virtualFileSystem, pendingCommands) ->
   message = event.data
 
   try
@@ -28,6 +28,7 @@ module.exports = onmessage = (event, virtualFileSystem) ->
     return console.error 'ERROR PARSING MESSAGE:', err
 
   strategy = messageStrategies[type]
+  pendingCommands.remove(type)
 
   if not strategy?
     console.error "Unhandled message type: #{type}"

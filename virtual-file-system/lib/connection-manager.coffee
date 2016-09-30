@@ -2,6 +2,8 @@ _ = require 'underscore-plus'
 _path = require 'path'
 onmessage= require './onmessage'
 SingleSocket = require 'single-socket'
+PendingCommands = require './util/pending-commands'
+{CompositeDisposable} = require 'event-kit'
 
 require('dotenv').config
   path: _path.join(__dirname, '..', '.env'),
@@ -29,6 +31,15 @@ WS_SERVER_URL = (->
 module.exports =
 class ConnectionManager
   constructor: (@virtualFileSystem) ->
+    @pending = new PendingCommands
+    @handleEvents()
+
+  handleEvents: ->
+    @disposables = new CompositeDisposable
+
+    @disposables.add @pending.onDidRemove ({command}) =>
+      if command is 'sync'
+        @startPingAfterTimeout()
 
   connect: ->
     @virtualFileSystem.atomHelper.getToken().then (token) =>
@@ -38,7 +49,7 @@ class ConnectionManager
         @onOpen(event)
 
       @websocket.onmessage = (event) =>
-        onmessage(event, @virtualFileSystem)
+        onmessage(event, @virtualFileSystem, @pending)
 
       @websocket.onerror = (err) ->
         console.error 'WS ERROR:', err
@@ -48,7 +59,6 @@ class ConnectionManager
 
   onOpen: (event) ->
     @connected = true
-    @startPingsAfterInit()
 
     if @reconnectNotification?
       @successfulReconnect()
@@ -67,9 +77,10 @@ class ConnectionManager
 
   send: (msg) ->
     if not @connected
-      @virtualFileSystem.atomHelper.error 'Learn IDE: you are not connected!',
+      return @virtualFileSystem.atomHelper.error 'Learn IDE: you are not connected!',
         detail: 'The operation cannot be performed while disconnected'
 
+    @pending.add(msg.command)
     console.log 'SEND:', msg
     payload = JSON.stringify(msg)
     @websocket.send(payload)
@@ -93,12 +104,18 @@ class ConnectionManager
     @reconnectNotification = null
     @virtualFileSystem.atomHelper.success 'Learn IDE: connected!'
 
-  startPingsAfterInit: ->
-    # TODO: something cleaner, this simply waits n minutes after init is sent
-    minutes = 3
+  startPingAfterTimeout: (seconds = 15) ->
     setTimeout =>
+      @startPing()
+    , seconds * 1000
+
+  startPing: ->
+    return if @pinging
+
+    if @pending.any('init') or @pending.greaterThan('fetch', 5)
+      @startPingAfterTimeout()
+    else
       @ping()
-    , minutes * 60 * 1000
 
   ping: ->
     return if not @connected
@@ -123,6 +140,7 @@ class ConnectionManager
       return @ping()
 
     if isRepeat
+      @pinging = false
       @websocket.close()
     else
       @waitForPong(timestamp, 5)
