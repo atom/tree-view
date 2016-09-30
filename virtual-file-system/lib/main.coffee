@@ -39,6 +39,7 @@ class VirtualFileSystem
     @fs = new FSAdapter(this)
     @shell = new ShellAdapter(this)
     @projectNode = new FileSystemNode({})
+    @reconnectCount = 0
 
     @setLocalPaths()
 
@@ -64,19 +65,46 @@ class VirtualFileSystem
       @websocket = new WebSocket "#{WS_SERVER_URL}?token=#{token}"
 
       @websocket.onopen = =>
+        if @reconnectCount > 0
+          @successfulReconnect()
+        @connected = true
         @activate()
         @init()
 
       @websocket.onmessage = (event) =>
         onmessage(event, this)
 
-      @websocket.onerror = (err) =>
-        console.error 'ERROR:', err
-        @atomHelper.cannotConnect()
+      @websocket.onerror = (err) ->
+        console.error 'WS ERROR:', err
 
       @websocket.onclose = (event) =>
-        console.log 'CLOSED:', event
-        @atomHelper.disconnected()
+        console.warn 'WS CLOSED:', event
+        if @connected and @reconnectCount < 1
+          @connected = false
+          @atomHelper.disconnected()
+        @reconnect()
+
+  reconnect: ->
+    timeouts = [5, 10, 30, 60, 180]
+    timeout = timeouts[@reconnectCount]
+
+    if timeout?
+      milliseconds = timeout * 1000
+      @atomHelper.reconnect(timeout)
+    else
+      milliseconds = 30 * 1000
+
+    if @reconnectCount is timeouts.length
+      @atomHelper.cannotConnect()
+
+    setTimeout @connect.bind(this), milliseconds
+    @reconnectCount++
+
+  successfulReconnect: ->
+    console.log 'here'
+    @reconnectCount = 0
+    @atomHelper.success 'Learn IDE: reconnected!',
+      detail: 'You\'re reading to keep working!'
 
   addOpener: ->
     @atomHelper.addOpener (uri) =>

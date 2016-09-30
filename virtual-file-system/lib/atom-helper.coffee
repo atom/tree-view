@@ -7,6 +7,12 @@ LocalStorage = window.localStorage
 remote = require 'remote'
 dialog = remote.require 'dialog'
 
+humanize = (seconds) ->
+  minutes = Math.floor(seconds / 60)
+  time = if minutes then minutes else seconds
+  unit = if minutes then 'minute' else 'second'
+  "#{time} #{unit}#{if time is 1 then '' else 's'}"
+
 convertEOL = (text) ->
   text.replace(/\r\n|\n|\r/g, '\n')
 
@@ -35,7 +41,7 @@ class AtomHelper
       'learn-ide:import': @onImport
 
     @disposables.add atom.workspace.observeTextEditors (editor) =>
-      editor.onDidSave (e) =>
+      @disposables.add editor.onDidSave (e) =>
         @onEditorSave(e)
         @updateTitle()
 
@@ -125,8 +131,20 @@ class AtomHelper
   findOrCreateBuffer: (path) ->
     atom.project.bufferForPath(path)
 
+  success: (msg, opts) ->
+    atom.notifications.addSuccess(msg, opts)
+
+  info: (msg, opts) ->
+    atom.notifications.addInfo(msg, opts)
+
+  warn: (msg, opts) ->
+    atom.notifications.addWarning(msg, opts)
+
+  error: (msg, opts) ->
+    atom.notifications.addError(msg, opts)
+
   loading: ->
-    atom.notifications.addInfo 'Learn IDE: loading your remote code...',
+    @info 'Learn IDE: loading your remote code...',
       detail: """
               This may take a moment, but you likely won't need
               to wait again on this computer.
@@ -134,23 +152,25 @@ class AtomHelper
 
   unimplemented: ({type}) ->
     command = type.replace(/^learn-ide:/, '').replace(/-/g, ' ')
-
-    atom.notifications.addWarning 'Learn IDE: coming soon!',
-      detail: """
-              Sorry, '#{command}' is not yet available.
-              """
+    @warn 'Learn IDE: coming soon!', {detail: "Sorry, '#{command}' isn't available yet."}
 
   disconnected: ->
-    atom.notifications.addError 'Learn IDE: connection lost',
+    @error 'Learn IDE: connection lost 😮',
       detail: """
               The connection with the remote server has been lost.
               """
 
-  cannotConnect: ->
-    atom.notifications.addError 'Learn IDE: unable to connect!',
+  reconnect: (seconds) ->
+    @warn 'Learn IDE: trouble connecting',
       detail: """
-              Please make sure you are connected to the internet. Once
-              you've verified your connection, restart the IDE.
+              Attempting to reconnect in #{humanize(seconds)}...
+              """
+
+  cannotConnect: ->
+    @error 'Learn IDE: unable to connect 😭',
+      detail: """
+              Please make sure you are connected to the internet. If the
+              problem continues, ask a question on Learn for support.
               """
       dismissable: true
 
