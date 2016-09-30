@@ -65,7 +65,7 @@ class VirtualFileSystem
       @websocket = new WebSocket "#{WS_SERVER_URL}?token=#{token}"
 
       @websocket.onopen = =>
-        if @reconnectCount > 0
+        if @reconnectNotification?
           @successfulReconnect()
         @connected = true
         @activate()
@@ -79,32 +79,24 @@ class VirtualFileSystem
 
       @websocket.onclose = (event) =>
         console.warn 'WS CLOSED:', event
-        if @connected and @reconnectCount < 1
+        if @connected and not @reconnectNotification?
           @connected = false
           @atomHelper.disconnected()
         @reconnect()
 
   reconnect: ->
-    timeouts = [5, 10, 30, 60, 180]
-    timeout = timeouts[@reconnectCount]
+    if not @reconnectNotification?
+      @reconnectNotification = @atomHelper.connecting()
 
-    if timeout?
-      milliseconds = timeout * 1000
-      @atomHelper.reconnect(timeout)
-    else
-      milliseconds = 30 * 1000
-
-    if @reconnectCount is timeouts.length
-      @atomHelper.cannotConnect()
-
-    setTimeout @connect.bind(this), milliseconds
-    @reconnectCount++
+    secondsBetweenAttempts = 5
+    setTimeout =>
+      @connect()
+    , secondsBetweenAttempts * 1000
 
   successfulReconnect: ->
-    console.log 'here'
-    @reconnectCount = 0
-    @atomHelper.success 'Learn IDE: reconnected!',
-      detail: 'You\'re reading to keep working!'
+    @reconnectNotification.dismiss()
+    @reconnectNotification = null
+    @atomHelper.success 'Learn IDE: connected!'
 
   addOpener: ->
     @atomHelper.addOpener (uri) =>
@@ -122,6 +114,14 @@ class VirtualFileSystem
       data = JSON.stringify(serializedNode)
       fs.writeFile(@cachedProjectNode, data)
 
+  loading: ->
+    secondsTillNotifying = 3
+
+    setTimeout =>
+      if not @projectNode.path?
+        @loadingNotification = @atomHelper.loading()
+    , secondsTillNotifying * 1000
+
   setActivationState: (activationState) ->
     @activationState = activationState
 
@@ -138,6 +138,9 @@ class VirtualFileSystem
     expansion = @activationState?.directoryExpansionStates
     @activationState = undefined
 
+    @loadingNotification?.dismiss()
+    @loadingNotification = null
+
     @atomHelper.updateProject(@projectNode.localPath(), expansion)
     @sync(@projectNode.path)
 
@@ -145,13 +148,15 @@ class VirtualFileSystem
     fs.readFile @cachedProjectNode, (err, data) =>
       if err?
         console.error 'Unable to load cached project node:', err
-        return @atomHelper.loading()
+        @loading()
+        return
 
       try
         serializedNode = JSON.parse(data)
       catch error
         console.error 'Unable to parse cached project node:', error
-        return @atomHelper.loading()
+        @loading()
+        return
 
       @setProjectNodeFromCache(serializedNode)
 
@@ -159,6 +164,10 @@ class VirtualFileSystem
     @activationState?.directoryExpansionStates
 
   send: (msg) ->
+    if not @connected
+      @atomHelper.error 'Learn IDE: you are not connected!',
+        detail: 'The operation cannot be performed while disconnected'
+
     convertedMsg = {}
 
     for own key, value of msg

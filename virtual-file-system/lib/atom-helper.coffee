@@ -146,9 +146,10 @@ class AtomHelper
   loading: ->
     @info 'Learn IDE: loading your remote code...',
       detail: """
-              This may take a moment, but you likely won't need
-              to wait again on this computer.
+              This may take a moment, but will only happen
+              very occasionally (maybe just once)
               """
+      dismissable: true
 
   unimplemented: ({type}) ->
     command = type.replace(/^learn-ide:/, '').replace(/-/g, ' ')
@@ -159,20 +160,10 @@ class AtomHelper
       detail: """
               The connection with the remote server has been lost.
               """
+      dismissable: false
 
-  reconnect: (seconds) ->
-    @warn 'Learn IDE: trouble connecting',
-      detail: """
-              Attempting to reconnect in #{humanize(seconds)}...
-              """
-
-  cannotConnect: ->
-    @error 'Learn IDE: unable to connect 😭',
-      detail: """
-              Please make sure you are connected to the internet. If the
-              problem continues, ask a question on Learn for support.
-              """
-      dismissable: true
+  connecting: (seconds) ->
+    @warn 'Learn IDE: attempting to connect...', {dismissable: true}
 
   onLearnSave: ({target}) =>
     textEditor = atom.workspace.getTextEditors().find (editor) ->
