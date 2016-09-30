@@ -64,6 +64,7 @@ class VirtualFileSystem
     @atomHelper.getToken().then (token) =>
       @websocket = new WebSocket "#{WS_SERVER_URL}?token=#{token}"
 
+      window.ws = @websocket
       @websocket.onopen = =>
         if @reconnectNotification?
           @successfulReconnect()
@@ -97,6 +98,37 @@ class VirtualFileSystem
     @reconnectNotification.dismiss()
     @reconnectNotification = null
     @atomHelper.success 'Learn IDE: connected!'
+
+  ping: ->
+    return if not @connected
+
+    @pings ?= []
+    timestamp = (new Date).toString()
+    @pings.push(timestamp)
+
+    @send {command: 'ping', timestamp}
+    @waitForPong(timestamp)
+
+  waitForPong: (timestamp, secondsToWait = 3) ->
+    isRepeat = timestamp is @currentPing
+    @currentPing = timestamp
+
+    setTimeout =>
+      @resolvePing(timestamp, isRepeat)
+    , secondsToWait * 1000
+
+  resolvePing: (timestamp, isRepeat) ->
+    if not @pings.includes(timestamp)
+      return @ping()
+
+    if isRepeat
+      @websocket.close()
+    else
+      @waitForPong(timestamp, 5)
+
+  pong: (timestamp) ->
+    i = @pings.indexOf(timestamp)
+    @pings.splice(i, 1)
 
   addOpener: ->
     @atomHelper.addOpener (uri) =>
@@ -164,7 +196,7 @@ class VirtualFileSystem
     @activationState?.directoryExpansionStates
 
   send: (msg) ->
-    if not @connected
+    if not @connected and msg.command isnt 'ping'
       @atomHelper.error 'Learn IDE: you are not connected!',
         detail: 'The operation cannot be performed while disconnected'
 
