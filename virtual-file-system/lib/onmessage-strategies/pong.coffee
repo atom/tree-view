@@ -1,3 +1,3 @@
 module.exports = init = (virtualFileSystem, {timestamp}) ->
-  virtualFileSystem.pong(timestamp)
+  virtualFileSystem.connectionManager.pong(timestamp)
 

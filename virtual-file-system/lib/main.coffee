@@ -1,37 +1,13 @@
-fs = require 'fs-plus'
 _ = require 'underscore-plus'
-shell = require 'shell'
 _path = require 'path'
 convert = require './util/path-converter'
-onmessage= require './onmessage'
+fs = require 'fs-plus'
+shell = require 'shell'
 AtomHelper = require './atom-helper'
+ConnectionManager = require './connection-manager'
+FSAdapter = require './adapters/fs-adapter'
 FileSystemNode = require './file-system-node'
 ShellAdapter = require './adapters/shell-adapter'
-FSAdapter = require './adapters/fs-adapter'
-SingleSocket = require 'single-socket'
-
-require('dotenv').config
-  path: _path.join(__dirname, '..', '.env'),
-  silent: true
-
-WS_SERVER_URL = (->
-  config = _.defaults
-    host: process.env['IDE_WS_HOST']
-    port: process.env['IDE_WS_PORT']
-    path: process.env['IDE_WS_PATH']
-  ,
-    host: 'ile.learn.co',
-    port: 443,
-    path: 'go_fs_server'
-    protocol: 'wss'
-
-  if config.port isnt 443
-    config.protocol = 'ws'
-
-  {protocol, host, port, path} = config
-
-  "#{protocol}://#{host}:#{port}/#{path}"
-)()
 
 class VirtualFileSystem
   constructor: ->
@@ -39,11 +15,12 @@ class VirtualFileSystem
     @fs = new FSAdapter(this)
     @shell = new ShellAdapter(this)
     @projectNode = new FileSystemNode({})
+    @connectionManager = new ConnectionManager(this)
     @reconnectCount = 0
 
     @setLocalPaths()
 
-    @connect()
+    @connectionManager.connect()
     @addOpener()
 
   setLocalPaths: ->
@@ -59,76 +36,6 @@ class VirtualFileSystem
 
     fs.makeTreeSync(@logDirectory)
     fs.makeTreeSync(@cacheDirectory)
-
-  connect: ->
-    @atomHelper.getToken().then (token) =>
-      @websocket = new WebSocket "#{WS_SERVER_URL}?token=#{token}"
-
-      window.ws = @websocket
-      @websocket.onopen = =>
-        if @reconnectNotification?
-          @successfulReconnect()
-        @connected = true
-        @activate()
-        @init()
-
-      @websocket.onmessage = (event) =>
-        onmessage(event, this)
-
-      @websocket.onerror = (err) ->
-        console.error 'WS ERROR:', err
-
-      @websocket.onclose = (event) =>
-        console.warn 'WS CLOSED:', event
-        if @connected and not @reconnectNotification?
-          @connected = false
-          @atomHelper.disconnected()
-        @reconnect()
-
-  reconnect: ->
-    if not @reconnectNotification?
-      @reconnectNotification = @atomHelper.connecting()
-
-    secondsBetweenAttempts = 5
-    setTimeout =>
-      @connect()
-    , secondsBetweenAttempts * 1000
-
-  successfulReconnect: ->
-    @reconnectNotification.dismiss()
-    @reconnectNotification = null
-    @atomHelper.success 'Learn IDE: connected!'
-
-  ping: ->
-    return if not @connected
-
-    @pings ?= []
-    timestamp = (new Date).toString()
-    @pings.push(timestamp)
-
-    @send {command: 'ping', timestamp}
-    @waitForPong(timestamp)
-
-  waitForPong: (timestamp, secondsToWait = 3) ->
-    isRepeat = timestamp is @currentPing
-    @currentPing = timestamp
-
-    setTimeout =>
-      @resolvePing(timestamp, isRepeat)
-    , secondsToWait * 1000
-
-  resolvePing: (timestamp, isRepeat) ->
-    if not @pings.includes(timestamp)
-      return @ping()
-
-    if isRepeat
-      @websocket.close()
-    else
-      @waitForPong(timestamp, 5)
-
-  pong: (timestamp) ->
-    i = @pings.indexOf(timestamp)
-    @pings.splice(i, 1)
 
   addOpener: ->
     @atomHelper.addOpener (uri) =>
@@ -196,10 +103,6 @@ class VirtualFileSystem
     @activationState?.directoryExpansionStates
 
   send: (msg) ->
-    if not @connected and msg.command isnt 'ping'
-      @atomHelper.error 'Learn IDE: you are not connected!',
-        detail: 'The operation cannot be performed while disconnected'
-
     convertedMsg = {}
 
     for own key, value of msg
@@ -208,9 +111,7 @@ class VirtualFileSystem
       else
         convertedMsg[key] = value
 
-    console.log 'SEND:', convertedMsg
-    payload = JSON.stringify(convertedMsg)
-    @websocket.send(payload)
+    @connectionManager.send(convertedMsg)
 
   # ------------------
   # File introspection
