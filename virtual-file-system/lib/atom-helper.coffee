@@ -39,6 +39,8 @@ class AtomHelper
       'learn-ide:save-as': @unimplemented
       'learn-ide:save-all': @unimplemented
       'learn-ide:import': @onImport
+      'learn-ide:file-open': @unimplemented
+      'learn-ide:add-project': @unimplemented
 
     @disposables.add atom.workspace.observeTextEditors (editor) =>
       @disposables.add editor.onDidSave (e) =>
@@ -145,21 +147,17 @@ class AtomHelper
 
   loading: ->
     @info 'Learn IDE: loading your remote code...',
-      detail: """
-              This may take a moment, but will only happen
-              very occasionally (maybe just once)
-              """
+      detail: """This may take a moment, but will only happen
+              very occasionally (maybe just once)"""
       dismissable: true
 
-  unimplemented: ({type}) ->
+  unimplemented: ({type}) =>
     command = type.replace(/^learn-ide:/, '').replace(/-/g, ' ')
     @warn 'Learn IDE: coming soon!', {detail: "Sorry, '#{command}' isn't available yet."}
 
   disconnected: ->
     @error 'Learn IDE: connection lost 😮',
-      detail: """
-              The connection with the remote server has been lost.
-              """
+      detail: 'The connection with the remote server has been lost.'
       dismissable: false
 
   connecting: (seconds) ->
@@ -203,7 +201,7 @@ class AtomHelper
       false
 
   saveAfterProjectReplace: (path) =>
-    fs.readFile path, (err, data) =>
+    fs.readFile path, 'utf8', (err, data) =>
       if err
         return console.error "Project Replace Error", err
 
@@ -259,7 +257,10 @@ class AtomHelper
         newPath = _path.posix.join(targetNode.path, base)
 
         if @virtualFileSystem.hasPath(newPath)
-          return console.error 'Cannot save file, already an existing file with path', newPath
+          @warn 'Learn IDE: cannot save file',
+            detail: """There is already an existing remote file with path:
+                    #{newPath}"""
+          return
 
         @virtualFileSystem.save(newPath, data)
 

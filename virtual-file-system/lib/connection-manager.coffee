@@ -94,11 +94,11 @@ class ConnectionManager
     @virtualFileSystem.atomHelper.success 'Learn IDE: connected!'
 
   startPingsAfterInit: ->
-    # TODO: something cleaner, this simply waits 4 minutes after init is sent
-    console.log 'here'
+    # TODO: something cleaner, this simply waits n minutes after init is sent
+    minutes = 3
     setTimeout =>
       @ping()
-    , 1 * 60 * 1000
+    , minutes * 60 * 1000
 
   ping: ->
     return if not @connected
