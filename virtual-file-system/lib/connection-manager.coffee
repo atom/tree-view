@@ -32,18 +32,18 @@ class ConnectionManager
 
   connect: ->
     @virtualFileSystem.atomHelper.getToken().then (token) =>
-      @websocket = new WebSocket "#{WS_SERVER_URL}?token=#{token}"
+      @websocket = new SingleSocket("#{WS_SERVER_URL}?token=#{token}")
 
-      @websocket.onopen = (event) =>
+      @websocket.on 'open', (event) =>
         @onOpen(event)
 
-      @websocket.onmessage = (event) =>
+      @websocket.on 'message', (event) =>
         onmessage(event, @virtualFileSystem)
 
-      @websocket.onerror = (err) ->
+      @websocket.on 'error', (err) ->
         console.error 'WS ERROR:', err
 
-      @websocket.onclose = (event) =>
+      @websocket.on 'close', (event) =>
         @onClose(event)
 
   onOpen: (event) ->
