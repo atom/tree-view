@@ -1,2 +1,0 @@
-'li[is="tree-view-directory"]': [{label: 'Import', command: 'learn-ide:import'}]
-'.tree-view.full-menu': [{'label': 'Add Project Folder', 'command': 'learn-ide:add-project'}]

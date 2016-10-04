@@ -1,5 +1,5 @@
 path = require 'path'
-{fs} = require '../virtual-file-system/lib/main'
+{fs} = require 'nsync-fs'
 Dialog = require './dialog'
 {repoForPath} = require "./helpers"
 
