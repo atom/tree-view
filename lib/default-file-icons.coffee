@@ -1,4 +1,4 @@
-{fs} = require '../virtual-file-system/lib/main'
+{fs} = require 'nsync-fs'
 path = require 'path'
 
 class DefaultFileIcons

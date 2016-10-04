@@ -38,4 +38,4 @@ class FileView extends HTMLElement
   isPathEqual: (pathToCompare) ->
     @file.isPathEqual(pathToCompare)
 
-module.exports = document.registerElement('tree-view-file', prototype: FileView.prototype, extends: 'li')
+module.exports = document.registerElement('learn-ide-tree-file', prototype: FileView.prototype, extends: 'li')
