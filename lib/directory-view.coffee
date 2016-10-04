@@ -131,5 +131,5 @@ class DirectoryView extends HTMLElement
     @directory.collapse()
     @entries.innerHTML = ''
 
-DirectoryElement = document.registerElement('tree-view-directory', prototype: DirectoryView.prototype, extends: 'li')
+DirectoryElement = document.registerElement('learn-ide-tree-directory', prototype: DirectoryView.prototype, extends: 'li')
 module.exports = DirectoryElement
