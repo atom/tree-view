@@ -19,7 +19,7 @@
     "minimatch": "~0.3.0",
     "pathwatcher": "^6.2",
     "shell": "^0.3.2",
-    "single-socket": "0.0.4",
+    "single-socket": "0.0.6",
     "temp": "~0.8.1",
     "underscore-plus": "^1.0.0"
   },

@@ -62,6 +62,10 @@ class AtomHelper
       atom.workspace.updateWindowTitle = LocalStorage.getItem('workspace:updateTitle')
       LocalStorage.removeItem('workspace:updateTitle')
 
+  spawn: (modulePath) ->
+    {BufferedNodeProcess} = require 'atom'
+    new BufferedNodeProcess({command: modulePath})
+
   replaceTitleUpdater: ->
     if not LocalStorage.getItem('workspace:updateTitle')
       LocalStorage.setItem('workspace:updateTitle', atom.workspace.updateWindowTitle)

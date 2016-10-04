@@ -32,7 +32,7 @@ class ConnectionManager
 
   connect: ->
     @virtualFileSystem.atomHelper.getToken().then (token) =>
-      @websocket = new SingleSocket("#{WS_SERVER_URL}?token=#{token}")
+      @websocket = new SingleSocket("#{WS_SERVER_URL}?token=#{token}", {spawn: atomHelper.spawn})
 
       @websocket.on 'open', (event) =>
         @onOpen(event)
