@@ -40,6 +40,7 @@ class TreeView extends View
     @selectedPath = null
     @ignoredPatterns = []
     @useSyncFS = false
+    @currentlyOpening = new Map
 
     @dragEventCounts = new WeakMap
     @projectFolderDragAndDropHandler = new ProjectFolderDragAndDropHandler(this)
@@ -208,17 +209,28 @@ class TreeView extends View
     @selectEntry(entry)
     if entry instanceof DirectoryView
       entry.toggleExpansion(isRecursive)
-      return false
     else if entry instanceof FileView
-      detail = e.originalEvent?.detail ? 1
-      alwaysOpenExisting = atom.config.get('tree-view.alwaysOpenExisting')
-      if detail is 1
-        if atom.config.get('core.allowPendingPaneItems')
-          atom.workspace.open(entry.getPath(), pending: true, activatePane: false, searchAllPanes: alwaysOpenExisting)
-      else if detail is 2
-        atom.workspace.open(entry.getPath(), searchAllPanes: alwaysOpenExisting)
+      @fileViewEntryClicked(e)
 
     false
+
+  fileViewEntryClicked: (e) ->
+    filePath = e.currentTarget.getPath()
+    detail = e.originalEvent?.detail ? 1
+    alwaysOpenExisting = atom.config.get('tree-view.alwaysOpenExisting')
+    if detail is 1
+      if atom.config.get('core.allowPendingPaneItems')
+        openPromise = atom.workspace.open(filePath, pending: true, activatePane: false, searchAllPanes: alwaysOpenExisting)
+        @currentlyOpening.set(filePath, openPromise)
+        openPromise.then => @currentlyOpening.delete(filePath)
+    else if detail is 2
+      @openAfterPromise(filePath, searchAllPanes: alwaysOpenExisting)
+
+  openAfterPromise: (uri, options) ->
+    if promise = @currentlyOpening.get(uri)
+      promise.then -> atom.workspace.open(uri, options)
+    else
+      atom.workspace.open(uri, options)
 
   resizeStarted: =>
     $(document).on('mousemove', @resizeTreeView)
@@ -265,6 +277,11 @@ class TreeView extends View
     @loadIgnoredPatterns()
 
     @roots = for projectPath in atom.project.getPaths()
+      continue unless stats = fs.lstatSyncNoException(projectPath)
+      stats = _.pick stats, _.keys(stats)...
+      for key in ["atime", "birthtime", "ctime", "mtime"]
+        stats[key] = stats[key].getTime()
+      
       directory = new Directory({
         name: path.basename(projectPath)
         fullPath: projectPath
@@ -275,6 +292,7 @@ class TreeView extends View
                         {isExpanded: true}
         @ignoredPatterns
         @useSyncFS
+        stats
       })
       root = new DirectoryView()
       root.initialize(directory)
@@ -394,16 +412,9 @@ class TreeView extends View
       else
         selectedEntry.toggleExpansion()
     else if selectedEntry instanceof FileView
-      uri = selectedEntry.getPath()
-      activePane = atom.workspace.getActivePane()
-      item = activePane?.itemForURI(uri)
-      if item? and not options.pending
-        activePane.clearPendingItem() if activePane.getPendingItem() is item
-
       if atom.config.get('tree-view.alwaysOpenExisting')
         options = Object.assign searchAllPanes: true, options
-
-      atom.workspace.open(uri, options)
+      @openAfterPromise(selectedEntry.getPath(), options)
 
   openSelectedEntrySplit: (orientation, side) ->
     selectedEntry = @selectedEntry()

@@ -9,7 +9,7 @@ realpathCache = {}
 
 module.exports =
 class Directory
-  constructor: ({@name, fullPath, @symlink, @expansionState, @isRoot, @ignoredPatterns, @useSyncFS}) ->
+  constructor: ({@name, fullPath, @symlink, @expansionState, @isRoot, @ignoredPatterns, @useSyncFS, @stats}) ->
     @destroyed = false
     @emitter = new Emitter()
     @subscriptions = new CompositeDisposable()
@@ -53,6 +53,12 @@ class Directory
 
   onDidRemoveEntries: (callback) ->
     @emitter.on('did-remove-entries', callback)
+
+  onDidCollapse: (callback) ->
+    @emitter.on('did-collapse', callback)
+
+  onDidExpand: (callback) ->
+    @emitter.on('did-expand', callback)
 
   loadRealPath: ->
     if @useSyncFS
@@ -177,6 +183,9 @@ class Directory
       stat = fs.lstatSyncNoException(fullPath)
       symlink = stat.isSymbolicLink?()
       stat = fs.statSyncNoException(fullPath) if symlink
+      statFlat = _.pick stat, _.keys(stat)...
+      for key in ["atime", "birthtime", "ctime", "mtime"]
+        statFlat[key] = statFlat[key]?.getTime()
 
       if stat.isDirectory?()
         if @entries.hasOwnProperty(name)
@@ -185,14 +194,14 @@ class Directory
           directories.push(name)
         else
           expansionState = @expansionState.entries[name]
-          directories.push(new Directory({name, fullPath, symlink, expansionState, @ignoredPatterns, @useSyncFS}))
+          directories.push(new Directory({name, fullPath, symlink, expansionState, @ignoredPatterns, @useSyncFS, stats: statFlat}))
       else if stat.isFile?()
         if @entries.hasOwnProperty(name)
           # push a placeholder since this entry already exists but this helps
           # track the insertion index for the created views
           files.push(name)
         else
-          files.push(new File({name, fullPath, symlink, realpathCache, @useSyncFS}))
+          files.push(new File({name, fullPath, symlink, realpathCache, @useSyncFS, stats: statFlat}))
 
     @sortEntries(directories.concat(files))
 
@@ -251,6 +260,7 @@ class Directory
     @expansionState.isExpanded = false
     @expansionState = @serializeExpansionState()
     @unwatch()
+    @emitter.emit('did-collapse')
 
   # Public: Expand this directory, load its children, and start watching it for
   # changes.
@@ -258,6 +268,7 @@ class Directory
     @expansionState.isExpanded = true
     @reload()
     @watch()
+    @emitter.emit('did-expand')
 
   serializeExpansionState: ->
     expansionState = {}
@@ -278,7 +289,6 @@ class Directory
       fullPath = path.join(fullPath, relativeDir)
 
     if squashedDirs.length > 1
-      @squashedName = squashedDirs[0..squashedDirs.length - 2].join(path.sep) + path.sep
-    @name = squashedDirs[squashedDirs.length - 1]
+      @squashedNames = [squashedDirs[0..squashedDirs.length - 2].join(path.sep) + path.sep, _.last(squashedDirs)]
 
     return fullPath

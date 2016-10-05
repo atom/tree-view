@@ -5,7 +5,7 @@ fs = require 'fs-plus'
 
 module.exports =
 class File
-  constructor: ({@name, fullPath, @symlink, realpathCache, useSyncFS}) ->
+  constructor: ({@name, fullPath, @symlink, realpathCache, useSyncFS, @stats}) ->
     @destroyed = false
     @emitter = new Emitter()
     @subscriptions = new CompositeDisposable()
@@ -36,7 +36,7 @@ class File
   onDidStatusChange: (callback) ->
     @emitter.on('did-status-change', callback)
 
-  # Subscribe to the project' repo for changes to the Git status of this file.
+  # Subscribe to the project's repo for changes to the Git status of this file.
   subscribeToRepo: ->
     repo = repoForPath(@path)
     return unless repo?

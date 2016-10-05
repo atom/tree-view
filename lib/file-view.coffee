@@ -19,7 +19,11 @@ class FileView extends HTMLElement
     @fileName.dataset.name = @file.name
     @fileName.dataset.path = @file.path
 
-    @fileName.classList.add(FileIcons.getService().iconClassForPath(@file.path))
+    iconClass = FileIcons.getService().iconClassForPath(@file.path, "tree-view")
+    if iconClass
+      unless Array.isArray iconClass
+        iconClass = iconClass.toString().split(/\s+/g)
+      @fileName.classList.add(iconClass...)
 
     @subscriptions.add @file.onDidStatusChange => @updateStatus()
     @updateStatus()
