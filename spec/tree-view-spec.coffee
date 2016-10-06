@@ -3037,6 +3037,31 @@ describe "TreeView", ->
         expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Opening folder in Finder failed'
         expect(atom.notifications.getNotifications()[0].getDetail()).toContain 'ENOENT'
 
+  describe "showCurrentFileInFileManager()", ->
+    it "does nothing when no file is opened", ->
+      expect(atom.workspace.getPaneItems().length).toBe(0)
+      expect(treeView.showCurrentFileInFileManager()).toBeUndefined()
+
+    it "does nothing when only an untitled tab is opened", ->
+      waitsForPromise ->
+        atom.workspace.open()
+      runs ->
+        $(workspaceElement).focus()
+        expect(treeView.showCurrentFileInFileManager()).toBeUndefined()
+
+    it "shows file in file manager when some file is opened", ->
+      filePath = path.join(os.tmpdir(), 'non-project-file.txt')
+      fs.writeFileSync(filePath, 'test')
+      waitsForPromise ->
+        atom.workspace.open(filePath)
+
+      runs ->
+        {BufferedProcess} = require 'atom'
+        spyOn(BufferedProcess.prototype, 'spawn').andCallFake ->
+        fileManagerProcess = treeView.showCurrentFileInFileManager()
+        expect(fileManagerProcess instanceof BufferedProcess).toBeTruthy()
+        fileManagerProcess.kill()
+
   describe "when reloading a directory with deletions and additions", ->
     it "does not throw an error (regression)", ->
       projectPath = temp.mkdirSync('atom-project')
