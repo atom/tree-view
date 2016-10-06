@@ -279,7 +279,7 @@ class TreeView extends View
       stats = _.pick stats, _.keys(stats)...
       for key in ["atime", "birthtime", "ctime", "mtime"]
         stats[key] = stats[key].getTime()
-      
+
       directory = new Directory({
         name: path.basename(projectPath)
         fullPath: projectPath
@@ -827,6 +827,7 @@ class TreeView extends View
   onDragEnter: (e) =>
     e.stopPropagation()
     entry = e.currentTarget.parentNode
+    return unless @canDrop(e, entry)
     @dragEventCounts.set(entry, 0) unless @dragEventCounts.get(entry)
     entry.classList.add('selected') if @dragEventCounts.get(entry) is 0
     @dragEventCounts.set(entry, @dragEventCounts.get(entry) + 1)
@@ -834,6 +835,7 @@ class TreeView extends View
   onDragLeave: (e) =>
     e.stopPropagation()
     entry = e.currentTarget.parentNode
+    return unless @canDrop(e, entry)
     @dragEventCounts.set(entry, @dragEventCounts.get(entry) - 1)
     entry.classList.remove('selected') if @dragEventCounts.get(entry) is 0
 
@@ -841,6 +843,7 @@ class TreeView extends View
   onDragStart: (e) ->
     e.stopPropagation()
 
+    entry = e.currentTarget
     target = $(e.currentTarget).find(".name")
     initialPath = target.data("path")
 
@@ -858,6 +861,8 @@ class TreeView extends View
     e.originalEvent.dataTransfer.effectAllowed = "move"
     e.originalEvent.dataTransfer.setDragImage(fileNameElement[0], 0, 0)
     e.originalEvent.dataTransfer.setData("initialPath", initialPath)
+    if entry instanceof DirectoryView
+      e.originalEvent.dataTransfer.setData("isDirectory", "true")
 
     window.requestAnimationFrame ->
       fileNameElement.remove()
@@ -873,7 +878,9 @@ class TreeView extends View
     e.stopPropagation()
 
     entry = e.currentTarget
+
     return unless entry instanceof DirectoryView
+    return unless @canDrop(e, entry)
 
     entry.classList.remove('selected')
 
@@ -889,3 +896,15 @@ class TreeView extends View
       # Drop event from OS
       for file in e.originalEvent.dataTransfer.files
         @moveEntry(file.path, newDirectoryPath)
+
+  canDrop: (e, entry) ->
+    dataTransfer = e.originalEvent.dataTransfer
+    return true unless dataTransfer.getData("isDirectory")
+
+    newDirectoryPath = $(entry).find(".name").data("path")
+    return false unless newDirectoryPath
+
+    initialPath = dataTransfer.getData("initialPath")
+
+    return true unless initialPath
+    return not newDirectoryPath.startsWith(initialPath)
