@@ -1,0 +1,65 @@
+fs = require 'fs-plus'
+path = require 'path'
+process = require 'process'
+temp = require('temp').track()
+
+DefaultFileIcons = require '../lib/default-file-icons'
+
+describe 'DefaultFileIcons', ->
+  [fileIcons] = []
+
+  beforeEach ->
+    fileIcons = new DefaultFileIcons
+
+  it 'defaults to text', ->
+    expect(fileIcons.iconClassForPath('foo.bar')).toEqual('icon-file-text')
+
+  it 'recognizes READMEs', ->
+    expect(fileIcons.iconClassForPath('README.md')).toEqual('icon-book')
+
+  it 'recognizes compressed files', ->
+    expect(fileIcons.iconClassForPath('foo.zip')).toEqual('icon-file-zip')
+
+  it 'recognizes image files', ->
+    expect(fileIcons.iconClassForPath('foo.png')).toEqual('icon-file-media')
+
+  it 'recognizes PDF files', ->
+    expect(fileIcons.iconClassForPath('foo.pdf')).toEqual('icon-file-pdf')
+
+  it 'recognizes binary files', ->
+    expect(fileIcons.iconClassForPath('foo.exe')).toEqual('icon-file-binary')
+
+  describe 'symlinks', ->
+    [tempDir] = []
+
+    beforeEach ->
+      tempDir = temp.mkdirSync('atom-tree-view')
+
+    afterEach ->
+      temp.cleanupSync()
+
+    it 'recognizes symlinks', ->
+      filePath = path.join(tempDir, 'foo.bar')
+      linkPath = path.join(tempDir, 'link.bar')
+      fs.writeFileSync(filePath, '')
+      try
+        fs.symlinkSync(filePath, linkPath)
+      catch err
+        # Symlinks are Administrator only on Windows
+        return if err.code is 'EPERM' and process.platform is 'win32'
+        throw err
+
+      expect(fileIcons.iconClassForPath(linkPath)).toEqual('icon-file-symlink-file')
+
+    it 'recognizes as symlink instead of other types', ->
+      filePath = path.join(tempDir, 'foo.zip')
+      linkPath = path.join(tempDir, 'link.zip')
+      fs.writeFileSync(filePath, '')
+      try
+        fs.symlinkSync(filePath, linkPath)
+      catch err
+        # Symlinks are Administrator only on Windows
+        return if err.code is 'EPERM' and process.platform is 'win32'
+        throw err
+
+      expect(fileIcons.iconClassForPath(linkPath)).toEqual('icon-file-symlink-file')

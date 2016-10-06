@@ -1,4 +1,5 @@
 {CompositeDisposable} = require 'event-kit'
+FileIcons = require './file-icons'
 
 module.exports =
 class FileView extends HTMLElement
@@ -14,19 +15,15 @@ class FileView extends HTMLElement
     @fileName.classList.add('name', 'icon')
     @appendChild(@fileName)
     @fileName.textContent = @file.name
+    @fileName.title = @file.name
     @fileName.dataset.name = @file.name
     @fileName.dataset.path = @file.path
 
-    if @file.symlink
-      @fileName.classList.add('icon-file-symlink-file')
-    else
-      switch @file.type
-        when 'binary'     then @fileName.classList.add('icon-file-binary')
-        when 'compressed' then @fileName.classList.add('icon-file-zip')
-        when 'image'      then @fileName.classList.add('icon-file-media')
-        when 'pdf'        then @fileName.classList.add('icon-file-pdf')
-        when 'readme'     then @fileName.classList.add('icon-book')
-        when 'text'       then @fileName.classList.add('icon-file-text')
+    iconClass = FileIcons.getService().iconClassForPath(@file.path, "tree-view")
+    if iconClass
+      unless Array.isArray iconClass
+        iconClass = iconClass.toString().split(/\s+/g)
+      @fileName.classList.add(iconClass...)
 
     @subscriptions.add @file.onDidStatusChange => @updateStatus()
     @updateStatus()

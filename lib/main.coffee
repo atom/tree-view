@@ -1,22 +1,9 @@
 {CompositeDisposable} = require 'event-kit'
 path = require 'path'
 
-module.exports =
-  config:
-    hideVcsIgnoredFiles:
-      type: 'boolean'
-      default: false
-      title: 'Hide VCS Ignored Files'
-    hideIgnoredNames:
-      type: 'boolean'
-      default: false
-    showOnRightSide:
-      type: 'boolean'
-      default: false
-    sortFoldersBeforeFiles:
-      type: 'boolean'
-      default: true
+FileIcons = require './file-icons'
 
+module.exports =
   treeView: null
 
   activate: (@state) ->
@@ -40,8 +27,16 @@ module.exports =
 
   deactivate: ->
     @disposables.dispose()
+    @fileIconsDisposable?.dispose()
     @treeView?.deactivate()
     @treeView = null
+
+  consumeFileIcons: (service) ->
+    FileIcons.setService(service)
+    @fileIconsDisposable = service.onWillDeactivate ->
+      FileIcons.resetService()
+      @treeView?.updateRoots()
+    @treeView?.updateRoots()
 
   serialize: ->
     if @treeView?
@@ -56,7 +51,7 @@ module.exports =
     @treeView
 
   shouldAttach: ->
-    projectPath = atom.project.getPaths()[0]
+    projectPath = atom.project.getPaths()[0] ? ''
     if atom.workspace.getActivePaneItem()
       false
     else if path.basename(projectPath) is '.git'

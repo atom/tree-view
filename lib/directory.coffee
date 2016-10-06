@@ -3,18 +3,19 @@ _ = require 'underscore-plus'
 {CompositeDisposable, Emitter} = require 'event-kit'
 fs = require 'fs-plus'
 PathWatcher = require 'pathwatcher'
-NaturalSort = require 'javascript-natural-sort'
 File = require './file'
 {repoForPath} = require './helpers'
-
 realpathCache = {}
 
 module.exports =
 class Directory
-  constructor: ({@name, fullPath, @symlink, @expansionState, @isRoot, @ignoredPatterns}) ->
+  constructor: ({@name, fullPath, @symlink, @expansionState, @isRoot, @ignoredPatterns, @useSyncFS, @stats}) ->
     @destroyed = false
     @emitter = new Emitter()
     @subscriptions = new CompositeDisposable()
+
+    if atom.config.get('tree-view.squashDirectoryNames')
+      fullPath = @squashDirectoryNames(fullPath)
 
     @path = fullPath
     @realPath = @path
@@ -53,13 +54,23 @@ class Directory
   onDidRemoveEntries: (callback) ->
     @emitter.on('did-remove-entries', callback)
 
+  onDidCollapse: (callback) ->
+    @emitter.on('did-collapse', callback)
+
+  onDidExpand: (callback) ->
+    @emitter.on('did-expand', callback)
+
   loadRealPath: ->
-    fs.realpath @path, realpathCache, (error, realPath) =>
-      return if @destroyed
-      if realPath and realPath isnt @path
-        @realPath = realPath
-        @lowerCaseRealPath = @realPath.toLowerCase() if fs.isCaseInsensitive()
-        @updateStatus()
+    if @useSyncFS
+      @realPath = fs.realpathSync(@path)
+      @lowerCaseRealPath = @realPath.toLowerCase() if fs.isCaseInsensitive()
+    else
+      fs.realpath @path, realpathCache, (error, realPath) =>
+        return if @destroyed
+        if realPath and realPath isnt @path
+          @realPath = realPath
+          @lowerCaseRealPath = @realPath.toLowerCase() if fs.isCaseInsensitive()
+          @updateStatus()
 
   # Subscribe to project's repo for changes to the Git status of this directory.
   subscribeToRepo: ->
@@ -160,8 +171,7 @@ class Directory
       names = fs.readdirSync(@path)
     catch error
       names = []
-    NaturalSort.insensitive = true
-    names.sort(NaturalSort)
+    names.sort(new Intl.Collator(undefined, {numeric: true, sensitivity: "base"}).compare)
 
     files = []
     directories = []
@@ -173,6 +183,9 @@ class Directory
       stat = fs.lstatSyncNoException(fullPath)
       symlink = stat.isSymbolicLink?()
       stat = fs.statSyncNoException(fullPath) if symlink
+      statFlat = _.pick stat, _.keys(stat)...
+      for key in ["atime", "birthtime", "ctime", "mtime"]
+        statFlat[key] = statFlat[key]?.getTime()
 
       if stat.isDirectory?()
         if @entries.hasOwnProperty(name)
@@ -181,14 +194,14 @@ class Directory
           directories.push(name)
         else
           expansionState = @expansionState.entries[name]
-          directories.push(new Directory({name, fullPath, symlink, expansionState, @ignoredPatterns}))
+          directories.push(new Directory({name, fullPath, symlink, expansionState, @ignoredPatterns, @useSyncFS, stats: statFlat}))
       else if stat.isFile?()
         if @entries.hasOwnProperty(name)
           # push a placeholder since this entry already exists but this helps
           # track the insertion index for the created views
           files.push(name)
         else
-          files.push(new File({name, fullPath, symlink, realpathCache}))
+          files.push(new File({name, fullPath, symlink, realpathCache, @useSyncFS, stats: statFlat}))
 
     @sortEntries(directories.concat(files))
 
@@ -229,8 +242,13 @@ class Directory
     for name, entry of removedEntries
       entriesRemoved = true
       entry.destroy()
-      delete @entries[name]
-      delete @expansionState[name]
+
+      if @entries.hasOwnProperty(name)
+        delete @entries[name]
+
+      if @expansionState.entries.hasOwnProperty(name)
+        delete @expansionState.entries[name]
+
     @emitter.emit('did-remove-entries', removedEntries) if entriesRemoved
 
     if newEntries.length > 0
@@ -242,6 +260,7 @@ class Directory
     @expansionState.isExpanded = false
     @expansionState = @serializeExpansionState()
     @unwatch()
+    @emitter.emit('did-collapse')
 
   # Public: Expand this directory, load its children, and start watching it for
   # changes.
@@ -249,6 +268,7 @@ class Directory
     @expansionState.isExpanded = true
     @reload()
     @watch()
+    @emitter.emit('did-expand')
 
   serializeExpansionState: ->
     expansionState = {}
@@ -257,3 +277,18 @@ class Directory
     for name, entry of @entries when entry.expansionState?
       expansionState.entries[name] = entry.serializeExpansionState()
     expansionState
+
+  squashDirectoryNames: (fullPath) ->
+    squashedDirs = [@name]
+    loop
+      contents = fs.listSync fullPath
+      break if contents.length isnt 1
+      break if not fs.isDirectorySync(contents[0])
+      relativeDir = path.relative(fullPath, contents[0])
+      squashedDirs.push relativeDir
+      fullPath = path.join(fullPath, relativeDir)
+
+    if squashedDirs.length > 1
+      @squashedNames = [squashedDirs[0..squashedDirs.length - 2].join(path.sep) + path.sep, _.last(squashedDirs)]
+
+    return fullPath

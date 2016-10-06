@@ -16,6 +16,13 @@ module.exports =
       styleObject[camelizedAttr] = value
     styleObject
 
+  getFullExtension: (filePath) ->
+    fullExtension = ''
+    while extension = path.extname(filePath)
+      fullExtension = extension + fullExtension
+      filePath = path.basename(filePath, extension)
+    fullExtension
+
   ensureOpaqueBackground: (styleObject) ->
     propName = if styleObject.backgroundColor then 'backgroundColor' else 'background'
     if (match = /((?:rgb|hsl)a\s*\(\s*[0-9.]+\s*,\s*[0-9.%]+\s*,\s*[0-9.%]+\s*,\s*)([0-9.]+)(\s*\).*)/.exec(styleObject[propName]))

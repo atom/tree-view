@@ -5,7 +5,7 @@ fs = require 'fs-plus'
 
 module.exports =
 class File
-  constructor: ({@name, fullPath, @symlink, realpathCache}) ->
+  constructor: ({@name, fullPath, @symlink, realpathCache, useSyncFS, @stats}) ->
     @destroyed = false
     @emitter = new Emitter()
     @subscriptions = new CompositeDisposable()
@@ -13,28 +13,17 @@ class File
     @path = fullPath
     @realPath = @path
 
-    extension = path.extname(@path)
-    if fs.isReadmePath(@path)
-      @type = 'readme'
-    else if fs.isCompressedExtension(extension)
-      @type = 'compressed'
-    else if fs.isImageExtension(extension)
-      @type = 'image'
-    else if fs.isPdfExtension(extension)
-      @type = 'pdf'
-    else if fs.isBinaryExtension(extension)
-      @type = 'binary'
-    else
-      @type = 'text'
-
     @subscribeToRepo()
     @updateStatus()
 
-    fs.realpath @path, realpathCache, (error, realPath) =>
-      return if @destroyed
-      if realPath and realPath isnt @path
-        @realPath = realPath
-        @updateStatus()
+    if useSyncFS
+      @realPath = fs.realpathSync(@path)
+    else
+      fs.realpath @path, realpathCache, (error, realPath) =>
+        return if @destroyed
+        if realPath and realPath isnt @path
+          @realPath = realPath
+          @updateStatus()
 
   destroy: ->
     @destroyed = true
@@ -47,7 +36,7 @@ class File
   onDidStatusChange: (callback) ->
     @emitter.on('did-status-change', callback)
 
-  # Subscribe to the project' repo for changes to the Git status of this file.
+  # Subscribe to the project's repo for changes to the Git status of this file.
   subscribeToRepo: ->
     repo = repoForPath(@path)
     return unless repo?

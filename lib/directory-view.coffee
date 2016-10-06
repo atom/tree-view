@@ -9,20 +9,15 @@ class DirectoryView extends HTMLElement
     @subscriptions.add @directory.onDidDestroy => @subscriptions.dispose()
     @subscribeToDirectory()
 
-    @draggable = true
-
     @classList.add('directory', 'entry',  'list-nested-item',  'collapsed')
 
     @header = document.createElement('div')
-    @appendChild(@header)
     @header.classList.add('header', 'list-item')
 
     @directoryName = document.createElement('span')
-    @header.appendChild(@directoryName)
     @directoryName.classList.add('name', 'icon')
 
     @entries = document.createElement('ol')
-    @appendChild(@entries)
     @entries.classList.add('entries', 'list-tree')
 
     if @directory.symlink
@@ -34,13 +29,29 @@ class DirectoryView extends HTMLElement
       else
         iconClass = 'icon-file-submodule' if @directory.submodule
     @directoryName.classList.add(iconClass)
-    @directoryName.textContent = @directory.name
-    @directoryName.dataset.name = @directory.name
     @directoryName.dataset.path = @directory.path
+
+    if @directory.squashedNames?
+      @directoryName.dataset.name = @directory.squashedNames.join('')
+      @directoryName.title = @directory.squashedNames.join('')
+      squashedDirectoryNameNode = document.createElement('span')
+      squashedDirectoryNameNode.classList.add('squashed-dir')
+      squashedDirectoryNameNode.textContent = @directory.squashedNames[0]
+      @directoryName.appendChild(squashedDirectoryNameNode)
+      @directoryName.appendChild(document.createTextNode(@directory.squashedNames[1]))
+    else
+      @directoryName.dataset.name = @directory.name
+      @directoryName.title = @directory.name
+      @directoryName.textContent = @directory.name
+
+    @appendChild(@header)
+    @header.appendChild(@directoryName)
+    @appendChild(@entries)
 
     if @directory.isRoot
       @classList.add('project-root')
     else
+      @draggable = true
       @subscriptions.add @directory.onDidStatusChange => @updateStatus()
       @updateStatus()
 

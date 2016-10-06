@@ -9,6 +9,14 @@
   min-width: 100px;
   width: 200px;
   z-index: 2;
+  display: flex;
+  flex-direction: column;
+
+  // use these classes to re-order
+  // using a value in-between is fine too, e.g. order: -3;
+  & > .order--start  { order: -10; }
+  & > .order--center { order:   0; }
+  & > .order--end    { order:  10; }
 
   .tree-view-resize-handle {
     position: absolute;
@@ -33,12 +41,28 @@
 }
 
 .tree-view-scroller {
-  height: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
   width: 100%;
   overflow: auto;
 }
 
 .tree-view {
+  flex-grow: 1;
+  flex-shrink: 0;
+  /*
+   * Force a new stacking context to prevent a large, duplicate paint layer from
+   * being created for tree-view's scrolling contents that can make the cost of
+   * layer tree updates scale at 3x the size of the layer rather than the
+   * optimal 1x.
+   *
+   * On high resolution displays, Chromium handles layers for scrolling content
+   * differently and inadvertently creates a duplicate paint layer the size of
+   * .tree-view-scroller because descendants of the scroller overlap the
+   * auto-created layer.
+   */
+  isolation: isolate;
   min-width: -webkit-min-content;
   min-height: 100%;
   padding-left: @component-icon-padding;
@@ -55,7 +79,7 @@
 
   .entry {
     // This fixes #110, see that issue for more details
-    &:before {
+    &::before {
       content: '';
       position: absolute;
     }
