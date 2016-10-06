@@ -97,9 +97,28 @@
   'atom-pane[data-active-item-path] .tab.active': [
     {'label': 'Rename', 'command': 'tree-view:rename'}
     {'label': 'Reveal in Tree View', 'command': 'tree-view:reveal-active-file'}
+  ]
+
+  '.platform-darwin atom-pane[data-active-item-path] .tab.active': [
+    {'label': 'Show In Finder', 'command': 'tree-view:show-current-file-in-file-manager'}
+  ]
+
+  '.platform-win32 atom-pane[data-active-item-path] .tab.active': [
+    {'label': 'Show In Explorer', 'command': 'tree-view:show-current-file-in-file-manager'}
+  ]
+
+  '.platform-linux atom-pane[data-active-item-path] .tab.active': [
     {'label': 'Show In File Manager', 'command': 'tree-view:show-current-file-in-file-manager'}
   ]
 
-  'atom-text-editor:not([mini])': [
+  '.platform-darwin atom-text-editor:not([mini])': [
+    {'label': 'Show In Finder', 'command': 'tree-view:show-current-file-in-file-manager'}
+  ]
+
+  '.platform-win32 atom-text-editor:not([mini])': [
+    {'label': 'Show In Explorer', 'command': 'tree-view:show-current-file-in-file-manager'}
+  ]
+
+  '.platform-linux atom-text-editor:not([mini])': [
     {'label': 'Show In File Manager', 'command': 'tree-view:show-current-file-in-file-manager'}
   ]
