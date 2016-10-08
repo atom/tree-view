@@ -7,6 +7,9 @@ module.exports.buildInternalDragEvents = (dragged, enterTarget, dropTarget) ->
     getData: (key) -> @data[key]
     setDragImage: (@image) -> return
 
+  for entry in dragged
+    $(entry).addClass('selected')
+
   dragStartEvent = $.Event()
   dragStartEvent.target = dragged
   dragStartEvent.currentTarget = dragged

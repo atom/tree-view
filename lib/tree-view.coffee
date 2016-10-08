@@ -752,12 +752,17 @@ class TreeView extends View
   onMouseDown: (e) ->
     e.stopPropagation()
 
-    # return early if we're opening a contextual menu (right click) during multi-select mode
-    if @multiSelectEnabled() and
-       e.currentTarget.classList.contains('selected') and
-       # mouse right click or ctrl click as right click on darwin platforms
-       (e.button is 2 or e.ctrlKey and process.platform is 'darwin')
-      return
+    if @multiSelectEnabled() and e.currentTarget.classList.contains('selected')
+      # return early if we're opening a contextual menu (right click) during multi-select mode
+      if (e.button is 2 or e.ctrlKey and process.platform is 'darwin')
+        return
+      # return early unless we're deselecting an entry (metaKey on OSX, ctrl/metaKey on linux/windows)
+      if process.platform is 'darwin'
+        if not e.metaKey
+          return
+      else if process.platform isnt 'darwin'
+        if not (e.ctrlKey or e.metaKey)
+          return
 
     entryToSelect = e.currentTarget
 
@@ -849,26 +854,33 @@ class TreeView extends View
   onDragStart: (e) ->
     e.stopPropagation()
 
-    target = $(e.currentTarget).find(".name")
-    initialPath = target.data("path")
+    initialPaths = []
+    targets = []
 
-    style = getStyleObject(target[0])
-
-    fileNameElement = target.clone()
-      .css(style)
+    eventTarget = $(e.currentTarget).find('.name')
+    dragImage = $('<ol></ol>', {class: 'entries list-tree'})
       .css(
         position: 'absolute'
         top: 0
         left: 0
       )
-    fileNameElement.appendTo(document.body)
 
-    e.originalEvent.dataTransfer.effectAllowed = "move"
-    e.originalEvent.dataTransfer.setDragImage(fileNameElement[0], 0, 0)
-    e.originalEvent.dataTransfer.setData("initialPath", initialPath)
+    for entry in @getSelectedEntries()
+      entryPath = $(entry).find('.name').data('path')
+      unless path.dirname(entryPath) in initialPaths
+        initialPaths.push(entryPath)
+        image = $(entry).clone()
+        image.find('.entry').addBack('.entry').removeClass('selected')
+        dragImage.append(image)
+
+    dragImage.appendTo(document.body)
+
+    e.originalEvent.dataTransfer.effectAllowed = 'move'
+    e.originalEvent.dataTransfer.setDragImage(dragImage[0], 0, 0)
+    e.originalEvent.dataTransfer.setData('initialPaths', initialPaths)
 
     window.requestAnimationFrame ->
-      fileNameElement.remove()
+      dragImage.remove()
 
   # Handle entry dragover event; reset default dragover actions
   onDragOver: (e) ->
@@ -888,11 +900,13 @@ class TreeView extends View
     newDirectoryPath = $(entry).find(".name").data("path")
     return false unless newDirectoryPath
 
-    initialPath = e.originalEvent.dataTransfer.getData("initialPath")
+    initialPaths = e.originalEvent.dataTransfer.getData("initialPaths")
 
-    if initialPath
+    if initialPaths
       # Drop event from Atom
-      @moveEntry(initialPath, newDirectoryPath)
+      # iterate backwards so files in a dir are moved before the dir itself
+      for initialPath in initialPaths.split(',') by -1
+        @moveEntry(initialPath, newDirectoryPath)
     else
       # Drop event from OS
       for file in e.originalEvent.dataTransfer.files
