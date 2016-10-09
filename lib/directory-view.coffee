@@ -60,7 +60,7 @@ class DirectoryView extends HTMLElement
   updateStatus: ->
     @classList.remove('status-ignored', 'status-modified', 'status-added', 'status-unstaged')
     @classList.add("status-#{@directory.status}") if @directory.status?
-    @classList.add("status-unstaged") if @directory.staged == false
+    @classList.add("status-unstaged") if @directory.staged is false
 
   subscribeToDirectory: ->
     @subscriptions.add @directory.onDidAddEntries (addedEntries) =>

@@ -31,7 +31,7 @@ class FileView extends HTMLElement
   updateStatus: ->
     @classList.remove('status-ignored', 'status-modified',  'status-added', 'status-unstaged')
     @classList.add("status-#{@file.status}") if @file.status?
-    @classList.add("status-unstaged") if @file.staged == false
+    @classList.add("status-unstaged") if @file.staged is false
 
   getPath: ->
     @fileName.dataset.path
