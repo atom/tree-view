@@ -3,13 +3,18 @@ path = require 'path'
 
 FileIcons = require './file-icons'
 
-virtualFileSystem = require 'nsync-fs'
+nsync = require 'nsync-fs'
 
 module.exports =
   treeView: null
 
   activate: (@state) ->
-    virtualFileSystem.setActivationState(@state)
+    @helperDisposables = require './nsync-helper'
+
+    nsync.configure
+      expansionState: @state.directoryExpansionStates
+      localRoot: path.join(atom.configDirPath, '.learn-ide')
+
     treeViewisDisabled = localStorage.disableTreeView is 'true'
 
     unless treeViewisDisabled
@@ -40,6 +45,7 @@ module.exports =
 
   deactivate: ->
     @disposables.dispose()
+    @helperDisposables.dispose()
     @fileIconsDisposable?.dispose()
     @treeView?.deactivate()
     @treeView = null
