@@ -79,6 +79,16 @@ module.exports = helper =
     pkg = atom.packages.getActivePackage('learn-ide-tree')
     pkg?.mainModule.treeView
 
+  getToken: ->
+    new Promise (resolve) ->
+      atom.config.observe 'learn-ide.oauthToken', (token) ->
+        if token? and token.length
+          resolve(token)
+
+  spawn: (modulePath) ->
+    {BufferedNodeProcess} = require 'atom'
+    new BufferedNodeProcess({command: modulePath})
+
   # reloadTreeView: (path, pathToSelect) ->
   #   @treeView()?.entryForPath(path).reload()
   #   @treeView()?.selectEntryForPath(pathToSelect or path)

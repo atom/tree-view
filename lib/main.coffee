@@ -9,11 +9,7 @@ module.exports =
   treeView: null
 
   activate: (@state) ->
-    @helperDisposables = require './nsync-helper'
-
-    nsync.configure
-      expansionState: @state.directoryExpansionStates
-      localRoot: path.join(atom.configDirPath, '.learn-ide')
+    @helperDisposables = require('./nsync/nsync-helper')(@state)
 
     treeViewisDisabled = localStorage.disableTreeView is 'true'
 
