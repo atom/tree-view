@@ -49,6 +49,18 @@ module.exports = helper = (activationState) ->
         atomHelper.loading()
     , secondsTillNotifying * 1000
 
+  disposables.add nsync.onDidDisconnect (detail) ->
+    if detail?
+      atomHelper.error 'Learn IDE: you are not connected!', {detail}
+    else
+      atomHelper.disconnected()
+
+  disposables.add nsync.onWillConnect ->
+    atomHelper.connecting()
+
+  disposables.add nsync.onDidConnect ->
+    atomHelper.connected()
+
   atomHelper.getToken().then (token) ->
     nsync.configure
       expansionState: activationState.directoryExpansionStates
