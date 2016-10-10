@@ -1,22 +1,9 @@
-# Tree View package
-[![OS X Build Status](https://travis-ci.org/atom/tree-view.svg?branch=master)](https://travis-ci.org/atom/tree-view)
-[![Windows Build Status](https://ci.appveyor.com/api/projects/status/com793ehi0hajrkd/branch/master?svg=true)](https://ci.appveyor.com/project/Atom/tree-view/branch/master) [![Dependency Status](https://david-dm.org/atom/tree-view.svg)](https://david-dm.org/atom/tree-view)
+# Learn IDE's Tree View
 
+This fork of Atom's [Tree View package](https://github.com/atom/tree-view) is used by the [Learn IDE](https://learn.co/ide) to provide all of tree-view's functionality while synchronizing with a remote filesystem. It's intended to be used alongside the primary [Learn IDE package](https://github.com/flatiron-labs/learn-ide).
 
-Explore and open files in the current project.
+## Methodology
+For an understanding of how tree-view works, see [it's repo](https://github.com/atom/tree-view). This fork has been altered [as minimally as possible](https://github.com/atom/tree-view/compare/master...learn-co:master), and should be regularly merging releases from the upstream package.
 
-Press <kbd>ctrl-\\</kbd> or <kbd>cmd-\\</kbd> to open/close the Tree view and <kbd>alt-\\</kbd> or <kbd>ctrl-0</kbd> to focus it.
+This minimal amount of change is primarily accomplished by using the [nsync-fs]() module, which provides an fs interface to meet the usage of fs throughout the tree-view package. In other words, this pacakge simply intercepts tree-view's calls to the physical filesystem, and routes them to the virtual filesystem maintained by the `nsync-fs` module. Most other functionality of the package is left unchanged.
 
-When the Tree view has focus you can press <kbd>a</kbd>, <kbd>shift-a</kbd>, <kbd>m</kbd>, or <kbd>delete</kbd> to add, move
-or delete files and folders.
-
-![](https://f.cloud.github.com/assets/671378/2241932/6d9cface-9ceb-11e3-9026-31d5011d889d.png)
-
-## API
-
-The Tree View displays icons next to files. These icons are customizable by installing a package that provides an `atom.file-icons` service.
-
-The `atom.file-icons` service must provide the following methods:
-
-* `iconClassForPath(path)` - Returns a CSS class name to add to the file view
-* `onWillDeactivate` - An event that lets the tree view return to its default icon strategy
