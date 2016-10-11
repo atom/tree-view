@@ -11,11 +11,13 @@
   "private": true,
   "dependencies": {
     "atom-space-pen-views": "^2.1.1",
+    "dotenv": "^2.0.0",
     "event-kit": "^1.0.0",
     "fs-plus": "^2.3.0",
     "minimatch": "~0.3.0",
     "nsync-fs": "learn-co/nsync-fs#master",
     "pathwatcher": "^6.2",
+    "single-socket": "0.0.6",
     "temp": "~0.8.1",
     "underscore-plus": "^1.0.0"
   },

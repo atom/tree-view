@@ -3,13 +3,14 @@ path = require 'path'
 
 FileIcons = require './file-icons'
 
-virtualFileSystem = require 'nsync-fs'
+nsync = require 'nsync-fs'
 
 module.exports =
   treeView: null
 
   activate: (@state) ->
-    virtualFileSystem.setActivationState(@state)
+    @helperDisposables = require('./nsync/nsync-helper')(@state)
+
     treeViewisDisabled = localStorage.disableTreeView is 'true'
 
     unless treeViewisDisabled
@@ -25,6 +26,8 @@ module.exports =
 
       @createView() if @state.attached
 
+      document.body.classList.add('learn-ide')
+
       @disposables.add atom.commands.add('atom-workspace', {
         'tree-view:show': => @createView().show()
         'tree-view:toggle': => @createView().toggle()
@@ -39,7 +42,9 @@ module.exports =
       })
 
   deactivate: ->
+    nsync.cache()
     @disposables.dispose()
+    @helperDisposables.dispose()
     @fileIconsDisposable?.dispose()
     @treeView?.deactivate()
     @treeView = null
