@@ -2,6 +2,8 @@ fs = require 'fs-plus'
 _ = require 'underscore-plus'
 _path = require 'path'
 nsync = require 'nsync-fs'
+remote = require 'remote'
+dialog = remote.require 'dialog'
 atomHelper = require './atom-helper'
 executeCustomCommand = require './custom-commands'
 SingleSocket = require 'single-socket'
@@ -49,6 +51,32 @@ onSave = ({target}) ->
   content = new Buffer(text).toString('base64')
   nsync.save(path, content)
 
+onImport = ->
+  dialog.showOpenDialog
+    title: 'Import Files',
+    properties: ['openFile', 'multiSelections']
+  , (paths) ->
+    importLocalPaths(paths)
+
+importLocalPaths = (localPaths) ->
+  localPaths = [localPaths] if typeof localPaths is 'string'
+  targetPath = atomHelper.selectedPath()
+  targetNode = nsync.getNode(targetPath)
+
+  localPaths.forEach (path) ->
+    fs.readFile path, 'base64', (err, data) ->
+      if err?
+        return console.error 'Unable to import file:', path, err
+
+      base = _path.basename(path)
+      newPath = _path.posix.join(targetNode.path, base)
+
+      if nsync.hasPath(newPath)
+        atomHelper.warn 'Learn IDE: cannot save file',
+          detail: "There is already an existing remote file with path: #{newPath}"
+        return
+
+      nsync.save(newPath, data)
 
 module.exports = helper = (activationState) ->
   disposables = new CompositeDisposable
@@ -57,7 +85,7 @@ module.exports = helper = (activationState) ->
     'learn-ide:save': onSave
     'learn-ide:save-as': unimplemented
     'learn-ide:save-all': unimplemented
-    'learn-ide:import': @onImport
+    'learn-ide:import': onImport
     'learn-ide:file-open': unimplemented
     'learn-ide:add-project': unimplemented
 

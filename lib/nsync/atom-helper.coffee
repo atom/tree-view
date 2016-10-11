@@ -102,6 +102,9 @@ module.exports = helper =
     @treeView()?.entryForPath(path).reload()
     @treeView()?.selectEntryForPath(pathToSelect or path)
 
+  selectedPath: ->
+    @treeView()?.selectedPath
+
   findTextEditorByElement: (element) ->
     atom.workspace.getTextEditors().find (editor) ->
       editor.element is element
