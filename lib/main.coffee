@@ -26,6 +26,8 @@ module.exports =
 
       @createView() if @state.attached
 
+      document.body.classList.add('learn-ide')
+
       @disposables.add atom.commands.add('atom-workspace', {
         'tree-view:show': => @createView().show()
         'tree-view:toggle': => @createView().toggle()
