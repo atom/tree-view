@@ -167,7 +167,8 @@ module.exports = helper = (activationState) ->
       connection:
         websocket: SingleSocket
         url: "#{WS_SERVER_URL}?token=#{token}"
-        spawn: atomHelper.spawn
+        opts:
+          spawn: atomHelper.spawn
 
   return disposables
 
