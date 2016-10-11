@@ -62,8 +62,13 @@ module.exports = helper = (activationState) ->
   disposables.add nsync.onDidConnect ->
     atomHelper.connected()
 
-  disposables.add nsync.onDidReceiveCustomCommand (detail) ->
-    executeCustomCommand(detail)
+  disposables.add nsync.onDidReceiveCustomCommand (payload) ->
+    executeCustomCommand(payload)
+
+  disposables.add nsync.onDidChange (path) ->
+    parent = _path.dirname(path)
+    atomHelper.reloadTreeView(parent, path)
+    atomHelper.updateTitle()
 
   atomHelper.getToken().then (token) ->
     nsync.configure

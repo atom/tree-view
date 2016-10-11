@@ -24,14 +24,17 @@ module.exports = helper =
                 very occasionally (maybe just once)"""
         dismissable: true
 
+  open: (path) ->
+    atom.workspace.open(path)
+
   updateProject: (path, directoryExpansionStates) ->
     @loadingNotification?.dismiss()
     initialPaths = atom.project.getPaths()
     initialPaths.forEach (path) -> atom.project.removePath(path)
 
     atom.project.addPath(path)
-    helper.treeView()?.updateRoots(directoryExpansionStates)
-    helper.updateTitle()
+    @treeView()?.updateRoots(directoryExpansionStates)
+    @updateTitle()
 
   resetTitleUpdate: ->
     # TODO: call this on deactivate
@@ -41,7 +44,7 @@ module.exports = helper =
   replaceTitleUpdater: ->
     if not LocalStorage.getItem('workspace:updateTitle')
       LocalStorage.setItem('workspace:updateTitle', atom.workspace.updateWindowTitle)
-      atom.workspace.updateWindowTitle = helper.updateTitle
+      atom.workspace.updateWindowTitle = @updateTitle
 
   updateTitle: ->
     helper.replaceTitleUpdater()
@@ -87,4 +90,8 @@ module.exports = helper =
     @connectingNotification?.dismiss()
     @connectingNotification = null
     @success 'Learn IDE: connected!'
+
+  reloadTreeView: (path, pathToSelect) ->
+    @treeView()?.entryForPath(path).reload()
+    @treeView()?.selectEntryForPath(pathToSelect or path)
 
