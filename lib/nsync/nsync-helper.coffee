@@ -30,8 +30,36 @@ WS_SERVER_URL = (->
   "#{protocol}://#{host}:#{port}/#{path}"
 )()
 
+convertEOL = (text) ->
+  text.replace(/\r\n|\n|\r/g, '\n')
+
+unimplemented = ({type}) ->
+  command = type.replace(/^learn-ide:/, '').replace(/-/g, ' ')
+  atomHelper.warn 'Learn IDE: coming soon!', {detail: "Sorry, '#{command}' isn't available yet."}
+
+onSave = ({target}) ->
+  editor = atomHelper.findTextEditorByElement(target)
+  path = editor.getPath()
+
+  if not editor.getPath()?
+    # TODO: untitled editor is saved
+    return console.warn 'Cannot save file without path'
+
+  text = convertEOL(editor.getText())
+  content = new Buffer(text).toString('base64')
+  nsync.save(path, content)
+
+
 module.exports = helper = (activationState) ->
   disposables = new CompositeDisposable
+
+  disposables.add atomHelper.addCommands
+    'learn-ide:save': onSave
+    'learn-ide:save-as': unimplemented
+    'learn-ide:save-all': unimplemented
+    'learn-ide:import': @onImport
+    'learn-ide:file-open': unimplemented
+    'learn-ide:add-project': unimplemented
 
   disposables.add nsync.onDidConfigure ->
     atomHelper.addOpener (uri) ->

@@ -9,6 +9,9 @@ module.exports = helper =
   addOpener: (callback) ->
     atom.workspace.addOpener(callback)
 
+  addCommands: (commands, target = 'atom-workspace') ->
+    atom.commands.add(target, commands)
+
   success: (msg, opts) ->
     atom.notifications.addSuccess(msg, opts)
 
@@ -99,9 +102,16 @@ module.exports = helper =
     @treeView()?.entryForPath(path).reload()
     @treeView()?.selectEntryForPath(pathToSelect or path)
 
-  saveEditor: (path) ->
-    textEditor = atom.workspace.getTextEditors().find (editor) ->
+  findTextEditorByElement: (element) ->
+    atom.workspace.getTextEditors().find (editor) ->
+      editor.element is element
+
+  findTextEditorByPath: (path) ->
+    atom.workspace.getTextEditors().find (editor) ->
       editor.getPath() is path
+
+  saveEditor: (path) ->
+    textEditor = @findTextEditorByPath(path)
 
     return unless textEditor? and textEditor.isModified()
 
