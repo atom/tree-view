@@ -281,7 +281,7 @@ class TreeView extends View
       stats = _.pick stats, _.keys(stats)...
       for key in ["atime", "birthtime", "ctime", "mtime"]
         stats[key] = stats[key].getTime()
-      
+
       directory = new Directory({
         name: path.basename(projectPath)
         fullPath: projectPath
@@ -828,6 +828,10 @@ class TreeView extends View
 
   onDragEnter: (e) =>
     e.stopPropagation()
+
+    if @projectFolderDragAndDropHandler.isDragging(e)
+      return
+
     entry = e.currentTarget.parentNode
     @dragEventCounts.set(entry, 0) unless @dragEventCounts.get(entry)
     entry.classList.add('selected') if @dragEventCounts.get(entry) is 0
@@ -835,14 +839,20 @@ class TreeView extends View
 
   onDragLeave: (e) =>
     e.stopPropagation()
+
+    if @projectFolderDragAndDropHandler.isDragging(e)
+      return @projectFolderDragAndDropHandler.onDragLeave(e)
+
     entry = e.currentTarget.parentNode
     @dragEventCounts.set(entry, @dragEventCounts.get(entry) - 1)
     entry.classList.remove('selected') if @dragEventCounts.get(entry) is 0
-    @projectFolderDragAndDropHandler.onDragLeave(e)
 
   # Handle entry name object dragstart event
   onDragStart: (e) ->
     e.stopPropagation()
+
+    if @projectFolderDragAndDropHandler.canDragStart(e)
+      return @projectFolderDragAndDropHandler.onDragStart(e)
 
     target = $(e.currentTarget).find(".name")
     initialPath = target.data("path")
@@ -865,36 +875,30 @@ class TreeView extends View
     window.requestAnimationFrame ->
       fileNameElement.remove()
 
-    @projectFolderDragAndDropHandler.onDragStart(e)
-
   # Handle entry dragover event; reset default dragover actions
   onDragOver: (e) ->
     e.preventDefault()
     e.stopPropagation()
 
-    entry = e.currentTarget
-    if @projectFolderDragAndDropHandler.isMovingProjectFolders(e)
-      entry.classList.remove('selected')
-    else if @dragEventCounts.get(entry) > 0 and not entry.classList.contains('selected')
-      entry.classList.add('selected')
+    if @projectFolderDragAndDropHandler.isDragging(e)
+      return @projectFolderDragAndDropHandler.onDragOver(e)
 
-    @projectFolderDragAndDropHandler.onDragOver(e)
+    entry = e.currentTarget
+    if @dragEventCounts.get(entry) > 0 and not entry.classList.contains('selected')
+      entry.classList.add('selected')
 
   # Handle entry drop event
   onDrop: (e) ->
     e.preventDefault()
     e.stopPropagation()
 
-    entry = e.currentTarget
-    unless entry instanceof DirectoryView
-      @projectFolderDragAndDropHandler.onDrop(e)
-      return
+    if @projectFolderDragAndDropHandler.isDragging(e)
+      return @projectFolderDragAndDropHandler.onDrop(e)
 
+    entry = e.currentTarget
     entry.classList.remove('selected')
 
-    if @projectFolderDragAndDropHandler.isMovingProjectFolders(e)
-      @projectFolderDragAndDropHandler.onDrop(e)
-      return
+    return unless entry instanceof DirectoryView
 
     newDirectoryPath = $(entry).find(".name").data("path")
     return false unless newDirectoryPath

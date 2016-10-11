@@ -16,9 +16,6 @@ class ProjectFolderDragAndDropHandler
     RendererIpc.removeListener('tree-view:project-folder-dropped', @onDropOnOtherWindow)
 
   onDragStart: (event) =>
-    unless $(event.target).closest('.project-root-header').size()
-      return
-
     event.originalEvent.dataTransfer.setData 'atom-event', 'true'
     projectRoot = $(event.target).closest('.project-root')
     directory = projectRoot[0].directory
@@ -147,19 +144,11 @@ class ProjectFolderDragAndDropHandler
     else
       projectRoots.index(projectRoot) + 1
 
-  isMovingProjectFolders: (event) ->
-    target = $(event.target)
-    return null if @isPlaceholder(target)
+  canDragStart: (event) ->
+    $(event.target).closest('.project-root-header').size() > 0
 
-    element = target.closest('.project-root-header')
-    return false unless element.length
-
-    elementTop30 = element.offset().top + element.height() * 0.3
-    return true if event.originalEvent.pageY < elementTop30
-    elementBottom30 = element.offset().top + element.height() * 0.7
-    return true if event.originalEvent.pageY > elementBottom30
-
-    false
+  isDragging: (event) ->
+    Boolean event.originalEvent.dataTransfer.getData 'from-root-path'
 
   getPlaceholder: ->
     @placeholderEl ?= $('<li/>', class: 'placeholder')

@@ -3410,24 +3410,6 @@ describe "TreeView", ->
           treeView.projectFolderDragAndDropHandler.onDragEnd()
           expect('.placeholder').not.toExist()
 
-      describe "when dragging on the middle part of the header", ->
-        it "should not add the placeholder", ->
-          # Dragging gammaDir onto alphaDir
-          alphaDir = $(treeView).find('.project-root:contains(alpha):first')
-          gammaDir = $(treeView).find('.project-root:contains(gamma):first')
-          [dragStartEvent, dragOverEvents] =
-            eventHelpers.buildPositionalDragEvents(gammaDir.find('.project-root-header')[0], alphaDir.find('.project-root-header')[0])
-
-          treeView.onDragStart(dragStartEvent)
-          treeView.onDragEnter(dragOverEvents.middle)
-          treeView.onDragOver(dragOverEvents.middle)
-          expect(alphaDir).toHaveClass('selected')
-          expect('.placeholder').not.toExist()
-
-          # Is removed when drag ends
-          treeView.projectFolderDragAndDropHandler.onDragEnd()
-          expect('.placeholder').not.toExist()
-
       describe "when dragging on the bottom part of the header", ->
         it "should add the placeholder below the directory", ->
           # Dragging gammaDir onto alphaDir
