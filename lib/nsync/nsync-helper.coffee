@@ -70,6 +70,9 @@ module.exports = helper = (activationState) ->
     atomHelper.reloadTreeView(parent, path)
     atomHelper.updateTitle()
 
+  disposables.add nsync.onDidUpdate (path) ->
+    atomHelper.saveEditor(path)
+
   atomHelper.getToken().then (token) ->
     nsync.configure
       expansionState: activationState.directoryExpansionStates

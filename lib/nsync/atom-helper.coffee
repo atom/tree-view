@@ -1,5 +1,9 @@
 LocalStorage = window.localStorage
 nsync = require 'nsync-fs'
+crypto = require 'crypto'
+
+digest = (str) ->
+  crypto.createHash('md5').update(str, 'utf8').digest('hex')
 
 module.exports = helper =
   addOpener: (callback) ->
@@ -94,4 +98,14 @@ module.exports = helper =
   reloadTreeView: (path, pathToSelect) ->
     @treeView()?.entryForPath(path).reload()
     @treeView()?.selectEntryForPath(pathToSelect or path)
+
+  saveEditor: (path) ->
+    textEditor = atom.workspace.getTextEditors().find (editor) ->
+      editor.getPath() is path
+
+    return unless textEditor? and textEditor.isModified()
+
+    node = nsync.getNode(path)
+    if node.digest is digest(textEditor.getText())
+      textEditor.save()
 
