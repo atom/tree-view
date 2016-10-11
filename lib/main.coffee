@@ -21,12 +21,12 @@ module.exports =
                   own tree package (learn-ide-tree)."""
           dismissable: true
 
+      document.body.classList.add('learn-ide')
+
       @disposables = new CompositeDisposable
       @state.attached ?= true if @shouldAttach()
 
       @createView() if @state.attached
-
-      document.body.classList.add('learn-ide')
 
       @disposables.add atom.commands.add('atom-workspace', {
         'tree-view:show': => @createView().show()
@@ -39,6 +39,7 @@ module.exports =
         'tree-view:duplicate': => @createView().copySelectedEntry()
         'tree-view:remove': => @createView().removeSelectedEntries()
         'tree-view:rename': => @createView().moveSelectedEntry()
+        'tree-view:show-current-file-in-file-manager': => @createView().showCurrentFileInFileManager()
       })
 
   deactivate: ->

@@ -1,6 +1,7 @@
 {
   "name": "learn-ide-tree",
   "version": "0.0.0",
+  "treeViewVersion": "0.210.0",
   "main": "./lib/main",
   "description": "Explore and open files in the current project.",
   "repository": "https://github.com/learn-co/learn-ide-tree",
@@ -71,7 +72,8 @@
     },
     "alwaysOpenExisting": {
       "type": "boolean",
-      "default": false
+      "default": false,
+      "description": "When opening a file, always focus an already-existing view of the file even if it's in a another pane."
     }
   }
 }
