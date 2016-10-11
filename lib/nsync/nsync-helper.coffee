@@ -3,6 +3,7 @@ _ = require 'underscore-plus'
 _path = require 'path'
 nsync = require 'nsync-fs'
 atomHelper = require './atom-helper'
+executeCustomCommand = require './custom-commands'
 SingleSocket = require 'single-socket'
 {CompositeDisposable} = require 'event-kit'
 
@@ -60,6 +61,9 @@ module.exports = helper = (activationState) ->
 
   disposables.add nsync.onDidConnect ->
     atomHelper.connected()
+
+  disposables.add nsync.onDidReceiveCustomCommand (detail) ->
+    executeCustomCommand(detail)
 
   atomHelper.getToken().then (token) ->
     nsync.configure
