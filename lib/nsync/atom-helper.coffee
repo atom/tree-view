@@ -105,6 +105,9 @@ module.exports = helper =
   selectedPath: ->
     @treeView()?.selectedPath
 
+  observeTextEditors: (callback) ->
+    atom.workspace.observeTextEditors(callback)
+
   findTextEditorByElement: (element) ->
     atom.workspace.getTextEditors().find (editor) ->
       editor.element is element
@@ -112,6 +115,9 @@ module.exports = helper =
   findTextEditorByPath: (path) ->
     atom.workspace.getTextEditors().find (editor) ->
       editor.getPath() is path
+
+  findOrCreateBuffer: (path) ->
+    atom.project.bufferForPath(path)
 
   saveEditor: (path) ->
     textEditor = @findTextEditorByPath(path)

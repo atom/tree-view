@@ -78,6 +78,16 @@ importLocalPaths = (localPaths) ->
 
       nsync.save(newPath, data)
 
+onEditorSave = ({path}) ->
+  node = nsync.getNode(path)
+
+  node.determineSync().then (shouldSync) ->
+    if shouldSync
+      atomHelper.findOrCreateBuffer(path).then (textBuffer) ->
+        text = convertEOL(textBuffer.getText())
+        content = new Buffer(text).toString('base64')
+        nsync.save(node.path, content)
+
 module.exports = helper = (activationState) ->
   disposables = new CompositeDisposable
 
@@ -128,6 +138,10 @@ module.exports = helper = (activationState) ->
 
   disposables.add nsync.onDidUpdate (path) ->
     atomHelper.saveEditor(path)
+
+  disposables.add atomHelper.observeTextEditors (editor) ->
+    disposables.add editor.onDidSave (e) ->
+      onEditorSave(e)
 
   atomHelper.getToken().then (token) ->
     nsync.configure
