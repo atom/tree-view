@@ -171,7 +171,12 @@ class Directory
       names = fs.readdirSync(@path)
     catch error
       names = []
-    names.sort(new Intl.Collator(undefined, {numeric: true, sensitivity: "base"}).compare)
+
+    localizedCompare = new Intl.Collator(undefined, {numeric: true, sensitivity: "base"}).compare
+    if atom.config.get('tree-view.sortByCase')
+      @sortByCase(names, localizedCompare)
+    else
+      names.sort(localizedCompare)
 
     files = []
     directories = []
@@ -212,6 +217,30 @@ class Directory
     if normalizedValue?
       normalizedValue = normalizedValue.toLowerCase()
     normalizedValue
+
+  sortByCase: (names, localizedCompare) ->
+    # We want uppercase characters to be treated as "less than" lowercase characters, e.g.:
+    #   ["FOO", "Foo", "foo"]
+    # Everything but uppercase vs. lowercase is handled by the localized compare function.
+    uppercaseRegExp = /[A-Z]/
+    lowercaseRegExp = /[a-z]/
+    names.sort((a, b) ->
+      for i in [0...Math.min(a.length, b.length)]
+        aCharIsUppercase = uppercaseRegExp.test(a[i])
+        aCharIsLowercase = lowercaseRegExp.test(a[i])
+        bCharIsUppercase = uppercaseRegExp.test(b[i])
+        bCharIsLowercase = lowercaseRegExp.test(b[i])
+        aCharIsLetter = aCharIsUppercase or aCharIsLowercase
+        bCharIsLetter = bCharIsUppercase or bCharIsLowercase
+        unless aCharIsLetter and bCharIsLetter
+          break
+        if aCharIsUppercase and bCharIsLowercase
+          return -1
+        if aCharIsLowercase and bCharIsUppercase
+          return 1
+
+      return localizedCompare(a, b)
+    )
 
   sortEntries: (combinedEntries) ->
     if atom.config.get('tree-view.sortFoldersBeforeFiles')

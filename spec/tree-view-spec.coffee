@@ -2942,7 +2942,6 @@ describe "TreeView", ->
 
       atom.project.setPaths([rootDirPath])
 
-
     it "defaults to set", ->
       expect(atom.config.get("tree-view.sortFoldersBeforeFiles")).toBeTruthy()
 
@@ -2989,6 +2988,59 @@ describe "TreeView", ->
         element.innerText
 
       expect(gammaEntries).toEqual(["delta.txt", "epsilon.txt", "theta"])
+
+  describe "the sortByCase config option", ->
+    [dirView, fileView, dirView2, fileView2, fileView3, rootDirPath, dirPath, filePath, dirPath2, filePath2, filePath3] = []
+
+    beforeEach ->
+      rootDirPath = fs.absolute(temp.mkdirSync('tree-view'))
+
+      filePaths = [
+        path.join(rootDirPath, "README.md")
+        path.join(rootDirPath, "LICENSE")
+        path.join(rootDirPath, "index.html")
+        path.join(rootDirPath, "vector.svg")
+        path.join(rootDirPath, "Makefile")
+        path.join(rootDirPath, ".gitignore")
+      ]
+
+      filePaths.forEach (filePath) =>
+        fs.writeFileSync(filePath, "doesn't matter")
+
+      atom.project.setPaths([rootDirPath])
+
+    it "defaults to unset", ->
+      expect(atom.config.get("tree-view.sortByCase")).toBeFalsy()
+
+    it "sorts with case sensitivity if the option is set", ->
+      atom.config.set "tree-view.sortByCase", true
+
+      topLevelEntries = [].slice.call(treeView.roots[0].entries.children).map (element) ->
+        element.innerText
+
+      expect(topLevelEntries).toEqual([
+        ".gitignore"
+        "LICENSE"
+        "README.md"
+        "Makefile"
+        "index.html"
+        "vector.svg"
+      ])
+
+    it "sorts without case sensitivity if the option is unset", ->
+      atom.config.set "tree-view.sortByCase", false
+
+      topLevelEntries = [].slice.call(treeView.roots[0].entries.children).map (element) ->
+        element.innerText
+
+      expect(topLevelEntries).toEqual([
+        ".gitignore"
+        "index.html"
+        "LICENSE"
+        "Makefile"
+        "README.md"
+        "vector.svg"
+      ])
 
   describe "showSelectedEntryInFileManager()", ->
     beforeEach ->

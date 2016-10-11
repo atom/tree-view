@@ -51,6 +51,11 @@
       "default": false,
       "description": "Show the tree view on the right side of the editor instead of the left."
     },
+    "sortByCase": {
+      "type": "boolean",
+      "default": false,
+      "description": "When listing directory items, list uppercase items first."
+    },
     "sortFoldersBeforeFiles": {
       "type": "boolean",
       "default": true,
