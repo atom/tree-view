@@ -1,6 +1,6 @@
 {
   "name": "learn-ide-tree",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "treeViewVersion": "0.210.0",
   "main": "./lib/main",
   "description": "Explore and open files in the current project.",
