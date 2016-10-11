@@ -1,4 +1,4 @@
-fs = require 'fs-plus'
+{fs} = require 'nsync-fs'
 path = require 'path'
 
 class DefaultFileIcons

@@ -3,31 +3,49 @@ path = require 'path'
 
 FileIcons = require './file-icons'
 
+nsync = require 'nsync-fs'
+
 module.exports =
   treeView: null
 
   activate: (@state) ->
-    @disposables = new CompositeDisposable
-    @state.attached ?= true if @shouldAttach()
+    @helperDisposables = require('./nsync/nsync-helper')(@state)
 
-    @createView() if @state.attached
+    treeViewisDisabled = localStorage.disableTreeView is 'true'
 
-    @disposables.add atom.commands.add('atom-workspace', {
-      'tree-view:show': => @createView().show()
-      'tree-view:toggle': => @createView().toggle()
-      'tree-view:toggle-focus': => @createView().toggleFocus()
-      'tree-view:reveal-active-file': => @createView().revealActiveFile()
-      'tree-view:toggle-side': => @createView().toggleSide()
-      'tree-view:add-file': => @createView().add(true)
-      'tree-view:add-folder': => @createView().add(false)
-      'tree-view:duplicate': => @createView().copySelectedEntry()
-      'tree-view:remove': => @createView().removeSelectedEntries()
-      'tree-view:rename': => @createView().moveSelectedEntry()
-      'tree-view:show-current-file-in-file-manager': => @createView().showCurrentFileInFileManager()
-    })
+    unless treeViewisDisabled
+      unless atom.packages.isPackageDisabled('tree-view')
+        atom.notifications.addWarning 'Learn IDE: two tree packages enabled',
+          detail: """Atom's core tree-view package is enabled. You may want
+                  to disable it while using the Learn IDE, which uses its
+                  own tree package (learn-ide-tree)."""
+          dismissable: true
+
+      document.body.classList.add('learn-ide')
+
+      @disposables = new CompositeDisposable
+      @state.attached ?= true if @shouldAttach()
+
+      @createView() if @state.attached
+
+      @disposables.add atom.commands.add('atom-workspace', {
+        'tree-view:show': => @createView().show()
+        'tree-view:toggle': => @createView().toggle()
+        'tree-view:toggle-focus': => @createView().toggleFocus()
+        'tree-view:reveal-active-file': => @createView().revealActiveFile()
+        'tree-view:toggle-side': => @createView().toggleSide()
+        'tree-view:add-file': => @createView().add(true)
+        'tree-view:add-folder': => @createView().add(false)
+        'tree-view:duplicate': => @createView().copySelectedEntry()
+        'tree-view:remove': => @createView().removeSelectedEntries()
+        'tree-view:rename': => @createView().moveSelectedEntry()
+        'tree-view:show-current-file-in-file-manager': => @createView().showCurrentFileInFileManager()
+      })
 
   deactivate: ->
+    nsync.cache()
     @disposables.dispose()
+    @helperDisposables.dispose()
     @fileIconsDisposable?.dispose()
     @treeView?.deactivate()
     @treeView = null

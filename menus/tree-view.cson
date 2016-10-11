@@ -1,5 +1,16 @@
 'menu': [
   {
+    'label': 'File'
+    'submenu': [
+      {'label': 'New File', command: 'tree-view:add-file'}
+      {'label': 'Save', 'command': 'learn-ide:save'}
+      {'label': 'Save As…', 'command': 'learn-ide:save-as'}
+      {'label': 'Open…', 'command': 'learn-ide:file-open'}
+      {'label': 'Add Project Folder…', 'command': 'learn-ide:add-project'}
+      {'label': 'Save All', 'command': 'learn-ide:save-all'}
+    ]
+  }
+  {
     'label': 'View'
     'submenu': [
       { 'label': 'Toggle Tree View', 'command': 'tree-view:toggle' }
@@ -33,15 +44,14 @@
     {'label': 'Paste', 'command': 'tree-view:paste'}
     {'type': 'separator'}
 
-    {'label': 'Add Project Folder', 'command': 'application:add-project-folder'}
-    {'type': 'separator'}
-
-    {'label': 'Copy Full Path', 'command': 'tree-view:copy-full-path'}
-    {'label': 'Copy Project Path', 'command': 'tree-view:copy-project-path'}
     {'label': 'Open In New Window', 'command': 'tree-view:open-in-new-window'}
   ]
 
-  '.tree-view.full-menu [is="tree-view-file"]': [
+  '.tree-view.full-menu [is="learn-ide-tree-directory"]': [
+    {label: 'Import', command: 'learn-ide:import'}
+  ]
+
+  '.tree-view.full-menu [is="learn-ide-tree-file"]': [
     {'label': 'Split Up', 'command': 'tree-view:open-selected-entry-up'}
     {'label': 'Split Down', 'command': 'tree-view:open-selected-entry-down'}
     {'label': 'Split Left', 'command': 'tree-view:open-selected-entry-left'}
@@ -62,8 +72,6 @@
     {'label': 'Paste', 'command': 'tree-view:paste'}
     {'type': 'separator'}
 
-    {'label': 'Add Project Folder', 'command': 'application:add-project-folder'}
-    {'label': 'Remove Project Folder', 'command': 'tree-view:remove-project-folder'}
     {'type': 'separator'}
 
     {'label': 'Copy Full Path', 'command': 'tree-view:copy-full-path'}

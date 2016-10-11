@@ -1,9 +1,10 @@
 {
-  "name": "tree-view",
-  "version": "0.210.0",
+  "name": "learn-ide-tree",
+  "version": "0.0.0",
+  "treeViewVersion": "0.210.0",
   "main": "./lib/main",
   "description": "Explore and open files in the current project.",
-  "repository": "https://github.com/atom/tree-view",
+  "repository": "https://github.com/learn-co/learn-ide-tree",
   "license": "MIT",
   "engines": {
     "atom": "*"
@@ -11,10 +12,13 @@
   "private": true,
   "dependencies": {
     "atom-space-pen-views": "^2.1.1",
+    "dotenv": "^2.0.0",
     "event-kit": "^1.0.0",
     "fs-plus": "^2.3.0",
     "minimatch": "~0.3.0",
+    "nsync-fs": "learn-co/nsync-fs#master",
     "pathwatcher": "^6.2",
+    "single-socket": "0.0.6",
     "temp": "~0.8.1",
     "underscore-plus": "^1.0.0"
   },
