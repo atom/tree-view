@@ -42,6 +42,7 @@ module.exports =
       })
 
   deactivate: ->
+    nsync.cache()
     @disposables.dispose()
     @helperDisposables.dispose()
     @fileIconsDisposable?.dispose()

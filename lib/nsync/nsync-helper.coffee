@@ -88,6 +88,15 @@ onEditorSave = ({path}) ->
         content = new Buffer(text).toString('base64')
         nsync.save(node.path, content)
 
+onFindAndReplace = (path) ->
+  fs.readFile path, 'utf8', (err, data) ->
+    if err
+      return console.error 'Project Replace Error', err
+
+    text = convertEOL(data)
+    content = new Buffer(text).toString('base64')
+    nsync.save(path, content)
+
 module.exports = helper = (activationState) ->
   disposables = new CompositeDisposable
 
@@ -142,6 +151,14 @@ module.exports = helper = (activationState) ->
   disposables.add atomHelper.observeTextEditors (editor) ->
     disposables.add editor.onDidSave (e) ->
       onEditorSave(e)
+
+  disposables.add atomHelper.onDidActivatePackage (pkg) ->
+    if pkg.name is 'find-and-replace'
+      projectFindView = pkg.mainModule.projectFindView
+      resultModel = projectFindView.model
+
+      disposables.add resultModel.onDidReplacePath ({filePath}) ->
+        onFindAndReplace(filePath)
 
   atomHelper.getToken().then (token) ->
     nsync.configure

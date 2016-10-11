@@ -105,6 +105,9 @@ module.exports = helper =
   selectedPath: ->
     @treeView()?.selectedPath
 
+  onDidActivatePackage: (callback) ->
+    atom.packages.onDidActivatePackage(callback)
+
   observeTextEditors: (callback) ->
     atom.workspace.observeTextEditors(callback)
 
