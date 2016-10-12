@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "treeViewVersion": "0.210.0",
   "main": "./lib/main",
-  "description": "Explore and open files in the current project.",
+  "description": "A Tree View replacement for the Learn IDE",
   "repository": "https://github.com/learn-co/learn-ide-tree",
   "license": "MIT",
   "engines": {
