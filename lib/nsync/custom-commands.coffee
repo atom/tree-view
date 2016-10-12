@@ -1,6 +1,7 @@
 nsync = require 'nsync-fs'
 shell = require 'shell'
 atomHelper = require './atom-helper'
+WebWindow = require './web-window'
 
 commandStrategies = {
   browser_open: ({url}) ->
@@ -11,7 +12,7 @@ commandStrategies = {
     atomHelper.open(node.localPath())
 
   learn_submit: ({url}) ->
-    # open BrowserWindow to url
+    new WebWindow(url, {resizable: false})
 }
 
 module.exports = executeCustomCommand = (data) ->
