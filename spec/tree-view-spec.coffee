@@ -3426,6 +3426,25 @@ describe "TreeView", ->
           treeView.projectFolderDragAndDropHandler.onDragEnd()
           expect('.placeholder').not.toExist()
 
+      describe "when below all entries", ->
+        it "should add the placeholder below the last directory", ->
+          # Dragging gammaDir onto alphaDir
+          alphaDir = $(treeView).find('.project-root:contains(alpha):first')
+          lastDir = $(treeView).find('.project-root:last')
+          [dragStartEvent, dragOverEvents] =
+            eventHelpers.buildPositionalDragEvents(alphaDir.find('.project-root-header')[0], treeView.find('.tree-view')[0])
+
+          expect(alphaDir[0]).not.toEqual(lastDir[0])
+
+          treeView.onDragStart(dragStartEvent)
+          treeView.onDragOver(dragOverEvents.bottom)
+          expect(lastDir[0].nextSibling).toHaveClass('placeholder')
+
+          # Is removed when drag ends
+          treeView.projectFolderDragAndDropHandler.onDragEnd()
+          expect('.placeholder').not.toExist()
+
+
     describe "when dropping a project root's header onto a different project root's header", ->
       describe "when dropping on the top part of the header", ->
         it "should add the placeholder above the directory", ->
