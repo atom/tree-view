@@ -114,6 +114,11 @@
       border-radius: 4px;
       border: 1px solid transparent;
     }
+
+    // ensure that placeholder doesn't disappear above the top of the view
+    &:first-child {
+      margin-top: 1px;
+    }
   }
 }
 
