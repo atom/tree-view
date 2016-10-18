@@ -105,6 +105,8 @@ class TreeView extends View
     @on 'dragleave', '.entry.directory > .header', (e) => @onDragLeave(e)
     @on 'dragover', '.entry', (e) => @onDragOver(e)
     @on 'drop', '.entry', (e) => @onDrop(e)
+    @on 'dragover', '.tree-view', (e) => @onDragOverTree(e)
+    @on 'drop', '.tree-view', (e) => @onDropTree(e)
 
     atom.commands.add @element,
      'core:move-up': @moveUp.bind(this)
@@ -912,3 +914,18 @@ class TreeView extends View
       # Drop event from OS
       for file in e.originalEvent.dataTransfer.files
         @moveEntry(file.path, newDirectoryPath)
+
+  # handle drag over and drop on the empty space in which there are no entries
+  onDragOverTree: (e) ->
+    e.preventDefault()
+    e.stopPropagation()
+
+    if @projectFolderDragAndDropHandler.isDragging(e)
+      return @projectFolderDragAndDropHandler.onDragOver(e)
+
+  onDropTree: (e) ->
+    e.preventDefault()
+    e.stopPropagation()
+
+    if @projectFolderDragAndDropHandler.isDragging(e)
+      return @projectFolderDragAndDropHandler.onDrop(e)
