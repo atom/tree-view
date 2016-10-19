@@ -3521,7 +3521,7 @@ describe "TreeView", ->
         gammaDir = $(treeView).find('.project-root:contains(gamma):first')
         [dragStartEvent, dropEvent] = eventHelpers.buildPositionalDragEvents(gammaDir.find('.project-root-header')[0])
         treeView.onDragStart(dragStartEvent)
-        treeView.projectFolderDragAndDropHandler.onDropOnOtherWindow(gammaDir.index())
+        treeView.projectFolderDragAndDropHandler.onDropOnOtherWindow({}, gammaDir.index())
 
         expect(atom.project.getPaths()).toEqual [alphaDirPath, thetaDirPath]
         expect('.placeholder').not.toExist()
