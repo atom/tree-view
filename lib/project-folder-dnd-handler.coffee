@@ -1,5 +1,5 @@
 BrowserWindow = null # Defer require until actually used
-RendererIpc = require 'ipc'
+{ipcRenderer} = require 'electron'
 
 {$, View} = require 'atom-space-pen-views'
 _ = require 'underscore-plus'
@@ -9,11 +9,11 @@ class ProjectFolderDragAndDropHandler
   constructor: (@treeView) ->
     @treeView.on 'dragend', '.project-root-header', @onDragEnd
 
-    RendererIpc.on('tree-view:project-folder-dropped', @onDropOnOtherWindow)
+    ipcRenderer.on('tree-view:project-folder-dropped', @onDropOnOtherWindow)
 
   # unused
   unsubscribe: ->
-    RendererIpc.removeListener('tree-view:project-folder-dropped', @onDropOnOtherWindow)
+    ipcRenderer.removeListener('tree-view:project-folder-dropped', @onDropOnOtherWindow)
 
   onDragStart: (event) =>
     event.originalEvent.dataTransfer.setData 'atom-event', 'true'
@@ -70,7 +70,7 @@ class ProjectFolderDragAndDropHandler
       element = projectRoots.eq(newDropTargetIndex - 1).addClass 'drop-target-is-after'
       @getPlaceholder().insertAfter(element)
 
-  onDropOnOtherWindow: (fromItemIndex) =>
+  onDropOnOtherWindow: (event, fromItemIndex) =>
     paths = atom.project.getPaths()
     paths.splice(fromItemIndex, 1)
     atom.project.setPaths(paths)
