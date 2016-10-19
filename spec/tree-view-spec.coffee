@@ -4,6 +4,7 @@ fs = require 'fs-plus'
 path = require 'path'
 temp = require('temp').track()
 os = require 'os'
+{remote} = require 'electron'
 eventHelpers = require "./event-helpers"
 
 DefaultFileIcons = require '../lib/default-file-icons'
@@ -3503,7 +3504,7 @@ describe "TreeView", ->
 
         # mock browserWindowForId
         browserWindowMock = {webContents: {send: ->}}
-        treeView.projectFolderDragAndDropHandler.browserWindowForId = -> browserWindowMock
+        spyOn(remote.BrowserWindow, 'fromId').andReturn(browserWindowMock)
         spyOn(browserWindowMock.webContents, 'send')
 
         treeView.onDrop(dropEvent)

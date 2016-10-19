@@ -1,5 +1,6 @@
-BrowserWindow = null # Defer require until actually used
-{ipcRenderer} = require 'electron'
+url = require 'url'
+
+{ipcRenderer, remote} = require 'electron'
 
 {$, View} = require 'atom-space-pen-views'
 _ = require 'underscore-plus'
@@ -37,7 +38,7 @@ class ProjectFolderDragAndDropHandler
 
   uriHasProtocol: (uri) ->
     try
-      require('url').parse(uri).protocol?
+      url.parse(uri).protocol?
     catch error
       false
 
@@ -114,7 +115,7 @@ class ProjectFolderDragAndDropHandler
 
       if not isNaN(fromWindowId)
         # Let the window where the drag started know that the tab was dropped
-        browserWindow = @browserWindowForId(fromWindowId)
+        browserWindow = remote.BrowserWindow.fromId(fromWindowId)
         browserWindow?.webContents.send('tree-view:project-folder-dropped', fromIndex)
 
   removeDropTargetClasses: ->
@@ -162,7 +163,3 @@ class ProjectFolderDragAndDropHandler
 
   getWindowId: ->
     @processId ?= atom.getCurrentWindow().id
-
-  browserWindowForId: (id) ->
-    BrowserWindow ?= require('remote').require('browser-window')
-    BrowserWindow.fromId id
