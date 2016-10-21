@@ -6,7 +6,7 @@ url = require 'url'
 _ = require 'underscore-plus'
 
 module.exports =
-class ProjectFolderDragAndDropHandler
+class RootDragAndDropHandler
   constructor: (@treeView) ->
     @treeView.on 'dragend', '.project-root-header', @onDragEnd
 

@@ -15,7 +15,7 @@ Minimatch = null  # Defer requiring until actually needed
 Directory = require './directory'
 DirectoryView = require './directory-view'
 FileView = require './file-view'
-ProjectFolderDragAndDropHandler = require './project-folder-dnd-handler'
+RootDragAndDrop = require './root-drag-and-drop'
 LocalStorage = window.localStorage
 
 toggleConfig = (keyPath) ->
@@ -43,7 +43,7 @@ class TreeView extends View
     @currentlyOpening = new Map
 
     @dragEventCounts = new WeakMap
-    @projectFolderDragAndDropHandler = new ProjectFolderDragAndDropHandler(this)
+    @rootDragAndDrop = new RootDragAndDrop(this)
 
     @handleEvents()
 
@@ -831,7 +831,7 @@ class TreeView extends View
   onDragEnter: (e) =>
     e.stopPropagation()
 
-    if @projectFolderDragAndDropHandler.isDragging(e)
+    if @rootDragAndDrop.isDragging(e)
       return
 
     entry = e.currentTarget.parentNode
@@ -842,8 +842,8 @@ class TreeView extends View
   onDragLeave: (e) =>
     e.stopPropagation()
 
-    if @projectFolderDragAndDropHandler.isDragging(e)
-      return @projectFolderDragAndDropHandler.onDragLeave(e)
+    if @rootDragAndDrop.isDragging(e)
+      return @rootDragAndDrop.onDragLeave(e)
 
     entry = e.currentTarget.parentNode
     @dragEventCounts.set(entry, @dragEventCounts.get(entry) - 1)
@@ -853,8 +853,8 @@ class TreeView extends View
   onDragStart: (e) ->
     e.stopPropagation()
 
-    if @projectFolderDragAndDropHandler.canDragStart(e)
-      return @projectFolderDragAndDropHandler.onDragStart(e)
+    if @rootDragAndDrop.canDragStart(e)
+      return @rootDragAndDrop.onDragStart(e)
 
     target = $(e.currentTarget).find(".name")
     initialPath = target.data("path")
@@ -882,8 +882,8 @@ class TreeView extends View
     e.preventDefault()
     e.stopPropagation()
 
-    if @projectFolderDragAndDropHandler.isDragging(e)
-      return @projectFolderDragAndDropHandler.onDragOver(e)
+    if @rootDragAndDrop.isDragging(e)
+      return @rootDragAndDrop.onDragOver(e)
 
     entry = e.currentTarget
     if @dragEventCounts.get(entry) > 0 and not entry.classList.contains('selected')
@@ -894,8 +894,8 @@ class TreeView extends View
     e.preventDefault()
     e.stopPropagation()
 
-    if @projectFolderDragAndDropHandler.isDragging(e)
-      return @projectFolderDragAndDropHandler.onDrop(e)
+    if @rootDragAndDrop.isDragging(e)
+      return @rootDragAndDrop.onDrop(e)
 
     entry = e.currentTarget
     entry.classList.remove('selected')
@@ -920,12 +920,12 @@ class TreeView extends View
     e.preventDefault()
     e.stopPropagation()
 
-    if @projectFolderDragAndDropHandler.isDragging(e)
-      return @projectFolderDragAndDropHandler.onDragOver(e)
+    if @rootDragAndDrop.isDragging(e)
+      return @rootDragAndDrop.onDragOver(e)
 
   onDropTree: (e) ->
     e.preventDefault()
     e.stopPropagation()
 
-    if @projectFolderDragAndDropHandler.isDragging(e)
-      return @projectFolderDragAndDropHandler.onDrop(e)
+    if @rootDragAndDrop.isDragging(e)
+      return @rootDragAndDrop.onDrop(e)

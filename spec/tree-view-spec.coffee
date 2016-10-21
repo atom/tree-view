@@ -3408,7 +3408,7 @@ describe "TreeView", ->
           expect(alphaDir[0].previousSibling).toHaveClass('placeholder')
 
           # Is removed when drag ends
-          treeView.projectFolderDragAndDropHandler.onDragEnd()
+          treeView.rootDragAndDrop.onDragEnd()
           expect('.placeholder').not.toExist()
 
       describe "when dragging on the bottom part of the header", ->
@@ -3424,7 +3424,7 @@ describe "TreeView", ->
           expect(alphaDir[0].nextSibling).toHaveClass('placeholder')
 
           # Is removed when drag ends
-          treeView.projectFolderDragAndDropHandler.onDragEnd()
+          treeView.rootDragAndDrop.onDragEnd()
           expect('.placeholder').not.toExist()
 
       describe "when below all entries", ->
@@ -3442,7 +3442,7 @@ describe "TreeView", ->
           expect(lastDir[0].nextSibling).toHaveClass('placeholder')
 
           # Is removed when drag ends
-          treeView.projectFolderDragAndDropHandler.onDragEnd()
+          treeView.rootDragAndDrop.onDragEnd()
           expect('.placeholder').not.toExist()
 
 
@@ -3499,7 +3499,7 @@ describe "TreeView", ->
 
         dropEvent = dragDropEvents.bottom
         dropEvent.originalEvent.dataTransfer.setData('atom-event', true)
-        dropEvent.originalEvent.dataTransfer.setData('from-window-id', treeView.projectFolderDragAndDropHandler.getWindowId() + 1)
+        dropEvent.originalEvent.dataTransfer.setData('from-window-id', treeView.rootDragAndDrop.getWindowId() + 1)
         dropEvent.originalEvent.dataTransfer.setData('from-root-path', etaDirPath)
 
         # mock browserWindowForId
@@ -3522,7 +3522,7 @@ describe "TreeView", ->
         gammaDir = $(treeView).find('.project-root:contains(gamma):first')
         [dragStartEvent, dropEvent] = eventHelpers.buildPositionalDragEvents(gammaDir.find('.project-root-header')[0])
         treeView.onDragStart(dragStartEvent)
-        treeView.projectFolderDragAndDropHandler.onDropOnOtherWindow({}, gammaDir.index())
+        treeView.rootDragAndDrop.onDropOnOtherWindow({}, gammaDir.index())
 
         expect(atom.project.getPaths()).toEqual [alphaDirPath, thetaDirPath]
         expect('.placeholder').not.toExist()
