@@ -87,6 +87,7 @@ class TreeView extends View
   deactivate: ->
     root.directory.destroy() for root in @roots
     @disposables.dispose()
+    @rootDragAndDrop.dispose()
     @detach() if @panel?
 
   handleEvents: ->

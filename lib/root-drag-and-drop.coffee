@@ -8,12 +8,12 @@ _ = require 'underscore-plus'
 module.exports =
 class RootDragAndDropHandler
   constructor: (@treeView) ->
-    @treeView.on 'dragend', '.project-root-header', @onDragEnd
-
     ipcRenderer.on('tree-view:project-folder-dropped', @onDropOnOtherWindow)
 
-  # unused
-  unsubscribe: ->
+    # will be cleaned up by tree view
+    @treeView.on 'dragend', '.project-root-header', @onDragEnd
+
+  dispose: ->
     ipcRenderer.removeListener('tree-view:project-folder-dropped', @onDropOnOtherWindow)
 
   onDragStart: (event) =>
@@ -65,10 +65,12 @@ class RootDragAndDropHandler
     projectRoots = $(@treeView.roots)
 
     if newDropTargetIndex < projectRoots.length
-      element = projectRoots.eq(newDropTargetIndex).addClass 'is-drop-target'
+      element = projectRoots.eq(newDropTargetIndex)
+      element.addClass 'is-drop-target'
       @getPlaceholder().insertBefore(element)
     else
-      element = projectRoots.eq(newDropTargetIndex - 1).addClass 'drop-target-is-after'
+      element = projectRoots.eq(newDropTargetIndex - 1)
+      element.addClass 'drop-target-is-after'
       @getPlaceholder().insertAfter(element)
 
   onDropOnOtherWindow: (event, fromItemIndex) =>
