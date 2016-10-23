@@ -50,6 +50,7 @@
   flex: 1;
   width: 100%;
   overflow: auto;
+  will-change: transform;
 }
 
 .tree-view {
@@ -93,21 +94,32 @@
   .placeholder {
     position: absolute;
     left: @component-icon-padding;
+    padding: 0;
     z-index: 999;
     display: inline-block;
-    height: 2px;
-    margin: -1px; padding: 0;
 
     width: calc(~"100% -" @component-icon-padding);
     background: @background-color-info;
 
     list-style: none;
+    pointer-events: none;
+
+    // bar
+    &:before {
+      content: "";
+      position: absolute;
+      height: 2px;
+      margin: -1px; padding: 0;
+      width: inherit;
+      background: inherit;
+    }
 
     &:after {
       content: "";
       position: absolute;
       left: 0;
-      margin: -1px;
+      margin-top: -2px;
+      margin-left: -1px;
       width: 4px;
       height: 4px;
       background: @background-color-info;
