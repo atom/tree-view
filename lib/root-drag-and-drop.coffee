@@ -9,32 +9,39 @@ module.exports =
 class RootDragAndDropHandler
   constructor: (@treeView) ->
     ipcRenderer.on('tree-view:project-folder-dropped', @onDropOnOtherWindow)
-
-    # will be cleaned up by tree view
-    @treeView.on 'dragend', '.project-root-header', @onDragEnd
+    @handleEvents()
 
   dispose: ->
     ipcRenderer.removeListener('tree-view:project-folder-dropped', @onDropOnOtherWindow)
 
-  onDragStart: (event) =>
-    event.originalEvent.dataTransfer.setData 'atom-event', 'true'
-    projectRoot = $(event.target).closest('.project-root')
+  handleEvents: ->
+    # onDragStart is called directly by TreeView's onDragStart
+    # will be cleaned up by tree view, since they are tree-view's handlers
+    @treeView.on 'dragenter', '.tree-view', @onDragEnter
+    @treeView.on 'dragend', '.project-root-header', @onDragEnd
+    @treeView.on 'dragleave', '.tree-view', @onDragLeave
+    @treeView.on 'dragover', '.tree-view', @onDragOver
+    @treeView.on 'drop', '.tree-view', @onDrop
+
+  onDragStart: (e) =>
+    e.originalEvent.dataTransfer.setData 'atom-event', 'true'
+    projectRoot = $(e.target).closest('.project-root')
     directory = projectRoot[0].directory
 
-    event.originalEvent.dataTransfer.setData 'project-root-index', projectRoot.index()
+    e.originalEvent.dataTransfer.setData 'project-root-index', projectRoot.index()
 
     rootIndex = -1
     (rootIndex = index; break) for root, index in @treeView.roots when root.directory is directory
 
-    event.originalEvent.dataTransfer.setData 'from-root-index', rootIndex
-    event.originalEvent.dataTransfer.setData 'from-root-path', directory.path
-    event.originalEvent.dataTransfer.setData 'from-window-id', @getWindowId()
+    e.originalEvent.dataTransfer.setData 'from-root-index', rootIndex
+    e.originalEvent.dataTransfer.setData 'from-root-path', directory.path
+    e.originalEvent.dataTransfer.setData 'from-window-id', @getWindowId()
 
-    event.originalEvent.dataTransfer.setData 'text/plain', directory.path
+    e.originalEvent.dataTransfer.setData 'text/plain', directory.path
 
     if process.platform in ['darwin', 'linux']
       pathUri = "file://#{directory.path}" unless @uriHasProtocol(directory.path)
-      event.originalEvent.dataTransfer.setData 'text/uri-list', pathUri
+      e.originalEvent.dataTransfer.setData 'text/uri-list', pathUri
 
   uriHasProtocol: (uri) ->
     try
@@ -42,22 +49,31 @@ class RootDragAndDropHandler
     catch error
       false
 
-  onDragLeave: (event) =>
-    @removePlaceholder()
+  onDragEnter: (e) =>
+    e.stopPropagation()
 
-  onDragEnd: (event) =>
+  onDragLeave: (e) =>
+    e.stopPropagation()
+    @removePlaceholder() if e.target is e.currentTarget
+
+  onDragEnd: (e) =>
+    e.stopPropagation()
     @clearDropTarget()
 
-  onDragOver: (event) =>
-    unless event.originalEvent.dataTransfer.getData('atom-event') is 'true'
+  onDragOver: (e) =>
+    unless e.originalEvent.dataTransfer.getData('atom-event') is 'true'
       return
 
-    entry = event.currentTarget
-    if entry.classList.contains('selected')
-      @clearDropTarget()
+    e.preventDefault()
+    e.stopPropagation()
+
+    entry = e.currentTarget
+
+    if @treeView.roots.length is 0
+      @getPlaceholder().appendTo(@treeView.list)
       return
 
-    newDropTargetIndex = @getDropTargetIndex(event)
+    newDropTargetIndex = @getDropTargetIndex(e)
     return unless newDropTargetIndex?
 
     @removeDropTargetClasses()
@@ -73,7 +89,7 @@ class RootDragAndDropHandler
       element.addClass 'drop-target-is-after'
       @getPlaceholder().insertAfter(element)
 
-  onDropOnOtherWindow: (event, fromItemIndex) =>
+  onDropOnOtherWindow: (e, fromItemIndex) =>
     paths = atom.project.getPaths()
     paths.splice(fromItemIndex, 1)
     atom.project.setPaths(paths)
@@ -87,9 +103,11 @@ class RootDragAndDropHandler
     @removeDropTargetClasses()
     @removePlaceholder()
 
-  onDrop: (event) =>
-    event.preventDefault()
-    {dataTransfer} = event.originalEvent
+  onDrop: (e) =>
+    e.preventDefault()
+    e.stopPropagation()
+
+    {dataTransfer} = e.originalEvent
 
     # TODO: support dragging folders from the filesystem -- electron needs to add support first
     return unless dataTransfer.getData('atom-event') is 'true'
@@ -99,7 +117,7 @@ class RootDragAndDropHandler
     fromIndex     = parseInt(dataTransfer.getData('project-root-index'))
     fromRootIndex = parseInt(dataTransfer.getData('from-root-index'))
 
-    toIndex = @getDropTargetIndex(event)
+    toIndex = @getDropTargetIndex(e)
 
     @clearDropTarget()
 
@@ -125,8 +143,8 @@ class RootDragAndDropHandler
     workspaceElement.find('.tree-view .is-drop-target').removeClass 'is-drop-target'
     workspaceElement.find('.tree-view .drop-target-is-after').removeClass 'drop-target-is-after'
 
-  getDropTargetIndex: (event) ->
-    target = $(event.target)
+  getDropTargetIndex: (e) ->
+    target = $(e.target)
 
     return if @isPlaceholder(target)
 
@@ -140,18 +158,18 @@ class RootDragAndDropHandler
 
     elementCenter = element.offset().top + element.height() / 2
 
-    if event.originalEvent.pageY < elementCenter
+    if e.originalEvent.pageY < elementCenter
       projectRoots.index(projectRoot)
     else if projectRoot.next('.project-root').length > 0
       projectRoots.index(projectRoot.next('.project-root'))
     else
       projectRoots.index(projectRoot) + 1
 
-  canDragStart: (event) ->
-    $(event.target).closest('.project-root-header').size() > 0
+  canDragStart: (e) ->
+    $(e.target).closest('.project-root-header').size() > 0
 
-  isDragging: (event) ->
-    Boolean event.originalEvent.dataTransfer.getData 'from-root-path'
+  isDragging: (e) ->
+    Boolean e.originalEvent.dataTransfer.getData 'from-root-path'
 
   getPlaceholder: ->
     @placeholderEl ?= $('<li/>', class: 'placeholder')

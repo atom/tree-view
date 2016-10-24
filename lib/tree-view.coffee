@@ -106,8 +106,6 @@ class TreeView extends View
     @on 'dragleave', '.entry.directory > .header', (e) => @onDragLeave(e)
     @on 'dragover', '.entry', (e) => @onDragOver(e)
     @on 'drop', '.entry', (e) => @onDrop(e)
-    @on 'dragover', '.tree-view', (e) => @onDragOverTree(e)
-    @on 'drop', '.tree-view', (e) => @onDropTree(e)
 
     atom.commands.add @element,
      'core:move-up': @moveUp.bind(this)
@@ -830,10 +828,9 @@ class TreeView extends View
     @list[0].classList.contains('multi-select')
 
   onDragEnter: (e) =>
-    e.stopPropagation()
+    return if @rootDragAndDrop.isDragging(e)
 
-    if @rootDragAndDrop.isDragging(e)
-      return
+    e.stopPropagation()
 
     entry = e.currentTarget.parentNode
     @dragEventCounts.set(entry, 0) unless @dragEventCounts.get(entry)
@@ -841,10 +838,9 @@ class TreeView extends View
     @dragEventCounts.set(entry, @dragEventCounts.get(entry) + 1)
 
   onDragLeave: (e) =>
-    e.stopPropagation()
+    return if @rootDragAndDrop.isDragging(e)
 
-    if @rootDragAndDrop.isDragging(e)
-      return @rootDragAndDrop.onDragLeave(e)
+    e.stopPropagation()
 
     entry = e.currentTarget.parentNode
     @dragEventCounts.set(entry, @dragEventCounts.get(entry) - 1)
@@ -880,11 +876,10 @@ class TreeView extends View
 
   # Handle entry dragover event; reset default dragover actions
   onDragOver: (e) ->
+    return if @rootDragAndDrop.isDragging(e)
+
     e.preventDefault()
     e.stopPropagation()
-
-    if @rootDragAndDrop.isDragging(e)
-      return @rootDragAndDrop.onDragOver(e)
 
     entry = e.currentTarget
     if @dragEventCounts.get(entry) > 0 and not entry.classList.contains('selected')
@@ -892,11 +887,10 @@ class TreeView extends View
 
   # Handle entry drop event
   onDrop: (e) ->
+    return if @rootDragAndDrop.isDragging(e)
+
     e.preventDefault()
     e.stopPropagation()
-
-    if @rootDragAndDrop.isDragging(e)
-      return @rootDragAndDrop.onDrop(e)
 
     entry = e.currentTarget
     entry.classList.remove('selected')
@@ -915,18 +909,3 @@ class TreeView extends View
       # Drop event from OS
       for file in e.originalEvent.dataTransfer.files
         @moveEntry(file.path, newDirectoryPath)
-
-  # handle drag over and drop on the empty space in which there are no entries
-  onDragOverTree: (e) ->
-    e.preventDefault()
-    e.stopPropagation()
-
-    if @rootDragAndDrop.isDragging(e)
-      return @rootDragAndDrop.onDragOver(e)
-
-  onDropTree: (e) ->
-    e.preventDefault()
-    e.stopPropagation()
-
-    if @rootDragAndDrop.isDragging(e)
-      return @rootDragAndDrop.onDrop(e)
