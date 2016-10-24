@@ -13,13 +13,8 @@ module.exports =
 
     treeViewisDisabled = localStorage.disableTreeView is 'true'
 
-    unless treeViewisDisabled
-      unless atom.packages.isPackageDisabled('tree-view')
-        atom.notifications.addWarning 'Learn IDE: two tree packages enabled',
-          detail: """Atom's core tree-view package is enabled. You may want
-                  to disable it while using the Learn IDE, which uses its
-                  own tree package (learn-ide-tree)."""
-          dismissable: true
+    if not treeViewisDisabled
+      @warnIfAtomsTreeViewIsActive()
 
       document.body.classList.add('learn-ide')
 
@@ -80,3 +75,12 @@ module.exports =
       projectPath is atom.getLoadSettings().pathToOpen
     else
       true
+
+  warnIfAtomsTreeViewIsActive: ->
+    if atom.packages.getActivePackage('tree-view')?
+      atom.notifications.addWarning 'Learn IDE: two tree packages enabled',
+        detail: """Atom's core tree-view package is enabled. You may want
+                to disable it while using the Learn IDE, which uses its
+                own tree package (learn-ide-tree)."""
+        dismissable: true
+
