@@ -75,4 +75,9 @@ module.exports.buildPositionalDragEvents = (dragged, target) ->
   dragStartEvent.currentTarget = dragged
   dragStartEvent.originalEvent = {dataTransfer}
 
-  [dragStartEvent, buildElementPositionalDragEvents(target, dataTransfer)]
+  dragEndEvent = $.Event()
+  dragEndEvent.target = dragged
+  dragEndEvent.currentTarget = dragged
+  dragEndEvent.originalEvent = {dataTransfer}
+
+  [dragStartEvent, buildElementPositionalDragEvents(target, dataTransfer), dragEndEvent]

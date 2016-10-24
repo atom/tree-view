@@ -3400,15 +3400,15 @@ describe "TreeView", ->
           # Dragging gammaDir onto alphaDir
           alphaDir = $(treeView).find('.project-root:contains(alpha):first')
           gammaDir = $(treeView).find('.project-root:contains(gamma):first')
-          [dragStartEvent, dragOverEvents] =
+          [dragStartEvent, dragOverEvents, dragEndEvent] =
             eventHelpers.buildPositionalDragEvents(gammaDir.find('.project-root-header')[0], alphaDir.find('.project-root-header')[0])
 
-          treeView.onDragStart(dragStartEvent)
-          treeView.onDragOver(dragOverEvents.top)
+          treeView.rootDragAndDrop.onDragStart(dragStartEvent)
+          treeView.rootDragAndDrop.onDragOver(dragOverEvents.top)
           expect(alphaDir[0].previousSibling).toHaveClass('placeholder')
 
           # Is removed when drag ends
-          treeView.rootDragAndDrop.onDragEnd()
+          treeView.rootDragAndDrop.onDragEnd(dragEndEvent)
           expect('.placeholder').not.toExist()
 
       describe "when dragging on the bottom part of the header", ->
@@ -3416,15 +3416,15 @@ describe "TreeView", ->
           # Dragging gammaDir onto alphaDir
           alphaDir = $(treeView).find('.project-root:contains(alpha):first')
           gammaDir = $(treeView).find('.project-root:contains(gamma):first')
-          [dragStartEvent, dragOverEvents] =
+          [dragStartEvent, dragOverEvents, dragEndEvent] =
             eventHelpers.buildPositionalDragEvents(gammaDir.find('.project-root-header')[0], alphaDir.find('.project-root-header')[0])
 
-          treeView.onDragStart(dragStartEvent)
-          treeView.onDragOver(dragOverEvents.bottom)
+          treeView.rootDragAndDrop.onDragStart(dragStartEvent)
+          treeView.rootDragAndDrop.onDragOver(dragOverEvents.bottom)
           expect(alphaDir[0].nextSibling).toHaveClass('placeholder')
 
           # Is removed when drag ends
-          treeView.rootDragAndDrop.onDragEnd()
+          treeView.rootDragAndDrop.onDragEnd(dragEndEvent)
           expect('.placeholder').not.toExist()
 
       describe "when below all entries", ->
@@ -3432,17 +3432,17 @@ describe "TreeView", ->
           # Dragging gammaDir onto alphaDir
           alphaDir = $(treeView).find('.project-root:contains(alpha):first')
           lastDir = $(treeView).find('.project-root:last')
-          [dragStartEvent, dragOverEvents] =
+          [dragStartEvent, dragOverEvents, dragEndEvent] =
             eventHelpers.buildPositionalDragEvents(alphaDir.find('.project-root-header')[0], treeView.find('.tree-view')[0])
 
           expect(alphaDir[0]).not.toEqual(lastDir[0])
 
-          treeView.onDragStart(dragStartEvent)
-          treeView.onDragOver(dragOverEvents.bottom)
+          treeView.rootDragAndDrop.onDragStart(dragStartEvent)
+          treeView.rootDragAndDrop.onDragOver(dragOverEvents.bottom)
           expect(lastDir[0].nextSibling).toHaveClass('placeholder')
 
           # Is removed when drag ends
-          treeView.rootDragAndDrop.onDragEnd()
+          treeView.rootDragAndDrop.onDragEnd(dragEndEvent)
           expect('.placeholder').not.toExist()
 
 
@@ -3455,8 +3455,8 @@ describe "TreeView", ->
           [dragStartEvent, dragDropEvents] =
             eventHelpers.buildPositionalDragEvents(gammaDir.find('.project-root-header')[0], alphaDir.find('.project-root-header')[0])
 
-          treeView.onDragStart(dragStartEvent)
-          treeView.onDrop(dragDropEvents.top)
+          treeView.rootDragAndDrop.onDragStart(dragStartEvent)
+          treeView.rootDragAndDrop.onDrop(dragDropEvents.top)
           projectPaths = atom.project.getPaths()
           expect(projectPaths[0]).toEqual(gammaDirPath)
           expect(projectPaths[1]).toEqual(alphaDirPath)
@@ -3472,8 +3472,8 @@ describe "TreeView", ->
           [dragStartEvent, dragDropEvents] =
             eventHelpers.buildPositionalDragEvents(thetaDir.find('.project-root-header')[0], alphaDir.find('.project-root-header')[0])
 
-          treeView.onDragStart(dragStartEvent)
-          treeView.onDrop(dragDropEvents.bottom)
+          treeView.rootDragAndDrop.onDragStart(dragStartEvent)
+          treeView.rootDragAndDrop.onDrop(dragDropEvents.bottom)
           projectPaths = atom.project.getPaths()
           expect(projectPaths[0]).toEqual(alphaDirPath)
           expect(projectPaths[1]).toEqual(thetaDirPath)
@@ -3486,7 +3486,7 @@ describe "TreeView", ->
       it "should carry the folder's information", ->
         gammaDir = $(treeView).find('.project-root:contains(gamma):first')
         [dragStartEvent] = eventHelpers.buildPositionalDragEvents(gammaDir.find('.project-root-header')[0])
-        treeView.onDragStart(dragStartEvent)
+        treeView.rootDragAndDrop.onDragStart(dragStartEvent)
 
         expect(dragStartEvent.originalEvent.dataTransfer.getData("text/plain")).toEqual gammaDirPath
         if process.platform in ['darwin', 'linux']
@@ -3507,7 +3507,7 @@ describe "TreeView", ->
         spyOn(remote.BrowserWindow, 'fromId').andReturn(browserWindowMock)
         spyOn(browserWindowMock.webContents, 'send')
 
-        treeView.onDrop(dropEvent)
+        treeView.rootDragAndDrop.onDrop(dropEvent)
 
         waitsFor ->
           browserWindowMock.webContents.send.callCount > 0
@@ -3521,7 +3521,7 @@ describe "TreeView", ->
       it "removes the root folder from the first window", ->
         gammaDir = $(treeView).find('.project-root:contains(gamma):first')
         [dragStartEvent, dropEvent] = eventHelpers.buildPositionalDragEvents(gammaDir.find('.project-root-header')[0])
-        treeView.onDragStart(dragStartEvent)
+        treeView.rootDragAndDrop.onDragStart(dragStartEvent)
         treeView.rootDragAndDrop.onDropOnOtherWindow({}, gammaDir.index())
 
         expect(atom.project.getPaths()).toEqual [alphaDirPath, thetaDirPath]
