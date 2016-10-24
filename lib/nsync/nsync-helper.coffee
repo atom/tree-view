@@ -19,15 +19,12 @@ WS_SERVER_URL = (->
     port: process.env['IDE_WS_PORT']
     path: process.env['IDE_WS_PATH']
   ,
-    host: 'ile.learn.co',
-    port: 443,
-    path: 'go_fs_server'
-    protocol: 'wss'
+    host: '159.203.101.28',
+    port: 8080,
+    path: 'fs_server'
 
-  if config.port isnt 443
-    config.protocol = 'ws'
-
-  {protocol, host, port, path} = config
+  {host, port, path} = config
+  protocol = if port is 443 then 'wss' else 'ws'
 
   "#{protocol}://#{host}:#{port}/#{path}"
 )()
