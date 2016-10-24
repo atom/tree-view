@@ -49,7 +49,7 @@ class RootDragAndDropHandler
     catch error
       false
 
-  onDragEnter: (e) =>
+  onDragEnter: (e) ->
     e.stopPropagation()
 
   onDragLeave: (e) =>
