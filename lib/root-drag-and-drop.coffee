@@ -79,8 +79,6 @@ class RootDragAndDropHandler
     return if @prevDropTargetIndex is newDropTargetIndex
     @prevDropTargetIndex = newDropTargetIndex
 
-    @removeDropTargetClasses()
-
     projectRoots = $(@treeView.roots)
 
     if newDropTargetIndex < projectRoots.length
@@ -103,7 +101,6 @@ class RootDragAndDropHandler
     element = @treeView.find(".is-dragging")
     element.removeClass 'is-dragging'
     element[0]?.updateTooltip()
-    @removeDropTargetClasses()
     @removePlaceholder()
 
   onDrop: (e) =>
@@ -140,11 +137,6 @@ class RootDragAndDropHandler
         # Let the window where the drag started know that the tab was dropped
         browserWindow = remote.BrowserWindow.fromId(fromWindowId)
         browserWindow?.webContents.send('tree-view:project-folder-dropped', fromIndex)
-
-  removeDropTargetClasses: ->
-    workspaceElement = $(atom.views.getView(atom.workspace))
-    workspaceElement.find('.tree-view .is-drop-target').removeClass 'is-drop-target'
-    workspaceElement.find('.tree-view .drop-target-is-after').removeClass 'drop-target-is-after'
 
   getDropTargetIndex: (e) ->
     target = $(e.target)
