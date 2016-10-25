@@ -25,7 +25,7 @@ class RootDragAndDropHandler
 
   onDragStart: (e) =>
     @prevDropTargetIndex = null
-    e.originalEvent.dataTransfer.setData 'atom-event', 'true'
+    e.originalEvent.dataTransfer.setData 'atom-tree-view-event', 'true'
     projectRoot = $(e.target).closest('.project-root')
     directory = projectRoot[0].directory
 
@@ -62,7 +62,7 @@ class RootDragAndDropHandler
     @clearDropTarget()
 
   onDragOver: (e) =>
-    unless e.originalEvent.dataTransfer.getData('atom-event') is 'true'
+    unless e.originalEvent.dataTransfer.getData('atom-tree-view-event') is 'true'
       return
 
     e.preventDefault()
@@ -110,7 +110,7 @@ class RootDragAndDropHandler
     {dataTransfer} = e.originalEvent
 
     # TODO: support dragging folders from the filesystem -- electron needs to add support first
-    return unless dataTransfer.getData('atom-event') is 'true'
+    return unless dataTransfer.getData('atom-tree-view-event') is 'true'
 
     fromWindowId = parseInt(dataTransfer.getData('from-window-id'))
     fromRootPath  = dataTransfer.getData('from-root-path')

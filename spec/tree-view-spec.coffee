@@ -3498,7 +3498,7 @@ describe "TreeView", ->
         [_, dragDropEvents] = eventHelpers.buildPositionalDragEvents(null, alphaDir.find('.project-root-header')[0], '.tree-view')
 
         dropEvent = dragDropEvents.bottom
-        dropEvent.originalEvent.dataTransfer.setData('atom-event', true)
+        dropEvent.originalEvent.dataTransfer.setData('atom-tree-view-event', true)
         dropEvent.originalEvent.dataTransfer.setData('from-window-id', treeView.rootDragAndDrop.getWindowId() + 1)
         dropEvent.originalEvent.dataTransfer.setData('from-root-path', etaDirPath)
 
