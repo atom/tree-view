@@ -24,6 +24,7 @@ class RootDragAndDropHandler
     @treeView.on 'drop', '.tree-view', @onDrop
 
   onDragStart: (e) =>
+    @prevDropTargetIndex = null
     e.originalEvent.dataTransfer.setData 'atom-event', 'true'
     projectRoot = $(e.target).closest('.project-root')
     directory = projectRoot[0].directory
@@ -75,6 +76,8 @@ class RootDragAndDropHandler
 
     newDropTargetIndex = @getDropTargetIndex(e)
     return unless newDropTargetIndex?
+    return if @prevDropTargetIndex is newDropTargetIndex
+    @prevDropTargetIndex = newDropTargetIndex
 
     @removeDropTargetClasses()
 
