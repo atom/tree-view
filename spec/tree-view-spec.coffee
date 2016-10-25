@@ -3394,14 +3394,14 @@ describe "TreeView", ->
     afterEach ->
       [alphaDirPath, gammaDirPath, thetaDirPath, etaDirPath] = []
 
-    describe "when dragging a project root's header onto a different project root's header", ->
-      describe "when dragging on the top part of the header", ->
+    describe "when dragging a project root's header onto a different project root", ->
+      describe "when dragging on the top part of the root", ->
         it "should add the placeholder above the directory", ->
           # Dragging gammaDir onto alphaDir
           alphaDir = $(treeView).find('.project-root:contains(alpha):first')
           gammaDir = $(treeView).find('.project-root:contains(gamma):first')
           [dragStartEvent, dragOverEvents, dragEndEvent] =
-            eventHelpers.buildPositionalDragEvents(gammaDir.find('.project-root-header')[0], alphaDir.find('.project-root-header')[0])
+            eventHelpers.buildPositionalDragEvents(gammaDir.find('.project-root-header')[0], alphaDir[0], '.tree-view')
 
           treeView.rootDragAndDrop.onDragStart(dragStartEvent)
           treeView.rootDragAndDrop.onDragOver(dragOverEvents.top)
@@ -3411,13 +3411,13 @@ describe "TreeView", ->
           treeView.rootDragAndDrop.onDragEnd(dragEndEvent)
           expect('.placeholder').not.toExist()
 
-      describe "when dragging on the bottom part of the header", ->
+      describe "when dragging on the bottom part of the root", ->
         it "should add the placeholder below the directory", ->
           # Dragging gammaDir onto alphaDir
           alphaDir = $(treeView).find('.project-root:contains(alpha):first')
           gammaDir = $(treeView).find('.project-root:contains(gamma):first')
           [dragStartEvent, dragOverEvents, dragEndEvent] =
-            eventHelpers.buildPositionalDragEvents(gammaDir.find('.project-root-header')[0], alphaDir.find('.project-root-header')[0])
+            eventHelpers.buildPositionalDragEvents(gammaDir.find('.project-root-header')[0], alphaDir[0], '.tree-view')
 
           treeView.rootDragAndDrop.onDragStart(dragStartEvent)
           treeView.rootDragAndDrop.onDragOver(dragOverEvents.bottom)
@@ -3446,14 +3446,14 @@ describe "TreeView", ->
           expect('.placeholder').not.toExist()
 
 
-    describe "when dropping a project root's header onto a different project root's header", ->
+    describe "when dropping a project root's header onto a different project root", ->
       describe "when dropping on the top part of the header", ->
         it "should add the placeholder above the directory", ->
           # dropping gammaDir above alphaDir
           alphaDir = $(treeView).find('.project-root:contains(alpha):first')
           gammaDir = $(treeView).find('.project-root:contains(gamma):first')
           [dragStartEvent, dragDropEvents] =
-            eventHelpers.buildPositionalDragEvents(gammaDir.find('.project-root-header')[0], alphaDir.find('.project-root-header')[0])
+            eventHelpers.buildPositionalDragEvents(gammaDir.find('.project-root-header')[0], alphaDir[0], '.tree-view')
 
           treeView.rootDragAndDrop.onDragStart(dragStartEvent)
           treeView.rootDragAndDrop.onDrop(dragDropEvents.top)
@@ -3470,7 +3470,7 @@ describe "TreeView", ->
           alphaDir = $(treeView).find('.project-root:contains(alpha):first')
           thetaDir = $(treeView).find('.project-root:contains(theta):first')
           [dragStartEvent, dragDropEvents] =
-            eventHelpers.buildPositionalDragEvents(thetaDir.find('.project-root-header')[0], alphaDir.find('.project-root-header')[0])
+            eventHelpers.buildPositionalDragEvents(thetaDir.find('.project-root-header')[0], alphaDir[0], '.tree-view')
 
           treeView.rootDragAndDrop.onDragStart(dragStartEvent)
           treeView.rootDragAndDrop.onDrop(dragDropEvents.bottom)
@@ -3495,7 +3495,7 @@ describe "TreeView", ->
     describe "when a root folder is dropped from another Atom window", ->
       it "adds the root folder to the window", ->
         alphaDir = $(treeView).find('.project-root:contains(alpha):first')
-        [_, dragDropEvents] = eventHelpers.buildPositionalDragEvents(null, alphaDir.find('.project-root-header')[0])
+        [_, dragDropEvents] = eventHelpers.buildPositionalDragEvents(null, alphaDir.find('.project-root-header')[0], '.tree-view')
 
         dropEvent = dragDropEvents.bottom
         dropEvent.originalEvent.dataTransfer.setData('atom-event', true)

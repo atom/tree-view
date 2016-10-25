@@ -149,11 +149,9 @@ class RootDragAndDropHandler
 
     return 0 unless projectRoot.length
 
-    element = projectRoot.find('.project-root-header')
+    center = projectRoot.offset().top + projectRoot.height() / 2
 
-    elementCenter = element.offset().top + element.height() / 2
-
-    if e.originalEvent.pageY < elementCenter
+    if e.originalEvent.pageY < center
       projectRoots.index(projectRoot)
     else if projectRoot.next('.project-root').length > 0
       projectRoots.index(projectRoot.next('.project-root'))

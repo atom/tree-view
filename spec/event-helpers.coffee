@@ -41,29 +41,33 @@ module.exports.buildExternalDropEvent = (filePaths, dropTarget) ->
 
   dropEvent
 
-buildElementPositionalDragEvents = (el, dataTransfer) ->
+buildElementPositionalDragEvents = (el, dataTransfer, currentTargetSelector) ->
   if not el?
     return {}
   $el = $(el)
+
+  $currentTarget = if currentTargetSelector then $el.closest(currentTargetSelector) else $el
+  currentTarget = $currentTarget[0]
+
   topEvent = $.Event()
   topEvent.target = el
-  topEvent.currentTarget = el
+  topEvent.currentTarget = currentTarget
   topEvent.originalEvent = {dataTransfer, pageY: $el.offset().top}
 
   middleEvent = $.Event()
   middleEvent.target = el
-  middleEvent.currentTarget = el
+  middleEvent.currentTarget = currentTarget
   middleEvent.originalEvent = {dataTransfer, pageY: $el.offset().top + $el.height() * 0.5}
 
   bottomEvent = $.Event()
   bottomEvent.target = el
-  bottomEvent.currentTarget = el
+  bottomEvent.currentTarget = currentTarget
   bottomEvent.originalEvent = {dataTransfer, pageY: $el.offset().bottom}
 
   {top: topEvent, middle: middleEvent, bottom: bottomEvent}
 
 
-module.exports.buildPositionalDragEvents = (dragged, target) ->
+module.exports.buildPositionalDragEvents = (dragged, target, currentTargetSelector) ->
   dataTransfer =
     data: {}
     setData: (key, value) -> @data[key] = "#{value}" # Drag events stringify data values
@@ -80,4 +84,4 @@ module.exports.buildPositionalDragEvents = (dragged, target) ->
   dragEndEvent.currentTarget = dragged
   dragEndEvent.originalEvent = {dataTransfer}
 
-  [dragStartEvent, buildElementPositionalDragEvents(target, dataTransfer), dragEndEvent]
+  [dragStartEvent, buildElementPositionalDragEvents(target, dataTransfer, currentTargetSelector), dragEndEvent]
