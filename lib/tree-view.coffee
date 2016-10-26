@@ -15,6 +15,7 @@ Minimatch = null  # Defer requiring until actually needed
 Directory = require './directory'
 DirectoryView = require './directory-view'
 FileView = require './file-view'
+RootDragAndDrop = require './root-drag-and-drop'
 LocalStorage = window.localStorage
 
 toggleConfig = (keyPath) ->
@@ -42,6 +43,7 @@ class TreeView extends View
     @currentlyOpening = new Map
 
     @dragEventCounts = new WeakMap
+    @rootDragAndDrop = new RootDragAndDrop(this)
 
     @handleEvents()
 
@@ -85,6 +87,7 @@ class TreeView extends View
   deactivate: ->
     root.directory.destroy() for root in @roots
     @disposables.dispose()
+    @rootDragAndDrop.dispose()
     @detach() if @panel?
 
   handleEvents: ->
@@ -279,7 +282,7 @@ class TreeView extends View
       stats = _.pick stats, _.keys(stats)...
       for key in ["atime", "birthtime", "ctime", "mtime"]
         stats[key] = stats[key].getTime()
-      
+
       directory = new Directory({
         name: path.basename(projectPath)
         fullPath: projectPath
@@ -833,14 +836,20 @@ class TreeView extends View
     @list[0].classList.contains('multi-select')
 
   onDragEnter: (e) =>
+    return if @rootDragAndDrop.isDragging(e)
+
     e.stopPropagation()
+
     entry = e.currentTarget.parentNode
     @dragEventCounts.set(entry, 0) unless @dragEventCounts.get(entry)
     entry.classList.add('selected') if @dragEventCounts.get(entry) is 0
     @dragEventCounts.set(entry, @dragEventCounts.get(entry) + 1)
 
   onDragLeave: (e) =>
+    return if @rootDragAndDrop.isDragging(e)
+
     e.stopPropagation()
+
     entry = e.currentTarget.parentNode
     @dragEventCounts.set(entry, @dragEventCounts.get(entry) - 1)
     entry.classList.remove('selected') if @dragEventCounts.get(entry) is 0
@@ -848,6 +857,9 @@ class TreeView extends View
   # Handle entry name object dragstart event
   onDragStart: (e) ->
     e.stopPropagation()
+
+    if @rootDragAndDrop.canDragStart(e)
+      return @rootDragAndDrop.onDragStart(e)
 
     target = $(e.currentTarget).find(".name")
     initialPath = target.data("path")
@@ -872,18 +884,26 @@ class TreeView extends View
 
   # Handle entry dragover event; reset default dragover actions
   onDragOver: (e) ->
-    e.preventDefault()
-    e.stopPropagation()
+    return if @rootDragAndDrop.isDragging(e)
 
-  # Handle entry drop event
-  onDrop: (e) ->
     e.preventDefault()
     e.stopPropagation()
 
     entry = e.currentTarget
-    return unless entry instanceof DirectoryView
+    if @dragEventCounts.get(entry) > 0 and not entry.classList.contains('selected')
+      entry.classList.add('selected')
 
+  # Handle entry drop event
+  onDrop: (e) ->
+    return if @rootDragAndDrop.isDragging(e)
+
+    e.preventDefault()
+    e.stopPropagation()
+
+    entry = e.currentTarget
     entry.classList.remove('selected')
+
+    return unless entry instanceof DirectoryView
 
     newDirectoryPath = $(entry).find(".name").data("path")
     return false unless newDirectoryPath
