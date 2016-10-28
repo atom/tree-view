@@ -17,6 +17,7 @@
     "fs-plus": "^2.3.0",
     "minimatch": "~0.3.0",
     "nsync-fs": "0.0.4",
+    "page-bus": "^3.0.1",
     "pathwatcher": "^6.2",
     "single-socket": "0.0.6",
     "temp": "~0.8.1",
