@@ -21,7 +21,7 @@ WS_SERVER_URL = (->
   config = _.defaults
     host: process.env['IDE_WS_HOST']
     port: process.env['IDE_WS_PORT']
-    path: process.env['IDE_WS_PATH']
+    path: process.env['IDE_WS_FS_PATH']
   ,
     host: '159.203.101.28',
     port: 8080,
