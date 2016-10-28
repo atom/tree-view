@@ -3554,9 +3554,7 @@ describe "TreeView", ->
 
 
 describe 'Icon class handling', ->
-  [workspaceElement, treeView, files] = []
-
-  beforeEach ->
+  it 'allows multiple classes to be passed', ->
     rootDirPath = fs.absolute(temp.mkdirSync('tree-view-root1'))
 
     for i in [1..3]
@@ -3565,16 +3563,16 @@ describe 'Icon class handling', ->
 
     atom.project.setPaths([rootDirPath])
     workspaceElement = atom.views.getView(atom.workspace)
-    jasmine.attachToDOM(workspaceElement)
 
-    FileIcons.setService
+    providerDisposable = atom.packages.serviceHub.provide 'atom.file-icons', '1.0.0', {
       iconClassForPath: (path, context) ->
         expect(context).toBe "tree-view"
         [name, id] = path.match(/file-(\d+)\.txt$/)
         switch id
-          when "1" then 'first second'
-          when "2" then ['first', 'second']
+          when "1" then 'first-icon-class second-icon-class'
+          when "2" then ['third-icon-class', 'fourth-icon-class']
           else "some-other-file"
+    }
 
     waitsForPromise ->
       atom.packages.activatePackage('tree-view')
@@ -3583,11 +3581,10 @@ describe 'Icon class handling', ->
       treeView = atom.packages.getActivePackage("tree-view").mainModule.createView()
       files = workspaceElement.querySelectorAll('li[is="tree-view-file"]')
 
-  afterEach ->
-    temp.cleanup()
+      expect(files[0].fileName.className).toBe('name icon first-icon-class second-icon-class')
+      expect(files[1].fileName.className).toBe('name icon third-icon-class fourth-icon-class')
 
-  it 'allows multiple classes to be passed', ->
-    expect(files[0].fileName.className).toBe('name icon first second')
+      providerDisposable.dispose()
 
-  it 'allows an array of classes to be passed', ->
-    expect(files[1].fileName.className).toBe('name icon first second')
+      files = workspaceElement.querySelectorAll('li[is="tree-view-file"]')
+      expect(files[0].fileName.className).toBe('name icon icon-file-text')
