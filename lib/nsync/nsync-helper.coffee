@@ -23,8 +23,8 @@ WS_SERVER_URL = (->
     port: process.env['IDE_WS_PORT']
     path: process.env['IDE_WS_FS_PATH']
   ,
-    host: '159.203.101.28',
-    port: 8080,
+    host: 'ile.learn.co',
+    port: 443,
     path: 'fs_server'
 
   {host, port, path} = config
