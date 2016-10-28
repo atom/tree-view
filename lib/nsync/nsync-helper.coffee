@@ -99,69 +99,73 @@ onFindAndReplace = (path) ->
     nsync.save(path, content)
 
 module.exports = helper = (activationState) ->
-  disposables = new CompositeDisposable
+  composite = new CompositeDisposable
 
-  disposables.add atomHelper.addCommands
-    'learn-ide:save': onSave
-    'learn-ide:save-as': unimplemented
-    'learn-ide:save-all': unimplemented
-    'learn-ide:import': onImport
-    'learn-ide:file-open': unimplemented
-    'learn-ide:add-project': unimplemented
+  disposables = [
+    atomHelper.addCommands
+      'learn-ide:save': onSave
+      'learn-ide:save-as': unimplemented
+      'learn-ide:save-all': unimplemented
+      'learn-ide:import': onImport
+      'learn-ide:file-open': unimplemented
+      'learn-ide:add-project': unimplemented
 
-  disposables.add nsync.onDidConfigure ->
-    atomHelper.addOpener (uri) ->
-      fs.stat uri, (err, stats) ->
-        if err? and nsync.hasPath(uri)
-          nsync.open(uri)
+    nsync.onDidConfigure ->
+      atomHelper.addOpener (uri) ->
+        fs.stat uri, (err, stats) ->
+          if err? and nsync.hasPath(uri)
+            nsync.open(uri)
 
-  disposables.add nsync.onDidSetPrimary ({localPath, expansionState}) ->
-    atomHelper.updateProject(localPath, expansionState)
+    nsync.onDidSetPrimary ({localPath, expansionState}) ->
+      atomHelper.updateProject(localPath, expansionState)
 
-  disposables.add nsync.onWillLoad ->
-    secondsTillNotifying = 2
+    nsync.onWillLoad ->
+      secondsTillNotifying = 2
 
-    setTimeout ->
-      unless nsync.hasPrimaryNode()
-        atomHelper.loading()
-    , secondsTillNotifying * 1000
+      setTimeout ->
+        unless nsync.hasPrimaryNode()
+          atomHelper.loading()
+      , secondsTillNotifying * 1000
 
-  disposables.add nsync.onDidDisconnect (detail) ->
-    if detail?
-      atomHelper.error 'Learn IDE: you are not connected!', {detail}
-    else
-      atomHelper.disconnected()
-      atomHelper.emit('learn-ide-tree:connection', {isConnected: false})
+    nsync.onDidDisconnect (detail) ->
+      if detail?
+        atomHelper.error 'Learn IDE: you are not connected!', {detail}
+      else
+        atomHelper.disconnected()
+        atomHelper.emit('learn-ide-tree:connection', {isConnected: false})
 
-  disposables.add nsync.onWillConnect ->
-    atomHelper.connecting()
+    nsync.onWillConnect ->
+      atomHelper.connecting()
 
-  disposables.add nsync.onDidConnect ->
-    atomHelper.emit('learn-ide-tree:connection', {isConnected: true})
-    atomHelper.connected()
+    nsync.onDidConnect ->
+      atomHelper.emit('learn-ide-tree:connection', {isConnected: true})
+      atomHelper.connected()
 
-  disposables.add nsync.onDidReceiveCustomCommand (payload) ->
-    executeCustomCommand(payload)
+    nsync.onDidReceiveCustomCommand (payload) ->
+      executeCustomCommand(payload)
 
-  disposables.add nsync.onDidChange (path) ->
-    parent = _path.dirname(path)
-    atomHelper.reloadTreeView(parent, path)
-    atomHelper.updateTitle()
+    nsync.onDidChange (path) ->
+      parent = _path.dirname(path)
+      atomHelper.reloadTreeView(parent, path)
+      atomHelper.updateTitle()
 
-  disposables.add nsync.onDidUpdate (path) ->
-    atomHelper.saveEditor(path)
+    nsync.onDidUpdate (path) ->
+      atomHelper.saveEditor(path)
 
-  disposables.add atomHelper.observeTextEditors (editor) ->
-    disposables.add editor.onDidSave (e) ->
-      onEditorSave(e)
+    atomHelper.observeTextEditors (editor) ->
+      composite.add editor.onDidSave (e) ->
+        onEditorSave(e)
 
-  disposables.add atomHelper.onDidActivatePackage (pkg) ->
-    if pkg.name is 'find-and-replace'
-      projectFindView = pkg.mainModule.projectFindView
-      resultModel = projectFindView.model
+    atomHelper.onDidActivatePackage (pkg) ->
+      if pkg.name is 'find-and-replace'
+        projectFindView = pkg.mainModule.projectFindView
+        resultModel = projectFindView.model
 
-      disposables.add resultModel.onDidReplacePath ({filePath}) ->
-        onFindAndReplace(filePath)
+        composite.add resultModel.onDidReplacePath ({filePath}) ->
+          onFindAndReplace(filePath)
+  ]
+
+  disposables.forEach (disposable) -> composite.add(disposable)
 
   atomHelper.getToken().then (token) ->
     nsync.configure
@@ -173,5 +177,5 @@ module.exports = helper = (activationState) ->
         opts:
           spawn: atomHelper.spawn
 
-  return disposables
+  return composite
 
