@@ -13,6 +13,10 @@ require('dotenv').config
   path: _path.join(__dirname, '..', '..', '.env')
   silent: true
 
+require('dotenv').config
+  path: _path.join(atom.getConfigDirPath(), '.env')
+  silent: true
+
 WS_SERVER_URL = (->
   config = _.defaults
     host: process.env['IDE_WS_HOST']
