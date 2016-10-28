@@ -4,7 +4,6 @@ _path = require 'path'
 nsync = require 'nsync-fs'
 remote = require 'remote'
 dialog = remote.require 'dialog'
-bus = require './event-bus'
 atomHelper = require './atom-helper'
 executeCustomCommand = require './custom-commands'
 SingleSocket = require 'single-socket'
@@ -132,13 +131,13 @@ module.exports = helper = (activationState) ->
       atomHelper.error 'Learn IDE: you are not connected!', {detail}
     else
       atomHelper.disconnected()
-      bus.emit('learn-ide-tree:connection', {isConnected: false})
+      atomHelper.emit('learn-ide-tree:connection', {isConnected: false})
 
   disposables.add nsync.onWillConnect ->
     atomHelper.connecting()
 
   disposables.add nsync.onDidConnect ->
-    bus.emit('learn-ide-tree:connection', {isConnected: true})
+    atomHelper.emit('learn-ide-tree:connection', {isConnected: true})
     atomHelper.connected()
 
   disposables.add nsync.onDidReceiveCustomCommand (payload) ->
