@@ -4,6 +4,7 @@ fs = require 'fs-plus'
 path = require 'path'
 temp = require('temp').track()
 os = require 'os'
+{remote} = require 'electron'
 eventHelpers = require "./event-helpers"
 
 DefaultFileIcons = require '../lib/default-file-icons'
@@ -3092,6 +3093,31 @@ describe "TreeView", ->
         expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Opening folder in Finder failed'
         expect(atom.notifications.getNotifications()[0].getDetail()).toContain 'ENOENT'
 
+  describe "showCurrentFileInFileManager()", ->
+    it "does nothing when no file is opened", ->
+      expect(atom.workspace.getPaneItems().length).toBe(0)
+      expect(treeView.showCurrentFileInFileManager()).toBeUndefined()
+
+    it "does nothing when only an untitled tab is opened", ->
+      waitsForPromise ->
+        atom.workspace.open()
+      runs ->
+        $(workspaceElement).focus()
+        expect(treeView.showCurrentFileInFileManager()).toBeUndefined()
+
+    it "shows file in file manager when some file is opened", ->
+      filePath = path.join(os.tmpdir(), 'non-project-file.txt')
+      fs.writeFileSync(filePath, 'test')
+      waitsForPromise ->
+        atom.workspace.open(filePath)
+
+      runs ->
+        {BufferedProcess} = require 'atom'
+        spyOn(BufferedProcess.prototype, 'spawn').andCallFake ->
+        fileManagerProcess = treeView.showCurrentFileInFileManager()
+        expect(fileManagerProcess instanceof BufferedProcess).toBeTruthy()
+        fileManagerProcess.kill()
+
   describe "when reloading a directory with deletions and additions", ->
     it "does not throw an error (regression)", ->
       projectPath = temp.mkdirSync('atom-project')
@@ -3410,6 +3436,176 @@ describe "TreeView", ->
 
           expect(activePaneItem.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.txt')
           expect(atom.views.getView(atom.workspace.getPanes()[1])).toHaveFocus()
+
+  describe "Dragging and dropping root folders", ->
+    [alphaDirPath, gammaDirPath, thetaDirPath, etaDirPath] = []
+    beforeEach ->
+      rootDirPath = fs.absolute(temp.mkdirSync('tree-view'))
+
+      alphaFilePath = path.join(rootDirPath, "alpha.txt")
+      zetaFilePath = path.join(rootDirPath, "zeta.txt")
+
+      alphaDirPath = path.join(rootDirPath, "alpha")
+      betaFilePath = path.join(alphaDirPath, "beta.txt")
+
+      gammaDirPath = path.join(rootDirPath, "gamma")
+      deltaFilePath = path.join(gammaDirPath, "delta.txt")
+      epsilonFilePath = path.join(gammaDirPath, "epsilon.txt")
+
+      thetaDirPath = path.join(rootDirPath, "theta")
+      etaDirPath = path.join(rootDirPath, "eta")
+
+      fs.writeFileSync(alphaFilePath, "doesn't matter")
+      fs.writeFileSync(zetaFilePath, "doesn't matter")
+
+      fs.makeTreeSync(alphaDirPath)
+      fs.writeFileSync(betaFilePath, "doesn't matter")
+
+      fs.makeTreeSync(gammaDirPath)
+      fs.writeFileSync(deltaFilePath, "doesn't matter")
+      fs.writeFileSync(epsilonFilePath, "doesn't matter")
+      fs.makeTreeSync(thetaDirPath)
+      fs.makeTreeSync(etaDirPath)
+
+      atom.project.setPaths([alphaDirPath, gammaDirPath, thetaDirPath])
+
+      jasmine.attachToDOM(workspaceElement)
+
+    afterEach ->
+      [alphaDirPath, gammaDirPath, thetaDirPath, etaDirPath] = []
+
+    describe "when dragging a project root's header onto a different project root", ->
+      describe "when dragging on the top part of the root", ->
+        it "should add the placeholder above the directory", ->
+          # Dragging gammaDir onto alphaDir
+          alphaDir = $(treeView).find('.project-root:contains(alpha):first')
+          gammaDir = $(treeView).find('.project-root:contains(gamma):first')
+          [dragStartEvent, dragOverEvents, dragEndEvent] =
+            eventHelpers.buildPositionalDragEvents(gammaDir.find('.project-root-header')[0], alphaDir[0], '.tree-view')
+
+          treeView.rootDragAndDrop.onDragStart(dragStartEvent)
+          treeView.rootDragAndDrop.onDragOver(dragOverEvents.top)
+          expect(alphaDir[0].previousSibling).toHaveClass('placeholder')
+
+          # Is removed when drag ends
+          treeView.rootDragAndDrop.onDragEnd(dragEndEvent)
+          expect('.placeholder').not.toExist()
+
+      describe "when dragging on the bottom part of the root", ->
+        it "should add the placeholder below the directory", ->
+          # Dragging gammaDir onto alphaDir
+          alphaDir = $(treeView).find('.project-root:contains(alpha):first')
+          gammaDir = $(treeView).find('.project-root:contains(gamma):first')
+          [dragStartEvent, dragOverEvents, dragEndEvent] =
+            eventHelpers.buildPositionalDragEvents(gammaDir.find('.project-root-header')[0], alphaDir[0], '.tree-view')
+
+          treeView.rootDragAndDrop.onDragStart(dragStartEvent)
+          treeView.rootDragAndDrop.onDragOver(dragOverEvents.bottom)
+          expect(alphaDir[0].nextSibling).toHaveClass('placeholder')
+
+          # Is removed when drag ends
+          treeView.rootDragAndDrop.onDragEnd(dragEndEvent)
+          expect('.placeholder').not.toExist()
+
+      describe "when below all entries", ->
+        it "should add the placeholder below the last directory", ->
+          # Dragging gammaDir onto alphaDir
+          alphaDir = $(treeView).find('.project-root:contains(alpha):first')
+          lastDir = $(treeView).find('.project-root:last')
+          [dragStartEvent, dragOverEvents, dragEndEvent] =
+            eventHelpers.buildPositionalDragEvents(alphaDir.find('.project-root-header')[0], treeView.find('.tree-view')[0])
+
+          expect(alphaDir[0]).not.toEqual(lastDir[0])
+
+          treeView.rootDragAndDrop.onDragStart(dragStartEvent)
+          treeView.rootDragAndDrop.onDragOver(dragOverEvents.bottom)
+          expect(lastDir[0].nextSibling).toHaveClass('placeholder')
+
+          # Is removed when drag ends
+          treeView.rootDragAndDrop.onDragEnd(dragEndEvent)
+          expect('.placeholder').not.toExist()
+
+
+    describe "when dropping a project root's header onto a different project root", ->
+      describe "when dropping on the top part of the header", ->
+        it "should add the placeholder above the directory", ->
+          # dropping gammaDir above alphaDir
+          alphaDir = $(treeView).find('.project-root:contains(alpha):first')
+          gammaDir = $(treeView).find('.project-root:contains(gamma):first')
+          [dragStartEvent, dragDropEvents] =
+            eventHelpers.buildPositionalDragEvents(gammaDir.find('.project-root-header')[0], alphaDir[0], '.tree-view')
+
+          treeView.rootDragAndDrop.onDragStart(dragStartEvent)
+          treeView.rootDragAndDrop.onDrop(dragDropEvents.top)
+          projectPaths = atom.project.getPaths()
+          expect(projectPaths[0]).toEqual(gammaDirPath)
+          expect(projectPaths[1]).toEqual(alphaDirPath)
+
+          # Is removed when drag ends
+          expect('.placeholder').not.toExist()
+
+      describe "when dropping on the bottom part of the header", ->
+        it "should add the placeholder below the directory", ->
+          # dropping thetaDir below alphaDir
+          alphaDir = $(treeView).find('.project-root:contains(alpha):first')
+          thetaDir = $(treeView).find('.project-root:contains(theta):first')
+          [dragStartEvent, dragDropEvents] =
+            eventHelpers.buildPositionalDragEvents(thetaDir.find('.project-root-header')[0], alphaDir[0], '.tree-view')
+
+          treeView.rootDragAndDrop.onDragStart(dragStartEvent)
+          treeView.rootDragAndDrop.onDrop(dragDropEvents.bottom)
+          projectPaths = atom.project.getPaths()
+          expect(projectPaths[0]).toEqual(alphaDirPath)
+          expect(projectPaths[1]).toEqual(thetaDirPath)
+          expect(projectPaths[2]).toEqual(gammaDirPath)
+
+          # Is removed when drag ends
+          expect('.placeholder').not.toExist()
+
+    describe "when a root folder is dragged out of application", ->
+      it "should carry the folder's information", ->
+        gammaDir = $(treeView).find('.project-root:contains(gamma):first')
+        [dragStartEvent] = eventHelpers.buildPositionalDragEvents(gammaDir.find('.project-root-header')[0])
+        treeView.rootDragAndDrop.onDragStart(dragStartEvent)
+
+        expect(dragStartEvent.originalEvent.dataTransfer.getData("text/plain")).toEqual gammaDirPath
+        if process.platform in ['darwin', 'linux']
+          expect(dragStartEvent.originalEvent.dataTransfer.getData("text/uri-list")).toEqual "file://#{gammaDirPath}"
+
+    describe "when a root folder is dropped from another Atom window", ->
+      it "adds the root folder to the window", ->
+        alphaDir = $(treeView).find('.project-root:contains(alpha):first')
+        [_, dragDropEvents] = eventHelpers.buildPositionalDragEvents(null, alphaDir.find('.project-root-header')[0], '.tree-view')
+
+        dropEvent = dragDropEvents.bottom
+        dropEvent.originalEvent.dataTransfer.setData('atom-tree-view-event', true)
+        dropEvent.originalEvent.dataTransfer.setData('from-window-id', treeView.rootDragAndDrop.getWindowId() + 1)
+        dropEvent.originalEvent.dataTransfer.setData('from-root-path', etaDirPath)
+
+        # mock browserWindowForId
+        browserWindowMock = {webContents: {send: ->}}
+        spyOn(remote.BrowserWindow, 'fromId').andReturn(browserWindowMock)
+        spyOn(browserWindowMock.webContents, 'send')
+
+        treeView.rootDragAndDrop.onDrop(dropEvent)
+
+        waitsFor ->
+          browserWindowMock.webContents.send.callCount > 0
+
+        runs ->
+          expect(atom.project.getPaths()).toContain etaDirPath
+          expect('.placeholder').not.toExist()
+
+
+    describe "when a root folder is dropped to another Atom window", ->
+      it "removes the root folder from the first window", ->
+        gammaDir = $(treeView).find('.project-root:contains(gamma):first')
+        [dragStartEvent, dropEvent] = eventHelpers.buildPositionalDragEvents(gammaDir.find('.project-root-header')[0])
+        treeView.rootDragAndDrop.onDragStart(dragStartEvent)
+        treeView.rootDragAndDrop.onDropOnOtherWindow({}, gammaDir.index())
+
+        expect(atom.project.getPaths()).toEqual [alphaDirPath, thetaDirPath]
+        expect('.placeholder').not.toExist()
 
 
 describe 'Icon class handling', ->
