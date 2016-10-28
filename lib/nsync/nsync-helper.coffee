@@ -14,14 +14,18 @@ require('dotenv').config
   path: _path.join(__dirname, '..', '..', '.env')
   silent: true
 
+require('dotenv').config
+  path: _path.join(atom.getConfigDirPath(), '.env')
+  silent: true
+
 WS_SERVER_URL = (->
   config = _.defaults
     host: process.env['IDE_WS_HOST']
     port: process.env['IDE_WS_PORT']
-    path: process.env['IDE_WS_PATH']
+    path: process.env['IDE_WS_FS_PATH']
   ,
-    host: '159.203.101.28',
-    port: 8080,
+    host: 'ile.learn.co',
+    port: 443,
     path: 'fs_server'
 
   {host, port, path} = config
