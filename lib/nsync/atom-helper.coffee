@@ -36,6 +36,7 @@ module.exports = helper =
 
   open: (path) ->
     atom.workspace.open(path)
+    @treeView()?.revealActiveFile()
 
   updateProject: (path, directoryExpansionStates) ->
     @loadingNotification?.dismiss()
