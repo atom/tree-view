@@ -153,3 +153,6 @@ module.exports = helper =
       textBuffer.subscribeToFile()
       textBuffer.reload()
 
+  resetPackage: ->
+    atom.packages.deactivatePackage('learn-ide-tree')
+    atom.packages.activatePackage('learn-ide-tree')

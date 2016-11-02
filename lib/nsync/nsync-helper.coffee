@@ -41,7 +41,7 @@ unimplemented = ({type}) ->
   atomHelper.warn 'Learn IDE: coming soon!', {detail: "Sorry, '#{command}' isn't available yet."}
 
 onRefresh = ->
-  nsync.init()
+  atomHelper.resetPackage()
 
 onSave = ({target}) ->
   editor = atomHelper.findTextEditorByElement(target)
