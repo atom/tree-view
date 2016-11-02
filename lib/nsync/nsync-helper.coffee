@@ -184,6 +184,7 @@ module.exports = helper = (activationState) ->
         url: "#{WS_SERVER_URL}?token=#{token}"
         opts:
           spawn: atomHelper.spawn
+          silent: true
 
   return composite
 
