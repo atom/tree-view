@@ -101,6 +101,14 @@ onFindAndReplace = (path) ->
     content = new Buffer(text).toString('base64')
     nsync.save(path, content)
 
+retryInit = (seconds) ->
+  nsync.init()
+
+  setTimeout ->
+    if not nsync.hasPrimaryNode()
+      retryInit(seconds * 2)
+  , seconds * 1000
+
 module.exports = helper = (activationState) ->
   composite = new CompositeDisposable
 
@@ -133,6 +141,7 @@ module.exports = helper = (activationState) ->
       setTimeout ->
         unless nsync.hasPrimaryNode()
           atomHelper.loading()
+          retryInit(10)
       , secondsTillNotifying * 1000
 
     nsync.onDidDisconnect (detail) ->
