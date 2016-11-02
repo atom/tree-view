@@ -1,6 +1,7 @@
 LocalStorage = window.localStorage
 nsync = require 'nsync-fs'
 crypto = require 'crypto'
+_path = require 'path'
 
 digest = (str) ->
   crypto.createHash('md5').update(str, 'utf8').digest('hex')
@@ -26,6 +27,13 @@ module.exports = helper =
 
   error: (msg, opts) ->
     atom.notifications.addError(msg, opts)
+
+  loadingFile: (path) ->
+    @loadingFileNotifications ?= {}
+    @loadingFileNotifications[path] =
+      @info "Learn IDE: loading #{_path.basename(path)}...",
+        detail: 'This should only take a moment.'
+        dismissable: true
 
   loading: ->
     @loadingNotification =
@@ -134,4 +142,14 @@ module.exports = helper =
     node = nsync.getNode(path)
     if node.digest is digest(textEditor.getText())
       textEditor.save()
+
+  resolveOpen: (path) ->
+    @refreshBuffer(path)
+    @loadingFileNotifications[path]?.dismiss()
+
+  refreshBuffer: (path) ->
+    textBuffer = atom.project.findBufferForPath(path)
+    textBuffer.updateCachedDiskContents false, ->
+      textBuffer.subscribeToFile()
+      textBuffer.reload()
 

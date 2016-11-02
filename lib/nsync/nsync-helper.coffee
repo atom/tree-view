@@ -114,7 +114,11 @@ module.exports = helper = (activationState) ->
       atomHelper.addOpener (uri) ->
         fs.stat uri, (err, stats) ->
           if err? and nsync.hasPath(uri)
+            atomHelper.loadingFile(uri)
             nsync.open(uri)
+
+    nsync.onDidOpen ({localPath}) ->
+      atomHelper.resolveOpen(localPath)
 
     nsync.onDidSetPrimary ({localPath, expansionState}) ->
       atomHelper.updateProject(localPath, expansionState)
