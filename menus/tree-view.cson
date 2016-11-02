@@ -19,12 +19,13 @@
   {
     'label': 'Packages'
     'submenu': [
-      'label': 'Tree View'
+      'label': 'Learn IDE Tree'
       'submenu': [
         { 'label': 'Focus', 'command': 'tree-view:toggle-focus' }
         { 'label': 'Toggle', 'command': 'tree-view:toggle' }
         { 'label': 'Reveal Active File', 'command': 'tree-view:reveal-active-file' }
         { 'label': 'Toggle Tree Side', 'command': 'tree-view:toggle-side' }
+        { 'label': 'Refresh', 'command': 'learn-ide-tree:refresh' }
       ]
     ]
   }

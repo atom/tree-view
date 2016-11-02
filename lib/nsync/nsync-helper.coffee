@@ -40,6 +40,9 @@ unimplemented = ({type}) ->
   command = type.replace(/^learn-ide:/, '').replace(/-/g, ' ')
   atomHelper.warn 'Learn IDE: coming soon!', {detail: "Sorry, '#{command}' isn't available yet."}
 
+onRefresh = ->
+  nsync.init()
+
 onSave = ({target}) ->
   editor = atomHelper.findTextEditorByElement(target)
   path = editor.getPath()
@@ -109,6 +112,7 @@ module.exports = helper = (activationState) ->
       'learn-ide:import': onImport
       'learn-ide:file-open': unimplemented
       'learn-ide:add-project': unimplemented
+      'learn-ide-tree:refresh': onRefresh
 
     nsync.onDidConfigure ->
       atomHelper.addOpener (uri) ->
