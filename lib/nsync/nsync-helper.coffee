@@ -109,6 +109,15 @@ retryInit = (seconds) ->
       retryInit(seconds * 2)
   , seconds * 1000
 
+waitForFile = (localPath, seconds) ->
+  setTimeout ->
+    fs.stat localPath, (err, stats) ->
+      if err? and nsync.hasPath(localPath)
+        waitForFile(localPath, seconds * 2)
+      else
+        atomHelper.resolveOpen(localPath)
+  , seconds * 1000
+
 module.exports = helper = (activationState) ->
   composite = new CompositeDisposable
 
@@ -128,6 +137,7 @@ module.exports = helper = (activationState) ->
           if err? and nsync.hasPath(uri)
             atomHelper.loadingFile(uri)
             nsync.open(uri)
+            waitForFile(uri, 1)
 
     nsync.onDidOpen ({localPath}) ->
       atomHelper.resolveOpen(localPath)

@@ -32,7 +32,9 @@ module.exports = helper =
     @loadingFileNotifications ?= {}
     @loadingFileNotifications[path] =
       @info "Learn IDE: loading #{_path.basename(path)}...",
-        detail: 'This should only take a moment.'
+        detail: """Please leave this file blank and the contents
+                will appear automatically (as you long as
+                you have not altered the file)"""
         dismissable: true
 
   loading: ->
@@ -144,15 +146,21 @@ module.exports = helper =
       textEditor.save()
 
   resolveOpen: (path) ->
-    @refreshBuffer(path)
-    @loadingFileNotifications[path]?.dismiss()
+    notification = @loadingFileNotifications[path]
+    if notification?
+      @refreshBuffer(path)
+      notification.dismiss()
+      delete @loadingFileNotifications[path]
 
   refreshBuffer: (path) ->
     textBuffer = atom.project.findBufferForPath(path)
-    textBuffer.updateCachedDiskContents false, ->
-      textBuffer.subscribeToFile()
-      textBuffer.reload()
+
+    if textBuffer.isEmpty()
+      textBuffer.updateCachedDiskContents false, ->
+        textBuffer.subscribeToFile()
+        textBuffer.reload()
 
   resetPackage: ->
     atom.packages.deactivatePackage('learn-ide-tree')
     atom.packages.activatePackage('learn-ide-tree')
+
