@@ -91,9 +91,12 @@ module.exports = helper =
 
   getToken: ->
     new Promise (resolve) ->
-      atom.config.observe 'learn-ide.oauthToken', (token) ->
-        if token? and token.length
-          resolve(token)
+      pkg = atom.packages.loadPackage('learn-ide')
+      token = pkg.mainModule.token
+
+      token.observe (value) ->
+        if value?
+          resolve(value)
 
   spawn: (modulePath) ->
     {BufferedNodeProcess} = require 'atom'
