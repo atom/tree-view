@@ -180,6 +180,7 @@ class TreeView
      'tree-view:recursive-expand-directory': => @expandDirectory(true)
      'tree-view:collapse-directory': => @collapseDirectory()
      'tree-view:recursive-collapse-directory': => @collapseDirectory(true)
+     'tree-view:collapse-all': => @collapseDirectory(true, true)
      'tree-view:open-selected-entry': => @openSelectedEntry()
      'tree-view:open-selected-entry-right': => @openSelectedEntryRight()
      'tree-view:open-selected-entry-left': => @openSelectedEntryLeft()
@@ -197,7 +198,6 @@ class TreeView
      'tree-view:toggle-vcs-ignored-files': -> toggleConfig 'tree-view.hideVcsIgnoredFiles'
      'tree-view:toggle-ignored-names': -> toggleConfig 'tree-view.hideIgnoredNames'
      'tree-view:remove-project-folder': (e) => @removeProjectFolder(e)
-     'tree-view:collapse-all': => @collapseAll()
 
     [0..8].forEach (index) =>
       atom.commands.add @element, "tree-view:open-selected-entry-in-pane-#{index + 1}", =>
@@ -218,9 +218,6 @@ class TreeView
       @updateRoots()
     @disposables.add atom.config.onDidChange 'tree-view.squashDirectoryNames', =>
       @updateRoots()
-
-  collapseAll: ->
-    root.collapse(true) for root in @roots
 
   toggle: ->
     atom.workspace.toggle(this)
@@ -440,11 +437,13 @@ class TreeView
     else
       directory.expand(isRecursive)
 
-  collapseDirectory: (isRecursive=false) ->
+  collapseDirectory: (isRecursive=false, allDirectories=false) ->
     selectedEntry = @selectedEntry()
     return unless selectedEntry?
 
-    if directory = selectedEntry.closest('.expanded.directory')
+    if allDirectories
+      root.collapse(true) for root in @roots
+    else if directory = $(selectedEntry).closest('.expanded.directory')[0]
       directory.collapse(isRecursive)
       @selectEntry(directory)
 

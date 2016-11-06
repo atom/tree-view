@@ -62,7 +62,6 @@
   'l': 'tree-view:expand-item'
   'left': 'tree-view:collapse-directory'
   'ctrl-[': 'tree-view:collapse-directory'
-  'ctrl-r': 'tree-view:collapse-all'
   'alt-ctrl-]': 'tree-view:recursive-expand-directory'
   'alt-right': 'tree-view:recursive-expand-directory'
   'alt-ctrl-[': 'tree-view:recursive-collapse-directory'
