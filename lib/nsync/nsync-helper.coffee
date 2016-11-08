@@ -101,14 +101,6 @@ onFindAndReplace = (path) ->
     content = new Buffer(text).toString('base64')
     nsync.save(path, content)
 
-retryInit = (seconds) ->
-  nsync.init()
-
-  setTimeout ->
-    if not nsync.hasPrimaryNode()
-      retryInit(seconds * 2)
-  , seconds * 1000
-
 waitForFile = (localPath, seconds) ->
   setTimeout ->
     fs.stat localPath, (err, stats) ->
@@ -151,7 +143,6 @@ module.exports = helper = (activationState) ->
       setTimeout ->
         unless nsync.hasPrimaryNode()
           atomHelper.loading()
-          retryInit(10)
       , secondsTillNotifying * 1000
 
     nsync.onDidDisconnect (detail) ->
@@ -182,6 +173,11 @@ module.exports = helper = (activationState) ->
     atomHelper.observeTextEditors (editor) ->
       composite.add editor.onDidSave (e) ->
         onEditorSave(e)
+
+    atomHelper.on 'learn-ide:logout', ->
+      pkg = atom.packages.loadPackage('learn-ide-tree')
+      pkg.mainModule.preventCache = true
+      nsync.flushCache()
 
     atomHelper.onDidActivatePackage (pkg) ->
       if pkg.name is 'find-and-replace'
