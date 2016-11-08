@@ -17,7 +17,6 @@ commandStrategies = {
 }
 
 module.exports = executeCustomCommand = (data) ->
-  console.log 'here in execute!', data
   {command} = data
   strategy = commandStrategies[command]
 
