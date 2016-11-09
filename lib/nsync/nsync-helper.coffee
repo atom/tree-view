@@ -6,8 +6,9 @@ remote = require 'remote'
 dialog = remote.require 'dialog'
 atomHelper = require './atom-helper'
 executeCustomCommand = require './custom-commands'
-SingleSocket = require 'single-socket'
 {CompositeDisposable} = require 'event-kit'
+
+logFile = _path.join(atom.getConfigDirPath(), 'learn-ide.log')
 
 require('dotenv').config
   path: _path.join(__dirname, '..', '..', '.env')
@@ -194,12 +195,13 @@ module.exports = helper = (activationState) ->
     nsync.configure
       expansionState: activationState.directoryExpansionStates
       localRoot: _path.join(atom.configDirPath, '.learn-ide')
+      logFile: logFile
       connection:
-        websocket: SingleSocket
         url: "#{WS_SERVER_URL}?token=#{token}"
         opts:
           spawn: atomHelper.spawn
           silent: true
+          logFile: logFile
 
   return composite
 
