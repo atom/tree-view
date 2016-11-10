@@ -17,7 +17,7 @@ class WebWindow
     @webContents = @win.webContents
 
     @handleEvents()
-    @win.loadUrl(url) # TODO: handle failed load
+    @win.loadURL(url) # TODO: handle failed load
 
   handleEvents: ->
     @webContents.on 'did-finish-load', =>
