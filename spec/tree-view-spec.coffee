@@ -408,6 +408,16 @@ describe "TreeView", ->
             expect(treeView.hasParent()).toBeTruthy()
             expect(treeView.focus).not.toHaveBeenCalled()
 
+      describe "if tree view is hidden", ->
+        it "tree view remains hidden", ->
+          waitsForPromise ->
+            atom.workspace.open(path.join(atom.project.getPaths()[0], 'dir1', 'file1'))
+
+          runs ->
+            expect(atom.workspace.getLeftPanels().length).toBe(0)
+            atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
+            expect(atom.workspace.getLeftPanels().length).toBe(0)
+
     describe "if the current file has no path", ->
       it "shows and focuses the tree view, but does not attempt to select a specific file", ->
         waitsForPromise ->
@@ -441,6 +451,9 @@ describe "TreeView", ->
         jasmine.attachToDOM(workspaceElement)
 
       it 'scrolls the selected file into the visible view', ->
+        treeView.attach()
+        expect(atom.workspace.getLeftPanels().length).toBe(1)
+
         # Open file at bottom
         waitsForPromise -> atom.workspace.open(path.join(rootDirPath, 'file-20.txt'))
         runs ->
