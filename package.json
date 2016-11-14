@@ -1,6 +1,6 @@
 {
   "name": "learn-ide-tree",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "upstreamVersion": "0.210.0",
   "main": "./lib/main",
   "description": "A Tree View replacement for the Learn IDE",
@@ -16,7 +16,7 @@
     "event-kit": "^1.0.0",
     "fs-plus": "^2.3.0",
     "minimatch": "~0.3.0",
-    "nsync-fs": "0.0.12",
+    "nsync-fs": "0.0.13",
     "pathwatcher": "^6.2",
     "temp": "~0.8.1",
     "underscore-plus": "^1.0.0"
