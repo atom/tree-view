@@ -307,7 +307,8 @@ class TreeView extends View
   getActivePath: -> atom.workspace.getActivePaneItem()?.getPath?()
 
   selectActiveFile: ->
-    if activeFilePath = @getActivePath()
+    activeFilePath = @getActivePath()
+    if @entryForPath(activeFilePath)
       @selectEntryForPath(activeFilePath)
     else
       @deselect()

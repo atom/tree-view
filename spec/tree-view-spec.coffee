@@ -3552,6 +3552,24 @@ describe "TreeView", ->
         expect(atom.project.getPaths()).toEqual [alphaDirPath, thetaDirPath]
         expect('.placeholder').not.toExist()
 
+  describe "When a file is opened", ->
+    describe "if the file entry does not exists in tree view", ->
+      it "deselects existing file entry", ->
+        newfilepath = path.join(os.tmpdir(), 'new-file.txt')
+        fs.writeFileSync(newfilepath, 'test')
+
+        waitsForFileToOpen ->
+          sampleJs.click()
+
+        runs ->
+          expect(sampleJs).toHaveClass 'selected'
+          expect(treeView.find('.selected').length).toBe 1
+
+        waitsForPromise ->
+          atom.workspace.open(newfilepath)
+
+        runs ->
+          expect(treeView.find('.selected').length).toBe 0
 
 describe 'Icon class handling', ->
   it 'allows multiple classes to be passed', ->
