@@ -198,10 +198,6 @@ module.exports = helper = (activationState) ->
       logFile: logFile
       connection:
         url: "#{WS_SERVER_URL}?token=#{token}"
-        opts:
-          spawn: atomHelper.spawn
-          silent: true
-          logFile: logFile
 
   return composite
 
