@@ -8,8 +8,6 @@ atomHelper = require './atom-helper'
 executeCustomCommand = require './custom-commands'
 {CompositeDisposable} = require 'event-kit'
 
-logFile = _path.join(atom.getConfigDirPath(), 'learn-ide.log')
-
 require('dotenv').config
   path: _path.join(__dirname, '..', '..', '.env')
   silent: true
@@ -195,7 +193,6 @@ module.exports = helper = (activationState) ->
     nsync.configure
       expansionState: activationState.directoryExpansionStates
       localRoot: _path.join(atom.configDirPath, '.learn-ide')
-      logFile: logFile
       connection:
         url: "#{WS_SERVER_URL}?token=#{token}"
 
