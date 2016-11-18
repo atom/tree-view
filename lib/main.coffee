@@ -4,16 +4,17 @@ path = require 'path'
 FileIcons = require './file-icons'
 
 nsync = require 'nsync-fs'
+nsyncInitializer = require './nsync/initializer'
 
 module.exports =
   treeView: null
 
   activate: (@state) ->
-    @helperDisposables = require('./nsync/nsync-helper')(@state)
-
     treeViewisDisabled = localStorage.disableTreeView is 'true'
 
     if not treeViewisDisabled
+      @nsyncDisposables = nsyncInitializer(@state)
+
       @warnIfAtomsTreeViewIsActive()
 
       window.addEventListener 'offline', -> nsync.resetConnection()
@@ -45,7 +46,7 @@ module.exports =
     window.removeEventListener 'offline', -> nsync.resetConnection()
     window.removeEventListener 'online', -> nsync.safeResetConnection()
     @disposables.dispose()
-    @helperDisposables.dispose()
+    @nsyncDisposables.dispose()
     @fileIconsDisposable?.dispose()
     @treeView?.deactivate()
     @treeView = null
