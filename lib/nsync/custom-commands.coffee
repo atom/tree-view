@@ -10,7 +10,8 @@ commandStrategies = {
   atom_open: ({path}) ->
     node = nsync.getNode(path)
     if node?
-      atomHelper.open(node.localPath())
+      atomHelper.open(node.localPath()).then ->
+        atomHelper.termFocus()
 
   learn_submit: ({url}) ->
     new WebWindow(url, {resizable: false})

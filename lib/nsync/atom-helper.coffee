@@ -48,8 +48,8 @@ module.exports = helper =
         dismissable: true
 
   open: (path) ->
-    atom.workspace.open(path)
-    @treeView()?.revealActiveFile()
+    atom.workspace.open(path).then =>
+      @treeView()?.revealActiveFile()
 
   updateProject: (path, directoryExpansionStates) ->
     @loadingNotification?.dismiss()
@@ -169,4 +169,8 @@ module.exports = helper =
   resetPackage: ->
     atom.packages.deactivatePackage('learn-ide-tree')
     atom.packages.activatePackage('learn-ide-tree')
+
+  termFocus: ->
+    view = atom.views.getView(atom.workspace)
+    atom.commands.dispatch view, 'learn-ide:focus'
 
