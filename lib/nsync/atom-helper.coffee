@@ -13,9 +13,6 @@ module.exports = helper =
   addCommands: (commands, target = 'atom-workspace') ->
     atom.commands.add(target, commands)
 
-  emit: (key, detail) ->
-    atom.emitter.emit(key, detail)
-
   on: (key, callback) ->
     atom.emitter.on(key, callback)
 

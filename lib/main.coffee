@@ -17,9 +17,6 @@ module.exports =
 
       @warnIfAtomsTreeViewIsActive()
 
-      window.addEventListener 'offline', -> nsync.resetConnection()
-      window.addEventListener 'online', -> nsync.safeResetConnection()
-
       document.body.classList.add('learn-ide')
 
       @disposables = new CompositeDisposable
@@ -43,8 +40,6 @@ module.exports =
 
   deactivate: ->
     nsync.cache() unless @preventCache
-    window.removeEventListener 'offline', -> nsync.resetConnection()
-    window.removeEventListener 'online', -> nsync.safeResetConnection()
     @disposables.dispose()
     @nsyncDisposables.dispose()
     @fileIconsDisposable?.dispose()

@@ -149,13 +149,9 @@ module.exports = helper = (activationState) ->
         atomHelper.error 'Learn IDE: you are not connected!', {detail}
       else
         atomHelper.disconnected()
-        atomHelper.emit('learn-ide-tree:connection', {isConnected: false})
-
-    nsync.onWillConnect ->
-      atomHelper.connecting()
+        atomHelper.connecting()
 
     nsync.onDidConnect ->
-      atomHelper.emit('learn-ide-tree:connection', {isConnected: true})
       atomHelper.connected()
 
     nsync.onDidReceiveCustomCommand (payload) ->
