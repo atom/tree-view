@@ -1,6 +1,7 @@
 LocalStorage = window.localStorage
 nsync = require 'nsync-fs'
 crypto = require 'crypto'
+fs = require 'fs-plus'
 _path = require 'path'
 
 digest = (str) ->
@@ -53,8 +54,9 @@ module.exports = helper =
     initialPaths = atom.project.getPaths()
     initialPaths.forEach (path) -> atom.project.removePath(path)
 
+    fs.makeTreeSync(path)
     atom.project.addPath(path)
-    @treeView()?.updateRoots(directoryExpansionStates)
+    @treeView().updateRoots(directoryExpansionStates)
     @updateTitle()
 
   resetTitleUpdate: ->
