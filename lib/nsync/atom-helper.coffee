@@ -167,7 +167,8 @@ module.exports = helper =
 
   resetPackage: ->
     atom.packages.deactivatePackage('learn-ide-tree')
-    atom.packages.activatePackage('learn-ide-tree')
+    atom.packages.activatePackage('learn-ide-tree').then ->
+      atom.menu.sortPackagesMenu()
 
   termFocus: ->
     view = atom.views.getView(atom.workspace)
