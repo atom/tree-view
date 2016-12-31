@@ -2507,6 +2507,9 @@ describe "TreeView", ->
       xiDirPath1 = path.join(muDirPath, "xi")
       xiDirPath2 = path.join(nuDirPath, "xi")
 
+      omicronDirPath = path.join(rootDirPath, "omicron")
+      piDirPath = path.join(omicronDirPath, "pi")
+
       fs.makeTreeSync(zetaDirPath)
       fs.writeFileSync(zetaFilePath, "doesn't matter")
 
@@ -2527,6 +2530,9 @@ describe "TreeView", ->
       fs.makeTreeSync(nuDirPath)
       fs.makeTreeSync(xiDirPath1)
       fs.makeTreeSync(xiDirPath2)
+
+      fs.makeTreeSync(omicronDirPath)
+      fs.makeTreeSync(piDirPath)
 
       atom.project.setPaths([rootDirPath])
 
@@ -2568,6 +2574,19 @@ describe "TreeView", ->
           element.innerText
 
         expect(lambdaEntries).toEqual(["iota", "kappa"])
+
+      describe "when a squashed directory is deleted", ->
+        it "un-squashes the directories", ->
+          jasmine.attachToDOM(workspaceElement)
+          piDir = $(treeView.roots[0].entries).find(".directory:contains(omicron#{path.sep}pi):first")[0]
+          treeView.focus()
+          treeView.selectEntry(piDir)
+          spyOn(atom, 'confirm').andCallFake (dialog) ->
+            dialog.buttons["Move to Trash"]()
+          atom.commands.dispatch(treeView.element, 'tree-view:remove')
+
+          omicronDir = $(treeView.roots[0].entries).find(".directory:contains(omicron):first span")[0]
+          expect(omicronDir.title).toEqual("omicron")
 
       describe "when a directory is reloaded", ->
         it "squashes the directory names the last of which is same as an unsquashed directory", ->

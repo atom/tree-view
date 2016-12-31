@@ -565,7 +565,7 @@ class TreeView extends View
       message: "Are you sure you want to delete the selected #{if selectedPaths.length > 1 then 'items' else 'item'}?"
       detailedMessage: "You are deleting:\n#{selectedPaths.join('\n')}"
       buttons:
-        "Move to Trash": ->
+        "Move to Trash": =>
           failedDeletions = []
           for selectedPath in selectedPaths
             if not shell.moveItemToTrash(selectedPath)
@@ -576,6 +576,7 @@ class TreeView extends View
             atom.notifications.addError "The following #{if failedDeletions.length > 1 then 'files' else 'file'} couldn't be moved to trash#{if process.platform is 'linux' then " (is `gvfs-trash` installed?)" else ""}",
               detail: "#{failedDeletions.join('\n')}"
               dismissable: true
+          @updateRoots()
         "Cancel": null
 
   # Public: Copy the path of the selected entry element.
