@@ -1,7 +1,7 @@
 {Disposable, CompositeDisposable} = require 'event-kit'
 path = require 'path'
 
-FileIcons = require './file-icons'
+IconServices = require './icon-services'
 
 module.exports =
   treeView: null
@@ -32,11 +32,16 @@ module.exports =
     @treeView?.deactivate()
     @treeView = null
 
+  consumeElementIcons: (service) ->
+    IconServices.set "element-icons", service
+    new Disposable ->
+      IconServices.reset "element-icons"
+
   consumeFileIcons: (service) ->
-    FileIcons.setService(service)
+    IconServices.set "file-icons", service
     @treeView?.updateRoots()
     new Disposable =>
-      FileIcons.resetService()
+      IconServices.reset "file-icons"
       @treeView?.updateRoots()
 
   serialize: ->

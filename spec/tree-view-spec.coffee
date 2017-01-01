@@ -7,9 +7,6 @@ os = require 'os'
 {remote} = require 'electron'
 eventHelpers = require "./event-helpers"
 
-DefaultFileIcons = require '../lib/default-file-icons'
-FileIcons = require '../lib/file-icons'
-
 waitsForFileToOpen = (causeFileToOpen) ->
   waitsFor (done) ->
     disposable = atom.workspace.onDidOpen ->

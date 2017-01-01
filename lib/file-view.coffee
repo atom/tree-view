@@ -1,5 +1,5 @@
 {CompositeDisposable} = require 'event-kit'
-FileIcons = require './file-icons'
+IconServices = require './icon-services'
 
 module.exports =
 class FileView extends HTMLElement
@@ -19,14 +19,24 @@ class FileView extends HTMLElement
     @fileName.dataset.name = @file.name
     @fileName.dataset.path = @file.path
 
-    iconClass = FileIcons.getService().iconClassForPath(@file.path, "tree-view")
+    @updateIcon()
+    @subscriptions.add @file.onDidStatusChange => @updateStatus()
+    @subscriptions.add IconServices.onDidChange => @updateIcon()
+    @updateStatus()
+
+  updateIcon: ->
+    if service = IconServices.get 'element-icons'
+      @subscriptions.add service @fileName, @file.path
+    else
+      service = IconServices.get 'file-icons'
+      iconClass = service.iconClassForPath(@file.path, "tree-view")
+
+    classes = ['name', 'icon']
     if iconClass
       unless Array.isArray iconClass
         iconClass = iconClass.toString().split(/\s+/g)
-      @fileName.classList.add(iconClass...)
-
-    @subscriptions.add @file.onDidStatusChange => @updateStatus()
-    @updateStatus()
+      classes.push(iconClass...)
+    @fileName.classList.add(classes...)
 
   updateStatus: ->
     @classList.remove('status-ignored', 'status-modified',  'status-added')
