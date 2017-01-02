@@ -2543,7 +2543,7 @@ describe "TreeView", ->
       beforeEach ->
         atom.config.set('tree-view.squashDirectoryNames', true)
 
-      it "it does not squash root directories", ->
+      it "does not squash root directories", ->
         rootDir = fs.absolute(temp.mkdirSync('tree-view'))
         zetaDir = path.join(rootDir, "zeta")
         fs.makeTreeSync(zetaDir)
