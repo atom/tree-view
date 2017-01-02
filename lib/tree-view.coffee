@@ -588,7 +588,7 @@ class TreeView extends View
     switch process.platform
       when 'linux' then 'Is `gvfs-trash` installed?'
       when 'darwin' then 'Is Trash enabled on the volume where the files are stored?'
-      when 'win32' then 'Is RecycleBin support enabled on the drive where the files are stored?'
+      when 'win32' then 'Is there a Recycle Bin on the drive where the files are stored?'
 
   # Public: Copy the path of the selected entry element.
   #         Save the path in localStorage, so that copying from 2 different
