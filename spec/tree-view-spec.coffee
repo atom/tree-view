@@ -2543,6 +2543,18 @@ describe "TreeView", ->
       beforeEach ->
         atom.config.set('tree-view.squashDirectoryNames', true)
 
+      it "does not squash root directories", ->
+        rootDir = fs.absolute(temp.mkdirSync('tree-view'))
+        zetaDir = path.join(rootDir, "zeta")
+        fs.makeTreeSync(zetaDir)
+        atom.project.setPaths([rootDir])
+        jasmine.attachToDOM(workspaceElement)
+
+        rootDirPath = treeView.roots[0].getPath()
+        expect(rootDirPath).toBe(rootDir)
+        zetaDirPath = $(treeView.roots[0].entries).find('.directory:contains(zeta):first')[0].getPath()
+        expect(zetaDirPath).toBe(zetaDir)
+
       it "does not squash a file in to a DirectoryViews", ->
         zetaDir = $(treeView.roots[0].entries).find('.directory:contains(zeta):first')
         zetaDir[0].expand()
