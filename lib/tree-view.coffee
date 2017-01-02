@@ -573,11 +573,22 @@ class TreeView extends View
             if repo = repoForPath(selectedPath)
               repo.getPathStatus(selectedPath)
           if failedDeletions.length > 0
-            atom.notifications.addError "The following #{if failedDeletions.length > 1 then 'files' else 'file'} couldn't be moved to trash#{if process.platform is 'linux' then " (is `gvfs-trash` installed?)" else ""}",
+            atom.notifications.addError @formatTrashFailureMessage(failedDeletions),
               detail: "#{failedDeletions.join('\n')}"
               dismissable: true
           @updateRoots()
         "Cancel": null
+
+  formatTrashFailureMessage: (failedDeletions) ->
+    fileText = if failedDeletions.length > 1 then 'files' else 'file'
+
+    "The following #{fileText} couldn't be moved to the trash. #{@formatTrashEnabledMessage()}"
+
+  formatTrashEnabledMessage: ->
+    switch process.platform
+      when 'linux' then 'Is `gvfs-trash` installed?'
+      when 'darwin' then 'Is Trash enabled on the volume where the files are stored?'
+      when 'win32' then 'Is RecycleBin support enabled on the drive where the files are stored?'
 
   # Public: Copy the path of the selected entry element.
   #         Save the path in localStorage, so that copying from 2 different
