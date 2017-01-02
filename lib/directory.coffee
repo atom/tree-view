@@ -14,7 +14,7 @@ class Directory
     @emitter = new Emitter()
     @subscriptions = new CompositeDisposable()
 
-    if atom.config.get('tree-view.squashDirectoryNames')
+    if atom.config.get('tree-view.squashDirectoryNames') and not @isRoot
       fullPath = @squashDirectoryNames(fullPath)
 
     @path = fullPath
