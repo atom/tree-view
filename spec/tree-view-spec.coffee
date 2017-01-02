@@ -2588,6 +2588,43 @@ describe "TreeView", ->
           omicronDir = $(treeView.roots[0].entries).find(".directory:contains(omicron):first span")[0]
           expect(omicronDir.title).toEqual("omicron")
 
+      describe "when a file is created within a directory with another squashed directory", ->
+        it "un-squashes the directories", ->
+          jasmine.attachToDOM(workspaceElement)
+          piDir = $(treeView.roots[0].entries).find(".directory:contains(omicron#{path.sep}pi):first")[0]
+          expect(piDir).not.toBeNull()
+          omicronPath = piDir.getPath().replace "/pi", ""
+          sigmaFilePath = path.join(omicronPath, "sigma.txt")
+          fs.writeFileSync(sigmaFilePath, "doesn't matter")
+          treeView.updateRoots()
+
+          omicronDir = $(treeView.roots[0].entries).find(".directory:contains(omicron):first span")[0]
+          expect(omicronDir.title).toEqual("omicron")
+          omicronDir.click()
+          piDir = $(treeView.roots[0].entries).find(".directory:contains(omicron) .entries .directory:contains(pi) span")[0]
+          expect(piDir.title).toEqual("pi")
+          sigmaFile = $(treeView.roots[0].entries).find(".directory:contains(omicron) .entries .file:contains(sigma) span")[0]
+          expect(sigmaFile.title).toEqual("sigma.txt")
+
+      describe "when a directory is created within a directory with another squashed directory", ->
+        it "un-squashes the directories", ->
+          jasmine.attachToDOM(workspaceElement)
+          piDir = $(treeView.roots[0].entries).find(".directory:contains(omicron#{path.sep}pi):first")[0]
+          expect(piDir).not.toBeNull()
+          omicronPath = piDir.getPath().replace "/pi", ""
+          rhoDirPath = path.join(omicronPath, "rho")
+          fs.makeTreeSync(rhoDirPath)
+          treeView.updateRoots()
+
+          omicronDir = $(treeView.roots[0].entries).find(".directory:contains(omicron):first span")[0]
+          expect(omicronDir.title).toEqual("omicron")
+          omicronDir.click()
+          piDir = $(treeView.roots[0].entries).find(".directory:contains(omicron) .entries .directory:contains(pi) span")[0]
+          expect(piDir.title).toEqual("pi")
+          rhoDir = $(treeView.roots[0].entries).find(".directory:contains(omicron) .entries .directory:contains(rho) span")[0]
+          expect(rhoDir.title).toEqual("rho")
+
+
       describe "when a directory is reloaded", ->
         it "squashes the directory names the last of which is same as an unsquashed directory", ->
           muDir = $(treeView.roots[0].entries).find('.directory:contains(mu):first')
