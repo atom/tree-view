@@ -65,6 +65,9 @@ class TreeView extends View
     @width(state.width) if state.width > 0
     @attach() if state.attached
 
+    @disposables.add atom.workspace.observeTextEditors (editor) =>
+      @onFileOpened(editor)
+
   attached: ->
     @focus() if @focusAfterAttach
     @scroller.scrollLeft(@scrollLeftAfterAttach) if @scrollLeftAfterAttach > 0
@@ -158,6 +161,14 @@ class TreeView extends View
     @disposables.add atom.config.onDidChange 'tree-view.squashDirectoryNames', =>
       @updateRoots()
 
+  onFileOpened: (editor) ->
+    filePath = editor.getPath()
+    entry = @entryForPath(filePath)
+    if entry? and entry.file?
+      file = entry.file
+      @disposables.add editor.onDidDestroy => file.close()
+      file.open()
+      
   toggle: ->
     if @isVisible()
       @detach()

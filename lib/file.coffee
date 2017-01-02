@@ -30,11 +30,23 @@ class File
     @subscriptions.dispose()
     @emitter.emit('did-destroy')
 
+  open: ->
+    @emitter.emit('did-open')
+
+  close: ->
+    @emitter.emit('did-close')
+
   onDidDestroy: (callback) ->
     @emitter.on('did-destroy', callback)
 
   onDidStatusChange: (callback) ->
     @emitter.on('did-status-change', callback)
+
+  onDidOpen: (callback) ->
+    @emitter.on('did-open', callback)
+
+  onDidClose: (callback) ->
+    @emitter.on('did-close', callback)
 
   # Subscribe to the project's repo for changes to the Git status of this file.
   subscribeToRepo: ->

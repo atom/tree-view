@@ -664,13 +664,34 @@ describe "TreeView", ->
           runs ->
             expect(atom.workspace.getActivePane().getItems().length).toBe 1
 
+      describe "when the icon-x is clicked", ->
+        it "closes the file and the icon-x disappears", ->
+          waitsForFileToOpen ->
+            sampleJs.trigger clickEvent(originalEvent: {detail: 1})
+            sampleJs.trigger clickEvent(originalEvent: {detail: 2})
+
+          runs ->
+            initialTextEditorsOpened = atom.workspace.textEditorRegistry.editors.size
+            treeView.focus()
+            activePaneItem = atom.workspace.getActivePaneItem()
+            file = treeView.entryForPath(activePaneItem.getPath())
+            iconX = file.lastChild
+            # Conditions before click icon-x
+            expect(iconX.className).toBe('icon-x')
+            expect(atom.workspace.textEditorRegistry.editors.size).toBe(initialTextEditorsOpened)
+
+            iconX.click()
+            # Conditions after click icon-x
+            expect(atom.workspace.textEditorRegistry.editors.size).toBe(initialTextEditorsOpened - 1)
+            expect(file.lastChild).not.toBe('icon-x')
+
     describe "when a file is double-clicked", ->
       activePaneItem = null
 
       beforeEach ->
         treeView.focus()
 
-      it "opens the file and focuses it", ->
+      it "opens the file, shows icon-x and focuses it", ->
         waitsForFileToOpen ->
           sampleJs.trigger clickEvent(originalEvent: {detail: 1})
           sampleJs.trigger clickEvent(originalEvent: {detail: 2})
@@ -682,6 +703,9 @@ describe "TreeView", ->
           activePaneItem = atom.workspace.getActivePaneItem()
           expect(activePaneItem.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
           expect(atom.views.getView(activePaneItem)).toHaveFocus()
+          file = treeView.entryForPath(activePaneItem.getPath())
+          iconX = file.lastChild
+          expect(iconX.className).toBe('icon-x')
 
       it "does not open a duplicate file", ->
         # Fixes https://github.com/atom/atom/issues/11391
