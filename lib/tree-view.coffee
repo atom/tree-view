@@ -574,6 +574,7 @@ class TreeView extends View
               repo.getPathStatus(selectedPath)
           if failedDeletions.length > 0
             atom.notifications.addError @formatTrashFailureMessage(failedDeletions),
+              description: @formatTrashEnabledMessage()
               detail: "#{failedDeletions.join('\n')}"
               dismissable: true
           @updateRoots()
@@ -582,7 +583,7 @@ class TreeView extends View
   formatTrashFailureMessage: (failedDeletions) ->
     fileText = if failedDeletions.length > 1 then 'files' else 'file'
 
-    "The following #{fileText} couldn't be moved to the trash. #{@formatTrashEnabledMessage()}"
+    "The following #{fileText} couldn't be moved to the trash."
 
   formatTrashEnabledMessage: ->
     switch process.platform
