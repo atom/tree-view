@@ -2401,7 +2401,7 @@ describe "TreeView", ->
           expect(notificationsNumber).toBe 1
           if notificationsNumber is 1
             notification = atom.notifications.getNotifications()[0]
-            expect(notification.getMessage()).toContain 'The following file couldn\'t be moved to trash'
+            expect(notification.getMessage()).toContain 'The following file couldn\'t be moved to the trash'
             expect(notification.getDetail()).toContain 'test-file.txt'
 
       it "does nothing when no file is selected", ->
@@ -2557,6 +2557,9 @@ describe "TreeView", ->
       xiDirPath1 = path.join(muDirPath, "xi")
       xiDirPath2 = path.join(nuDirPath, "xi")
 
+      omicronDirPath = path.join(rootDirPath, "omicron")
+      piDirPath = path.join(omicronDirPath, "pi")
+
       fs.makeTreeSync(zetaDirPath)
       fs.writeFileSync(zetaFilePath, "doesn't matter")
 
@@ -2578,6 +2581,9 @@ describe "TreeView", ->
       fs.makeTreeSync(xiDirPath1)
       fs.makeTreeSync(xiDirPath2)
 
+      fs.makeTreeSync(omicronDirPath)
+      fs.makeTreeSync(piDirPath)
+
       atom.project.setPaths([rootDirPath])
 
     it "defaults to disabled", ->
@@ -2586,6 +2592,18 @@ describe "TreeView", ->
     describe "when enabled", ->
       beforeEach ->
         atom.config.set('tree-view.squashDirectoryNames', true)
+
+      it "does not squash root directories", ->
+        rootDir = fs.absolute(temp.mkdirSync('tree-view'))
+        zetaDir = path.join(rootDir, "zeta")
+        fs.makeTreeSync(zetaDir)
+        atom.project.setPaths([rootDir])
+        jasmine.attachToDOM(workspaceElement)
+
+        rootDirPath = treeView.roots[0].getPath()
+        expect(rootDirPath).toBe(rootDir)
+        zetaDirPath = $(treeView.roots[0].entries).find('.directory:contains(zeta):first')[0].getPath()
+        expect(zetaDirPath).toBe(zetaDir)
 
       it "does not squash a file in to a DirectoryViews", ->
         zetaDir = $(treeView.roots[0].entries).find('.directory:contains(zeta):first')
@@ -2618,6 +2636,57 @@ describe "TreeView", ->
           element.innerText
 
         expect(lambdaEntries).toEqual(["iota", "kappa"])
+
+      describe "when a squashed directory is deleted", ->
+        it "un-squashes the directories", ->
+          jasmine.attachToDOM(workspaceElement)
+          piDir = $(treeView.roots[0].entries).find(".directory:contains(omicron#{path.sep}pi):first")[0]
+          treeView.focus()
+          treeView.selectEntry(piDir)
+          spyOn(atom, 'confirm').andCallFake (dialog) ->
+            dialog.buttons["Move to Trash"]()
+          atom.commands.dispatch(treeView.element, 'tree-view:remove')
+
+          omicronDir = $(treeView.roots[0].entries).find(".directory:contains(omicron):first span")[0]
+          expect(omicronDir.title).toEqual("omicron")
+
+      describe "when a file is created within a directory with another squashed directory", ->
+        it "un-squashes the directories", ->
+          jasmine.attachToDOM(workspaceElement)
+          piDir = $(treeView.roots[0].entries).find(".directory:contains(omicron#{path.sep}pi):first")[0]
+          expect(piDir).not.toBeNull()
+          # omicron is a squashed dir, so searching for omicron would give us omicron/pi instead
+          omicronPath = piDir.getPath().replace "#{path.sep}pi", ""
+          sigmaFilePath = path.join(omicronPath, "sigma.txt")
+          fs.writeFileSync(sigmaFilePath, "doesn't matter")
+          treeView.updateRoots()
+
+          omicronDir = $(treeView.roots[0].entries).find(".directory:contains(omicron):first span")[0]
+          expect(omicronDir.title).toEqual("omicron")
+          omicronDir.click()
+          piDir = $(treeView.roots[0].entries).find(".directory:contains(omicron) .entries .directory:contains(pi) span")[0]
+          expect(piDir.title).toEqual("pi")
+          sigmaFile = $(treeView.roots[0].entries).find(".directory:contains(omicron) .entries .file:contains(sigma) span")[0]
+          expect(sigmaFile.title).toEqual("sigma.txt")
+
+      describe "when a directory is created within a directory with another squashed directory", ->
+        it "un-squashes the directories", ->
+          jasmine.attachToDOM(workspaceElement)
+          piDir = $(treeView.roots[0].entries).find(".directory:contains(omicron#{path.sep}pi):first")[0]
+          expect(piDir).not.toBeNull()
+          # omicron is a squashed dir, so searching for omicron would give us omicron/pi instead
+          omicronPath = piDir.getPath().replace "#{path.sep}pi", ""
+          rhoDirPath = path.join(omicronPath, "rho")
+          fs.makeTreeSync(rhoDirPath)
+          treeView.updateRoots()
+
+          omicronDir = $(treeView.roots[0].entries).find(".directory:contains(omicron):first span")[0]
+          expect(omicronDir.title).toEqual("omicron")
+          omicronDir.click()
+          piDir = $(treeView.roots[0].entries).find(".directory:contains(omicron) .entries .directory:contains(pi) span")[0]
+          expect(piDir.title).toEqual("pi")
+          rhoDir = $(treeView.roots[0].entries).find(".directory:contains(omicron) .entries .directory:contains(rho) span")[0]
+          expect(rhoDir.title).toEqual("rho")
 
       describe "when a directory is reloaded", ->
         it "squashes the directory names the last of which is same as an unsquashed directory", ->
