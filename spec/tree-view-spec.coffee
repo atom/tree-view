@@ -2593,6 +2593,7 @@ describe "TreeView", ->
           jasmine.attachToDOM(workspaceElement)
           piDir = $(treeView.roots[0].entries).find(".directory:contains(omicron#{path.sep}pi):first")[0]
           expect(piDir).not.toBeNull()
+          # omicron is a squashed dir, so searching for omicron would give us omicron/pi instead
           omicronPath = piDir.getPath().replace "#{path.sep}pi", ""
           sigmaFilePath = path.join(omicronPath, "sigma.txt")
           fs.writeFileSync(sigmaFilePath, "doesn't matter")
@@ -2611,6 +2612,7 @@ describe "TreeView", ->
           jasmine.attachToDOM(workspaceElement)
           piDir = $(treeView.roots[0].entries).find(".directory:contains(omicron#{path.sep}pi):first")[0]
           expect(piDir).not.toBeNull()
+          # omicron is a squashed dir, so searching for omicron would give us omicron/pi instead
           omicronPath = piDir.getPath().replace "#{path.sep}pi", ""
           rhoDirPath = path.join(omicronPath, "rho")
           fs.makeTreeSync(rhoDirPath)
