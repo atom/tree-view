@@ -32,8 +32,10 @@ class CopyDialog extends Dialog
     try
       if fs.isDirectorySync(@initialPath)
         fs.copySync(@initialPath, newPath)
+        @trigger 'entry-copied', [@initialPath, newPath]
       else
-        fs.copy @initialPath, newPath, ->
+        fs.copy @initialPath, newPath, =>
+          @trigger 'entry-copied', [@initialPath, newPath]
           atom.workspace.open newPath,
             activatePane: true
             initialLine: activeEditor?.getLastCursor().getBufferRow()
