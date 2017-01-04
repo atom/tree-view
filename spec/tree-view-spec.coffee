@@ -2624,7 +2624,6 @@ describe "TreeView", ->
           rhoDir = $(treeView.roots[0].entries).find(".directory:contains(omicron) .entries .directory:contains(rho) span")[0]
           expect(rhoDir.title).toEqual("rho")
 
-
       describe "when a directory is reloaded", ->
         it "squashes the directory names the last of which is same as an unsquashed directory", ->
           muDir = $(treeView.roots[0].entries).find('.directory:contains(mu):first')
