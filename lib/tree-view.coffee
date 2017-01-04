@@ -577,7 +577,7 @@ class TreeView extends View
               description: @formatTrashEnabledMessage()
               detail: "#{failedDeletions.join('\n')}"
               dismissable: true
-          @updateRoots()
+          @updateRoots() if atom.config.get('tree-view.squashDirectoryNames')
         "Cancel": null
 
   formatTrashFailureMessage: (failedDeletions) ->
@@ -676,9 +676,11 @@ class TreeView extends View
     dialog.on 'directory-created', (event, createdPath) =>
       @entryForPath(createdPath)?.reload()
       @selectEntryForPath(createdPath)
+      @updateRoots() if atom.config.get('tree-view.squashDirectoryNames')
       false
-    dialog.on 'file-created', (event, createdPath) ->
+    dialog.on 'file-created', (event, createdPath) =>
       atom.workspace.open(createdPath)
+      @updateRoots() if atom.config.get('tree-view.squashDirectoryNames')
       false
     dialog.attach()
 
