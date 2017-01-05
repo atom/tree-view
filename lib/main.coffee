@@ -1,4 +1,4 @@
-{CompositeDisposable} = require 'event-kit'
+{Disposable, CompositeDisposable} = require 'event-kit'
 path = require 'path'
 
 FileIcons = require './file-icons'
@@ -23,6 +23,7 @@ module.exports =
       'tree-view:duplicate': => @createView().copySelectedEntry()
       'tree-view:remove': => @createView().removeSelectedEntries()
       'tree-view:rename': => @createView().moveSelectedEntry()
+      'tree-view:show-current-file-in-file-manager': => @createView().showCurrentFileInFileManager()
     })
 
   deactivate: ->
@@ -33,10 +34,10 @@ module.exports =
 
   consumeFileIcons: (service) ->
     FileIcons.setService(service)
-    @fileIconsDisposable = service.onWillDeactivate ->
+    @treeView?.updateRoots()
+    new Disposable =>
       FileIcons.resetService()
       @treeView?.updateRoots()
-    @treeView?.updateRoots()
 
   serialize: ->
     if @treeView?
@@ -51,7 +52,7 @@ module.exports =
     @treeView
 
   shouldAttach: ->
-    projectPath = atom.project.getPaths()[0]
+    projectPath = atom.project.getPaths()[0] ? ''
     if atom.workspace.getActivePaneItem()
       false
     else if path.basename(projectPath) is '.git'

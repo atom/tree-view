@@ -29,26 +29,28 @@ class DirectoryView extends HTMLElement
       else
         iconClass = 'icon-file-submodule' if @directory.submodule
     @directoryName.classList.add(iconClass)
-    @directoryName.dataset.name = @directory.name
-    @directoryName.title = @directory.name
     @directoryName.dataset.path = @directory.path
 
-    if @directory.squashedName?
-      @squashedDirectoryName = document.createElement('span')
-      @squashedDirectoryName.classList.add('squashed-dir')
-      @squashedDirectoryName.textContent = @directory.squashedName
-
-    directoryNameTextNode = document.createTextNode(@directory.name)
+    if @directory.squashedNames?
+      @directoryName.dataset.name = @directory.squashedNames.join('')
+      @directoryName.title = @directory.squashedNames.join('')
+      squashedDirectoryNameNode = document.createElement('span')
+      squashedDirectoryNameNode.classList.add('squashed-dir')
+      squashedDirectoryNameNode.textContent = @directory.squashedNames[0]
+      @directoryName.appendChild(squashedDirectoryNameNode)
+      @directoryName.appendChild(document.createTextNode(@directory.squashedNames[1]))
+    else
+      @directoryName.dataset.name = @directory.name
+      @directoryName.title = @directory.name
+      @directoryName.textContent = @directory.name
 
     @appendChild(@header)
-    if @squashedDirectoryName?
-      @directoryName.appendChild(@squashedDirectoryName)
-    @directoryName.appendChild(directoryNameTextNode)
     @header.appendChild(@directoryName)
     @appendChild(@entries)
 
     if @directory.isRoot
       @classList.add('project-root')
+      @header.classList.add('project-root-header')
     else
       @draggable = true
       @subscriptions.add @directory.onDidStatusChange => @updateStatus()

@@ -19,4 +19,3 @@ The Tree View displays icons next to files. These icons are customizable by inst
 The `atom.file-icons` service must provide the following methods:
 
 * `iconClassForPath(path)` - Returns a CSS class name to add to the file view
-* `onWillDeactivate` - An event that lets the tree view return to its default icon strategy
