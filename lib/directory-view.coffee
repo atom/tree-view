@@ -55,15 +55,16 @@ class DirectoryView extends HTMLElement
   updateIcon: ->
     if service = IconServices.get 'element-icons'
       @subscriptions.add service @directoryName, @directory.path
-    else if @directory.symlink
-      iconClass = 'icon-file-symlink-directory'
     else
-      iconClass = 'icon-file-directory'
-      if @directory.isRoot
-        iconClass = 'icon-repo' if repoForPath(@directory.path)?.isProjectAtRoot()
+      if @directory.symlink
+        iconClass = 'icon-file-symlink-directory'
       else
-        iconClass = 'icon-file-submodule' if @directory.submodule
-    @directoryName.classList.add(iconClass)
+        iconClass = 'icon-file-directory'
+        if @directory.isRoot
+          iconClass = 'icon-repo' if repoForPath(@directory.path)?.isProjectAtRoot()
+        else
+          iconClass = 'icon-file-submodule' if @directory.submodule
+      @directoryName.classList.add(iconClass)
 
   updateStatus: ->
     @classList.remove('status-ignored', 'status-modified', 'status-added')
