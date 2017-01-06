@@ -1908,7 +1908,7 @@ describe "TreeView", ->
               [addPanel] = atom.workspace.getModalPanels()
               addDialog = $(addPanel.getItem()).view()
 
-              newPath = temp.path()
+              newPath = path.join(fs.realpathSync(temp.mkdirSync()), 'a-file')
               addDialog.miniEditor.getModel().insertText(newPath)
 
               waitsForFileToOpen ->
@@ -1917,7 +1917,7 @@ describe "TreeView", ->
               runs ->
                 expect(fs.isFileSync(newPath)).toBeTruthy()
                 expect(atom.workspace.getModalPanels().length).toBe 0
-                expect(atom.workspace.getActivePaneItem().getPath()).toBe fs.realpathSync(newPath)
+                expect(atom.workspace.getActivePaneItem().getPath()).toBe(newPath)
                 expect(handlers['file-created'][0]).toHaveBeenCalled()
 
         describe "when the path with a trailing '#{path.sep}' is changed and confirmed", ->
