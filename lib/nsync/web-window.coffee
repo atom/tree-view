@@ -1,7 +1,7 @@
 _ = require 'underscore-plus'
 shell = require 'shell'
 remote = require 'remote'
-BrowserWindow = remote.require 'browser-window'
+BrowserWindow = remote.BrowserWindow
 
 module.exports =
 class WebWindow
