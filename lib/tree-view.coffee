@@ -510,7 +510,7 @@ class TreeView extends View
 
       handleError(errorMessage) if failed
 
-    showProcess = new BufferedProcess({command, args, stderr, exit})
+    showProcess = new BufferedProcess({command, args, options: {shell: false}, stderr, exit})
     showProcess.onWillThrowError ({error, handle}) ->
       handle()
       handleError(error?.message)

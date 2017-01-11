@@ -1,6 +1,5 @@
 fs = require 'fs-plus'
 path = require 'path'
-process = require 'process'
 temp = require('temp').track()
 
 DefaultFileIcons = require '../lib/default-file-icons'
@@ -42,12 +41,7 @@ describe 'DefaultFileIcons', ->
       filePath = path.join(tempDir, 'foo.bar')
       linkPath = path.join(tempDir, 'link.bar')
       fs.writeFileSync(filePath, '')
-      try
-        fs.symlinkSync(filePath, linkPath)
-      catch err
-        # Symlinks are Administrator only on Windows
-        return if err.code is 'EPERM' and process.platform is 'win32'
-        throw err
+      fs.symlinkSync(filePath, linkPath, 'junction')
 
       expect(fileIcons.iconClassForPath(linkPath)).toEqual('icon-file-symlink-file')
 
@@ -55,11 +49,6 @@ describe 'DefaultFileIcons', ->
       filePath = path.join(tempDir, 'foo.zip')
       linkPath = path.join(tempDir, 'link.zip')
       fs.writeFileSync(filePath, '')
-      try
-        fs.symlinkSync(filePath, linkPath)
-      catch err
-        # Symlinks are Administrator only on Windows
-        return if err.code is 'EPERM' and process.platform is 'win32'
-        throw err
+      fs.symlinkSync(filePath, linkPath, 'junction')
 
       expect(fileIcons.iconClassForPath(linkPath)).toEqual('icon-file-symlink-file')

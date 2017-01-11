@@ -2564,7 +2564,11 @@ describe "TreeView", ->
         expect(zetaEntries).toEqual(["zeta.txt"])
 
       it "squashes two dir names when the first only contains a single dir", ->
-        betaDir = $(treeView.roots[0].entries).find(".directory:contains(alpha#{path.sep}beta):first")
+        if path.sep is '\\'
+          # First escape the backslashes for Coffeescript, then escape them for jQuery
+          betaDir = $(treeView.roots[0].entries).find(".directory:contains(alpha\\\\beta):first")
+        else
+          betaDir = $(treeView.roots[0].entries).find(".directory:contains(alpha#{path.sep}beta):first")
         betaDir[0].expand()
         betaEntries = [].slice.call(betaDir[0].children[1].children).map (element) ->
           element.innerText
@@ -2572,7 +2576,11 @@ describe "TreeView", ->
         expect(betaEntries).toEqual(["beta.txt"])
 
       it "squashes three dir names when the first and second only contain single dirs", ->
-        epsilonDir = $(treeView.roots[0].entries).find(".directory:contains(gamma#{path.sep}delta#{path.sep}epsilon):first")
+        if path.sep is '\\'
+          # First escape the backslashes for Coffeescript, then escape them for jQuery
+          epsilonDir = $(treeView.roots[0].entries).find(".directory:contains(gamma\\\\delta\\\\epsilon):first")
+        else
+          epsilonDir = $(treeView.roots[0].entries).find(".directory:contains(gamma#{path.sep}delta#{path.sep}epsilon):first")
         epsilonDir[0].expand()
         epsilonEntries = [].slice.call(epsilonDir[0].children[1].children).map (element) ->
           element.innerText
@@ -2730,7 +2738,7 @@ describe "TreeView", ->
     describe "when the project is a symbolic link to the repository root", ->
       beforeEach ->
         symlinkPath = temp.path('tree-view-project')
-        fs.symlinkSync(projectPath, symlinkPath)
+        fs.symlinkSync(projectPath, symlinkPath, 'junction')
         atom.project.setPaths([symlinkPath])
         $(treeView.roots[0].entries).find('.directory:contains(dir)')[0].expand()
 
@@ -3094,8 +3102,8 @@ describe "TreeView", ->
 
     it "handle errors thrown when spawning the OS file manager", ->
       spyOn(treeView, 'fileManagerCommandForPath').andReturn
-        command: '/this/command/does/not/exist'
-        label: 'Finder'
+        command: path.normalize('/this/command/does/not/exist')
+        label: 'OS file manager'
         args: ['foo']
 
       treeView.showSelectedEntryInFileManager()
@@ -3104,7 +3112,7 @@ describe "TreeView", ->
         atom.notifications.getNotifications().length is 1
 
       runs ->
-        expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Opening folder in Finder failed'
+        expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Opening folder in OS file manager failed'
         expect(atom.notifications.getNotifications()[0].getDetail()).toContain 'ENOENT'
 
   describe "showCurrentFileInFileManager()", ->
