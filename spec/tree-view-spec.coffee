@@ -1098,12 +1098,12 @@ describe "TreeView", ->
 
       describe "when trying to expand a file", ->
         it "won't raise an error", ->
-          sampleTxt.click()
-          treeView.roots[0].collapse()
+          file = root1.find('.file:contains(tree-view.js)')[0]
+          treeView.selectEntry(file)
 
-          expect(treeView.roots[0]).not.toHaveClass 'expanded'
+          expect(file).not.toHaveClass 'expanded'
           atom.commands.dispatch(treeView.element, 'tree-view:recursive-expand-directory')
-          expect(treeView.roots[0]).not.toHaveClass 'expanded'
+          expect(file).not.toHaveClass 'expanded'
 
     describe "tree-view:collapse-directory", ->
       subdir = null
