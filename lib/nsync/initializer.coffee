@@ -46,7 +46,7 @@ onSave = ({target}) ->
   editor = atomHelper.findTextEditorByElement(target)
   path = editor.getPath()
 
-  if not editor.getPath()?
+  if not path
     # TODO: untitled editor is saved
     return console.warn 'Cannot save file without path'
 
@@ -145,11 +145,12 @@ module.exports = helper = (activationState) ->
           atomHelper.loading()
       , secondsTillNotifying * 1000
 
-    nsync.onDidDisconnect (detail) ->
-      if detail?
-        atomHelper.error 'Learn IDE: you are not connected!', {detail}
-      else
-        atomHelper.disconnected()
+    nsync.onDidDisconnect ->
+      atomHelper.disconnected()
+
+    nsync.onDidSendWhileDisconnected (msg) ->
+        atomHelper.error 'Learn IDE: you are not connected!',
+          detail: "The operation cannot be performed while disconnected {command: #{msg.command}}"
 
     nsync.onDidConnect ->
       atomHelper.connected()

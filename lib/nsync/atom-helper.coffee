@@ -145,8 +145,7 @@ module.exports = helper =
     atom.workspace.observeTextEditors(callback)
 
   findTextEditorByElement: (element) ->
-    atom.workspace.getTextEditors().find (editor) ->
-      editor.element is element
+    element.getModel()
 
   findTextEditorByPath: (path) ->
     atom.workspace.getTextEditors().find (editor) ->
