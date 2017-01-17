@@ -82,7 +82,7 @@ module.exports = helper =
     title = 'Learn IDE'
 
     if node? and node.path?
-      title += " — #{node.path.replace(/^\//, '')}"
+      title += " — #{node.path}"
       atom.applicationDelegate.setRepresentedFilename(node.localPath())
 
     document.title = title
@@ -100,22 +100,36 @@ module.exports = helper =
         if value?
           resolve(value)
 
-  spawn: (modulePath) ->
-    {BufferedNodeProcess} = require 'atom'
-    new BufferedNodeProcess({command: modulePath})
-
   disconnected: ->
-    @error 'Learn IDE: connection lost 😮',
-      detail: 'The connection with the remote server has been lost.'
+    if @reconnectNotification?
+      @reconnectNotification.dismiss()
+      @reconnectNotification = null
 
-  connecting: ->
-    @connectingNotification =
-      @warn 'Learn IDE: attempting to connect...', {dismissable: true}
+    if not @disconnectedNotification?
+      @disconnectedNotification =
+        @warn 'Learn IDE: you are not connected!',
+          detail: 'The connection with the remote server has been lost.'
+          buttons: [
+            text: 'Reconnect'
+            onDidClick: => @reconnect()
+          ]
+          dismissable: true
+
+  reconnect: ->
+    @disconnectedNotification.dismiss()
+    @disconnectedNotification = null
+
+    @reconnectNotification =
+      @warn 'attempting to reconnect...', {dismissable: true}
+
+    view = atom.views.getView(atom.workspace)
+    atom.commands.dispatch view, 'learn-ide:reset-connection'
 
   connected: ->
-    @connectingNotification?.dismiss()
-    @connectingNotification = null
-    @success 'Learn IDE: connected!'
+    if @reconnectNotification?
+      @reconnectNotification.dismiss()
+      @reconnectNotification = null
+      @success 'Learn IDE: connected!'
 
   reloadTreeView: (path, pathToSelect) ->
     @treeView()?.entryForPath(path).reload()

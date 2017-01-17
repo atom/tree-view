@@ -115,6 +115,7 @@ module.exports = helper = (activationState) ->
   disposables = [
     atomHelper.addCommands
       'learn-ide:save': onSave
+      'learn-ide:reset-connection': -> nsync.resetConnection()
       'learn-ide:save-as': unimplemented
       'learn-ide:save-all': unimplemented
       'learn-ide:import': onImport
@@ -149,7 +150,6 @@ module.exports = helper = (activationState) ->
         atomHelper.error 'Learn IDE: you are not connected!', {detail}
       else
         atomHelper.disconnected()
-        atomHelper.connecting()
 
     nsync.onDidConnect ->
       atomHelper.connected()
