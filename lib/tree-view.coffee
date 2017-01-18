@@ -568,7 +568,11 @@ class TreeView extends View
         "Move to Trash": =>
           failedDeletions = []
           for selectedPath in selectedPaths
-            if not shell.moveItemToTrash(selectedPath)
+            if shell.moveItemToTrash(selectedPath)
+              for editor in atom.workspace.getTextEditors()
+                if editor?.getPath() is selectedPath
+                  editor.destroy()
+            else
               failedDeletions.push "#{selectedPath}"
             if repo = repoForPath(selectedPath)
               repo.getPathStatus(selectedPath)
