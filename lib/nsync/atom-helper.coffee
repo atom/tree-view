@@ -100,6 +100,15 @@ module.exports = helper =
         if value?
           resolve(value)
 
+  learnIdeVersion: ->
+    if not LEARN_IDE_VERSION?
+      pkg = atom.packages.loadPackage('learn-ide')
+      path = _path.join(pkg.path, 'package.json')
+      pkgJSON = require(path)
+      return pkgJSON.version
+
+    LEARN_IDE_VERSION
+
   disconnected: ->
     if @reconnectNotification?
       @reconnectNotification.dismiss()

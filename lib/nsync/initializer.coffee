@@ -191,7 +191,7 @@ module.exports = helper = (activationState) ->
       expansionState: activationState.directoryExpansionStates
       localRoot: _path.join(atom.configDirPath, '.learn-ide')
       connection:
-        url: "#{WS_SERVER_URL}?token=#{token}"
+        url: "#{WS_SERVER_URL}?token=#{token}&version=#{atomHelper.learnIdeVersion()}"
 
   return composite
 
