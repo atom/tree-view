@@ -1,6 +1,6 @@
 {
   "name": "learn-ide-tree",
-  "version": "1.0.19",
+  "version": "1.0.20",
   "upstreamVersion": "0.213.1",
   "main": "./lib/main",
   "description": "A Tree View replacement for the Learn IDE",
