@@ -120,23 +120,28 @@ module.exports = helper =
           detail: 'The connection with the remote server has been lost.'
           buttons: [
             text: 'Reconnect'
-            onDidClick: => @reconnect()
+            onDidClick: @resetConnection
           ]
           dismissable: true
 
-  reconnect: ->
-    @disconnectedNotification.dismiss()
-    @disconnectedNotification = null
-
-    @reconnectNotification =
-      @warn 'attempting to reconnect...', {dismissable: true}
-
+  resetConnection: ->
     view = atom.views.getView(atom.workspace)
     atom.commands.dispatch view, 'learn-ide:reset-connection'
 
+  onResetConnection: ->
+    if @disconnectedNotification?
+      @disconnectedNotification.dismiss()
+      @disconnectedNotification = null
+
+    @reconnectNotification =
+      @warn 'Learn IDE: attempting to reconnect...', {dismissable: true}
+
   connected: ->
-    if @reconnectNotification?
-      @reconnectNotification.dismiss()
+    @disconnectedNotification?.dismiss()
+    @reconnectNotification?.dismiss()
+
+    if @reconnectNotification? or @disconnectedNotification?
+      @disconnectedNotification = null
       @reconnectNotification = null
       @success 'Learn IDE: connected!'
 

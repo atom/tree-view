@@ -109,13 +109,17 @@ waitForFile = (localPath, seconds) ->
         atomHelper.resolveOpen(localPath)
   , seconds * 1000
 
+onResetConnection = ->
+  atomHelper.onResetConnection()
+  nsync.resetConnection()
+
 module.exports = helper = (activationState) ->
   composite = new CompositeDisposable
 
   disposables = [
     atomHelper.addCommands
       'learn-ide:save': onSave
-      'learn-ide:reset-connection': -> nsync.resetConnection()
+      'learn-ide:reset-connection': onResetConnection
       'learn-ide:save-as': unimplemented
       'learn-ide:save-all': unimplemented
       'learn-ide:import': onImport
