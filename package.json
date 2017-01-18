@@ -1,7 +1,7 @@
 {
   "name": "learn-ide-tree",
   "version": "1.0.19",
-  "upstreamVersion": "0.210.0",
+  "upstreamVersion": "0.213.1",
   "main": "./lib/main",
   "description": "A Tree View replacement for the Learn IDE",
   "repository": "https://github.com/learn-co/learn-ide-tree",
