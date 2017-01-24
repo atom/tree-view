@@ -14,7 +14,7 @@ class Directory
     @emitter = new Emitter()
     @subscriptions = new CompositeDisposable()
 
-    if atom.config.get('tree-view.squashDirectoryNames')
+    if atom.config.get('tree-view.squashDirectoryNames') and not @isRoot
       fullPath = @squashDirectoryNames(fullPath)
 
     @path = fullPath
@@ -281,7 +281,10 @@ class Directory
   squashDirectoryNames: (fullPath) ->
     squashedDirs = [@name]
     loop
-      contents = fs.listSync fullPath
+      try
+        contents = fs.listSync fullPath
+      catch error
+        break
       break if contents.length isnt 1
       break if not fs.isDirectorySync(contents[0])
       relativeDir = path.relative(fullPath, contents[0])

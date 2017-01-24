@@ -510,7 +510,7 @@ class TreeView extends View
 
       handleError(errorMessage) if failed
 
-    showProcess = new BufferedProcess({command, args, stderr, exit})
+    showProcess = new BufferedProcess({command, args, options: {shell: false}, stderr, exit})
     showProcess.onWillThrowError ({error, handle}) ->
       handle()
       handleError(error?.message)
@@ -565,7 +565,7 @@ class TreeView extends View
       message: "Are you sure you want to delete the selected #{if selectedPaths.length > 1 then 'items' else 'item'}?"
       detailedMessage: "You are deleting:\n#{selectedPaths.join('\n')}"
       buttons:
-        "Move to Trash": ->
+        "Move to Trash": =>
           failedDeletions = []
           for selectedPath in selectedPaths
             if not shell.moveItemToTrash(selectedPath)
@@ -573,10 +573,23 @@ class TreeView extends View
             if repo = repoForPath(selectedPath)
               repo.getPathStatus(selectedPath)
           if failedDeletions.length > 0
-            atom.notifications.addError "The following #{if failedDeletions.length > 1 then 'files' else 'file'} couldn't be moved to trash#{if process.platform is 'linux' then " (is `gvfs-trash` installed?)" else ""}",
+            atom.notifications.addError @formatTrashFailureMessage(failedDeletions),
+              description: @formatTrashEnabledMessage()
               detail: "#{failedDeletions.join('\n')}"
               dismissable: true
+          @updateRoots() if atom.config.get('tree-view.squashDirectoryNames')
         "Cancel": null
+
+  formatTrashFailureMessage: (failedDeletions) ->
+    fileText = if failedDeletions.length > 1 then 'files' else 'file'
+
+    "The following #{fileText} couldn't be moved to the trash."
+
+  formatTrashEnabledMessage: ->
+    switch process.platform
+      when 'linux' then 'Is `gvfs-trash` installed?'
+      when 'darwin' then 'Is Trash enabled on the volume where the files are stored?'
+      when 'win32' then 'Is there a Recycle Bin on the drive where the files are stored?'
 
   # Public: Copy the path of the selected entry element.
   #         Save the path in localStorage, so that copying from 2 different
@@ -663,9 +676,11 @@ class TreeView extends View
     dialog.on 'directory-created', (event, createdPath) =>
       @entryForPath(createdPath)?.reload()
       @selectEntryForPath(createdPath)
+      @updateRoots() if atom.config.get('tree-view.squashDirectoryNames')
       false
-    dialog.on 'file-created', (event, createdPath) ->
+    dialog.on 'file-created', (event, createdPath) =>
       atom.workspace.open(createdPath)
+      @updateRoots() if atom.config.get('tree-view.squashDirectoryNames')
       false
     dialog.attach()
 
