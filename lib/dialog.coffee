@@ -29,7 +29,7 @@ class Dialog extends View
       @miniEditor.getModel().setSelectedBufferRange(range)
 
   attach: ->
-    @panel = atom.workspace.addModalPanel(item: this.element)
+    @panel = atom.workspace.addModalPanel(item: this)
     @miniEditor.focus()
     @miniEditor.getModel().scrollToCursorPosition()
 
