@@ -225,7 +225,7 @@ describe "TreeView", ->
     it "restores the focus state of the tree view", ->
       jasmine.attachToDOM(workspaceElement)
       treeView.focus()
-      expect(treeView.list).toMatchSelector ':focus'
+      expect(treeView.element.querySelector('.tree-view')).toHaveFocus()
       atom.packages.deactivatePackage("tree-view")
 
       waitsForPromise ->
@@ -233,7 +233,7 @@ describe "TreeView", ->
 
       runs ->
         treeView = atom.workspace.getLeftPanels()[0].getItem()
-        expect(treeView.list).toMatchSelector ':focus'
+        expect(treeView.element.querySelector('.tree-view')).toHaveFocus()
 
     it "restores the scroll top when toggled", ->
       workspaceElement.style.height = '5px'
@@ -294,7 +294,7 @@ describe "TreeView", ->
         treeView.detach()
         atom.commands.dispatch(workspaceElement, 'tree-view:toggle')
         expect(treeView.hasParent()).toBeTruthy()
-        expect(treeView.list).toMatchSelector(':focus')
+        expect(treeView.element.querySelector('.tree-view')).toHaveFocus()
 
     describe "when tree-view:toggle-side is triggered on the root view", ->
       describe "when the tree view is on the left", ->
@@ -330,7 +330,7 @@ describe "TreeView", ->
         treeView.detach()
         atom.commands.dispatch(workspaceElement, 'tree-view:toggle-focus')
         expect(treeView.hasParent()).toBeTruthy()
-        expect(treeView.list).toMatchSelector(':focus')
+        expect(treeView.element.querySelector('.tree-view')).toHaveFocus()
 
     describe "when the tree view is shown", ->
       it "focuses the tree view", ->
@@ -342,7 +342,7 @@ describe "TreeView", ->
           expect(treeView).toBeVisible()
           atom.commands.dispatch(workspaceElement, 'tree-view:toggle-focus')
           expect(treeView).toBeVisible()
-          expect(treeView.list).toMatchSelector(':focus')
+          expect(treeView.element.querySelector('.tree-view')).toHaveFocus()
 
       describe "when the tree view is focused", ->
         it "unfocuses the tree view", ->
@@ -354,7 +354,7 @@ describe "TreeView", ->
             expect(treeView).toBeVisible()
             atom.commands.dispatch(workspaceElement, 'tree-view:toggle-focus')
             expect(treeView).toBeVisible()
-            expect(treeView.list).not.toMatchSelector(':focus')
+            expect(treeView.element.querySelector('.tree-view')).not.toHaveFocus()
 
   describe "when tree-view:reveal-active-file is triggered on the root view", ->
     beforeEach ->
@@ -464,10 +464,10 @@ describe "TreeView", ->
       runs ->
         jasmine.attachToDOM(workspaceElement)
         treeView.focus()
-        expect(treeView.list).toMatchSelector(':focus')
+        expect(treeView.element.querySelector('.tree-view')).toHaveFocus()
         atom.commands.dispatch(treeView.element, 'tool-panel:unfocus')
         expect(treeView).toBeVisible()
-        expect(treeView.list).not.toMatchSelector(':focus')
+        expect(treeView.element.querySelector('.tree-view')).not.toHaveFocus()
         expect(atom.workspace.getActivePane().isActive()).toBe(true)
 
   describe "copy path commands", ->
@@ -2132,7 +2132,7 @@ describe "TreeView", ->
           it "removes the dialog and focuses the tree view", ->
             atom.commands.dispatch moveDialog.element, 'core:cancel'
             expect(atom.workspace.getModalPanels().length).toBe 0
-            expect(treeView.find(".tree-view")).toMatchSelector(':focus')
+            expect(treeView.find(".tree-view")).toHaveFocus()
 
         describe "when the move dialog's editor loses focus", ->
           it "removes the dialog and focuses root view", ->
@@ -2250,7 +2250,7 @@ describe "TreeView", ->
             jasmine.attachToDOM(treeView.element)
             atom.commands.dispatch copyDialog.element, 'core:cancel'
             expect(atom.workspace.getModalPanels().length).toBe 0
-            expect(treeView.find(".tree-view")).toMatchSelector(':focus')
+            expect(treeView.find(".tree-view")).toHaveFocus()
 
         describe "when the duplicate dialog's editor loses focus", ->
           it "removes the dialog and focuses root view", ->
@@ -2649,14 +2649,6 @@ describe "TreeView", ->
           muEntries = Array.from(muDir.children[1].children).map (element) -> element.innerText
           expect(muEntries).toEqual(["nu#{path.sep}xi", "xi"])
 
-    findDirectoryContainingText = (element, text) ->
-      directories = Array.from(element.querySelectorAll('.entries .directory'))
-      directories.find((directory) -> directory.header.textContent is text)
-
-    findFileContainingText = (element, text) ->
-      files = Array.from(element.querySelectorAll('.entries .file'))
-      files.find((file) -> file.fileName.textContent is text)
-
   describe "Git status decorations", ->
     [projectPath, modifiedFile, originalFileContent] = []
 
@@ -2686,60 +2678,59 @@ describe "TreeView", ->
 
       treeView.useSyncFS = true
       treeView.updateRoots()
-      $(treeView.roots[0].entries).find('.directory:contains(dir)')[0].expand()
+      treeView.roots[0].entries.querySelectorAll('.directory')[1].expand()
 
     describe "when the project is the repository root", ->
       it "adds a custom style", ->
-        expect(treeView.find('.icon-repo').length).toBe 1
+        expect(treeView.element.querySelectorAll('.icon-repo').length).toBe 1
 
     describe "when a file is modified", ->
       it "adds a custom style", ->
-        $(treeView.roots[0].entries).find('.directory:contains(dir)')[0].expand()
-        expect(treeView.find('.file:contains(b.txt)')).toHaveClass 'status-modified'
+        expect(treeView.element.querySelector('.file.status-modified')).toHaveText('b.txt')
 
     describe "when a directory if modified", ->
       it "adds a custom style", ->
-        expect(treeView.find('.directory:contains(dir)')).toHaveClass 'status-modified'
+        expect(treeView.element.querySelector('.directory.status-modified').header).toHaveText('dir')
 
     describe "when a file is new", ->
       it "adds a custom style", ->
-        $(treeView.roots[0].entries).find('.directory:contains(dir2)')[0].expand()
-        expect(treeView.find('.file:contains(new2)')).toHaveClass 'status-added'
+        treeView.roots[0].entries.querySelectorAll('.directory')[2].expand()
+        expect(treeView.element.querySelector('.file.status-added')).toHaveText('new2')
 
     describe "when a directory is new", ->
       it "adds a custom style", ->
-        expect(treeView.find('.directory:contains(dir2)')).toHaveClass 'status-added'
+        expect(treeView.element.querySelector('.directory.status-added').header).toHaveText('dir2')
 
     describe "when a file is ignored", ->
       it "adds a custom style", ->
-        expect(treeView.find('.file:contains(ignored.txt)')).toHaveClass 'status-ignored'
+        expect(treeView.element.querySelector('.file.status-ignored')).toHaveText('ignored.txt')
 
     describe "when a file is selected in a directory", ->
       beforeEach ->
         jasmine.attachToDOM(workspaceElement)
         treeView.focus()
-        element.expand() for element in treeView.find('.directory')
-        fileView = treeView.find('.file:contains(new2)')
+        element.expand() for element in treeView.element.querySelectorAll('.directory')
+        fileView = treeView.element.querySelector('.file.status-added')
         expect(fileView).not.toBeNull()
         fileView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
 
       describe "when the file is deleted", ->
         it "updates the style of the directory", ->
           expect(treeView.selectedEntry().getPath()).toContain(path.join('dir2', 'new2'))
-          dirView = $(treeView.roots[0].entries).find('.directory:contains(dir2)')
+          dirView = findDirectoryContainingText(treeView.roots[0], 'dir2')
           expect(dirView).not.toBeNull()
-          spyOn(dirView[0].directory, 'updateStatus')
+          spyOn(dirView.directory, 'updateStatus')
           spyOn(atom, 'confirm').andCallFake (dialog) ->
             dialog.buttons["Move to Trash"]()
           atom.commands.dispatch(treeView.element, 'tree-view:remove')
-          expect(dirView[0].directory.updateStatus).toHaveBeenCalled()
+          expect(dirView.directory.updateStatus).toHaveBeenCalled()
 
     describe "when the project is a symbolic link to the repository root", ->
       beforeEach ->
         symlinkPath = temp.path('tree-view-project')
         fs.symlinkSync(projectPath, symlinkPath, 'junction')
         atom.project.setPaths([symlinkPath])
-        $(treeView.roots[0].entries).find('.directory:contains(dir)')[0].expand()
+        treeView.roots[0].entries.querySelectorAll('.directory')[1].expand()
 
         waitsFor (done) ->
           disposable = atom.project.getRepositories()[0].onDidChangeStatuses ->
@@ -2748,29 +2739,31 @@ describe "TreeView", ->
 
       describe "when a file is modified", ->
         it "updates its and its parent directories' styles", ->
-          expect(treeView.find('.file:contains(b.txt)')).toHaveClass 'status-modified'
-          expect(treeView.find('.directory:contains(dir)')).toHaveClass 'status-modified'
+          expect(treeView.element.querySelector('.file.status-modified')).toHaveText('b.txt')
+          expect(treeView.element.querySelector('.directory.status-modified').header).toHaveText('dir')
 
       describe "when a file loses its modified status", ->
         it "updates its and its parent directories' styles", ->
           fs.writeFileSync(modifiedFile, originalFileContent)
           atom.project.getRepositories()[0].getPathStatus(modifiedFile)
 
-          expect(treeView.find('.file:contains(b.txt)')).not.toHaveClass 'status-modified'
-          expect(treeView.find('.directory:contains(dir)')).not.toHaveClass 'status-modified'
+          expect(treeView.element.querySelector('.file.status-modified')).not.toExist()
+          expect(treeView.element.querySelector('.directory.status-modified')).not.toExist()
 
   describe "when the resize handle is double clicked", ->
     beforeEach ->
-      treeView.width(10).find('.list-tree').width 100
+      treeView.element.style.width = '10px'
+      treeView.element.querySelector('.list-tree').style.width = '100px'
+      jasmine.attachToDOM(workspaceElement)
 
     it "sets the width of the tree to be the width of the list", ->
-      expect(treeView.width()).toBe 10
-      treeView.find('.tree-view-resize-handle').trigger 'dblclick'
-      expect(treeView.width()).toBeGreaterThan 10
+      expect(parseInt(treeView.element.style.width)).toBe 10
+      treeView.element.querySelector('.tree-view-resize-handle').dispatchEvent(new MouseEvent('dblclick', {bubbles: true}))
+      expect(parseInt(treeView.element.style.width)).toBeGreaterThan 10
 
-      treeView.width(1000)
-      treeView.find('.tree-view-resize-handle').trigger 'dblclick'
-      expect(treeView.width()).toBeLessThan 1000
+      treeView.element.style.width = '1000px'
+      treeView.element.querySelector('.tree-view-resize-handle').dispatchEvent(new MouseEvent('dblclick', {bubbles: true}))
+      expect(parseInt(treeView.element.style.width)).toBeLessThan 1000
 
   describe "when other panels are added", ->
     beforeEach ->
@@ -2780,20 +2773,20 @@ describe "TreeView", ->
       expect(treeView).toBeVisible()
       expect(atom.workspace.getLeftPanels().length).toBe(1)
 
-      treeView.width(100)
+      treeView.element.style.width = '100px'
 
-      expect(treeView.width()).toBe(100)
+      expect(parseInt(treeView.element.style.width)).toBe(100)
 
       panel = document.createElement('div')
       panel.style.width = '100px'
       atom.workspace.addLeftPanel({item: panel, priority: 10})
 
       expect(atom.workspace.getLeftPanels().length).toBe(2)
-      expect(treeView.width()).toBe(100)
+      expect(parseInt(treeView.element.style.width)).toBe(100)
 
       treeView.resizeTreeView({pageX: 250, which: 1})
 
-      expect(treeView.width()).toBe(150)
+      expect(parseInt(treeView.element.style.width)).toBe(150)
 
     it "should resize normally on the right side", ->
       atom.commands.dispatch(workspaceElement, 'tree-view:toggle-side')
@@ -2802,20 +2795,20 @@ describe "TreeView", ->
       expect(treeView).toBeVisible()
       expect(atom.workspace.getRightPanels().length).toBe(1)
 
-      treeView.width(100)
+      treeView.element.style.width = '100px'
 
-      expect(treeView.width()).toBe(100)
+      expect(parseInt(treeView.element.style.width)).toBe(100)
 
       panel = document.createElement('div')
       panel.style.width = '100px'
       atom.workspace.addRightPanel({item: panel, priority: 10})
 
       expect(atom.workspace.getRightPanels().length).toBe(2)
-      expect(treeView.width()).toBe(100)
+      expect(parseInt(treeView.element.style.width)).toBe(100)
 
-      treeView.resizeTreeView({pageX: $(document.body).width() - 250, which: 1})
+      treeView.resizeTreeView({pageX: document.body.offsetWidth - 250, which: 1})
 
-      expect(treeView.width()).toBe(150)
+      expect(parseInt(treeView.element.style.width)).toBe(150)
 
   describe "selecting items", ->
     [dirView, fileView1, fileView2, fileView3, treeView, rootDirPath, dirPath, filePath1, filePath2, filePath3] = []
@@ -2835,30 +2828,28 @@ describe "TreeView", ->
 
       atom.project.setPaths([rootDirPath])
 
-      dirView = $(treeView.roots[0].entries).find('.directory:contains(test-dir)')
-      dirView[0].expand()
-      fileView1 = treeView.find('.file:contains(test-file1.txt)')
-      fileView2 = treeView.find('.file:contains(test-file2.txt)')
-      fileView3 = treeView.find('.file:contains(test-file3.txt)')
+      dirView = treeView.entryForPath(dirPath)
+      dirView.expand()
+      [fileView1, fileView2, fileView3] = dirView.querySelectorAll('.file')
 
     describe 'selecting multiple items', ->
       it 'switches the contextual menu to muli-select mode', ->
         fileView1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
-        fileView2.trigger($.Event('mousedown', {shiftKey: true}))
-        expect(treeView.find('.tree-view')).toHaveClass('multi-select')
-        fileView3.trigger($.Event('mousedown'))
-        expect(treeView.find('.tree-view')).toHaveClass('full-menu')
+        fileView2.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, shiftKey: true}))
+        expect(treeView.element.querySelector('.tree-view')).toHaveClass('multi-select')
+        fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}))
+        expect(treeView.element.querySelector('.tree-view')).toHaveClass('full-menu')
 
     describe 'selecting multiple items', ->
       it 'switches the contextual menu to muli-select mode', ->
         fileView1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
-        fileView2.trigger($.Event('mousedown', {shiftKey: true}))
+        fileView2.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, shiftKey: true}))
         expect(treeView.find('.tree-view')).toHaveClass('multi-select')
 
       describe 'using the shift key', ->
         it 'selects the items between the already selected item and the shift clicked item', ->
           fileView1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
-          fileView3.trigger($.Event('mousedown', {shiftKey: true}))
+          fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, shiftKey: true}))
           expect(fileView1).toHaveClass('selected')
           expect(fileView2).toHaveClass('selected')
           expect(fileView3).toHaveClass('selected')
@@ -2866,7 +2857,7 @@ describe "TreeView", ->
       describe 'using the metakey(cmd) key', ->
         it 'selects the cmd clicked item in addition to the original selected item', ->
           fileView1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
-          fileView3.trigger($.Event('mousedown', {metaKey: true}))
+          fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, metaKey: true}))
           expect(fileView1).toHaveClass('selected')
           expect(fileView3).toHaveClass('selected')
           expect(fileView2).not.toHaveClass('selected')
@@ -2885,7 +2876,7 @@ describe "TreeView", ->
         describe 'using the ctrl key', ->
           it 'selects the ctrl clicked item in addition to the original selected item', ->
             fileView1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
-            fileView3.trigger($.Event('mousedown', {ctrlKey: true}))
+            fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, ctrlKey: true}))
             expect(fileView1).toHaveClass('selected')
             expect(fileView3).toHaveClass('selected')
             expect(fileView2).not.toHaveClass('selected')
@@ -2905,87 +2896,87 @@ describe "TreeView", ->
           describe "previous item is selected but the ctrl clicked item is not", ->
             it 'selects the clicked item, but deselects the previous item', ->
               fileView1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
-              fileView3.trigger($.Event('mousedown', {ctrlKey: true}))
+              fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, ctrlKey: true}))
               expect(fileView1).not.toHaveClass('selected')
               expect(fileView3).toHaveClass('selected')
               expect(fileView2).not.toHaveClass('selected')
 
             it 'displays the full contextual menu', ->
               fileView1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
-              fileView3.trigger($.Event('mousedown', {ctrlKey: true}))
-              expect(treeView.list).toHaveClass('full-menu')
-              expect(treeView.list).not.toHaveClass('multi-select')
+              fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, ctrlKey: true}))
+              expect(treeView.element.querySelector('.tree-view')).toHaveClass('full-menu')
+              expect(treeView.element.querySelector('.tree-view')).not.toHaveClass('multi-select')
 
           describe 'previous item is selected including the ctrl clicked', ->
             it 'displays the multi-select menu', ->
               fileView1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
-              fileView3.trigger($.Event('mousedown', {metaKey: true}))
-              fileView3.trigger($.Event('mousedown', {ctrlKey: true}))
-              expect(treeView.list).not.toHaveClass('full-menu')
-              expect(treeView.list).toHaveClass('multi-select')
+              fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, metaKey: true}))
+              fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, ctrlKey: true}))
+              expect(treeView.element.querySelector('.tree-view')).not.toHaveClass('full-menu')
+              expect(treeView.element.querySelector('.tree-view')).toHaveClass('multi-select')
 
             it 'does not deselect any of the items', ->
               fileView1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
-              fileView3.trigger($.Event('mousedown', {metaKey: true}))
-              fileView3.trigger($.Event('mousedown', {ctrlKey: true}))
+              fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, metaKey: true}))
+              fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, ctrlKey: true}))
               expect(fileView1).toHaveClass('selected')
               expect(fileView3).toHaveClass('selected')
 
           describe 'when clicked item is the only item selected', ->
             it 'displays the full contextual menu', ->
               fileView1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
-              fileView3.trigger($.Event('mousedown', {ctrlKey: true}))
-              expect(treeView.list).toHaveClass('full-menu')
-              expect(treeView.list).not.toHaveClass('multi-select')
+              fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, ctrlKey: true}))
+              expect(treeView.element.querySelector('.tree-view')).toHaveClass('full-menu')
+              expect(treeView.element.querySelector('.tree-view')).not.toHaveClass('multi-select')
 
           describe 'when no item is selected', ->
             it 'selects the ctrl clicked item', ->
-              fileView3.trigger($.Event('mousedown', {ctrlKey: true}))
+              fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, ctrlKey: true}))
               expect(fileView3).toHaveClass('selected')
 
             it 'displays the full context menu', ->
-              fileView3.trigger($.Event('mousedown', {ctrlKey: true}))
-              expect(treeView.list).toHaveClass('full-menu')
-              expect(treeView.list).not.toHaveClass('multi-select')
+              fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, ctrlKey: true}))
+              expect(treeView.element.querySelector('.tree-view')).toHaveClass('full-menu')
+              expect(treeView.element.querySelector('.tree-view')).not.toHaveClass('multi-select')
 
         describe "right-clicking", ->
           describe 'when multiple items are selected', ->
             it 'displays the multi-select context menu', ->
               fileView1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
-              fileView3.trigger($.Event('mousedown', {metaKey: true}))
-              fileView3.trigger($.Event('mousedown', {button: 2}))
+              fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, metaKey: true}))
+              fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, button: 2}))
               expect(fileView1).toHaveClass('selected')
               expect(fileView3).toHaveClass('selected')
-              expect(treeView.list).not.toHaveClass('full-menu')
-              expect(treeView.list).toHaveClass('multi-select')
+              expect(treeView.element.querySelector('.tree-view')).not.toHaveClass('full-menu')
+              expect(treeView.element.querySelector('.tree-view')).toHaveClass('multi-select')
 
           describe 'when a single item is selected', ->
             it 'displays the full context menu', ->
               fileView1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
-              fileView3.trigger($.Event('mousedown', {button: 2}))
-              expect(treeView.list).toHaveClass('full-menu')
-              expect(treeView.list).not.toHaveClass('multi-select')
+              fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, button: 2}))
+              expect(treeView.element.querySelector('.tree-view')).toHaveClass('full-menu')
+              expect(treeView.element.querySelector('.tree-view')).not.toHaveClass('multi-select')
 
             it 'selects right clicked item', ->
               fileView1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
-              fileView3.trigger($.Event('mousedown', {button: 2}))
+              fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, button: 2}))
               expect(fileView3).toHaveClass('selected')
 
             it 'de-selects the previously selected item', ->
               fileView1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
-              fileView3.trigger($.Event('mousedown', {button: 2}))
+              fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, button: 2}))
               expect(fileView1).not.toHaveClass('selected')
 
           describe 'when no item is selected', ->
             it 'selects the right clicked item', ->
-              fileView3.trigger($.Event('mousedown', {button: 2}))
+              fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, button: 2}))
               expect(fileView3).toHaveClass('selected')
 
             it 'shows the full context menu', ->
-              fileView3.trigger($.Event('mousedown', {button: 2}))
+              fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, button: 2}))
               expect(fileView3).toHaveClass('selected')
-              expect(treeView.list).toHaveClass('full-menu')
-              expect(treeView.list).not.toHaveClass('multi-select')
+              expect(treeView.element.querySelector('.tree-view')).toHaveClass('full-menu')
+              expect(treeView.element.querySelector('.tree-view')).not.toHaveClass('multi-select')
 
   describe "the sortFoldersBeforeFiles config option", ->
     [dirView, fileView, dirView2, fileView2, fileView3, rootDirPath, dirPath, filePath, dirPath2, filePath2, filePath3] = []
@@ -3031,16 +3022,16 @@ describe "TreeView", ->
 
       expect(topLevelEntries).toEqual(["alpha", "gamma", "alpha.txt", "zeta.txt"])
 
-      alphaDir = $(treeView.roots[0].entries).find('.directory:contains(alpha):first')
-      alphaDir[0].expand()
-      alphaEntries = [].slice.call(alphaDir[0].children[1].children).map (element) ->
+      alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
+      alphaDir.expand()
+      alphaEntries = [].slice.call(alphaDir.children[1].children).map (element) ->
         element.innerText
 
       expect(alphaEntries).toEqual(["eta", "beta.txt"])
 
-      gammaDir = $(treeView.roots[0].entries).find('.directory:contains(gamma):first')
-      gammaDir[0].expand()
-      gammaEntries = [].slice.call(gammaDir[0].children[1].children).map (element) ->
+      gammaDir = findDirectoryContainingText(treeView.roots[0], 'gamma')
+      gammaDir.expand()
+      gammaEntries = [].slice.call(gammaDir.children[1].children).map (element) ->
         element.innerText
 
       expect(gammaEntries).toEqual(["theta", "delta.txt", "epsilon.txt"])
@@ -3053,16 +3044,16 @@ describe "TreeView", ->
 
       expect(topLevelEntries).toEqual(["alpha", "alpha.txt", "gamma", "zeta.txt"])
 
-      alphaDir = $(treeView.roots[0].entries).find('.directory:contains(alpha):first')
-      alphaDir[0].expand()
-      alphaEntries = [].slice.call(alphaDir[0].children[1].children).map (element) ->
+      alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
+      alphaDir.expand()
+      alphaEntries = [].slice.call(alphaDir.children[1].children).map (element) ->
         element.innerText
 
       expect(alphaEntries).toEqual(["beta.txt", "eta"])
 
-      gammaDir = $(treeView.roots[0].entries).find('.directory:contains(gamma):first')
-      gammaDir[0].expand()
-      gammaEntries = [].slice.call(gammaDir[0].children[1].children).map (element) ->
+      gammaDir = findDirectoryContainingText(treeView.roots[0], 'gamma')
+      gammaDir.expand()
+      gammaEntries = [].slice.call(gammaDir.children[1].children).map (element) ->
         element.innerText
 
       expect(gammaEntries).toEqual(["delta.txt", "epsilon.txt", "theta"])
@@ -3123,7 +3114,7 @@ describe "TreeView", ->
       waitsForPromise ->
         atom.workspace.open()
       runs ->
-        $(workspaceElement).focus()
+        workspaceElement.focus()
         expect(treeView.showCurrentFileInFileManager()).toBeUndefined()
 
     it "shows file in file manager when some file is opened", ->
@@ -3205,14 +3196,15 @@ describe "TreeView", ->
     describe "when dragging a FileView onto a DirectoryView's header", ->
       it "should add the selected class to the DirectoryView", ->
         # Dragging theta onto alphaDir
-        alphaDir = $(treeView.roots[0].entries).find('.directory:contains(alpha):first')
+        alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
+        alphaDir.expand()
 
-        gammaDir = $(treeView.roots[0].entries).find('.directory:contains(gamma):first')
-        gammaDir[0].expand()
-        deltaFile = gammaDir[0].entries.children[2]
+        gammaDir = findDirectoryContainingText(treeView.roots[0], 'gamma')
+        gammaDir.expand()
+        deltaFile = gammaDir.entries.children[2]
 
         [dragStartEvent, dragEnterEvent, dropEvent] =
-            eventHelpers.buildInternalDragEvents(deltaFile, alphaDir.find('.header')[0])
+            eventHelpers.buildInternalDragEvents(deltaFile, alphaDir.querySelector('.header'))
         treeView.onDragStart(dragStartEvent)
         treeView.onDragEnter(dragEnterEvent)
         expect(alphaDir).toHaveClass('selected')
@@ -3228,104 +3220,104 @@ describe "TreeView", ->
     describe "when dropping a FileView onto a DirectoryView's header", ->
       it "should move the file to the hovered directory", ->
         # Dragging delta.txt onto alphaDir
-        alphaDir = $(treeView.roots[0].entries).find('.directory:contains(alpha):first')
-        alphaDir[0].expand()
+        alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
+        alphaDir.expand()
 
-        gammaDir = $(treeView.roots[0].entries).find('.directory:contains(gamma):first')
-        gammaDir[0].expand()
-        deltaFile = gammaDir[0].entries.children[2]
+        gammaDir = findDirectoryContainingText(treeView.roots[0], 'gamma')
+        gammaDir.expand()
+        deltaFile = gammaDir.entries.children[2]
 
         [dragStartEvent, dragEnterEvent, dropEvent] =
-            eventHelpers.buildInternalDragEvents(deltaFile, alphaDir.find('.header')[0], alphaDir[0])
+            eventHelpers.buildInternalDragEvents(deltaFile, alphaDir.querySelector('.header'), alphaDir)
 
         runs ->
           treeView.onDragStart(dragStartEvent)
           treeView.onDrop(dropEvent)
-          expect(alphaDir[0].children.length).toBe 2
+          expect(alphaDir.children.length).toBe 2
 
         waitsFor "directory view contents to refresh", ->
-          $(treeView.roots[0].entries).find('.directory:contains(alpha):first .entry').length > 2
+          findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > 2
 
         runs ->
-          expect($(treeView.roots[0].entries).find('.directory:contains(alpha):first .entry').length).toBe 3
+          expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe 3
 
     describe "when dropping a DirectoryView onto a DirectoryView's header", ->
       it "should move the directory to the hovered directory", ->
         # Dragging thetaDir onto alphaDir
-        alphaDir = $(treeView.roots[0].entries).find('.directory:contains(alpha):first')
-        alphaDir[0].expand()
+        alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
+        alphaDir.expand()
 
-        gammaDir = $(treeView.roots[0].entries).find('.directory:contains(gamma):first')
-        gammaDir[0].expand()
-        thetaDir = gammaDir[0].entries.children[0]
+        gammaDir = findDirectoryContainingText(treeView.roots[0], 'gamma')
+        gammaDir.expand()
+        thetaDir = gammaDir.entries.children[0]
 
         [dragStartEvent, dragEnterEvent, dropEvent] =
-            eventHelpers.buildInternalDragEvents(thetaDir, alphaDir.find('.header')[0], alphaDir[0])
+            eventHelpers.buildInternalDragEvents(thetaDir, alphaDir.querySelector('.header'), alphaDir)
 
         runs ->
           treeView.onDragStart(dragStartEvent)
           treeView.onDrop(dropEvent)
-          expect(alphaDir[0].children.length).toBe 2
+          expect(alphaDir.children.length).toBe 2
 
         waitsFor "directory view contents to refresh", ->
-          $(treeView.roots[0].entries).find('.directory:contains(alpha):first .entry').length > 2
+          findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > 2
 
         runs ->
-          expect($(treeView.roots[0].entries).find('.directory:contains(alpha):first .entry').length).toBe 3
+          expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe 3
 
     describe "when dragging a file from the OS onto a DirectoryView's header", ->
       it "should move the file to the hovered directory", ->
         # Dragging delta.txt from OS file explorer onto alphaDir
-        alphaDir = $(treeView.roots[0].entries).find('.directory:contains(alpha):first')
-        alphaDir[0].expand()
+        alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
+        alphaDir.expand()
 
-        dropEvent = eventHelpers.buildExternalDropEvent([deltaFilePath], alphaDir[0])
+        dropEvent = eventHelpers.buildExternalDropEvent([deltaFilePath], alphaDir)
 
         runs ->
           treeView.onDrop(dropEvent)
-          expect(alphaDir[0].children.length).toBe 2
+          expect(alphaDir.children.length).toBe 2
 
         waitsFor "directory view contents to refresh", ->
-          $(treeView.roots[0].entries).find('.directory:contains(alpha):first .entry').length > 2
+          findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > 2
 
         runs ->
-          expect($(treeView.roots[0].entries).find('.directory:contains(alpha):first .entry').length).toBe 3
+          expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe 3
 
     describe "when dragging a directory from the OS onto a DirectoryView's header", ->
       it "should move the directory to the hovered directory", ->
         # Dragging gammaDir from OS file explorer onto alphaDir
-        alphaDir = $(treeView.roots[0].entries).find('.directory:contains(alpha):first')
-        alphaDir[0].expand()
+        alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
+        alphaDir.expand()
 
-        dropEvent = eventHelpers.buildExternalDropEvent([gammaDirPath], alphaDir[0])
+        dropEvent = eventHelpers.buildExternalDropEvent([gammaDirPath], alphaDir)
 
         runs ->
           treeView.onDrop(dropEvent)
-          expect(alphaDir[0].children.length).toBe 2
+          expect(alphaDir.children.length).toBe 2
 
         waitsFor "directory view contents to refresh", ->
-          $(treeView.roots[0].entries).find('.directory:contains(alpha):first .entry').length > 2
+          findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > 2
 
         runs ->
-          expect($(treeView.roots[0].entries).find('.directory:contains(alpha):first .entry').length).toBe 3
+          expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe 3
 
     describe "when dragging a file and directory from the OS onto a DirectoryView's header", ->
       it "should move the file and directory to the hovered directory", ->
         # Dragging delta.txt and gammaDir from OS file explorer onto alphaDir
-        alphaDir = $(treeView.roots[0].entries).find('.directory:contains(alpha):first')
-        alphaDir[0].expand()
+        alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
+        alphaDir.expand()
 
-        dropEvent = eventHelpers.buildExternalDropEvent([deltaFilePath, gammaDirPath], alphaDir[0])
+        dropEvent = eventHelpers.buildExternalDropEvent([deltaFilePath, gammaDirPath], alphaDir)
 
         runs ->
           treeView.onDrop(dropEvent)
-          expect(alphaDir[0].children.length).toBe 2
+          expect(alphaDir.children.length).toBe 2
 
         waitsFor "directory view contents to refresh", ->
-          $(treeView.roots[0].entries).find('.directory:contains(alpha):first .entry').length > 3
+          findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > 3
 
         runs ->
-          expect($(treeView.roots[0].entries).find('.directory:contains(alpha):first .entry').length).toBe 4
+          expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe 4
 
   describe "the alwaysOpenExisting config option", ->
     it "defaults to unset", ->
@@ -3340,21 +3332,21 @@ describe "TreeView", ->
         treeView.focus()
 
         waitsForFileToOpen ->
-          sampleJs.trigger clickEvent(originalEvent: {detail: 1})
+          sampleJs.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
 
         runs ->
           expect(sampleJs).toHaveClass 'selected'
           expect(atom.workspace.getActivePaneItem().getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
-          expect(treeView.list).toHaveFocus()
+          expect(treeView.element.querySelector('.tree-view')).toHaveFocus()
 
         waitsForFileToOpen ->
-          sampleTxt.trigger clickEvent(originalEvent: {detail: 1})
+          sampleTxt.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
 
         runs ->
           expect(sampleTxt).toHaveClass 'selected'
-          expect(treeView.find('.selected').length).toBe 1
+          expect(treeView.element.querySelectorAll('.selected').length).toBe 1
           expect(atom.workspace.getActivePaneItem().getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.txt')
-          expect(treeView.list).toHaveFocus()
+          expect(treeView.element.querySelector('.tree-view')).toHaveFocus()
 
     describe "opening existing opened files in existing split panes", ->
       beforeEach ->
@@ -3420,7 +3412,7 @@ describe "TreeView", ->
             treeView.focus()
 
             waitsForFileToOpen ->
-              sampleTxt.trigger clickEvent(originalEvent: {detail: 1})
+              sampleTxt.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
 
             runs ->
               activePaneItem = atom.workspace.getActivePaneItem()
@@ -3445,8 +3437,8 @@ describe "TreeView", ->
           treeView.focus()
 
           waitsForFileToOpen ->
-            sampleTxt.trigger clickEvent(originalEvent: {detail: 1})
-            sampleTxt.trigger clickEvent(originalEvent: {detail: 2})
+            sampleTxt.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+            sampleTxt.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 2}))
 
           waits 100
 
@@ -3499,14 +3491,14 @@ describe "TreeView", ->
       describe "when dragging on the top part of the root", ->
         it "should add the placeholder above the directory", ->
           # Dragging gammaDir onto alphaDir
-          alphaDir = $(treeView).find('.project-root:contains(alpha):first')
-          gammaDir = $(treeView).find('.project-root:contains(gamma):first')
+          alphaDir = treeView.roots[0]
+          gammaDir = treeView.roots[1]
           [dragStartEvent, dragOverEvents, dragEndEvent] =
-            eventHelpers.buildPositionalDragEvents(gammaDir.find('.project-root-header')[0], alphaDir[0], '.tree-view')
+            eventHelpers.buildPositionalDragEvents(gammaDir.querySelector('.project-root-header'), alphaDir, '.tree-view')
 
           treeView.rootDragAndDrop.onDragStart(dragStartEvent)
           treeView.rootDragAndDrop.onDragOver(dragOverEvents.top)
-          expect(alphaDir[0].previousSibling).toHaveClass('placeholder')
+          expect(alphaDir.previousSibling).toHaveClass('placeholder')
 
           # Is removed when drag ends
           treeView.rootDragAndDrop.onDragEnd(dragEndEvent)
@@ -3515,14 +3507,14 @@ describe "TreeView", ->
       describe "when dragging on the bottom part of the root", ->
         it "should add the placeholder below the directory", ->
           # Dragging gammaDir onto alphaDir
-          alphaDir = $(treeView).find('.project-root:contains(alpha):first')
-          gammaDir = $(treeView).find('.project-root:contains(gamma):first')
+          alphaDir = treeView.roots[0]
+          gammaDir = treeView.roots[1]
           [dragStartEvent, dragOverEvents, dragEndEvent] =
-            eventHelpers.buildPositionalDragEvents(gammaDir.find('.project-root-header')[0], alphaDir[0], '.tree-view')
+            eventHelpers.buildPositionalDragEvents(gammaDir.querySelector('.project-root-header'), alphaDir, '.tree-view')
 
           treeView.rootDragAndDrop.onDragStart(dragStartEvent)
           treeView.rootDragAndDrop.onDragOver(dragOverEvents.bottom)
-          expect(alphaDir[0].nextSibling).toHaveClass('placeholder')
+          expect(alphaDir.nextSibling).toHaveClass('placeholder')
 
           # Is removed when drag ends
           treeView.rootDragAndDrop.onDragEnd(dragEndEvent)
@@ -3531,16 +3523,16 @@ describe "TreeView", ->
       describe "when below all entries", ->
         it "should add the placeholder below the last directory", ->
           # Dragging gammaDir onto alphaDir
-          alphaDir = $(treeView).find('.project-root:contains(alpha):first')
-          lastDir = $(treeView).find('.project-root:last')
+          alphaDir = treeView.roots[0]
+          lastDir = treeView.roots[treeView.roots.length - 1]
           [dragStartEvent, dragOverEvents, dragEndEvent] =
-            eventHelpers.buildPositionalDragEvents(alphaDir.find('.project-root-header')[0], treeView.find('.tree-view')[0])
+            eventHelpers.buildPositionalDragEvents(alphaDir.querySelector('.project-root-header'), treeView.element.querySelector('.tree-view'))
 
-          expect(alphaDir[0]).not.toEqual(lastDir[0])
+          expect(alphaDir).not.toEqual(lastDir)
 
           treeView.rootDragAndDrop.onDragStart(dragStartEvent)
           treeView.rootDragAndDrop.onDragOver(dragOverEvents.bottom)
-          expect(lastDir[0].nextSibling).toHaveClass('placeholder')
+          expect(lastDir.nextSibling).toHaveClass('placeholder')
 
           # Is removed when drag ends
           treeView.rootDragAndDrop.onDragEnd(dragEndEvent)
@@ -3551,10 +3543,10 @@ describe "TreeView", ->
       describe "when dropping on the top part of the header", ->
         it "should add the placeholder above the directory", ->
           # dropping gammaDir above alphaDir
-          alphaDir = $(treeView).find('.project-root:contains(alpha):first')
-          gammaDir = $(treeView).find('.project-root:contains(gamma):first')
+          alphaDir = treeView.roots[0]
+          gammaDir = treeView.roots[1]
           [dragStartEvent, dragDropEvents] =
-            eventHelpers.buildPositionalDragEvents(gammaDir.find('.project-root-header')[0], alphaDir[0], '.tree-view')
+            eventHelpers.buildPositionalDragEvents(gammaDir.querySelector('.project-root-header'), alphaDir, '.tree-view')
 
           treeView.rootDragAndDrop.onDragStart(dragStartEvent)
           treeView.rootDragAndDrop.onDrop(dragDropEvents.top)
@@ -3568,10 +3560,10 @@ describe "TreeView", ->
       describe "when dropping on the bottom part of the header", ->
         it "should add the placeholder below the directory", ->
           # dropping thetaDir below alphaDir
-          alphaDir = $(treeView).find('.project-root:contains(alpha):first')
-          thetaDir = $(treeView).find('.project-root:contains(theta):first')
+          alphaDir = treeView.roots[0]
+          thetaDir = treeView.roots[2]
           [dragStartEvent, dragDropEvents] =
-            eventHelpers.buildPositionalDragEvents(thetaDir.find('.project-root-header')[0], alphaDir[0], '.tree-view')
+            eventHelpers.buildPositionalDragEvents(thetaDir.querySelector('.project-root-header'), alphaDir, '.tree-view')
 
           treeView.rootDragAndDrop.onDragStart(dragStartEvent)
           treeView.rootDragAndDrop.onDrop(dragDropEvents.bottom)
@@ -3585,8 +3577,8 @@ describe "TreeView", ->
 
     describe "when a root folder is dragged out of application", ->
       it "should carry the folder's information", ->
-        gammaDir = $(treeView).find('.project-root:contains(gamma):first')
-        [dragStartEvent] = eventHelpers.buildPositionalDragEvents(gammaDir.find('.project-root-header')[0])
+        gammaDir = treeView.roots[1]
+        [dragStartEvent] = eventHelpers.buildPositionalDragEvents(gammaDir.querySelector('.project-root-header'))
         treeView.rootDragAndDrop.onDragStart(dragStartEvent)
 
         expect(dragStartEvent.originalEvent.dataTransfer.getData("text/plain")).toEqual gammaDirPath
@@ -3595,8 +3587,8 @@ describe "TreeView", ->
 
     describe "when a root folder is dropped from another Atom window", ->
       it "adds the root folder to the window", ->
-        alphaDir = $(treeView).find('.project-root:contains(alpha):first')
-        [_, dragDropEvents] = eventHelpers.buildPositionalDragEvents(null, alphaDir.find('.project-root-header')[0], '.tree-view')
+        alphaDir = treeView.roots[0]
+        [_, dragDropEvents] = eventHelpers.buildPositionalDragEvents(null, alphaDir.querySelector('.project-root-header'), '.tree-view')
 
         dropEvent = dragDropEvents.bottom
         dropEvent.originalEvent.dataTransfer.setData('atom-tree-view-event', true)
@@ -3620,14 +3612,21 @@ describe "TreeView", ->
 
     describe "when a root folder is dropped to another Atom window", ->
       it "removes the root folder from the first window", ->
-        gammaDir = $(treeView).find('.project-root:contains(gamma):first')
-        [dragStartEvent, dropEvent] = eventHelpers.buildPositionalDragEvents(gammaDir.find('.project-root-header')[0])
+        gammaDir = treeView.roots[1]
+        [dragStartEvent, dropEvent] = eventHelpers.buildPositionalDragEvents(gammaDir.querySelector('.project-root-header'))
         treeView.rootDragAndDrop.onDragStart(dragStartEvent)
-        treeView.rootDragAndDrop.onDropOnOtherWindow({}, gammaDir.index())
+        treeView.rootDragAndDrop.onDropOnOtherWindow({}, Array.from(gammaDir.parentElement.children).indexOf(gammaDir))
 
         expect(atom.project.getPaths()).toEqual [alphaDirPath, thetaDirPath]
         expect('.placeholder').not.toExist()
 
+  findDirectoryContainingText = (element, text) ->
+    directories = Array.from(element.querySelectorAll('.entries .directory'))
+    directories.find((directory) -> directory.header.textContent is text)
+
+  findFileContainingText = (element, text) ->
+    files = Array.from(element.querySelectorAll('.entries .file'))
+    files.find((file) -> file.fileName.textContent is text)
 
 describe 'Icon class handling', ->
   it 'allows multiple classes to be passed', ->
