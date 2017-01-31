@@ -225,7 +225,7 @@ describe "TreeView", ->
     it "restores the focus state of the tree view", ->
       jasmine.attachToDOM(workspaceElement)
       treeView.focus()
-      expect(treeView.element.querySelector('.tree-view')).toHaveFocus()
+      expect(treeView.list).toMatchSelector(":focus")
       atom.packages.deactivatePackage("tree-view")
 
       waitsForPromise ->
@@ -233,7 +233,7 @@ describe "TreeView", ->
 
       runs ->
         treeView = atom.workspace.getLeftPanels()[0].getItem()
-        expect(treeView.element.querySelector('.tree-view')).toHaveFocus()
+        expect(treeView.list).toMatchSelector(":focus")
 
     it "restores the scroll top when toggled", ->
       workspaceElement.style.height = '5px'
@@ -294,7 +294,7 @@ describe "TreeView", ->
         treeView.detach()
         atom.commands.dispatch(workspaceElement, 'tree-view:toggle')
         expect(treeView.hasParent()).toBeTruthy()
-        expect(treeView.element.querySelector('.tree-view')).toHaveFocus()
+        expect(treeView.list).toMatchSelector(":focus")
 
     describe "when tree-view:toggle-side is triggered on the root view", ->
       describe "when the tree view is on the left", ->
@@ -330,7 +330,7 @@ describe "TreeView", ->
         treeView.detach()
         atom.commands.dispatch(workspaceElement, 'tree-view:toggle-focus')
         expect(treeView.hasParent()).toBeTruthy()
-        expect(treeView.element.querySelector('.tree-view')).toHaveFocus()
+        expect(treeView.list).toMatchSelector(":focus")
 
     describe "when the tree view is shown", ->
       it "focuses the tree view", ->
@@ -342,7 +342,7 @@ describe "TreeView", ->
           expect(treeView).toBeVisible()
           atom.commands.dispatch(workspaceElement, 'tree-view:toggle-focus')
           expect(treeView).toBeVisible()
-          expect(treeView.element.querySelector('.tree-view')).toHaveFocus()
+          expect(treeView.list).toMatchSelector(":focus")
 
       describe "when the tree view is focused", ->
         it "unfocuses the tree view", ->
@@ -354,7 +354,7 @@ describe "TreeView", ->
             expect(treeView).toBeVisible()
             atom.commands.dispatch(workspaceElement, 'tree-view:toggle-focus')
             expect(treeView).toBeVisible()
-            expect(treeView.element.querySelector('.tree-view')).not.toHaveFocus()
+            expect(treeView.list).not.toMatchSelector(":focus")
 
   describe "when tree-view:reveal-active-file is triggered on the root view", ->
     beforeEach ->
@@ -464,10 +464,10 @@ describe "TreeView", ->
       runs ->
         jasmine.attachToDOM(workspaceElement)
         treeView.focus()
-        expect(treeView.element.querySelector('.tree-view')).toHaveFocus()
+        expect(treeView.list).toMatchSelector(":focus")
         atom.commands.dispatch(treeView.element, 'tool-panel:unfocus')
         expect(treeView).toBeVisible()
-        expect(treeView.element.querySelector('.tree-view')).not.toHaveFocus()
+        expect(treeView.list).not.toMatchSelector(":focus")
         expect(atom.workspace.getActivePane().isActive()).toBe(true)
 
   describe "copy path commands", ->
@@ -2132,7 +2132,7 @@ describe "TreeView", ->
           it "removes the dialog and focuses the tree view", ->
             atom.commands.dispatch moveDialog.element, 'core:cancel'
             expect(atom.workspace.getModalPanels().length).toBe 0
-            expect(treeView.find(".tree-view")).toHaveFocus()
+            expect(treeView.querySelector(".tree-view")).toHaveFocus()
 
         describe "when the move dialog's editor loses focus", ->
           it "removes the dialog and focuses root view", ->
@@ -2250,7 +2250,7 @@ describe "TreeView", ->
             jasmine.attachToDOM(treeView.element)
             atom.commands.dispatch copyDialog.element, 'core:cancel'
             expect(atom.workspace.getModalPanels().length).toBe 0
-            expect(treeView.find(".tree-view")).toHaveFocus()
+            expect(treeView.querySelector(".tree-view")).toHaveFocus()
 
         describe "when the duplicate dialog's editor loses focus", ->
           it "removes the dialog and focuses root view", ->
@@ -2836,9 +2836,9 @@ describe "TreeView", ->
       it 'switches the contextual menu to muli-select mode', ->
         fileView1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
         fileView2.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, shiftKey: true}))
-        expect(treeView.element.querySelector('.tree-view')).toHaveClass('multi-select')
+        expect(treeView.list).toHaveClass('multi-select')
         fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}))
-        expect(treeView.element.querySelector('.tree-view')).toHaveClass('full-menu')
+        expect(treeView.list).toHaveClass('full-menu')
 
     describe 'selecting multiple items', ->
       it 'switches the contextual menu to muli-select mode', ->
@@ -2904,16 +2904,16 @@ describe "TreeView", ->
             it 'displays the full contextual menu', ->
               fileView1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
               fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, ctrlKey: true}))
-              expect(treeView.element.querySelector('.tree-view')).toHaveClass('full-menu')
-              expect(treeView.element.querySelector('.tree-view')).not.toHaveClass('multi-select')
+              expect(treeView.list).toHaveClass('full-menu')
+              expect(treeView.list).not.toHaveClass('multi-select')
 
           describe 'previous item is selected including the ctrl clicked', ->
             it 'displays the multi-select menu', ->
               fileView1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
               fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, metaKey: true}))
               fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, ctrlKey: true}))
-              expect(treeView.element.querySelector('.tree-view')).not.toHaveClass('full-menu')
-              expect(treeView.element.querySelector('.tree-view')).toHaveClass('multi-select')
+              expect(treeView.list).not.toHaveClass('full-menu')
+              expect(treeView.list).toHaveClass('multi-select')
 
             it 'does not deselect any of the items', ->
               fileView1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
@@ -2926,8 +2926,8 @@ describe "TreeView", ->
             it 'displays the full contextual menu', ->
               fileView1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
               fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, ctrlKey: true}))
-              expect(treeView.element.querySelector('.tree-view')).toHaveClass('full-menu')
-              expect(treeView.element.querySelector('.tree-view')).not.toHaveClass('multi-select')
+              expect(treeView.list).toHaveClass('full-menu')
+              expect(treeView.list).not.toHaveClass('multi-select')
 
           describe 'when no item is selected', ->
             it 'selects the ctrl clicked item', ->
@@ -2936,8 +2936,8 @@ describe "TreeView", ->
 
             it 'displays the full context menu', ->
               fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, ctrlKey: true}))
-              expect(treeView.element.querySelector('.tree-view')).toHaveClass('full-menu')
-              expect(treeView.element.querySelector('.tree-view')).not.toHaveClass('multi-select')
+              expect(treeView.list).toHaveClass('full-menu')
+              expect(treeView.list).not.toHaveClass('multi-select')
 
         describe "right-clicking", ->
           describe 'when multiple items are selected', ->
@@ -2947,15 +2947,15 @@ describe "TreeView", ->
               fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, button: 2}))
               expect(fileView1).toHaveClass('selected')
               expect(fileView3).toHaveClass('selected')
-              expect(treeView.element.querySelector('.tree-view')).not.toHaveClass('full-menu')
-              expect(treeView.element.querySelector('.tree-view')).toHaveClass('multi-select')
+              expect(treeView.list).not.toHaveClass('full-menu')
+              expect(treeView.list).toHaveClass('multi-select')
 
           describe 'when a single item is selected', ->
             it 'displays the full context menu', ->
               fileView1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
               fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, button: 2}))
-              expect(treeView.element.querySelector('.tree-view')).toHaveClass('full-menu')
-              expect(treeView.element.querySelector('.tree-view')).not.toHaveClass('multi-select')
+              expect(treeView.list).toHaveClass('full-menu')
+              expect(treeView.list).not.toHaveClass('multi-select')
 
             it 'selects right clicked item', ->
               fileView1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
@@ -2975,8 +2975,8 @@ describe "TreeView", ->
             it 'shows the full context menu', ->
               fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, button: 2}))
               expect(fileView3).toHaveClass('selected')
-              expect(treeView.element.querySelector('.tree-view')).toHaveClass('full-menu')
-              expect(treeView.element.querySelector('.tree-view')).not.toHaveClass('multi-select')
+              expect(treeView.list).toHaveClass('full-menu')
+              expect(treeView.list).not.toHaveClass('multi-select')
 
   describe "the sortFoldersBeforeFiles config option", ->
     [dirView, fileView, dirView2, fileView2, fileView3, rootDirPath, dirPath, filePath, dirPath2, filePath2, filePath3] = []
@@ -3337,7 +3337,7 @@ describe "TreeView", ->
         runs ->
           expect(sampleJs).toHaveClass 'selected'
           expect(atom.workspace.getActivePaneItem().getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
-          expect(treeView.element.querySelector('.tree-view')).toHaveFocus()
+          expect(treeView.list).toMatchSelector(":focus")
 
         waitsForFileToOpen ->
           sampleTxt.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
@@ -3346,7 +3346,7 @@ describe "TreeView", ->
           expect(sampleTxt).toHaveClass 'selected'
           expect(treeView.element.querySelectorAll('.selected').length).toBe 1
           expect(atom.workspace.getActivePaneItem().getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.txt')
-          expect(treeView.element.querySelector('.tree-view')).toHaveFocus()
+          expect(treeView.list).toMatchSelector(":focus")
 
     describe "opening existing opened files in existing split panes", ->
       beforeEach ->
@@ -3422,7 +3422,7 @@ describe "TreeView", ->
             expect(treeView).toHaveFocus()
 
           it "doesn't open the file in the active pane", ->
-            expect(atom.views.getView(treeView)).toHaveFocus()
+            expect(atom.views.getView(treeView).element).toHaveFocus()
             expect(activePaneItem.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
 
       describe "when a file is double-clicked", ->
