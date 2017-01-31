@@ -1852,7 +1852,7 @@ describe "TreeView", ->
                 dirView3.entries.querySelectorAll(".file").length > 1
 
               runs ->
-                expect(treeView.element.querySelector('.selected').textContent).toBe path.basename(newPath)
+                expect(treeView.element.querySelector('.file.selected').textContent).toBe path.basename(newPath)
 
           describe "when a file already exists at that location", ->
             it "shows an error message and does not close the dialog", ->
@@ -2132,7 +2132,7 @@ describe "TreeView", ->
           it "removes the dialog and focuses the tree view", ->
             atom.commands.dispatch moveDialog.element, 'core:cancel'
             expect(atom.workspace.getModalPanels().length).toBe 0
-            expect(treeView.querySelector(".tree-view")).toHaveFocus()
+            expect(treeView.list).toMatchSelector(":focus")
 
         describe "when the move dialog's editor loses focus", ->
           it "removes the dialog and focuses root view", ->
@@ -2250,7 +2250,7 @@ describe "TreeView", ->
             jasmine.attachToDOM(treeView.element)
             atom.commands.dispatch copyDialog.element, 'core:cancel'
             expect(atom.workspace.getModalPanels().length).toBe 0
-            expect(treeView.querySelector(".tree-view")).toHaveFocus()
+            expect(treeView.list).toMatchSelector(":focus")
 
         describe "when the duplicate dialog's editor loses focus", ->
           it "removes the dialog and focuses root view", ->
