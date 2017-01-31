@@ -2555,11 +2555,7 @@ describe "TreeView", ->
         expect(zetaEntries).toEqual(["zeta.txt"])
 
       it "squashes two dir names when the first only contains a single dir", ->
-        if path.sep is '\\'
-          # First escape the backslashes for Coffeescript, then escape them for jQuery
-          betaDir = findDirectoryContainingText(treeView.roots[0], "alpha\\beta")
-        else
-          betaDir = findDirectoryContainingText(treeView.roots[0], "alpha#{path.sep}beta")
+        betaDir = findDirectoryContainingText(treeView.roots[0], "alpha#{path.sep}beta")
         betaDir.expand()
         betaEntries = [].slice.call(betaDir.children[1].children).map (element) ->
           element.innerText
@@ -2567,11 +2563,7 @@ describe "TreeView", ->
         expect(betaEntries).toEqual(["beta.txt"])
 
       it "squashes three dir names when the first and second only contain single dirs", ->
-        if path.sep is '\\'
-          # First escape the backslashes for Coffeescript, then escape them for jQuery
-          epsilonDir = findDirectoryContainingText(treeView.roots[0], "gamma\\delta\\epsilon")
-        else
-          epsilonDir = findDirectoryContainingText(treeView.roots[0], "gamma#{path.sep}delta#{path.sep}epsilon")
+        epsilonDir = findDirectoryContainingText(treeView.roots[0], "gamma#{path.sep}delta#{path.sep}epsilon")
         epsilonDir.expand()
         epsilonEntries = [].slice.call(epsilonDir.children[1].children).map (element) ->
           element.innerText
