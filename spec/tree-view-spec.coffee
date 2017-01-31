@@ -2543,13 +2543,13 @@ describe "TreeView", ->
 
         rootDirPath = treeView.roots[0].getPath()
         expect(rootDirPath).toBe(rootDir)
-        zetaDirPath = $(treeView.roots[0].entries).find('.directory:contains(zeta):first')[0].getPath()
+        zetaDirPath = findDirectoryContainingText(treeView.roots[0], 'zeta').getPath()
         expect(zetaDirPath).toBe(zetaDir)
 
       it "does not squash a file in to a DirectoryViews", ->
-        zetaDir = $(treeView.roots[0].entries).find('.directory:contains(zeta):first')
-        zetaDir[0].expand()
-        zetaEntries = [].slice.call(zetaDir[0].children[1].children).map (element) ->
+        zetaDir = findDirectoryContainingText(treeView.roots[0], 'zeta')
+        zetaDir.expand()
+        zetaEntries = [].slice.call(zetaDir.children[1].children).map (element) ->
           element.innerText
 
         expect(zetaEntries).toEqual(["zeta.txt"])
@@ -2557,11 +2557,11 @@ describe "TreeView", ->
       it "squashes two dir names when the first only contains a single dir", ->
         if path.sep is '\\'
           # First escape the backslashes for Coffeescript, then escape them for jQuery
-          betaDir = $(treeView.roots[0].entries).find(".directory:contains(alpha\\\\beta):first")
+          betaDir = findDirectoryContainingText(treeView.roots[0], "alpha\\\\beta")
         else
-          betaDir = $(treeView.roots[0].entries).find(".directory:contains(alpha#{path.sep}beta):first")
-        betaDir[0].expand()
-        betaEntries = [].slice.call(betaDir[0].children[1].children).map (element) ->
+          betaDir = findDirectoryContainingText(treeView.roots[0], "alpha#{path.sep}beta")
+        betaDir.expand()
+        betaEntries = [].slice.call(betaDir.children[1].children).map (element) ->
           element.innerText
 
         expect(betaEntries).toEqual(["beta.txt"])
@@ -2569,19 +2569,19 @@ describe "TreeView", ->
       it "squashes three dir names when the first and second only contain single dirs", ->
         if path.sep is '\\'
           # First escape the backslashes for Coffeescript, then escape them for jQuery
-          epsilonDir = $(treeView.roots[0].entries).find(".directory:contains(gamma\\\\delta\\\\epsilon):first")
+          epsilonDir = findDirectoryContainingText(treeView.roots[0], "gamma\\\\delta\\\\epsilon")
         else
-          epsilonDir = $(treeView.roots[0].entries).find(".directory:contains(gamma#{path.sep}delta#{path.sep}epsilon):first")
-        epsilonDir[0].expand()
-        epsilonEntries = [].slice.call(epsilonDir[0].children[1].children).map (element) ->
+          epsilonDir = findDirectoryContainingText(treeView.roots[0], "gamma#{path.sep}delta#{path.sep}epsilon")
+        epsilonDir.expand()
+        epsilonEntries = [].slice.call(epsilonDir.children[1].children).map (element) ->
           element.innerText
 
         expect(epsilonEntries).toEqual(["theta.txt"])
 
       it "does not squash a dir name when there are two child dirs ", ->
-        lambdaDir = $(treeView.roots[0].entries).find('.directory:contains(lambda):first')
-        lambdaDir[0].expand()
-        lambdaEntries = [].slice.call(lambdaDir[0].children[1].children).map (element) ->
+        lambdaDir = findDirectoryContainingText(treeView.roots[0], "lambda")
+        lambdaDir.expand()
+        lambdaEntries = [].slice.call(lambdaDir.children[1].children).map (element) ->
           element.innerText
 
         expect(lambdaEntries).toEqual(["iota", "kappa"])
@@ -2589,20 +2589,20 @@ describe "TreeView", ->
       describe "when a squashed directory is deleted", ->
         it "un-squashes the directories", ->
           jasmine.attachToDOM(workspaceElement)
-          piDir = $(treeView.roots[0].entries).find(".directory:contains(omicron#{path.sep}pi):first")[0]
+          piDir = findDirectoryContainingText(treeView.roots[0], "omicron#{path.sep}pi")
           treeView.focus()
           treeView.selectEntry(piDir)
           spyOn(atom, 'confirm').andCallFake (dialog) ->
             dialog.buttons["Move to Trash"]()
           atom.commands.dispatch(treeView.element, 'tree-view:remove')
 
-          omicronDir = $(treeView.roots[0].entries).find(".directory:contains(omicron):first span")[0]
-          expect(omicronDir.title).toEqual("omicron")
+          omicronDir = findDirectoryContainingText(treeView.roots[0], "omicron")
+          expect(omicronDir.header.textContent).toEqual("omicron")
 
       describe "when a file is created within a directory with another squashed directory", ->
         it "un-squashes the directories", ->
           jasmine.attachToDOM(workspaceElement)
-          piDir = $(treeView.roots[0].entries).find(".directory:contains(omicron#{path.sep}pi):first")[0]
+          piDir = findDirectoryContainingText(treeView.roots[0], "omicron#{path.sep}pi")
           expect(piDir).not.toBeNull()
           # omicron is a squashed dir, so searching for omicron would give us omicron/pi instead
           omicronPath = piDir.getPath().replace "#{path.sep}pi", ""
@@ -2610,18 +2610,18 @@ describe "TreeView", ->
           fs.writeFileSync(sigmaFilePath, "doesn't matter")
           treeView.updateRoots()
 
-          omicronDir = $(treeView.roots[0].entries).find(".directory:contains(omicron):first span")[0]
-          expect(omicronDir.title).toEqual("omicron")
+          omicronDir = findDirectoryContainingText(treeView.roots[0], "omicron")
+          expect(omicronDir.header.textContent).toEqual("omicron")
           omicronDir.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
-          piDir = $(treeView.roots[0].entries).find(".directory:contains(omicron) .entries .directory:contains(pi) span")[0]
-          expect(piDir.title).toEqual("pi")
-          sigmaFile = $(treeView.roots[0].entries).find(".directory:contains(omicron) .entries .file:contains(sigma) span")[0]
-          expect(sigmaFile.title).toEqual("sigma.txt")
+          piDir = findDirectoryContainingText(omicronDir, "pi")
+          expect(piDir.header.textContent).toEqual("pi")
+          sigmaFile = findFileContainingText(omicronDir, "sigma.txt")
+          expect(sigmaFile.fileName.textContent).toEqual("sigma.txt")
 
       describe "when a directory is created within a directory with another squashed directory", ->
         it "un-squashes the directories", ->
           jasmine.attachToDOM(workspaceElement)
-          piDir = $(treeView.roots[0].entries).find(".directory:contains(omicron#{path.sep}pi):first")[0]
+          piDir = findDirectoryContainingText(treeView.roots[0], "omicron#{path.sep}pi")
           expect(piDir).not.toBeNull()
           # omicron is a squashed dir, so searching for omicron would give us omicron/pi instead
           omicronPath = piDir.getPath().replace "#{path.sep}pi", ""
@@ -2629,25 +2629,33 @@ describe "TreeView", ->
           fs.makeTreeSync(rhoDirPath)
           treeView.updateRoots()
 
-          omicronDir = $(treeView.roots[0].entries).find(".directory:contains(omicron):first span")[0]
-          expect(omicronDir.title).toEqual("omicron")
+          omicronDir = findDirectoryContainingText(treeView.roots[0], "omicron")
+          expect(omicronDir.header.textContent).toEqual("omicron")
           omicronDir.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
-          piDir = $(treeView.roots[0].entries).find(".directory:contains(omicron) .entries .directory:contains(pi) span")[0]
-          expect(piDir.title).toEqual("pi")
-          rhoDir = $(treeView.roots[0].entries).find(".directory:contains(omicron) .entries .directory:contains(rho) span")[0]
-          expect(rhoDir.title).toEqual("rho")
+          piDir = findDirectoryContainingText(omicronDir, "pi")
+          expect(piDir.header.textContent).toEqual("pi")
+          rhoDir = findDirectoryContainingText(omicronDir, "rho")
+          expect(rhoDir.header.textContent).toEqual("rho")
 
       describe "when a directory is reloaded", ->
         it "squashes the directory names the last of which is same as an unsquashed directory", ->
-          muDir = $(treeView.roots[0].entries).find('.directory:contains(mu):first')
-          muDir[0].expand()
-          muEntries = Array.from(muDir[0].children[1].children).map (element) -> element.innerText
+          muDir = findDirectoryContainingText(treeView.roots[0], "mu")
+          muDir.expand()
+          muEntries = Array.from(muDir.children[1].children).map (element) -> element.innerText
           expect(muEntries).toEqual(["nu#{path.sep}xi", "xi"])
 
-          muDir[0].expand()
-          muDir[0].reload()
-          muEntries = Array.from(muDir[0].children[1].children).map (element) -> element.innerText
+          muDir.expand()
+          muDir.reload()
+          muEntries = Array.from(muDir.children[1].children).map (element) -> element.innerText
           expect(muEntries).toEqual(["nu#{path.sep}xi", "xi"])
+
+    findDirectoryContainingText = (element, text) ->
+      directories = Array.from(element.querySelectorAll('.entries .directory'))
+      directories.find((directory) -> directory.header.textContent is text)
+
+    findFileContainingText = (element, text) ->
+      files = Array.from(element.querySelectorAll('.entries .file'))
+      files.find((file) -> file.fileName.textContent is text)
 
   describe "Git status decorations", ->
     [projectPath, modifiedFile, originalFileContent] = []
