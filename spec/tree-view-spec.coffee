@@ -2717,7 +2717,7 @@ describe "TreeView", ->
           atom.commands.dispatch(treeView.element, 'tree-view:remove')
           expect(dirView.directory.updateStatus).toHaveBeenCalled()
 
-    describe "when the project is a symbolic link to the repository root", ->
+    describe "on #darwin, when the project is a symbolic link to the repository root", ->
       beforeEach ->
         symlinkPath = temp.path('tree-view-project')
         fs.symlinkSync(projectPath, symlinkPath, 'junction')
@@ -2739,12 +2739,8 @@ describe "TreeView", ->
           fs.writeFileSync(modifiedFile, originalFileContent)
           atom.project.getRepositories()[0].getPathStatus(modifiedFile)
 
-          waitsFor ->
-            not treeView.element.querySelector('.file.status-modified')
-
-          runs ->
-            expect(treeView.element.querySelector('.file.status-modified')).not.toExist()
-            expect(treeView.element.querySelector('.directory.status-modified')).not.toExist()
+          expect(treeView.element.querySelector('.file.status-modified')).not.toExist()
+          expect(treeView.element.querySelector('.directory.status-modified')).not.toExist()
 
   describe "when the resize handle is double clicked", ->
     beforeEach ->
