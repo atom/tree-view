@@ -2557,7 +2557,7 @@ describe "TreeView", ->
       it "squashes two dir names when the first only contains a single dir", ->
         if path.sep is '\\'
           # First escape the backslashes for Coffeescript, then escape them for jQuery
-          betaDir = findDirectoryContainingText(treeView.roots[0], "alpha\\\\beta")
+          betaDir = findDirectoryContainingText(treeView.roots[0], "alpha\\beta")
         else
           betaDir = findDirectoryContainingText(treeView.roots[0], "alpha#{path.sep}beta")
         betaDir.expand()
@@ -2569,7 +2569,7 @@ describe "TreeView", ->
       it "squashes three dir names when the first and second only contain single dirs", ->
         if path.sep is '\\'
           # First escape the backslashes for Coffeescript, then escape them for jQuery
-          epsilonDir = findDirectoryContainingText(treeView.roots[0], "gamma\\\\delta\\\\epsilon")
+          epsilonDir = findDirectoryContainingText(treeView.roots[0], "gamma\\delta\\epsilon")
         else
           epsilonDir = findDirectoryContainingText(treeView.roots[0], "gamma#{path.sep}delta#{path.sep}epsilon")
         epsilonDir.expand()
