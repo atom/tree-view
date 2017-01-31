@@ -2739,8 +2739,12 @@ describe "TreeView", ->
           fs.writeFileSync(modifiedFile, originalFileContent)
           atom.project.getRepositories()[0].getPathStatus(modifiedFile)
 
-          expect(treeView.element.querySelector('.file.status-modified')).not.toExist()
-          expect(treeView.element.querySelector('.directory.status-modified')).not.toExist()
+          waitsFor ->
+            not treeView.element.querySelector('.file.status-modified')
+
+          runs ->
+            expect(treeView.element.querySelector('.file.status-modified')).not.toExist()
+            expect(treeView.element.querySelector('.directory.status-modified')).not.toExist()
 
   describe "when the resize handle is double clicked", ->
     beforeEach ->
@@ -3414,7 +3418,7 @@ describe "TreeView", ->
             expect(treeView).toHaveFocus()
 
           it "doesn't open the file in the active pane", ->
-            expect(atom.views.getView(treeView).element).toHaveFocus()
+            expect(atom.views.getView(treeView)).toHaveFocus()
             expect(activePaneItem.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
 
       describe "when a file is double-clicked", ->
