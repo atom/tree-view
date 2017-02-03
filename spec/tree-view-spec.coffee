@@ -106,12 +106,12 @@ describe "TreeView", ->
           treeView = atom.packages.getActivePackage("tree-view").mainModule.createView()
 
       it "does not attach to the workspace or create a root node when initialized", ->
-        expect(treeView.hasParent()).toBeFalsy()
+        expect(treeView.element.parentElement).toBeFalsy()
         expect(treeView.roots).toHaveLength(0)
 
       it "does not attach to the workspace or create a root node when attach() is called", ->
         treeView.attach()
-        expect(treeView.hasParent()).toBeFalsy()
+        expect(treeView.element.parentElement).toBeFalsy()
         expect(treeView.roots).toHaveLength(0)
 
       it "serializes without throwing an exception", ->
@@ -133,7 +133,7 @@ describe "TreeView", ->
 
         runs ->
           atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
-          expect(treeView.hasParent()).toBeFalsy()
+          expect(treeView.element.parentElement).toBeFalsy()
           expect(treeView.roots).toHaveLength(0)
 
       describe "when the project is assigned a path because a new buffer is saved", ->
@@ -144,7 +144,7 @@ describe "TreeView", ->
           runs ->
             projectPath = temp.mkdirSync('atom-project')
             atom.workspace.getActivePaneItem().saveAs(path.join(projectPath, 'test.txt'))
-            expect(treeView.hasParent()).toBeTruthy()
+            expect(treeView.element.parentElement).toBeTruthy()
             expect(treeView.roots).toHaveLength(1)
             expect(fs.absolute(treeView.roots[0].getPath())).toBe fs.absolute(projectPath)
 
@@ -161,7 +161,7 @@ describe "TreeView", ->
 
         runs ->
           treeView = atom.packages.getActivePackage("tree-view").mainModule.createView()
-          expect(treeView.hasParent()).toBeFalsy()
+          expect(treeView.element.parentElement).toBeFalsy()
           expect(treeView.roots).toHaveLength(2)
 
     describe "when the root view is opened to a directory", ->
@@ -171,7 +171,7 @@ describe "TreeView", ->
 
         runs ->
           treeView = atom.packages.getActivePackage("tree-view").mainModule.createView()
-          expect(treeView.hasParent()).toBeTruthy()
+          expect(treeView.element.parentElement).toBeTruthy()
           expect(treeView.roots).toHaveLength(2)
 
     describe "when the project is a .git folder", ->
@@ -238,36 +238,36 @@ describe "TreeView", ->
     it "restores the scroll top when toggled", ->
       workspaceElement.style.height = '5px'
       jasmine.attachToDOM(workspaceElement)
-      expect(treeView).toBeVisible()
+      expect(treeView.element).toBeVisible()
       treeView.focus()
 
       treeView.scrollTop(10)
       expect(treeView.scrollTop()).toBe(10)
 
       runs -> atom.commands.dispatch(workspaceElement, 'tree-view:toggle')
-      waitsFor -> treeView.is(':hidden')
+      waitsFor -> treeView.element.offsetHeight is 0
 
       runs -> atom.commands.dispatch(workspaceElement, 'tree-view:toggle')
-      waitsFor -> treeView.is(':visible')
+      waitsFor -> treeView.element.offsetHeight > 0
 
       runs -> expect(treeView.scrollTop()).toBe(10)
 
     it "restores the scroll left when toggled", ->
-      treeView.width(5)
+      treeView.element.style.width = '5px'
       jasmine.attachToDOM(workspaceElement)
-      expect(treeView).toBeVisible()
+      expect(treeView.element).toBeVisible()
       treeView.focus()
 
-      treeView.scroller.scrollLeft(5)
-      expect(treeView.scroller.scrollLeft()).toBe(5)
+      treeView.scroller.scrollLeft = 5
+      expect(treeView.scroller.scrollLeft).toBe(5)
 
       runs -> atom.commands.dispatch(workspaceElement, 'tree-view:toggle')
-      waitsFor -> treeView.is(':hidden')
+      waitsFor -> treeView.element.offsetHeight is 0
 
       runs -> atom.commands.dispatch(workspaceElement, 'tree-view:toggle')
-      waitsFor -> treeView.is(':visible')
+      waitsFor -> treeView.element.offsetHeight > 0
 
-      runs -> expect(treeView.scroller.scrollLeft()).toBe(5)
+      runs -> expect(treeView.scroller.scrollLeft).toBe(5)
 
   describe "when tree-view:toggle is triggered on the root view", ->
     beforeEach ->
@@ -275,31 +275,31 @@ describe "TreeView", ->
 
     describe "when the tree view is visible", ->
       beforeEach ->
-        expect(treeView).toBeVisible()
+        expect(treeView.element).toBeVisible()
 
       describe "when the tree view is focused", ->
         it "hides the tree view", ->
           treeView.focus()
           atom.commands.dispatch(workspaceElement, 'tree-view:toggle')
-          expect(treeView).toBeHidden()
+          expect(treeView.element).toBeHidden()
 
       describe "when the tree view is not focused", ->
         it "hides the tree view", ->
           workspaceElement.focus()
           atom.commands.dispatch(workspaceElement, 'tree-view:toggle')
-          expect(treeView).toBeHidden()
+          expect(treeView.element).toBeHidden()
 
     describe "when the tree view is hidden", ->
       it "shows and focuses the tree view", ->
         treeView.detach()
         atom.commands.dispatch(workspaceElement, 'tree-view:toggle')
-        expect(treeView.hasParent()).toBeTruthy()
+        expect(treeView.element.parentElement).toBeTruthy()
         expect(treeView.list).toHaveFocus()
 
     describe "when tree-view:toggle-side is triggered on the root view", ->
       describe "when the tree view is on the left", ->
         it "moves the tree view to the right", ->
-          expect(treeView).toBeVisible()
+          expect(treeView.element).toBeVisible()
           atom.commands.dispatch(workspaceElement, 'tree-view:toggle-side')
           expect(treeView.element.dataset.showOnRightSide).toBe('true')
 
@@ -308,7 +308,7 @@ describe "TreeView", ->
           atom.commands.dispatch(workspaceElement, 'tree-view:toggle-side')
 
         it "moves the tree view to the left", ->
-          expect(treeView).toBeVisible()
+          expect(treeView.element).toBeVisible()
           atom.commands.dispatch(workspaceElement, 'tree-view:toggle-side')
           expect(treeView.element.dataset.showOnRightSide).toBe('false')
 
@@ -329,7 +329,7 @@ describe "TreeView", ->
       it "shows and focuses the tree view", ->
         treeView.detach()
         atom.commands.dispatch(workspaceElement, 'tree-view:toggle-focus')
-        expect(treeView.hasParent()).toBeTruthy()
+        expect(treeView.element.parentElement).toBeTruthy()
         expect(treeView.list).toHaveFocus()
 
     describe "when the tree view is shown", ->
@@ -339,9 +339,9 @@ describe "TreeView", ->
 
         runs ->
           workspaceElement.focus()
-          expect(treeView).toBeVisible()
+          expect(treeView.element).toBeVisible()
           atom.commands.dispatch(workspaceElement, 'tree-view:toggle-focus')
-          expect(treeView).toBeVisible()
+          expect(treeView.element).toBeVisible()
           expect(treeView.list).toHaveFocus()
 
       describe "when the tree view is focused", ->
@@ -351,9 +351,9 @@ describe "TreeView", ->
 
           runs ->
             treeView.focus()
-            expect(treeView).toBeVisible()
+            expect(treeView.element).toBeVisible()
             atom.commands.dispatch(workspaceElement, 'tree-view:toggle-focus')
-            expect(treeView).toBeVisible()
+            expect(treeView.element).toBeVisible()
             expect(treeView.list).not.toHaveFocus()
 
   describe "when tree-view:reveal-active-file is triggered on the root view", ->
@@ -371,7 +371,7 @@ describe "TreeView", ->
 
           runs ->
             atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
-            expect(treeView.hasParent()).toBeTruthy()
+            expect(treeView.element.parentElement).toBeTruthy()
             expect(treeView.focus).toHaveBeenCalled()
 
           waitsForPromise ->
@@ -380,7 +380,7 @@ describe "TreeView", ->
 
           runs ->
             atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
-            expect(treeView.hasParent()).toBeTruthy()
+            expect(treeView.element.parentElement).toBeTruthy()
             expect(treeView.focus).toHaveBeenCalled()
 
       describe "if the tree-view.focusOnReveal config option is false", ->
@@ -392,7 +392,7 @@ describe "TreeView", ->
 
           runs ->
             atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
-            expect(treeView.hasParent()).toBeTruthy()
+            expect(treeView.element.parentElement).toBeTruthy()
             expect(treeView.focus).not.toHaveBeenCalled()
 
           waitsForPromise ->
@@ -401,7 +401,7 @@ describe "TreeView", ->
 
           runs ->
             atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
-            expect(treeView.hasParent()).toBeTruthy()
+            expect(treeView.element.parentElement).toBeTruthy()
             expect(treeView.focus).not.toHaveBeenCalled()
 
     describe "if the current file has no path", ->
@@ -412,14 +412,14 @@ describe "TreeView", ->
         runs ->
           expect(atom.workspace.getActivePaneItem().getPath()).toBeUndefined()
           atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
-          expect(treeView.hasParent()).toBeTruthy()
+          expect(treeView.element.parentElement).toBeTruthy()
           expect(treeView.focus).toHaveBeenCalled()
 
     describe "if there is no editor open", ->
       it "shows and focuses the tree view, but does not attempt to select a specific file", ->
         expect(atom.workspace.getActivePaneItem()).toBeUndefined()
         atom.commands.dispatch(workspaceElement, 'tree-view:reveal-active-file')
-        expect(treeView.hasParent()).toBeTruthy()
+        expect(treeView.element.parentElement).toBeTruthy()
         expect(treeView.focus).toHaveBeenCalled()
 
     describe 'if there are more items than can be visible in the viewport', ->
@@ -433,7 +433,7 @@ describe "TreeView", ->
           fs.writeFileSync(filepath, "doesn't matter")
 
         atom.project.setPaths([rootDirPath])
-        treeView.height(100)
+        treeView.element.style.height = '100px'
         jasmine.attachToDOM(workspaceElement)
 
       it 'scrolls the selected file into the visible view', ->
@@ -466,7 +466,7 @@ describe "TreeView", ->
         treeView.focus()
         expect(treeView.list).toHaveFocus()
         atom.commands.dispatch(treeView.element, 'tool-panel:unfocus')
-        expect(treeView).toBeVisible()
+        expect(treeView.element).toBeVisible()
         expect(treeView.list).not.toHaveFocus()
         expect(atom.workspace.getActivePane().isActive()).toBe(true)
 
@@ -622,7 +622,7 @@ describe "TreeView", ->
 
         it "selects the file and retains focus on tree-view", ->
           expect(sampleJs).toHaveClass 'selected'
-          expect(treeView).toHaveFocus()
+          expect(treeView.element).toHaveFocus()
 
         it "opens the file in a pending state", ->
           expect(activePaneItem.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.js')
@@ -638,7 +638,7 @@ describe "TreeView", ->
 
         it "selects the file and retains focus on tree-view", ->
           expect(sampleJs).toHaveClass 'selected'
-          expect(treeView).toHaveFocus()
+          expect(treeView.element).toHaveFocus()
 
         it "does not open the file", ->
           expect(atom.workspace.open).not.toHaveBeenCalled()
@@ -718,7 +718,7 @@ describe "TreeView", ->
         subdir.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 2}))
         expect(subdir).toHaveClass 'selected'
         expect(subdir).not.toHaveClass 'expanded'
-        expect(treeView).toHaveFocus()
+        expect(treeView.element).toHaveFocus()
 
   describe "when an directory is alt-clicked", ->
     describe "when the directory is collapsed", ->
@@ -954,18 +954,18 @@ describe "TreeView", ->
         treeView.element.style.height = '100px'
         jasmine.attachToDOM(treeView.element)
         element.expand() for element in treeView.element.querySelectorAll('.directory')
-        expect(treeView.element.querySelector('.tree-view').offsetHeight).toBeGreaterThan treeView.element.querySelector('.tree-view-scroller').offsetHeight
-        expect(treeView.element.querySelector('.tree-view-scroller').scrollTop).toBe(0)
+        expect(treeView.list.offsetHeight).toBeGreaterThan treeView.scroller.offsetHeight
+        expect(treeView.scroller.scrollTop).toBe(0)
 
         entryCount = treeView.element.querySelectorAll(".entry").length
         _.times entryCount, -> atom.commands.dispatch(treeView.element, 'core:move-down')
-        expect(treeView.element.querySelector('.tree-view-scroller').scrollTop).toBeGreaterThan 0
+        expect(treeView.scroller.scrollTop).toBeGreaterThan 0
 
         atom.commands.dispatch(treeView.element, 'core:move-to-top')
-        expect(treeView.element.querySelector('.tree-view-scroller').scrollTop).toBe(0)
+        expect(treeView.scroller.scrollTop).toBe(0)
 
       it "selects the root entry", ->
-        entryCount = treeView.find(".entry").length
+        entryCount = treeView.element.querySelectorAll(".entry").length
         _.times entryCount, -> atom.commands.dispatch(treeView.element, 'core:move-down')
 
         expect(treeView.roots[0]).not.toHaveClass 'selected'
@@ -977,16 +977,16 @@ describe "TreeView", ->
         treeView.element.style.height = '100px'
         jasmine.attachToDOM(treeView.element)
         element.expand() for element in treeView.element.querySelectorAll('.directory')
-        expect(treeView.element.querySelector('.tree-view').offsetHeight).toBeGreaterThan treeView.element.querySelector('.tree-view-scroller').offsetHeight
-        expect(treeView.element.querySelector('.tree-view-scroller').scrollTop).toBe(0)
+        expect(treeView.list.offsetHeight).toBeGreaterThan treeView.scroller.offsetHeight
+        expect(treeView.scroller.scrollTop).toBe(0)
 
         atom.commands.dispatch(treeView.element, 'core:move-to-bottom')
-        expect(treeView.element.querySelector('.tree-view-scroller').scrollTop).toBeGreaterThan(0)
+        expect(treeView.scroller.scrollTop).toBeGreaterThan(0)
 
         treeView.roots[0].collapse()
         treeView.roots[1].collapse()
         atom.commands.dispatch(treeView.element, 'core:move-to-bottom')
-        expect(treeView.element.querySelector('.tree-view-scroller').scrollTop).toBe(0)
+        expect(treeView.scroller.scrollTop).toBe(0)
 
       it "selects the last entry", ->
         expect(treeView.roots[0]).toHaveClass 'selected'
@@ -999,45 +999,45 @@ describe "TreeView", ->
         treeView.element.style.height = '5px'
         jasmine.attachToDOM(treeView.element)
         element.expand() for element in treeView.element.querySelectorAll('.directory')
-        expect(treeView.element.querySelector('.tree-view').offsetHeight).toBeGreaterThan treeView.element.querySelector('.tree-view-scroller').offsetHeight
+        expect(treeView.list.offsetHeight).toBeGreaterThan treeView.scroller.offsetHeight
 
-        expect(treeView.element.querySelector('.tree-view-scroller').scrollTop).toBe(0)
+        expect(treeView.scroller.scrollTop).toBe(0)
         treeView.scrollToBottom()
-        scrollTop = treeView.element.querySelector('.tree-view-scroller').scrollTop
+        scrollTop = treeView.scroller.scrollTop
         expect(scrollTop).toBeGreaterThan 0
 
         atom.commands.dispatch(treeView.element, 'core:page-up')
-        expect(treeView.element.querySelector('.tree-view-scroller').scrollTop).toBe scrollTop - treeView.element.offsetHeight
+        expect(treeView.scroller.scrollTop).toBe scrollTop - treeView.element.offsetHeight
 
     describe "core:page-down", ->
       it "scrolls down a page", ->
         treeView.element.style.height = '5px'
         jasmine.attachToDOM(treeView.element)
         element.expand() for element in treeView.element.querySelectorAll('.directory')
-        expect(treeView.element.querySelector('.tree-view').offsetHeight).toBeGreaterThan treeView.element.querySelector('.tree-view-scroller').offsetHeight
+        expect(treeView.list.offsetHeight).toBeGreaterThan treeView.scroller.offsetHeight
 
-        expect(treeView.element.querySelector('.tree-view-scroller').scrollTop).toBe(0)
+        expect(treeView.scroller.scrollTop).toBe(0)
         atom.commands.dispatch(treeView.element, 'core:page-down')
-        expect(treeView.element.querySelector('.tree-view-scroller').scrollTop).toBe treeView.element.offsetHeight
+        expect(treeView.scroller.scrollTop).toBe treeView.element.offsetHeight
 
     describe "movement outside of viewable region", ->
       it "scrolls the tree view to the selected item", ->
         treeView.element.style.height = '100px'
         jasmine.attachToDOM(treeView.element)
         element.expand() for element in treeView.element.querySelectorAll('.directory')
-        expect(treeView.element.querySelector('.tree-view').offsetHeight).toBeGreaterThan treeView.element.querySelector('.tree-view-scroller').offsetHeight
+        expect(treeView.list.offsetHeight).toBeGreaterThan treeView.scroller.offsetHeight
 
         atom.commands.dispatch(treeView.element, 'core:move-down')
-        expect(treeView.element.querySelector('.tree-view-scroller').scrollTop).toBe(0)
+        expect(treeView.scroller.scrollTop).toBe(0)
 
         entryCount = treeView.element.querySelectorAll(".entry").length
         entryHeight = treeView.element.querySelector('.file').offsetHeight
 
         _.times entryCount, -> atom.commands.dispatch(treeView.element, 'core:move-down')
-        expect(treeView.element.querySelector('.tree-view-scroller').scrollTop + treeView.element.offsetHeight).toBeGreaterThan((entryCount * entryHeight) - 1)
+        expect(treeView.scroller.scrollTop + treeView.element.offsetHeight).toBeGreaterThan((entryCount * entryHeight) - 1)
 
         _.times entryCount, -> atom.commands.dispatch(treeView.element, 'core:move-up')
-        expect(treeView.element.querySelector('.tree-view-scroller').scrollTop).toBe 0
+        expect(treeView.scroller.scrollTop).toBe 0
 
     describe "tree-view:expand-directory", ->
       describe "when a directory entry is selected", ->
@@ -2762,7 +2762,7 @@ describe "TreeView", ->
       jasmine.attachToDOM(workspaceElement)
 
     it "should resize normally", ->
-      expect(treeView).toBeVisible()
+      expect(treeView.element).toBeVisible()
       expect(atom.workspace.getLeftPanels().length).toBe(1)
 
       treeView.element.style.width = '100px'
@@ -2784,7 +2784,7 @@ describe "TreeView", ->
       atom.commands.dispatch(workspaceElement, 'tree-view:toggle-side')
       expect(treeView.element.dataset.showOnRightSide).toBe('true')
 
-      expect(treeView).toBeVisible()
+      expect(treeView.element).toBeVisible()
       expect(atom.workspace.getRightPanels().length).toBe(1)
 
       treeView.element.style.width = '100px'
@@ -2836,7 +2836,7 @@ describe "TreeView", ->
       it 'switches the contextual menu to muli-select mode', ->
         fileView1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
         fileView2.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, shiftKey: true}))
-        expect(treeView.find('.tree-view')).toHaveClass('multi-select')
+        expect(treeView.list).toHaveClass('multi-select')
 
       describe 'using the shift key', ->
         it 'selects the items between the already selected item and the shift clicked item', ->
@@ -3410,7 +3410,7 @@ describe "TreeView", ->
 
           it "selects the file and retains focus on tree-view", ->
             expect(sampleTxt).toHaveClass 'selected'
-            expect(treeView).toHaveFocus()
+            expect(treeView.element).toHaveFocus()
 
           it "doesn't open the file in the active pane", ->
             expect(atom.views.getView(treeView)).toHaveFocus()
@@ -3517,7 +3517,7 @@ describe "TreeView", ->
           alphaDir = treeView.roots[0]
           lastDir = treeView.roots[treeView.roots.length - 1]
           [dragStartEvent, dragOverEvents, dragEndEvent] =
-            eventHelpers.buildPositionalDragEvents(alphaDir.querySelector('.project-root-header'), treeView.element.querySelector('.tree-view'))
+            eventHelpers.buildPositionalDragEvents(alphaDir.querySelector('.project-root-header'), treeView.list)
 
           expect(alphaDir).not.toEqual(lastDir)
 
@@ -3572,9 +3572,9 @@ describe "TreeView", ->
         [dragStartEvent] = eventHelpers.buildPositionalDragEvents(gammaDir.querySelector('.project-root-header'))
         treeView.rootDragAndDrop.onDragStart(dragStartEvent)
 
-        expect(dragStartEvent.originalEvent.dataTransfer.getData("text/plain")).toEqual gammaDirPath
+        expect(dragStartEvent.dataTransfer.getData("text/plain")).toEqual gammaDirPath
         if process.platform in ['darwin', 'linux']
-          expect(dragStartEvent.originalEvent.dataTransfer.getData("text/uri-list")).toEqual "file://#{gammaDirPath}"
+          expect(dragStartEvent.dataTransfer.getData("text/uri-list")).toEqual "file://#{gammaDirPath}"
 
     describe "when a root folder is dropped from another Atom window", ->
       it "adds the root folder to the window", ->
@@ -3582,9 +3582,9 @@ describe "TreeView", ->
         [_, dragDropEvents] = eventHelpers.buildPositionalDragEvents(null, alphaDir.querySelector('.project-root-header'), '.tree-view')
 
         dropEvent = dragDropEvents.bottom
-        dropEvent.originalEvent.dataTransfer.setData('atom-tree-view-event', true)
-        dropEvent.originalEvent.dataTransfer.setData('from-window-id', treeView.rootDragAndDrop.getWindowId() + 1)
-        dropEvent.originalEvent.dataTransfer.setData('from-root-path', etaDirPath)
+        dropEvent.dataTransfer.setData('atom-tree-view-event', true)
+        dropEvent.dataTransfer.setData('from-window-id', treeView.rootDragAndDrop.getWindowId() + 1)
+        dropEvent.dataTransfer.setData('from-root-path', etaDirPath)
 
         # mock browserWindowForId
         browserWindowMock = {webContents: {send: ->}}
