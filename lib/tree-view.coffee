@@ -7,9 +7,9 @@ _ = require 'underscore-plus'
 {$, View} = require 'atom-space-pen-views'
 fs = require 'fs-plus'
 
-AddDialog = null  # Defer requiring until actually needed
-MoveDialog = null # Defer requiring until actually needed
-CopyDialog = null # Defer requiring until actually needed
+AddDialog = require './add-dialog'
+MoveDialog = require './move-dialog'
+CopyDialog = require './copy-dialog'
 Minimatch = null  # Defer requiring until actually needed
 
 Directory = require './directory'
@@ -454,7 +454,6 @@ class TreeView extends View
       oldPath = @getActivePath()
 
     if oldPath
-      MoveDialog ?= require './move-dialog'
       dialog = new MoveDialog(oldPath)
       dialog.attach()
 
@@ -542,7 +541,6 @@ class TreeView extends View
       oldPath = @getActivePath()
     return unless oldPath
 
-    CopyDialog ?= require './copy-dialog'
     dialog = new CopyDialog(oldPath)
     dialog.attach()
 
@@ -675,17 +673,14 @@ class TreeView extends View
     selectedEntry = @selectedEntry() ? @roots[0]
     selectedPath = selectedEntry?.getPath() ? ''
 
-    AddDialog ?= require './add-dialog'
     dialog = new AddDialog(selectedPath, isCreatingFile)
-    dialog.on 'directory-created', (event, createdPath) =>
+    dialog.onDidCreateDirectory (createdPath) =>
       @entryForPath(createdPath)?.reload()
       @selectEntryForPath(createdPath)
       @updateRoots() if atom.config.get('tree-view.squashDirectoryNames')
-      false
-    dialog.on 'file-created', (event, createdPath) =>
+    dialog.onDidCreateFile (createdPath) =>
       atom.workspace.open(createdPath)
       @updateRoots() if atom.config.get('tree-view.squashDirectoryNames')
-      false
     dialog.attach()
 
   removeProjectFolder: (e) ->
