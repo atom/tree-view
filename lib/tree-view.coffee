@@ -13,7 +13,6 @@ Minimatch = null  # Defer requiring until actually needed
 
 Directory = require './directory'
 DirectoryView = require './directory-view'
-FileView = require './file-view'
 RootDragAndDrop = require './root-drag-and-drop'
 
 toggleConfig = (keyPath) ->
@@ -100,7 +99,7 @@ class TreeView
 
       @entryClicked(e) unless e.shiftKey or e.metaKey or e.ctrlKey
     @element.addEventListener 'mousedown', (e) => @onMouseDown(e)
-    @element.addEventListener 'dragstart', '.entry', (e) => @onDragStart(e)
+    @element.addEventListener 'dragstart', (e) => @onDragStart(e)
     @element.addEventListener 'dragenter', (e) => @onDragEnter(e)
     @element.addEventListener 'dragleave', (e) => @onDragLeave(e)
     @element.addEventListener 'dragover', (e) => @onDragOver(e)
@@ -223,9 +222,9 @@ class TreeView
     entry = e.target.closest('.entry')
     isRecursive = e.altKey or false
     @selectEntry(entry)
-    if entry instanceof DirectoryView
+    if entry.classList.contains('directory')
       entry.toggleExpansion(isRecursive)
-    else if entry instanceof FileView
+    else if entry.classList.contains('file')
       @fileViewEntryClicked(e)
 
     false
@@ -311,8 +310,7 @@ class TreeView
         @useSyncFS
         stats
       })
-      root = new DirectoryView()
-      root.initialize(directory)
+      root = new DirectoryView(directory).element
       @list.appendChild(root)
       root
 
@@ -344,7 +342,7 @@ class TreeView
     for pathComponent in activePathComponents
       currentPath += path.sep + pathComponent
       entry = @entryForPath(currentPath)
-      if entry instanceof DirectoryView
+      if entry.classList.contains('directory')
         entry.expand()
       else
         @selectEntry(entry)
@@ -377,7 +375,7 @@ class TreeView
     event?.stopImmediatePropagation()
     selectedEntry = @selectedEntry()
     if selectedEntry?
-      if selectedEntry instanceof DirectoryView
+      if selectedEntry.classList.contains('directory')
         if @selectEntry(selectedEntry.entries.children[0])
           @scrollToEntry(@selectedEntry())
           return
@@ -395,7 +393,7 @@ class TreeView
     if selectedEntry?
       if previousEntry = @previousEntry(selectedEntry)
         @selectEntry(previousEntry)
-        if previousEntry instanceof DirectoryView
+        if previousEntry.classList.contains('directory')
           @selectEntry(_.last(previousEntry.entries.children))
       else
         @selectEntry(selectedEntry.parentElement.closest('.directory'))
@@ -442,12 +440,12 @@ class TreeView
 
   openSelectedEntry: (options={}, expandDirectory=false) ->
     selectedEntry = @selectedEntry()
-    if selectedEntry instanceof DirectoryView
+    if selectedEntry.classList.contains('directory')
       if expandDirectory
         @expandDirectory(false)
       else
         selectedEntry.toggleExpansion()
-    else if selectedEntry instanceof FileView
+    else if selectedEntry.classList.contains('file')
       if atom.config.get('tree-view.alwaysOpenExisting')
         options = Object.assign searchAllPanes: true, options
       @openAfterPromise(selectedEntry.getPath(), options)
@@ -455,7 +453,7 @@ class TreeView
   openSelectedEntrySplit: (orientation, side) ->
     selectedEntry = @selectedEntry()
     pane = atom.workspace.getActivePane()
-    if pane and selectedEntry instanceof FileView
+    if pane and selectedEntry.classList.contains('file')
       if atom.workspace.getActivePaneItem()
         split = pane.split orientation, side
         atom.workspace.openURIInPane selectedEntry.getPath(), split
@@ -477,7 +475,7 @@ class TreeView
   openSelectedEntryInPane: (index) ->
     selectedEntry = @selectedEntry()
     pane = atom.workspace.getPanes()[index]
-    if pane and selectedEntry instanceof FileView
+    if pane and selectedEntry.classList.contains('file')
       atom.workspace.openURIInPane selectedEntry.getPath(), pane
 
   moveSelectedEntry: ->
@@ -553,7 +551,7 @@ class TreeView
   showSelectedEntryInFileManager: ->
     return unless entry = @selectedEntry()
 
-    isFile = entry instanceof FileView
+    isFile = entry.classList.contains('file')
     {command, args, label} = @fileManagerCommandForPath(entry.getPath(), isFile)
     @openInFileManager(command, args, label, isFile)
 
@@ -676,7 +674,7 @@ class TreeView
       initialPathIsDirectory = fs.isDirectorySync(initialPath)
       if selectedEntry and initialPath and fs.existsSync(initialPath)
         basePath = selectedEntry.getPath()
-        basePath = path.dirname(basePath) if selectedEntry instanceof FileView
+        basePath = path.dirname(basePath) if selectedEntry.classList.contains('file')
         newPath = path.join(basePath, path.basename(initialPath))
 
         if copiedPaths
@@ -760,7 +758,7 @@ class TreeView
       @scroller.scrollTop + @scroller.offsetHeight
 
   scrollToEntry: (entry) ->
-    element = if entry instanceof DirectoryView then entry.header else entry
+    element = if entry?.classList.contains('directory') then entry.header else entry
     element?.scrollIntoViewIfNeeded(true) # true = center around item if possible
 
   scrollToBottom: ->
@@ -956,7 +954,7 @@ class TreeView
     entry = e.target.closest('.entry')
     entry.classList.remove('selected')
 
-    return unless entry instanceof DirectoryView
+    return unless entry.classList.contains('directory')
 
     newDirectoryPath = entry.querySelector('.name')?.dataset.path
     return false unless newDirectoryPath
