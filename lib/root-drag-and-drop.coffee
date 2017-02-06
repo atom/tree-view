@@ -16,11 +16,11 @@ class RootDragAndDropHandler
   handleEvents: ->
     # onDragStart is called directly by TreeView's onDragStart
     # will be cleaned up by tree view, since they are tree-view's handlers
-    @treeView.element.addEventListener 'dragenter', @onDragEnter
-    @treeView.element.addEventListener 'dragend', @onDragEnd
-    @treeView.element.addEventListener 'dragleave', @onDragLeave
-    @treeView.element.addEventListener 'dragover', @onDragOver
-    @treeView.element.addEventListener 'drop', @onDrop
+    @treeView.element.addEventListener 'dragenter', @onDragEnter.bind(this)
+    @treeView.element.addEventListener 'dragend', @onDragEnd.bind(this)
+    @treeView.element.addEventListener 'dragleave', @onDragLeave.bind(this)
+    @treeView.element.addEventListener 'dragover', @onDragOver.bind(this)
+    @treeView.element.addEventListener 'drop', @onDrop.bind(this)
 
   onDragStart: (e) =>
     return unless @treeView.list.contains(e.target)

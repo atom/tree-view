@@ -219,15 +219,13 @@ class TreeView
       @show()
 
   entryClicked: (e) ->
-    entry = e.target.closest('.entry')
-    isRecursive = e.altKey or false
-    @selectEntry(entry)
-    if entry.classList.contains('directory')
-      entry.toggleExpansion(isRecursive)
-    else if entry.classList.contains('file')
-      @fileViewEntryClicked(e)
-
-    false
+    if entry = e.target.closest('.entry')
+      isRecursive = e.altKey or false
+      @selectEntry(entry)
+      if entry.classList.contains('directory')
+        entry.toggleExpansion(isRecursive)
+      else if entry.classList.contains('file')
+        @fileViewEntryClicked(e)
 
   fileViewEntryClicked: (e) ->
     filePath = e.target.closest('.entry').getPath()
@@ -806,29 +804,28 @@ class TreeView
     @element.style.display = ''
 
   onMouseDown: (e) ->
-    e.stopPropagation()
+    if entryToSelect = e.target.closest('.entry')
+      e.stopPropagation()
 
-    # return early if we're opening a contextual menu (right click) during multi-select mode
-    if @multiSelectEnabled() and
-       e.target.classList.contains('selected') and
-       # mouse right click or ctrl click as right click on darwin platforms
-       (e.button is 2 or e.ctrlKey and process.platform is 'darwin')
-      return
+      # return early if we're opening a contextual menu (right click) during multi-select mode
+      if @multiSelectEnabled() and
+         e.target.classList.contains('selected') and
+         # mouse right click or ctrl click as right click on darwin platforms
+         (e.button is 2 or e.ctrlKey and process.platform is 'darwin')
+        return
 
-    entryToSelect = e.target.closest('.entry')
+      if e.shiftKey
+        @selectContinuousEntries(entryToSelect)
+        @showMultiSelectMenu()
+      # only allow ctrl click for multi selection on non darwin systems
+      else if e.metaKey or (e.ctrlKey and process.platform isnt 'darwin')
+        @selectMultipleEntries(entryToSelect)
 
-    if e.shiftKey
-      @selectContinuousEntries(entryToSelect)
-      @showMultiSelectMenu()
-    # only allow ctrl click for multi selection on non darwin systems
-    else if e.metaKey or (e.ctrlKey and process.platform isnt 'darwin')
-      @selectMultipleEntries(entryToSelect)
-
-      # only show the multi select menu if more then one file/directory is selected
-      @showMultiSelectMenu() if @selectedPaths().length > 1
-    else
-      @selectEntry(entryToSelect)
-      @showFullMenu()
+        # only show the multi select menu if more then one file/directory is selected
+        @showMultiSelectMenu() if @selectedPaths().length > 1
+      else
+        @selectEntry(entryToSelect)
+        @showFullMenu()
 
   onSideToggled: (newValue) ->
     @element.dataset.showOnRightSide = newValue
@@ -889,82 +886,85 @@ class TreeView
     @list.classList.contains('multi-select')
 
   onDragEnter: (e) =>
-    return if @rootDragAndDrop.isDragging(e)
+    if header = e.target.closest('.entry.directory > .header')
+      return if @rootDragAndDrop.isDragging(e)
 
-    e.stopPropagation()
+      e.stopPropagation()
 
-    entry = e.target.closest('.entry.directory > .header').parentNode
-    @dragEventCounts.set(entry, 0) unless @dragEventCounts.get(entry)
-    entry.classList.add('selected') if @dragEventCounts.get(entry) is 0
-    @dragEventCounts.set(entry, @dragEventCounts.get(entry) + 1)
+      entry = header.parentNode
+      @dragEventCounts.set(entry, 0) unless @dragEventCounts.get(entry)
+      entry.classList.add('selected') if @dragEventCounts.get(entry) is 0
+      @dragEventCounts.set(entry, @dragEventCounts.get(entry) + 1)
 
   onDragLeave: (e) =>
-    return if @rootDragAndDrop.isDragging(e)
+    if header = e.target.closest('.entry.directory > .header')
+      return if @rootDragAndDrop.isDragging(e)
 
-    e.stopPropagation()
+      e.stopPropagation()
 
-    entry = e.target.closest('.entry.directory > .header').parentNode
-    @dragEventCounts.set(entry, @dragEventCounts.get(entry) - 1)
-    entry.classList.remove('selected') if @dragEventCounts.get(entry) is 0
+      entry = header.parentNode
+      @dragEventCounts.set(entry, @dragEventCounts.get(entry) - 1)
+      entry.classList.remove('selected') if @dragEventCounts.get(entry) is 0
 
   # Handle entry name object dragstart event
   onDragStart: (e) ->
-    e.stopPropagation()
+    if entry = e.target.closest('.entry')
+      e.stopPropagation()
 
-    if @rootDragAndDrop.canDragStart(e)
-      return @rootDragAndDrop.onDragStart(e)
+      if @rootDragAndDrop.canDragStart(e)
+        return @rootDragAndDrop.onDragStart(e)
 
-    target = e.target.closest('.entry').querySelector(".name")
-    initialPath = target.dataset.path
+      target = entry.querySelector(".name")
+      initialPath = target.dataset.path
 
-    fileNameElement = target.cloneNode(true)
-    for key, value of getStyleObject(target)
-      fileNameElement.style[key] = value
-    fileNameElement.style.position = 'absolute'
-    fileNameElement.style.top = 0
-    fileNameElement.style.left = 0
+      fileNameElement = target.cloneNode(true)
+      for key, value of getStyleObject(target)
+        fileNameElement.style[key] = value
+      fileNameElement.style.position = 'absolute'
+      fileNameElement.style.top = 0
+      fileNameElement.style.left = 0
 
-    document.body.appendChild(fileNameElement)
+      document.body.appendChild(fileNameElement)
 
-    e.dataTransfer.effectAllowed = "move"
-    e.dataTransfer.setDragImage(fileNameElement, 0, 0)
-    e.dataTransfer.setData("initialPath", initialPath)
+      e.dataTransfer.effectAllowed = "move"
+      e.dataTransfer.setDragImage(fileNameElement, 0, 0)
+      e.dataTransfer.setData("initialPath", initialPath)
 
-    window.requestAnimationFrame ->
-      fileNameElement.remove()
+      window.requestAnimationFrame ->
+        fileNameElement.remove()
 
   # Handle entry dragover event; reset default dragover actions
   onDragOver: (e) ->
-    return if @rootDragAndDrop.isDragging(e)
+    if entry = e.target.closest('.entry')
+      return if @rootDragAndDrop.isDragging(e)
 
-    e.preventDefault()
-    e.stopPropagation()
+      e.preventDefault()
+      e.stopPropagation()
 
-    entry = e.target.closest('.entry')
-    if @dragEventCounts.get(entry) > 0 and not entry.classList.contains('selected')
-      entry.classList.add('selected')
+      if @dragEventCounts.get(entry) > 0 and not entry.classList.contains('selected')
+        entry.classList.add('selected')
 
   # Handle entry drop event
   onDrop: (e) ->
-    return if @rootDragAndDrop.isDragging(e)
+    if entry = e.target.closest('.entry')
+      return if @rootDragAndDrop.isDragging(e)
 
-    e.preventDefault()
-    e.stopPropagation()
+      e.preventDefault()
+      e.stopPropagation()
 
-    entry = e.target.closest('.entry')
-    entry.classList.remove('selected')
+      entry.classList.remove('selected')
 
-    return unless entry.classList.contains('directory')
+      return unless entry.classList.contains('directory')
 
-    newDirectoryPath = entry.querySelector('.name')?.dataset.path
-    return false unless newDirectoryPath
+      newDirectoryPath = entry.querySelector('.name')?.dataset.path
+      return false unless newDirectoryPath
 
-    initialPath = e.dataTransfer.getData("initialPath")
+      initialPath = e.dataTransfer.getData("initialPath")
 
-    if initialPath
-      # Drop event from Atom
-      @moveEntry(initialPath, newDirectoryPath)
-    else
-      # Drop event from OS
-      for file in e.dataTransfer.files
-        @moveEntry(file.path, newDirectoryPath)
+      if initialPath
+        # Drop event from Atom
+        @moveEntry(initialPath, newDirectoryPath)
+      else
+        # Drop event from OS
+        for file in e.dataTransfer.files
+          @moveEntry(file.path, newDirectoryPath)
