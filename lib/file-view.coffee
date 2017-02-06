@@ -33,6 +33,7 @@ class FileView
     @element.isPathEqual = @isPathEqual.bind(this)
     @element.file = @file
     @element.fileName = @fileName
+    @element.updateStatus = @updateStatus.bind(this)
 
   updateStatus: ->
     @element.classList.remove('status-ignored', 'status-modified',  'status-added')
