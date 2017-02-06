@@ -2614,7 +2614,11 @@ describe "TreeView", ->
         expect(zetaEntries).toEqual(["zeta.txt"])
 
       it "squashes two dir names when the first only contains a single dir", ->
-        betaDir = $(treeView.roots[0].entries).find(".directory:contains(alpha#{path.sep}beta):first")
+        if path.sep is '\\'
+          # First escape the backslashes for Coffeescript, then escape them for jQuery
+          betaDir = $(treeView.roots[0].entries).find(".directory:contains(alpha\\\\beta):first")
+        else
+          betaDir = $(treeView.roots[0].entries).find(".directory:contains(alpha#{path.sep}beta):first")
         betaDir[0].expand()
         betaEntries = [].slice.call(betaDir[0].children[1].children).map (element) ->
           element.innerText
@@ -2622,7 +2626,11 @@ describe "TreeView", ->
         expect(betaEntries).toEqual(["beta.txt"])
 
       it "squashes three dir names when the first and second only contain single dirs", ->
-        epsilonDir = $(treeView.roots[0].entries).find(".directory:contains(gamma#{path.sep}delta#{path.sep}epsilon):first")
+        if path.sep is '\\'
+          # First escape the backslashes for Coffeescript, then escape them for jQuery
+          epsilonDir = $(treeView.roots[0].entries).find(".directory:contains(gamma\\\\delta\\\\epsilon):first")
+        else
+          epsilonDir = $(treeView.roots[0].entries).find(".directory:contains(gamma#{path.sep}delta#{path.sep}epsilon):first")
         epsilonDir[0].expand()
         epsilonEntries = [].slice.call(epsilonDir[0].children[1].children).map (element) ->
           element.innerText
@@ -2640,7 +2648,12 @@ describe "TreeView", ->
       describe "when a squashed directory is deleted", ->
         it "un-squashes the directories", ->
           jasmine.attachToDOM(workspaceElement)
-          piDir = $(treeView.roots[0].entries).find(".directory:contains(omicron#{path.sep}pi):first")[0]
+          if path.sep is '\\'
+            # First escape the backslashes for Coffeescript, then escape them for jQuery
+            piDir = $(treeView.roots[0].entries).find(".directory:contains(omicron\\\\pi):first")[0]
+          else
+            piDir = $(treeView.roots[0].entries).find(".directory:contains(omicron#{path.sep}pi):first")[0]
+
           treeView.focus()
           treeView.selectEntry(piDir)
           spyOn(atom, 'confirm').andCallFake (dialog) ->
@@ -2653,7 +2666,11 @@ describe "TreeView", ->
       describe "when a file is created within a directory with another squashed directory", ->
         it "un-squashes the directories", ->
           jasmine.attachToDOM(workspaceElement)
-          piDir = $(treeView.roots[0].entries).find(".directory:contains(omicron#{path.sep}pi):first")[0]
+          if path.sep is '\\'
+            # First escape the backslashes for Coffeescript, then escape them for jQuery
+            piDir = $(treeView.roots[0].entries).find(".directory:contains(omicron\\\\pi):first")[0]
+          else
+            piDir = $(treeView.roots[0].entries).find(".directory:contains(omicron#{path.sep}pi):first")[0]
           expect(piDir).not.toBeNull()
           # omicron is a squashed dir, so searching for omicron would give us omicron/pi instead
           omicronPath = piDir.getPath().replace "#{path.sep}pi", ""
@@ -2672,7 +2689,11 @@ describe "TreeView", ->
       describe "when a directory is created within a directory with another squashed directory", ->
         it "un-squashes the directories", ->
           jasmine.attachToDOM(workspaceElement)
-          piDir = $(treeView.roots[0].entries).find(".directory:contains(omicron#{path.sep}pi):first")[0]
+          if path.sep is '\\'
+            # First escape the backslashes for Coffeescript, then escape them for jQuery
+            piDir = $(treeView.roots[0].entries).find(".directory:contains(omicron\\\\pi):first")[0]
+          else
+            piDir = $(treeView.roots[0].entries).find(".directory:contains(omicron#{path.sep}pi):first")[0]
           expect(piDir).not.toBeNull()
           # omicron is a squashed dir, so searching for omicron would give us omicron/pi instead
           omicronPath = piDir.getPath().replace "#{path.sep}pi", ""
@@ -2782,10 +2803,10 @@ describe "TreeView", ->
           expect(dirView[0].directory.updateStatus).toHaveBeenCalled()
           expect(handlers['entry-deleted'][0]).toHaveBeenCalled()
 
-    describe "when the project is a symbolic link to the repository root", ->
+    describe "on #darwin, when the project is a symbolic link to the repository root", ->
       beforeEach ->
         symlinkPath = temp.path('tree-view-project')
-        fs.symlinkSync(projectPath, symlinkPath)
+        fs.symlinkSync(projectPath, symlinkPath, 'junction')
         atom.project.setPaths([symlinkPath])
         $(treeView.roots[0].entries).find('.directory:contains(dir)')[0].expand()
 
@@ -3149,8 +3170,8 @@ describe "TreeView", ->
 
     it "handle errors thrown when spawning the OS file manager", ->
       spyOn(treeView, 'fileManagerCommandForPath').andReturn
-        command: '/this/command/does/not/exist'
-        label: 'Finder'
+        command: path.normalize('/this/command/does/not/exist')
+        label: 'OS file manager'
         args: ['foo']
 
       treeView.showSelectedEntryInFileManager()
@@ -3159,8 +3180,7 @@ describe "TreeView", ->
         atom.notifications.getNotifications().length is 1
 
       runs ->
-        expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Opening folder in Finder failed'
-        expect(atom.notifications.getNotifications()[0].getDetail()).toContain 'ENOENT'
+        expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Opening folder in OS file manager failed'
 
   describe "showCurrentFileInFileManager()", ->
     it "does nothing when no file is opened", ->
