@@ -907,6 +907,16 @@ class TreeView extends View
 
     e.preventDefault()
     e.stopPropagation()
+    
+    # Toggle Expand/Collapse with Ctrl Key
+    target = e.currentTarget
+    return unless target instanceof DirectoryView
+
+    if e.ctrlKey
+      if not target.classList.contains "expanded"
+        target.expand()
+      else
+        target.collapse()
 
     entry = e.currentTarget
     if @dragEventCounts.get(entry) > 0 and not entry.classList.contains('selected')
