@@ -1096,6 +1096,18 @@ describe "TreeView", ->
           children.each (index, child) ->
             expect(child).toHaveClass 'expanded'
 
+      describe "when trying to expand a file", ->
+        it "doesn't expand the file and doesn't error", ->
+          file = root1.find('.file:contains(tree-view.js)')[0]
+          treeView.selectEntry(file)
+          expect(file).not.toHaveClass 'expanded'
+
+          expect(-> treeView.expandDirectory(true)).not.toThrow()
+          expect(file).not.toHaveClass 'expanded'
+
+          expect(-> treeView.expandDirectory(false)).not.toThrow()
+          expect(file).not.toHaveClass 'expanded'
+
     describe "tree-view:collapse-directory", ->
       subdir = null
 
