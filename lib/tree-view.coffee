@@ -921,6 +921,7 @@ class TreeView extends View
 
     entry = e.currentTarget
     entry.classList.remove('selected')
+    @dragEventCounts.set(entry, 0)
 
     return unless entry instanceof DirectoryView
 
