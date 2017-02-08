@@ -3113,7 +3113,7 @@ describe "TreeView", ->
         expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'failed'
         expect(atom.notifications.getNotifications()[0].getDetail()).toContain 'bad process'
 
-    ffit "handle errors thrown when spawning the OS file manager", ->
+    it "handle errors thrown when spawning the OS file manager", ->
       spyOn(treeView, 'fileManagerCommandForPath').andReturn
         command: path.normalize('/this/command/does/not/exist')
         label: 'OS file manager'
