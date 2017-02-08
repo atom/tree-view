@@ -392,6 +392,8 @@ class TreeView extends View
 
   expandDirectory: (isRecursive=false) ->
     selectedEntry = @selectedEntry()
+    return unless selectedEntry instanceof DirectoryView
+
     if isRecursive is false and selectedEntry.isExpanded
       @moveDown() if selectedEntry.directory.getEntries().length > 0
     else
