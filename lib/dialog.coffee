@@ -1,5 +1,6 @@
 {$, TextEditorView, View} = require 'atom-space-pen-views'
 path = require 'path'
+{getFullExtension} = require "./helpers"
 
 module.exports =
 class Dialog extends View
@@ -19,7 +20,7 @@ class Dialog extends View
     @miniEditor.getModel().setText(initialPath)
 
     if select
-      extension = path.extname(initialPath)
+      extension = getFullExtension(initialPath)
       baseName = path.basename(initialPath)
       if baseName is extension
         selectionEnd = initialPath.length
