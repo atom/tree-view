@@ -4,9 +4,11 @@ path = require 'path'
 module.exports =
 class Dialog extends View
   @content: ({prompt} = {}) ->
+    textEditorView = new TextEditorView(mini: true)
+    textEditorView.getModel().setSoftWrapped(false)
     @div class: 'tree-view-dialog', =>
       @label prompt, class: 'icon', outlet: 'promptText'
-      @subview 'miniEditor', new TextEditorView(mini: true)
+      @subview 'miniEditor', textEditorView
       @div class: 'error-message', outlet: 'errorMessage'
 
   initialize: ({initialPath, select, iconClass} = {}) ->
