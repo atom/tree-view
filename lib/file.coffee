@@ -52,6 +52,7 @@ class File
     return unless repo?
 
     newStatus = null
+    newStaged = null
     if repo.isPathIgnored(@path)
       newStatus = 'ignored'
     else
@@ -61,8 +62,15 @@ class File
       else if repo.isStatusNew(status)
         newStatus = 'added'
 
-    if newStatus isnt @status
+      try
+        newStaged = repo.isStatusStaged(status) unless not status
+      catch error
+        # While git doesn’t expose isStatusStaged method
+        newStaged = (status & 15) > 0 unless not status
+
+    if newStatus isnt @status or newStaged isnt @staged
       @status = newStatus
+      @staged = newStaged
       @emitter.emit('did-status-change', newStatus)
 
   isPathEqual: (pathToCompare) ->

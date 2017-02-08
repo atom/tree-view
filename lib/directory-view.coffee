@@ -59,8 +59,9 @@ class DirectoryView extends HTMLElement
     @expand() if @directory.expansionState.isExpanded
 
   updateStatus: ->
-    @classList.remove('status-ignored', 'status-modified', 'status-added')
+    @classList.remove('status-ignored', 'status-modified', 'status-added', 'status-unstaged')
     @classList.add("status-#{@directory.status}") if @directory.status?
+    @classList.add("status-unstaged") if @directory.staged is false
 
   subscribeToDirectory: ->
     @subscriptions.add @directory.onDidAddEntries (addedEntries) =>
