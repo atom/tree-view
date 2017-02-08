@@ -3113,7 +3113,7 @@ describe "TreeView", ->
         expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'failed'
         expect(atom.notifications.getNotifications()[0].getDetail()).toContain 'bad process'
 
-    it "handle errors thrown when spawning the OS file manager", ->
+    ffit "handle errors thrown when spawning the OS file manager", ->
       spyOn(treeView, 'fileManagerCommandForPath').andReturn
         command: path.normalize('/this/command/does/not/exist')
         label: 'OS file manager'
@@ -3126,6 +3126,7 @@ describe "TreeView", ->
 
       runs ->
         expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Opening folder in OS file manager failed'
+        expect(atom.notifications.getNotifications()[0].getDetail()).toContain if process.platform is 'win32' then 'cannot find the path' else 'ENOENT'
 
   describe "showCurrentFileInFileManager()", ->
     it "does nothing when no file is opened", ->
