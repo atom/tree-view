@@ -22,3 +22,11 @@ module.exports =
       fullExtension = extension + fullExtension
       filePath = path.basename(filePath, extension)
     fullExtension
+
+  ensureOpaqueBackground: (styleObject) ->
+    propName = if styleObject.backgroundColor then 'backgroundColor' else 'background'
+    if (match = /((?:rgb|hsl)a\s*\(\s*[0-9.]+\s*,\s*[0-9.%]+\s*,\s*[0-9.%]+\s*,\s*)([0-9.]+)(\s*\).*)/.exec(styleObject[propName]))
+      opacity = Number(match[2])
+      if opacity < 0.4
+        styleObject[propName] = match[1] + 1.0 + match[3]
+    styleObject

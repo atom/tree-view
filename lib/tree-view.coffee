@@ -3,7 +3,7 @@ path = require 'path'
 
 _ = require 'underscore-plus'
 {BufferedProcess, CompositeDisposable} = require 'atom'
-{repoForPath, getStyleObject, getFullExtension} = require "./helpers"
+{repoForPath, getStyleObject, getFullExtension, ensureOpaqueBackground} = require "./helpers"
 {$, View} = require 'atom-space-pen-views'
 fs = require 'fs-plus'
 
@@ -884,6 +884,7 @@ class TreeView extends View
     initialPath = target.data("path")
 
     style = getStyleObject(target[0])
+    ensureOpaqueBackground(style)
 
     fileNameElement = target.clone()
       .css(style)
