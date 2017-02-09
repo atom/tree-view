@@ -1,3 +1,5 @@
+pkg = require '../package.json'
+pkgName = pkg.name
 path = require 'path'
 {shell} = require 'nsync-fs'
 
@@ -26,7 +28,7 @@ class TreeView extends View
   panel: null
 
   @content: ->
-    @div class: 'tree-view-resizer tool-panel', 'data-show-on-right-side': atom.config.get('learn-ide-tree.showOnRightSide'), =>
+    @div class: 'tree-view-resizer tool-panel', 'data-show-on-right-side': atom.config.get("#{pkgName}.showOnRightSide"), =>
       @div class: 'tree-view-scroller order--center', outlet: 'scroller', =>
         @ol class: 'tree-view full-menu list-tree has-collapsable-children focusable-panel', tabindex: -1, outlet: 'list'
       @div class: 'tree-view-resize-handle', outlet: 'resizeHandle'
@@ -132,8 +134,8 @@ class TreeView extends View
      'tree-view:open-in-new-window': => @openSelectedEntryInNewWindow()
      'tree-view:copy-project-path': => @copySelectedEntryPath(true)
      'tool-panel:unfocus': => @unfocus()
-     'tree-view:toggle-vcs-ignored-files': -> toggleConfig 'learn-ide-tree.hideVcsIgnoredFiles'
-     'tree-view:toggle-ignored-names': -> toggleConfig 'learn-ide-tree.hideIgnoredNames'
+     'tree-view:toggle-vcs-ignored-files': -> toggleConfig "#{pkgName}.hideVcsIgnoredFiles"
+     'tree-view:toggle-ignored-names': -> toggleConfig "#{pkgName}.hideIgnoredNames"
      'tree-view:remove-project-folder': (e) => @removeProjectFolder(e)
 
     [0..8].forEach (index) =>
@@ -142,20 +144,20 @@ class TreeView extends View
 
     @disposables.add atom.workspace.onDidChangeActivePaneItem =>
       @selectActiveFile()
-      @revealActiveFile() if atom.config.get('learn-ide-tree.autoReveal')
+      @revealActiveFile() if atom.config.get("#{pkgName}.autoReveal")
     @disposables.add atom.project.onDidChangePaths =>
       @updateRoots()
-    @disposables.add atom.config.onDidChange 'learn-ide-tree.hideVcsIgnoredFiles', =>
+    @disposables.add atom.config.onDidChange "#{pkgName}.hideVcsIgnoredFiles", =>
       @updateRoots()
-    @disposables.add atom.config.onDidChange 'learn-ide-tree.hideIgnoredNames', =>
+    @disposables.add atom.config.onDidChange "#{pkgName}.hideIgnoredNames", =>
       @updateRoots()
     @disposables.add atom.config.onDidChange 'core.ignoredNames', =>
-      @updateRoots() if atom.config.get('learn-ide-tree.hideIgnoredNames')
-    @disposables.add atom.config.onDidChange 'learn-ide-tree.showOnRightSide', ({newValue}) =>
+      @updateRoots() if atom.config.get("#{pkgName}.hideIgnoredNames")
+    @disposables.add atom.config.onDidChange "#{pkgName}.showOnRightSide", ({newValue}) =>
       @onSideToggled(newValue)
-    @disposables.add atom.config.onDidChange 'learn-ide-tree.sortFoldersBeforeFiles', =>
+    @disposables.add atom.config.onDidChange "#{pkgName}.sortFoldersBeforeFiles", =>
       @updateRoots()
-    @disposables.add atom.config.onDidChange 'learn-ide-tree.squashDirectoryNames', =>
+    @disposables.add atom.config.onDidChange "#{pkgName}.squashDirectoryNames", =>
       @updateRoots()
 
   toggle: ->
@@ -172,7 +174,7 @@ class TreeView extends View
     return if _.isEmpty(atom.project.getPaths())
 
     @panel ?=
-      if atom.config.get('learn-ide-tree.showOnRightSide')
+      if atom.config.get("#{pkgName}.showOnRightSide")
         atom.workspace.addRightPanel(item: this)
       else
         atom.workspace.addLeftPanel(item: this)
@@ -218,7 +220,7 @@ class TreeView extends View
   fileViewEntryClicked: (e) ->
     filePath = e.currentTarget.getPath()
     detail = e.originalEvent?.detail ? 1
-    alwaysOpenExisting = atom.config.get('learn-ide-tree.alwaysOpenExisting')
+    alwaysOpenExisting = atom.config.get("#{pkgName}.alwaysOpenExisting")
     if detail is 1
       if atom.config.get('core.allowPendingPaneItems')
         openPromise = atom.workspace.open(filePath, pending: true, activatePane: false, searchAllPanes: alwaysOpenExisting)
@@ -244,7 +246,7 @@ class TreeView extends View
   resizeTreeView: ({pageX, which}) =>
     return @resizeStopped() unless which is 1
 
-    if atom.config.get('learn-ide-tree.showOnRightSide')
+    if atom.config.get("#{pkgName}.showOnRightSide")
       width = @outerWidth() + @offset().left - pageX
     else
       width = pageX - @offset().left
@@ -256,7 +258,7 @@ class TreeView extends View
 
   loadIgnoredPatterns: ->
     @ignoredPatterns.length = 0
-    return unless atom.config.get('learn-ide-tree.hideIgnoredNames')
+    return unless atom.config.get("#{pkgName}.hideIgnoredNames")
 
     Minimatch ?= require('minimatch').Minimatch
 
@@ -316,7 +318,7 @@ class TreeView extends View
     return if _.isEmpty(atom.project.getPaths())
 
     @attach()
-    @focus() if atom.config.get('learn-ide-tree.focusOnReveal')
+    @focus() if atom.config.get("#{pkgName}.focusOnReveal")
 
     return unless activeFilePath = @getActivePath()
 
@@ -413,7 +415,7 @@ class TreeView extends View
       else
         selectedEntry.toggleExpansion()
     else if selectedEntry instanceof FileView
-      if atom.config.get('learn-ide-tree.alwaysOpenExisting')
+      if atom.config.get("#{pkgName}.alwaysOpenExisting")
         options = Object.assign searchAllPanes: true, options
       @openAfterPromise(selectedEntry.getPath(), options)
 
@@ -739,7 +741,7 @@ class TreeView extends View
     @scrollTop(0)
 
   toggleSide: ->
-    toggleConfig('learn-ide-tree.showOnRightSide')
+    toggleConfig("#{pkgName}.showOnRightSide")
 
   moveEntry: (initialPath, newDirectoryPath) ->
     if initialPath is newDirectoryPath
