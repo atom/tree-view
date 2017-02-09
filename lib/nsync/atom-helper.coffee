@@ -3,6 +3,7 @@ nsync = require 'nsync-fs'
 crypto = require 'crypto'
 fs = require 'fs-plus'
 _path = require 'path'
+{name, primaryLearnIDEPackage} = require '../../package.json'
 
 digest = (str) ->
   crypto.createHash('md5').update(str, 'utf8').digest('hex')
@@ -88,12 +89,12 @@ module.exports = helper =
     document.title = title
 
   treeView: ->
-    pkg = atom.packages.getActivePackage('learn-ide-tree')
+    pkg = atom.packages.getActivePackage(name)
     pkg?.mainModule.treeView
 
   getToken: ->
     new Promise (resolve) ->
-      pkg = atom.packages.loadPackage('learn-ide')
+      pkg = atom.packages.loadPackage(primaryLearnIDEPackage)
       token = pkg.mainModule.token
 
       token.observe (value) ->
@@ -102,7 +103,7 @@ module.exports = helper =
 
   learnIdeVersion: ->
     if not LEARN_IDE_VERSION?
-      pkg = atom.packages.loadPackage('learn-ide')
+      pkg = atom.packages.loadPackage(primaryLearnIDEPackage)
       path = _path.join(pkg.path, 'package.json')
       pkgJSON = require(path)
       return pkgJSON.version
@@ -193,8 +194,8 @@ module.exports = helper =
         textBuffer.reload()
 
   resetPackage: ->
-    atom.packages.deactivatePackage('learn-ide-tree')
-    atom.packages.activatePackage('learn-ide-tree').then ->
+    atom.packages.deactivatePackage(name)
+    atom.packages.activatePackage(name).then ->
       atom.menu.sortPackagesMenu()
 
   termFocus: ->

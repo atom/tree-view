@@ -6,6 +6,7 @@ remote = require 'remote'
 {dialog} = require('electron').remote
 atomHelper = require './atom-helper'
 executeCustomCommand = require './custom-commands'
+{name} = require '../../package.json'
 {CompositeDisposable} = require 'event-kit'
 
 require('dotenv').config
@@ -175,7 +176,7 @@ module.exports = helper = (activationState) ->
         onEditorSave(e)
 
     atomHelper.on 'learn-ide:logout', ->
-      pkg = atom.packages.loadPackage('learn-ide-tree')
+      pkg = atom.packages.loadPackage(name)
       pkg.mainModule.preventCache = true
       nsync.flushCache()
 

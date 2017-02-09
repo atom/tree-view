@@ -9,6 +9,7 @@
   "engines": {
     "atom": "*"
   },
+  "primaryLearnIDEPackage": "learn-ide",
   "private": true,
   "dependencies": {
     "atom-space-pen-views": "^2.1.1",
