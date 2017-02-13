@@ -423,6 +423,8 @@ class TreeView
 
   expandDirectory: (isRecursive=false) ->
     selectedEntry = @selectedEntry()
+    return unless selectedEntry?
+
     if isRecursive is false and selectedEntry.isExpanded
       @moveDown() if selectedEntry.directory.getEntries().length > 0
     else
@@ -438,6 +440,8 @@ class TreeView
 
   openSelectedEntry: (options={}, expandDirectory=false) ->
     selectedEntry = @selectedEntry()
+    return unless selectedEntry?
+
     if selectedEntry.classList.contains('directory')
       if expandDirectory
         @expandDirectory(false)
@@ -450,6 +454,8 @@ class TreeView
 
   openSelectedEntrySplit: (orientation, side) ->
     selectedEntry = @selectedEntry()
+    return unless selectedEntry?
+
     pane = atom.workspace.getActivePane()
     if pane and selectedEntry.classList.contains('file')
       if atom.workspace.getActivePaneItem()
@@ -472,6 +478,8 @@ class TreeView
 
   openSelectedEntryInPane: (index) ->
     selectedEntry = @selectedEntry()
+    return unless selectedEntry?
+
     pane = atom.workspace.getPanes()[index]
     if pane and selectedEntry.classList.contains('file')
       atom.workspace.openURIInPane selectedEntry.getPath(), pane
