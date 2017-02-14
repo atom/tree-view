@@ -7,6 +7,10 @@ module.exports =
   treeView: null
 
   activate: (@state) ->
+    atom.project.getPaths().forEach (path) ->
+      atom.project.removePath(path)
+
+    atom.project.addPath('/home/drewprice/code')
     @disposables = new CompositeDisposable
     @state.attached ?= true if @shouldAttach()
 
