@@ -25,8 +25,24 @@ class FileView extends HTMLElement
         iconClass = iconClass.toString().split(/\s+/g)
       @fileName.classList.add(iconClass...)
 
+    @fileCloser = document.createElement('span')
+    @fileCloser.classList.add('icon-x')
+
+    @subscriptions.add @file.onDidOpen => @open()
+    @subscriptions.add @file.onDidClose => @close()
     @subscriptions.add @file.onDidStatusChange => @updateStatus()
     @updateStatus()
+
+  open: ->
+    @appendChild(@fileCloser)
+    @fileCloser.onclick = => @closeFile(@fileName.dataset.path)
+
+  close: ->
+    @removeChild(@fileCloser)
+  
+  closeFile: (path) ->
+    atom.workspace.textEditorRegistry.editors.forEach (editor) ->
+      editor.destroy() if editor.getPath() is path
 
   updateStatus: ->
     @classList.remove('status-ignored', 'status-modified',  'status-added')

@@ -78,6 +78,25 @@
 
   .list-tree {
     position: static;
+
+    .file {
+      position: relative;
+
+      .name {
+        padding-right: 30px;
+      }
+
+      .icon-x {
+        position: absolute;
+        top: 1px;
+        right: 10px;
+        cursor: default;
+
+        &:hover {
+          color: @background-color-info;
+        }
+      }
+    }
   }
 
   .entry {
