@@ -57,7 +57,7 @@ module.exports = helper =
 
     fs.makeTreeSync(path)
     atom.project.addPath(path)
-    @treeView().updateRoots(directoryExpansionStates)
+    @treeView()?.updateRoots(directoryExpansionStates)
     @updateTitle()
 
   resetTitleUpdate: ->
