@@ -18,6 +18,7 @@ class FileView extends HTMLElement
     @fileName.title = @file.name
     @fileName.dataset.name = @file.name
     @fileName.dataset.path = @file.path
+    @setupTooltip();
 
     iconClass = FileIcons.getService().iconClassForPath(@file.path, "tree-view")
     if iconClass
@@ -37,5 +38,23 @@ class FileView extends HTMLElement
 
   isPathEqual: (pathToCompare) ->
     @file.isPathEqual(pathToCompare)
+
+  setupTooltip: ->
+    onMouseEnter = =>
+      @mouseEnterSubscription.dispose()
+      @tooltip = atom.tooltips.add this,
+        title: @file.name
+        html: false
+        delay:
+          show: 1000
+          hide: 100
+        placement: 'bottom'
+      @dispatchEvent(new CustomEvent('mouseenter', bubbles: true))
+
+    @mouseEnterSubscription = dispose: =>
+      @removeEventListener('mouseenter', onMouseEnter)
+      @mouseEnterSubscription = null
+
+    @addEventListener('mouseenter', onMouseEnter)
 
 module.exports = document.registerElement('tree-view-file', prototype: FileView.prototype, extends: 'li')
