@@ -2,6 +2,7 @@
 path = require 'path'
 
 IconServices = require './icon-services'
+TreeView = require './tree-view'
 
 module.exports =
   treeView: null
@@ -52,7 +53,6 @@ module.exports =
 
   createView: ->
     unless @treeView?
-      TreeView = require './tree-view'
       @treeView = new TreeView(@state)
     @treeView
 
