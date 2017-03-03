@@ -36,7 +36,7 @@ class MoveDialog extends Dialog
     try
       fs.makeTreeSync(directoryPath) unless fs.existsSync(directoryPath)
       fs.moveSync(@initialPath, newPath)
-      @trigger 'entry-moved', [@initialPath, newPath]
+      @emitter.emit 'entry-moved', [@initialPath, newPath]
       if repo = repoForPath(newPath)
         repo.getPathStatus(@initialPath)
         repo.getPathStatus(newPath)
