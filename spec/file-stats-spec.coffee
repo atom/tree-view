@@ -1,5 +1,4 @@
 _ = require 'underscore-plus'
-{$, $$} = require 'atom-space-pen-views'
 fs = require 'fs-plus'
 path = require 'path'
 temp = require('temp').track()
@@ -25,7 +24,7 @@ describe "FileStats", ->
         atom.packages.activatePackage("tree-view")
 
       runs ->
-        treeView = $(atom.workspace.getLeftPanels()[0].getItem()).view()
+        treeView = atom.workspace.getLeftPanels()[0].getItem()
 
     afterEach ->
       temp.cleanup()
@@ -45,7 +44,7 @@ describe "FileStats", ->
       expect(treeView.roots[0].directory.stats).toBeDefined()
 
     it "passes stats to File instances in subdirectories", ->
-      treeView.find(".entries > li:contains(subdir)")[0].expand()
+      treeView.element.querySelector(".entries > li").expand()
       subdir = treeView.roots[0].directory.entries["subdir"]
       stats = subdir.entries["file2.txt"].stats
       expect(stats).toBeDefined()
