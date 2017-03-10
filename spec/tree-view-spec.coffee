@@ -2162,6 +2162,42 @@ describe "TreeView", ->
           expect(moveDialog.miniEditor.getText()).toBe(atom.project.relativize(dotFilePath))
           expect(moveDialog.miniEditor.getSelectedText()).toBe '.dotfile'
 
+      describe "when a subdirectory is selected", ->
+        moveDialog = null
+
+        beforeEach ->
+          jasmine.attachToDOM(workspaceElement)
+
+          waitsForFileToOpen ->
+            atom.workspace.open(filePath)
+
+          runs ->
+            dirView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+            treeView.toggleFocus()
+            atom.commands.dispatch(treeView.element, "tree-view:move")
+            moveDialog = atom.workspace.getModalPanels()[0].getItem()
+
+        afterEach ->
+          waits 50 # The move specs cause too many false positives because of their async nature, so wait a little bit before we cleanup
+
+        it "opens a move dialog with the folder's current path populated", ->
+          extension = path.extname(dirPath)
+          expect(moveDialog.element).toExist()
+          expect(moveDialog.promptText.textContent).toBe "Enter the new path for the directory."
+          expect(moveDialog.miniEditor.getText()).toBe(atom.project.relativize(dirPath))
+          expect(moveDialog.miniEditor.element).toHaveFocus()
+
+        describe "when the path is changed and confirmed", ->
+          it "updates text editor paths accordingly", ->
+            editor = atom.workspace.getActiveTextEditor()
+            expect(editor.getPath()).toBe(filePath)
+
+            newPath = path.join(rootDirPath, 'renamed-dir')
+            moveDialog.miniEditor.setText(newPath)
+
+            atom.commands.dispatch moveDialog.element, 'core:confirm'
+            expect(editor.getPath()).toBe(filePath.replace('test-dir', 'renamed-dir'))
+
       describe "when the project is selected", ->
         it "doesn't display the move dialog", ->
           treeView.roots[0].dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
