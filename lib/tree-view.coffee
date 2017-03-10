@@ -3,7 +3,7 @@ path = require 'path'
 
 _ = require 'underscore-plus'
 {BufferedProcess, CompositeDisposable} = require 'atom'
-{repoForPath, getStyleObject, getFullExtension} = require "./helpers"
+{repoForPath, getStyleObject, getFullExtension, updateEditorsForPath} = require "./helpers"
 fs = require 'fs-plus'
 
 AddDialog = require './add-dialog'
@@ -795,7 +795,7 @@ class TreeView
     try
       fs.makeTreeSync(newDirectoryPath) unless fs.existsSync(newDirectoryPath)
       fs.moveSync(initialPath, newPath)
-      @updateEditorForPath(initialPath, newPath)
+      updateEditorsForPath(initialPath, newPath)
 
       if repo = repoForPath(newPath)
         repo.getPathStatus(initialPath)
@@ -803,13 +803,6 @@ class TreeView
 
     catch error
       atom.notifications.addWarning("Failed to move entry #{initialPath} to #{newDirectoryPath}", detail: error.message)
-
-  updateEditorForPath: (oldPath, newPath) ->
-    editors = atom.workspace.getTextEditors()
-    for editor in editors
-      filePath = editor.getPath()
-      if filePath.startsWith(oldPath)
-        editor.getBuffer().setPath(filePath.replace(oldPath, newPath))
 
   onStylesheetsChanged: =>
     return unless @isVisible()

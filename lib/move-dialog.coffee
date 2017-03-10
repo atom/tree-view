@@ -1,7 +1,7 @@
 path = require 'path'
 fs = require 'fs-plus'
 Dialog = require './dialog'
-{repoForPath} = require "./helpers"
+{repoForPath, updateEditorsForPath} = require "./helpers"
 
 module.exports =
 class MoveDialog extends Dialog
@@ -36,7 +36,7 @@ class MoveDialog extends Dialog
     try
       fs.makeTreeSync(directoryPath) unless fs.existsSync(directoryPath)
       fs.moveSync(@initialPath, newPath)
-      @updateEditorForPath(@initialPath, newPath)
+      updateEditorsForPath(@initialPath, newPath)
       if repo = repoForPath(newPath)
         repo.getPathStatus(@initialPath)
         repo.getPathStatus(newPath)
@@ -57,10 +57,3 @@ class MoveDialog extends Dialog
         oldStat.ino is newStat.ino
     catch
       true # new path does not exist so it is valid
-
-  updateEditorForPath: (oldPath, newPath) ->
-    editors = atom.workspace.getTextEditors()
-    for editor in editors
-      filePath = editor.getPath()
-      if filePath.startsWith(oldPath)
-        editor.getBuffer().setPath(filePath.replace(oldPath, newPath))
