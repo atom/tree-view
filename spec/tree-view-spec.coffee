@@ -2401,6 +2401,29 @@ describe "TreeView", ->
         expect(atom.confirm.mostRecentCall).not.toExist
         expect(atom.notifications.getNotifications().length).toBe 0
 
+      describe "when a directory is removed", ->
+        it "closes editors with files belonging to the removed folder", ->
+          jasmine.attachToDOM(workspaceElement)
+
+          waitsForFileToOpen ->
+            atom.workspace.open(filePath2)
+
+          waitsForFileToOpen ->
+            atom.workspace.open(filePath3)
+
+          runs ->
+            openFilePaths = atom.workspace.getTextEditors().map((e) -> e.getPath())
+            expect(openFilePaths).toEqual([filePath2, filePath3])
+            dirView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+            treeView.toggleFocus()
+
+            spyOn(atom, 'confirm').andCallFake (dialog) ->
+              dialog.buttons["Move to Trash"]()
+
+            atom.commands.dispatch(treeView.element, 'tree-view:remove')
+            openFilePaths = (editor.getPath() for editor in atom.workspace.getTextEditors())
+            expect(openFilePaths).toEqual([])
+
   describe "file system events", ->
     temporaryFilePath = null
 

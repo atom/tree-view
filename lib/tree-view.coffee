@@ -607,7 +607,7 @@ class TreeView
           for selectedPath in selectedPaths
             if shell.moveItemToTrash(selectedPath)
               for editor in atom.workspace.getTextEditors()
-                if editor?.getPath() is selectedPath
+                if editor?.getPath()?.startsWith(selectedPath)
                   editor.destroy()
             else
               failedDeletions.push "#{selectedPath}"

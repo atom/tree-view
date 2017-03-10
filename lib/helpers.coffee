@@ -27,5 +27,5 @@ module.exports =
     editors = atom.workspace.getTextEditors()
     for editor in editors
       filePath = editor.getPath()
-      if filePath.startsWith(oldPath)
+      if filePath?.startsWith(oldPath)
         editor.getBuffer().setPath(filePath.replace(oldPath, newPath))
