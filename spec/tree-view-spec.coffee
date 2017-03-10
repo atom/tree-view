@@ -3191,6 +3191,7 @@ describe "TreeView", ->
   describe "Dragging and dropping files", ->
     deltaFilePath = null
     gammaDirPath = null
+    thetaFilePath = null
 
     beforeEach ->
       rootDirPath = fs.absolute(temp.mkdirSync('tree-view'))
@@ -3206,6 +3207,7 @@ describe "TreeView", ->
       deltaFilePath = path.join(gammaDirPath, "delta.txt")
       epsilonFilePath = path.join(gammaDirPath, "epsilon.txt")
       thetaDirPath = path.join(gammaDirPath, "theta")
+      thetaFilePath = path.join(thetaDirPath, "theta.txt")
 
       fs.writeFileSync(alphaFilePath, "doesn't matter")
       fs.writeFileSync(zetaFilePath, "doesn't matter")
@@ -3218,6 +3220,7 @@ describe "TreeView", ->
       fs.writeFileSync(deltaFilePath, "doesn't matter")
       fs.writeFileSync(epsilonFilePath, "doesn't matter")
       fs.makeTreeSync(thetaDirPath)
+      fs.writeFileSync(thetaFilePath, "doesn't matter")
 
       atom.project.setPaths([rootDirPath])
 
@@ -3278,11 +3281,14 @@ describe "TreeView", ->
         gammaDir = findDirectoryContainingText(treeView.roots[0], 'gamma')
         gammaDir.expand()
         thetaDir = gammaDir.entries.children[0]
+        thetaDir.expand()
 
-        [dragStartEvent, dragEnterEvent, dropEvent] =
-            eventHelpers.buildInternalDragEvents(thetaDir, alphaDir.querySelector('.header'), alphaDir)
+        waitsForFileToOpen ->
+          atom.workspace.open(thetaFilePath)
 
         runs ->
+          [dragStartEvent, dragEnterEvent, dropEvent] =
+            eventHelpers.buildInternalDragEvents(thetaDir, alphaDir.querySelector('.header'), alphaDir)
           treeView.onDragStart(dragStartEvent)
           treeView.onDrop(dropEvent)
           expect(alphaDir.children.length).toBe 2
@@ -3292,6 +3298,8 @@ describe "TreeView", ->
 
         runs ->
           expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe 3
+          editor = atom.workspace.getActiveTextEditor()
+          expect(editor.getPath()).toBe(thetaFilePath.replace('gamma', 'alpha'))
 
     describe "when dragging a file from the OS onto a DirectoryView's header", ->
       it "should move the file to the hovered directory", ->
