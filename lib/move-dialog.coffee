@@ -1,7 +1,7 @@
 path = require 'path'
 fs = require 'fs-plus'
 Dialog = require './dialog'
-{repoForPath} = require "./helpers"
+{repoForPath, updateEditorsForPath} = require "./helpers"
 
 module.exports =
 class MoveDialog extends Dialog
@@ -36,6 +36,7 @@ class MoveDialog extends Dialog
     try
       fs.makeTreeSync(directoryPath) unless fs.existsSync(directoryPath)
       fs.moveSync(@initialPath, newPath)
+      updateEditorsForPath(@initialPath, newPath)
       if repo = repoForPath(newPath)
         repo.getPathStatus(@initialPath)
         repo.getPathStatus(newPath)

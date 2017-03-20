@@ -3,7 +3,7 @@ path = require 'path'
 
 _ = require 'underscore-plus'
 {BufferedProcess, CompositeDisposable} = require 'atom'
-{repoForPath, getStyleObject, getFullExtension} = require "./helpers"
+{repoForPath, getStyleObject, getFullExtension, updateEditorsForPath} = require "./helpers"
 fs = require 'fs-plus'
 
 AddDialog = require './add-dialog'
@@ -607,7 +607,7 @@ class TreeView
           for selectedPath in selectedPaths
             if shell.moveItemToTrash(selectedPath)
               for editor in atom.workspace.getTextEditors()
-                if editor?.getPath() is selectedPath
+                if editor?.getPath()?.startsWith(selectedPath)
                   editor.destroy()
             else
               failedDeletions.push "#{selectedPath}"
@@ -795,6 +795,7 @@ class TreeView
     try
       fs.makeTreeSync(newDirectoryPath) unless fs.existsSync(newDirectoryPath)
       fs.moveSync(initialPath, newPath)
+      updateEditorsForPath(initialPath, newPath)
 
       if repo = repoForPath(newPath)
         repo.getPathStatus(initialPath)
