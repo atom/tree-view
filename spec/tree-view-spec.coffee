@@ -30,6 +30,9 @@ setupPaneFiles = ->
 
 getPaneFileName = (index) -> "test-file-#{index}.txt"
 
+# TODO: Remove this after atom/atom#13977 lands in favor of unguarded `getCenter()` calls
+getCenter = -> atom.workspace.getCenter?() ? atom.workspace
+
 describe "TreeView", ->
   [treeView, path1, path2, root1, root2, sampleJs, sampleTxt, workspaceElement] = []
 
@@ -1321,7 +1324,7 @@ describe "TreeView", ->
           atom.commands.dispatch(treeView.element, 'tree-view:open-selected-entry-right')
 
     it "should have opened all windows", ->
-      expect(atom.workspace.getPanes().length).toBe 9
+      expect(getCenter().getPanes().length).toBe 9
 
     [0..8].forEach (index) ->
       paneNumber = index + 1
@@ -1335,7 +1338,7 @@ describe "TreeView", ->
               atom.commands.dispatch treeView.element, command
 
           it "opens the file in pane #{paneNumber} and focuses it", ->
-            pane = atom.workspace.getPanes()[index]
+            pane = getCenter().getPanes()[index]
             item = atom.workspace.getActivePaneItem()
             expect(atom.views.getView(pane)).toHaveFocus()
             expect(item.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.txt')
@@ -1352,7 +1355,7 @@ describe "TreeView", ->
           atom.commands.dispatch(treeView.element, 'tree-view:open-selected-entry-right')
 
     it "should have opened all windows", ->
-      expect(atom.workspace.getPanes().length).toBe 9
+      expect(getCenter().getPanes().length).toBe 9
 
     [0..8].forEach (index) ->
       paneNumber = index + 1
@@ -1368,7 +1371,7 @@ describe "TreeView", ->
                 atom.commands.dispatch treeView.element, command
 
             it "opens the file in pane #{paneNumber} and focuses it", ->
-              pane = atom.workspace.getPanes()[index]
+              pane = getCenter().getPanes()[index]
               item = atom.workspace.getActivePaneItem()
               expect(atom.views.getView(pane)).toHaveFocus()
               expect(item.getPath()).toBe atom.project.getDirectories()[0].resolve(fileName)
@@ -3353,21 +3356,21 @@ describe "TreeView", ->
           atom.commands.dispatch(treeView.element, 'tree-view:open-selected-entry-right')
 
       it "should have opened both panes", ->
-        expect(atom.workspace.getPanes().length).toBe 2
+        expect(getCenter().getPanes().length).toBe 2
 
       describe "tree-view:open-selected-entry", ->
         beforeEach ->
           atom.config.set "tree-view.alwaysOpenExisting", true
         describe "when the first pane is focused, a file is opened that is already open in the second pane", ->
           beforeEach ->
-            firstPane = atom.workspace.getPanes()[0]
+            firstPane = getCenter().getPanes()[0]
             firstPane.activate()
             selectEntry 'tree-view.txt'
             waitsForFileToOpen ->
               atom.commands.dispatch treeView.element, "tree-view:open-selected-entry"
 
           it "opens the file in the second pane and focuses it", ->
-            pane = atom.workspace.getPanes()[1]
+            pane = getCenter().getPanes()[1]
             item = atom.workspace.getActivePaneItem()
             expect(atom.views.getView(pane)).toHaveFocus()
             expect(item.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.txt')
@@ -3380,7 +3383,7 @@ describe "TreeView", ->
         describe "when the first pane is focused, a file is opened that is already open in the second pane", ->
           firstPane = null
           beforeEach ->
-            firstPane = atom.workspace.getPanes()[0]
+            firstPane = getCenter().getPanes()[0]
             firstPane.activate()
             selectEntry 'tree-view.txt'
             waitsForFileToOpen ->
@@ -3398,7 +3401,7 @@ describe "TreeView", ->
         describe "when core.allowPendingPaneItems is set to true (default)", ->
           firstPane = activePaneItem = null
           beforeEach ->
-            firstPane = atom.workspace.getPanes()[0]
+            firstPane = getCenter().getPanes()[0]
             firstPane.activate()
 
             treeView.focus()
@@ -3423,7 +3426,7 @@ describe "TreeView", ->
         activePaneItem = null
 
         beforeEach ->
-          firstPane = atom.workspace.getPanes()[0]
+          firstPane = getCenter().getPanes()[0]
           firstPane.activate()
 
           treeView.focus()
@@ -3440,7 +3443,7 @@ describe "TreeView", ->
         it "opens the file and focuses it", ->
 
           expect(activePaneItem.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.txt')
-          expect(atom.views.getView(atom.workspace.getPanes()[1])).toHaveFocus()
+          expect(atom.views.getView(getCenter().getPanes()[1])).toHaveFocus()
 
   describe "Dragging and dropping root folders", ->
     [alphaDirPath, gammaDirPath, thetaDirPath, etaDirPath] = []
