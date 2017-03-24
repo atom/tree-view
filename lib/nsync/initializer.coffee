@@ -43,8 +43,8 @@ unimplemented = ({type}) ->
 onRefresh = ->
   atomHelper.resetPackage()
 
-onSave = ({target}) ->
-  editor = atomHelper.findTextEditorByElement(target)
+onSave = ->
+  editor = atomHelper.findActiveTextEditor()
   path = editor.getPath()
 
   if not path
