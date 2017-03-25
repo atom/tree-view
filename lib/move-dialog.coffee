@@ -5,7 +5,7 @@ Dialog = require './dialog'
 
 module.exports =
 class MoveDialog extends Dialog
-  constructor: (@initialPath) ->
+  constructor: (@initialPath, {@onMoveCallback}) ->
     if fs.isDirectorySync(@initialPath)
       prompt = 'Enter the new path for the directory.'
     else
@@ -36,7 +36,7 @@ class MoveDialog extends Dialog
     try
       fs.makeTreeSync(directoryPath) unless fs.existsSync(directoryPath)
       fs.moveSync(@initialPath, newPath)
-      @emitter.emit 'entry-moved', [@initialPath, newPath]
+      @onMoveCallback?(initialPath: @initialPath, newPath: newPath)
       if repo = repoForPath(newPath)
         repo.getPathStatus(@initialPath)
         repo.getPathStatus(newPath)

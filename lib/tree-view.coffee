@@ -509,9 +509,9 @@ class TreeView
       oldPath = @getActivePath()
 
     if oldPath
-      dialog = new MoveDialog(oldPath)
-      dialog.emitter.on 'entry-moved', ([oldPath, newPath]) =>
-        @emitter.emit 'entry-moved', {oldPath, newPath}
+      dialog = new MoveDialog oldPath,
+        onMoveCallback: ({initialPath, newPath}) =>
+          @emitter.emit 'entry-moved', {initialPath, newPath}
       dialog.attach()
 
   # Get the outline of a system call to the current platform's file manager.
@@ -598,9 +598,9 @@ class TreeView
       oldPath = @getActivePath()
     return unless oldPath
 
-    dialog = new CopyDialog(oldPath)
-    dialog.emitter.on 'entry-copied', (oldPath, newPath) =>
-      @emitter.emit 'entry-copied', {oldPath, newPath}
+    dialog = new CopyDialog oldPath,
+      onCopyCallback: ({initialPath, newPath}) =>
+        @emitter.emit 'entry-copied', {initialPath, newPath}
     dialog.attach()
 
   removeSelectedEntries: ->
