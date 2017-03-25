@@ -510,7 +510,7 @@ class TreeView
 
     if oldPath
       dialog = new MoveDialog oldPath,
-        onMoveCallback: ({initialPath, newPath}) =>
+        onMove: ({initialPath, newPath}) =>
           @emitter.emit 'entry-moved', {initialPath, newPath}
       dialog.attach()
 
@@ -599,7 +599,7 @@ class TreeView
     return unless oldPath
 
     dialog = new CopyDialog oldPath,
-      onCopyCallback: ({initialPath, newPath}) =>
+      onCopy: ({initialPath, newPath}) =>
         @emitter.emit 'entry-copied', {initialPath, newPath}
     dialog.attach()
 
