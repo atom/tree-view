@@ -5,7 +5,7 @@ fs = require 'fs-plus'
 
 module.exports =
 class File
-  constructor: ({@name, fullPath, @symlink, realpathCache, useSyncFS, @stats}) ->
+  constructor: ({@name, fullPath, @symlink, realpathCache, @ignoredNames, useSyncFS, @stats}) ->
     @destroyed = false
     @emitter = new Emitter()
     @subscriptions = new CompositeDisposable()
@@ -60,6 +60,8 @@ class File
         newStatus = 'modified'
       else if repo.isStatusNew(status)
         newStatus = 'added'
+      else if @ignoredNames.matches(@path)
+        newStatus = 'ignored'
 
     if newStatus isnt @status
       @status = newStatus

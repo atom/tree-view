@@ -9,7 +9,7 @@ realpathCache = {}
 
 module.exports =
 class Directory
-  constructor: ({@name, fullPath, @symlink, @expansionState, @isRoot, @ignoredPatterns, @useSyncFS, @stats}) ->
+  constructor: ({@name, fullPath, @symlink, @expansionState, @isRoot, @ignoredNames, @useSyncFS, @stats}) ->
     @destroyed = false
     @emitter = new Emitter()
     @subscriptions = new CompositeDisposable()
@@ -96,6 +96,8 @@ class Directory
         newStatus = 'modified'
       else if repo.isStatusNew(status)
         newStatus = 'added'
+      else if @ignoredNames.matches(@path)
+        newStatus = 'ignored'
 
     if newStatus isnt @status
       @status = newStatus
@@ -108,8 +110,7 @@ class Directory
       return true if repo? and repo.isProjectAtRoot() and repo.isPathIgnored(filePath)
 
     if atom.config.get('tree-view.hideIgnoredNames')
-      for ignoredPattern in @ignoredPatterns
-        return true if ignoredPattern.match(filePath)
+      return true if @ignoredNames.matches(filePath)
 
     false
 
@@ -194,14 +195,14 @@ class Directory
           directories.push(name)
         else
           expansionState = @expansionState.entries[name]
-          directories.push(new Directory({name, fullPath, symlink, expansionState, @ignoredPatterns, @useSyncFS, stats: statFlat}))
+          directories.push(new Directory({name, fullPath, symlink, expansionState, @ignoredNames, @useSyncFS, stats: statFlat}))
       else if stat.isFile?()
         if @entries.hasOwnProperty(name)
           # push a placeholder since this entry already exists but this helps
           # track the insertion index for the created views
           files.push(name)
         else
-          files.push(new File({name, fullPath, symlink, realpathCache, @useSyncFS, stats: statFlat}))
+          files.push(new File({name, fullPath, symlink, realpathCache, @ignoredNames, @useSyncFS, stats: statFlat}))
 
     @sortEntries(directories.concat(files))
 
