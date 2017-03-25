@@ -721,19 +721,19 @@ class TreeView
             # use fs.copy to copy directories since read/write will fail for directories
             catchAndShowFileErrors =>
               fs.copySync(initialPath, newPath)
-              @emitter.emit 'entry-copied', {oldPath: initialPath, newPath}
+              @emitter.emit 'entry-copied', {initialPath, newPath}
           else
             # read the old file and write a new one at target location
             catchAndShowFileErrors =>
               fs.writeFileSync(newPath, fs.readFileSync(initialPath))
-              @emitter.emit 'entry-copied', {oldPath: initialPath, newPath}
+              @emitter.emit 'entry-copied', {initialPath, newPath}
         else if cutPaths
           # Only move the target if the cut target doesn't exist and if the newPath
           # is not within the initial path
           unless fs.existsSync(newPath) or newPath.startsWith(initialPath)
             catchAndShowFileErrors =>
               fs.moveSync(initialPath, newPath)
-              @emitter.emit 'entry-moved', {oldPath: initialPath, newPath}
+              @emitter.emit 'entry-moved', {initialPath, newPath}
 
   add: (isCreatingFile) ->
     selectedEntry = @selectedEntry() ? @roots[0]
@@ -824,7 +824,8 @@ class TreeView
     try
       fs.makeTreeSync(newDirectoryPath) unless fs.existsSync(newDirectoryPath)
       fs.moveSync(initialPath, newPath)
-      @emitter.emit 'entry-moved', {oldPath: initialPath, newPath}
+      console.log "MOVED!", initialPath, newPath
+      @emitter.emit 'entry-moved', {initialPath, newPath}
 
       if repo = repoForPath(newPath)
         repo.getPathStatus(initialPath)
