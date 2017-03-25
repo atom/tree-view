@@ -77,6 +77,11 @@ class TreeView
     @disposables.add @onEntryMoved ({initialPath, newPath}) ->
       updateEditorsForPath(initialPath, newPath)
 
+    @disposables.add @onEntryDeleted ({path}) ->
+      for editor in atom.workspace.getTextEditors()
+        if editor?.getPath()?.startsWith(path)
+          editor.destroy()
+
   serialize: ->
     directoryExpansionStates: new ((roots) ->
       @[root.directory.path] = root.directory.serializeExpansionState() for root in roots
@@ -630,9 +635,6 @@ class TreeView
           for selectedPath in selectedPaths
             if shell.moveItemToTrash(selectedPath)
               @emitter.emit 'entry-deleted', {path: selectedPath}
-              for editor in atom.workspace.getTextEditors()
-                if editor?.getPath()?.startsWith(selectedPath)
-                  editor.destroy()
             else
               failedDeletions.push "#{selectedPath}"
             if repo = repoForPath(selectedPath)
