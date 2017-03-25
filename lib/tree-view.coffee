@@ -824,7 +824,6 @@ class TreeView
     try
       fs.makeTreeSync(newDirectoryPath) unless fs.existsSync(newDirectoryPath)
       fs.moveSync(initialPath, newPath)
-      console.log "MOVED!", initialPath, newPath
       @emitter.emit 'entry-moved', {initialPath, newPath}
 
       if repo = repoForPath(newPath)
