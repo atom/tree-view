@@ -3,7 +3,7 @@ path = require 'path'
 
 _ = require 'underscore-plus'
 {BufferedProcess, CompositeDisposable, Emitter} = require 'atom'
-{repoForPath, getStyleObject, getFullExtension} = require "./helpers"
+{repoForPath, getStyleObject, getFullExtension, updateEditorsForPath} = require "./helpers"
 fs = require 'fs-plus'
 
 AddDialog = require './add-dialog'
@@ -73,6 +73,9 @@ class TreeView
     @attachAfterProjectPathSet = state.attached and _.isEmpty(atom.project.getPaths())
     @element.style.width = "#{state.width}px" if state.width > 0
     @attach() if state.attached
+
+    @disposables.add @onEntryMoved ({initialPath, newPath}) ->
+      updateEditorsForPath(initialPath, newPath)
 
   serialize: ->
     directoryExpansionStates: new ((roots) ->
@@ -628,7 +631,7 @@ class TreeView
             if shell.moveItemToTrash(selectedPath)
               @emitter.emit 'entry-deleted', {path: selectedPath}
               for editor in atom.workspace.getTextEditors()
-                if editor?.getPath() is selectedPath
+                if editor?.getPath()?.startsWith(selectedPath)
                   editor.destroy()
             else
               failedDeletions.push "#{selectedPath}"

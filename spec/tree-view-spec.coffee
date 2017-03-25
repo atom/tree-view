@@ -2242,6 +2242,42 @@ describe "TreeView", ->
           expect(moveDialog.miniEditor.getText()).toBe(atom.project.relativize(dotFilePath))
           expect(moveDialog.miniEditor.getSelectedText()).toBe '.dotfile'
 
+      describe "when a subdirectory is selected", ->
+        moveDialog = null
+
+        beforeEach ->
+          jasmine.attachToDOM(workspaceElement)
+
+          waitsForFileToOpen ->
+            atom.workspace.open(filePath)
+
+          runs ->
+            dirView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+            treeView.toggleFocus()
+            atom.commands.dispatch(treeView.element, "tree-view:move")
+            moveDialog = atom.workspace.getModalPanels()[0].getItem()
+
+        afterEach ->
+          waits 50 # The move specs cause too many false positives because of their async nature, so wait a little bit before we cleanup
+
+        it "opens a move dialog with the folder's current path populated", ->
+          extension = path.extname(dirPath)
+          expect(moveDialog.element).toExist()
+          expect(moveDialog.promptText.textContent).toBe "Enter the new path for the directory."
+          expect(moveDialog.miniEditor.getText()).toBe(atom.project.relativize(dirPath))
+          expect(moveDialog.miniEditor.element).toHaveFocus()
+
+        describe "when the path is changed and confirmed", ->
+          it "updates text editor paths accordingly", ->
+            editor = atom.workspace.getActiveTextEditor()
+            expect(editor.getPath()).toBe(filePath)
+
+            newPath = path.join(rootDirPath, 'renamed-dir')
+            moveDialog.miniEditor.setText(newPath)
+
+            atom.commands.dispatch moveDialog.element, 'core:confirm'
+            expect(editor.getPath()).toBe(filePath.replace('test-dir', 'renamed-dir'))
+
       describe "when the project is selected", ->
         it "doesn't display the move dialog", ->
           treeView.roots[0].dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
@@ -2444,6 +2480,29 @@ describe "TreeView", ->
 
         expect(atom.confirm.mostRecentCall).not.toExist
         expect(atom.notifications.getNotifications().length).toBe 0
+
+      describe "when a directory is removed", ->
+        it "closes editors with files belonging to the removed folder", ->
+          jasmine.attachToDOM(workspaceElement)
+
+          waitsForFileToOpen ->
+            atom.workspace.open(filePath2)
+
+          waitsForFileToOpen ->
+            atom.workspace.open(filePath3)
+
+          runs ->
+            openFilePaths = atom.workspace.getTextEditors().map((e) -> e.getPath())
+            expect(openFilePaths).toEqual([filePath2, filePath3])
+            dirView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+            treeView.toggleFocus()
+
+            spyOn(atom, 'confirm').andCallFake (dialog) ->
+              dialog.buttons["Move to Trash"]()
+
+            atom.commands.dispatch(treeView.element, 'tree-view:remove')
+            openFilePaths = (editor.getPath() for editor in atom.workspace.getTextEditors())
+            expect(openFilePaths).toEqual([])
 
   describe "file system events", ->
     temporaryFilePath = null
@@ -3240,6 +3299,7 @@ describe "TreeView", ->
   describe "Dragging and dropping files", ->
     deltaFilePath = null
     gammaDirPath = null
+    thetaFilePath = null
 
     beforeEach ->
       rootDirPath = fs.absolute(temp.mkdirSync('tree-view'))
@@ -3255,6 +3315,7 @@ describe "TreeView", ->
       deltaFilePath = path.join(gammaDirPath, "delta.txt")
       epsilonFilePath = path.join(gammaDirPath, "epsilon.txt")
       thetaDirPath = path.join(gammaDirPath, "theta")
+      thetaFilePath = path.join(thetaDirPath, "theta.txt")
 
       fs.writeFileSync(alphaFilePath, "doesn't matter")
       fs.writeFileSync(zetaFilePath, "doesn't matter")
@@ -3267,6 +3328,7 @@ describe "TreeView", ->
       fs.writeFileSync(deltaFilePath, "doesn't matter")
       fs.writeFileSync(epsilonFilePath, "doesn't matter")
       fs.makeTreeSync(thetaDirPath)
+      fs.writeFileSync(thetaFilePath, "doesn't matter")
 
       atom.project.setPaths([rootDirPath])
 
@@ -3327,11 +3389,14 @@ describe "TreeView", ->
         gammaDir = findDirectoryContainingText(treeView.roots[0], 'gamma')
         gammaDir.expand()
         thetaDir = gammaDir.entries.children[0]
+        thetaDir.expand()
 
-        [dragStartEvent, dragEnterEvent, dropEvent] =
-            eventHelpers.buildInternalDragEvents(thetaDir, alphaDir.querySelector('.header'), alphaDir)
+        waitsForFileToOpen ->
+          atom.workspace.open(thetaFilePath)
 
         runs ->
+          [dragStartEvent, dragEnterEvent, dropEvent] =
+            eventHelpers.buildInternalDragEvents(thetaDir, alphaDir.querySelector('.header'), alphaDir)
           treeView.onDragStart(dragStartEvent)
           treeView.onDrop(dropEvent)
           expect(alphaDir.children.length).toBe 2
@@ -3341,6 +3406,8 @@ describe "TreeView", ->
 
         runs ->
           expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe 3
+          editor = atom.workspace.getActiveTextEditor()
+          expect(editor.getPath()).toBe(thetaFilePath.replace('gamma', 'alpha'))
 
     describe "when dragging a file from the OS onto a DirectoryView's header", ->
       it "should move the file to the hovered directory", ->

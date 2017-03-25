@@ -22,3 +22,10 @@ module.exports =
       fullExtension = extension + fullExtension
       filePath = path.basename(filePath, extension)
     fullExtension
+
+  updateEditorsForPath: (oldPath, newPath) ->
+    editors = atom.workspace.getTextEditors()
+    for editor in editors
+      filePath = editor.getPath()
+      if filePath?.startsWith(oldPath)
+        editor.getBuffer().setPath(filePath.replace(oldPath, newPath))
