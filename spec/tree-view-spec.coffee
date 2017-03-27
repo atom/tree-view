@@ -1494,14 +1494,23 @@ describe "TreeView", ->
 
       describe "when attempting to paste a directory into itself", ->
         describe "when copied", ->
-          it "makes a copy inside itself", ->
+          beforeEach ->
             LocalStorage['tree-view:copyPath'] = JSON.stringify([dirPath])
 
-            dirView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
-
+          it "makes a copy inside itself", ->
             newPath = path.join(dirPath, path.basename(dirPath))
+            dirView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
             expect(-> atom.commands.dispatch(treeView.element, "tree-view:paste")).not.toThrow()
             expect(fs.existsSync(newPath)).toBeTruthy()
+
+          it "dispatches an event to the tree-view", ->
+            newPath = path.join(dirPath, path.basename(dirPath))
+            callback = jasmine.createSpy("onEntryCopied")
+            treeView.onEntryCopied(callback)
+
+            dirView.click()
+            atom.commands.dispatch(treeView.element, "tree-view:paste")
+            expect(callback).toHaveBeenCalledWith(initialPath: dirPath, newPath: newPath)
 
           it 'does not keep copying recursively', ->
             LocalStorage['tree-view:copyPath'] = JSON.stringify([dirPath])
@@ -1539,14 +1548,25 @@ describe "TreeView", ->
 
       describe "when a file has been copied", ->
         describe "when a file is selected", ->
-          it "creates a copy of the original file in the selected file's parent directory", ->
+          beforeEach ->
             LocalStorage['tree-view:copyPath'] = JSON.stringify([filePath])
 
+          it "creates a copy of the original file in the selected file's parent directory", ->
             fileView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
             atom.commands.dispatch(treeView.element, "tree-view:paste")
 
-            expect(fs.existsSync(path.join(dirPath2, path.basename(filePath)))).toBeTruthy()
+            newPath = path.join(dirPath2, path.basename(filePath))
+            expect(fs.existsSync(newPath)).toBeTruthy()
             expect(fs.existsSync(filePath)).toBeTruthy()
+
+          it "emits an event", ->
+            callback = jasmine.createSpy("onEntryCopied")
+            treeView.onEntryCopied(callback)
+            fileView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+            atom.commands.dispatch(treeView.element, "tree-view:paste")
+
+            newPath = path.join(dirPath2, path.basename(filePath))
+            expect(callback).toHaveBeenCalledWith({initialPath: filePath, newPath: newPath})
 
           describe "when the target already exists", ->
             it "appends a number to the destination name", ->
@@ -1698,19 +1718,32 @@ describe "TreeView", ->
               expect(fs.existsSync(path.join(dirPath, "test-file30.txt"))).toBeTruthy()
 
       describe "when a file has been cut", ->
+        beforeEach ->
+          LocalStorage['tree-view:cutPath'] = JSON.stringify([filePath])
+
         describe "when a file is selected", ->
           it "creates a copy of the original file in the selected file's parent directory and removes the original", ->
-            LocalStorage['tree-view:cutPath'] = JSON.stringify([filePath])
+            fileView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+            atom.commands.dispatch(treeView.element, "tree-view:paste")
+
+            newPath = path.join(dirPath2, path.basename(filePath))
+            expect(fs.existsSync(newPath)).toBeTruthy()
+            expect(fs.existsSync(filePath)).toBeFalsy()
+
+          it "emits an event", ->
+            callback = jasmine.createSpy("onEntryMoved")
+            treeView.onEntryMoved(callback)
 
             fileView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
             atom.commands.dispatch(treeView.element, "tree-view:paste")
 
-            expect(fs.existsSync(path.join(dirPath2, path.basename(filePath)))).toBeTruthy()
-            expect(fs.existsSync(filePath)).toBeFalsy()
+            newPath = path.join(dirPath2, path.basename(filePath))
+            expect(callback).toHaveBeenCalledWith({initialPath: filePath, newPath})
 
           describe 'when the target destination file exists', ->
             it 'does not move the cut file', ->
-              LocalStorage['tree-view:cutPath'] = JSON.stringify([filePath])
+              callback = jasmine.createSpy("onEntryMoved")
+              treeView.onEntryMoved(callback)
 
               filePath3 = path.join(dirPath2, "test-file.txt")
               fs.writeFileSync(filePath3, "doesn't matter")
@@ -1719,29 +1752,49 @@ describe "TreeView", ->
               atom.commands.dispatch(treeView.element, "tree-view:paste")
 
               expect(fs.existsSync(filePath)).toBeTruthy()
+              expect(callback).not.toHaveBeenCalled()
 
         describe "when a directory is selected", ->
           it "creates a copy of the original file in the selected directory and removes the original", ->
             LocalStorage['tree-view:cutPath'] = JSON.stringify([filePath])
 
+            callback = jasmine.createSpy("onEntryMoved")
+            treeView.onEntryMoved(callback)
             dirView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
             atom.commands.dispatch(treeView.element, "tree-view:paste")
 
-            expect(fs.existsSync(path.join(dirPath2, path.basename(filePath)))).toBeTruthy()
+            newPath = path.join(dirPath2, path.basename(filePath))
+            expect(fs.existsSync(newPath)).toBeTruthy()
             expect(fs.existsSync(filePath)).toBeFalsy()
+            expect(callback).toHaveBeenCalledWith({initialPath: filePath, newPath})
 
       describe "when multiple files have been cut", ->
         describe "when a file is selected", ->
-          it "moves the selected files to the parent directory of the selected file", ->
+          beforeEach ->
             LocalStorage['tree-view:cutPath'] = JSON.stringify([filePath2, filePath3])
 
+          it "moves the selected files to the parent directory of the selected file", ->
             fileView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
             atom.commands.dispatch(treeView.element, "tree-view:paste")
 
-            expect(fs.existsSync(path.join(dirPath, path.basename(filePath2)))).toBeTruthy()
-            expect(fs.existsSync(path.join(dirPath, path.basename(filePath3)))).toBeTruthy()
+            newPath2 = path.join(dirPath, path.basename(filePath2))
+            newPath3 = path.join(dirPath, path.basename(filePath3))
+            expect(fs.existsSync(newPath2)).toBeTruthy()
+            expect(fs.existsSync(newPath3)).toBeTruthy()
             expect(fs.existsSync(filePath2)).toBeFalsy()
             expect(fs.existsSync(filePath3)).toBeFalsy()
+
+          it "emits events", ->
+            callback = jasmine.createSpy("onEntryMoved")
+            treeView.onEntryMoved(callback)
+            fileView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+            atom.commands.dispatch(treeView.element, "tree-view:paste")
+
+            newPath2 = path.join(dirPath, path.basename(filePath2))
+            newPath3 = path.join(dirPath, path.basename(filePath3))
+            expect(callback.callCount).toEqual(2)
+            expect(callback).toHaveBeenCalledWith({initialPath: filePath2, newPath: newPath2})
+            expect(callback).toHaveBeenCalledWith({initialPath: filePath3, newPath: newPath3})
 
           describe 'when the target destination file exists', ->
             it 'does not move the cut file', ->
@@ -1786,10 +1839,12 @@ describe "TreeView", ->
           expect(atom.notifications.getNotifications()[0].getDetail()).toContain 'ENOENT: no such file or directory'
 
     describe "tree-view:add-file", ->
-      [addPanel, addDialog] = []
+      [addPanel, addDialog, callback] = []
 
       beforeEach ->
         jasmine.attachToDOM(workspaceElement)
+        callback = jasmine.createSpy("onFileCreated")
+        treeView.onFileCreated(callback)
 
         waitsForFileToOpen ->
           fileView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
@@ -1815,7 +1870,7 @@ describe "TreeView", ->
 
         describe "when the path without a trailing '#{path.sep}' is changed and confirmed", ->
           describe "when no file exists at that location", ->
-            it "add a file, closes the dialog and selects the file in the tree-view", ->
+            it "adds a file, closes the dialog, selects the file in the tree-view, and emits an event", ->
               newPath = path.join(dirPath, "new-test-file.txt")
 
               waitsForFileToOpen ->
@@ -1832,6 +1887,7 @@ describe "TreeView", ->
 
               runs ->
                 expect(treeView.element.querySelector('.selected').textContent).toBe path.basename(newPath)
+                expect(callback).toHaveBeenCalledWith({path: newPath})
 
             it "adds file in any project path", ->
               newPath = path.join(dirPath3, "new-test-file.txt")
@@ -1856,6 +1912,7 @@ describe "TreeView", ->
 
               runs ->
                 expect(treeView.element.querySelector('.file.selected').textContent).toBe path.basename(newPath)
+                expect(callback).toHaveBeenCalledWith({path: newPath})
 
           describe "when a file already exists at that location", ->
             it "shows an error message and does not close the dialog", ->
@@ -1867,9 +1924,10 @@ describe "TreeView", ->
               expect(addDialog.errorMessage.textContent).toContain 'already exists'
               expect(addDialog.element).toHaveClass('error')
               expect(atom.workspace.getModalPanels()[0]).toBe addPanel
+              expect(callback).not.toHaveBeenCalled()
 
           describe "when the project has no path", ->
-            it "add a file and closes the dialog", ->
+            it "adds a file and closes the dialog", ->
               atom.project.setPaths([])
               addDialog.close()
               atom.commands.dispatch(treeView.element, "tree-view:add-file")
@@ -1886,6 +1944,7 @@ describe "TreeView", ->
                 expect(fs.isFileSync(newPath)).toBeTruthy()
                 expect(atom.workspace.getModalPanels().length).toBe 0
                 expect(atom.workspace.getActivePaneItem().getPath()).toBe(newPath)
+                expect(callback).toHaveBeenCalledWith({path: newPath})
 
         describe "when the path with a trailing '#{path.sep}' is changed and confirmed", ->
           it "shows an error message and does not close the dialog", ->
@@ -1895,12 +1954,14 @@ describe "TreeView", ->
             expect(addDialog.errorMessage.textContent).toContain 'names must not end with'
             expect(addDialog.element).toHaveClass('error')
             expect(atom.workspace.getModalPanels()[0]).toBe addPanel
+            expect(callback).not.toHaveBeenCalled()
 
         describe "when 'core:cancel' is triggered on the add dialog", ->
           it "removes the dialog and focuses the tree view", ->
             atom.commands.dispatch addDialog.element, 'core:cancel'
             expect(atom.workspace.getModalPanels().length).toBe 0
             expect(document.activeElement).toBe(treeView.element.querySelector(".tree-view"))
+            expect(callback).not.toHaveBeenCalled()
 
         describe "when the add dialog's editor loses focus", ->
           it "removes the dialog and focuses root view", ->
@@ -1919,6 +1980,7 @@ describe "TreeView", ->
             runs ->
               expect(fs.isFileSync(newPath)).toBeTruthy()
               expect(atom.workspace.getActivePaneItem().getPath()).toBe newPath
+              expect(callback).toHaveBeenCalledWith({path: newPath})
 
       describe "when a directory is selected", ->
         it "opens an add dialog with the directory's path populated", ->
@@ -1966,10 +2028,12 @@ describe "TreeView", ->
           expect(addDialog.element.textContent).toContain("You must open a directory to create a file with a relative path")
 
     describe "tree-view:add-folder", ->
-      [addPanel, addDialog] = []
+      [addPanel, addDialog, callback] = []
 
       beforeEach ->
         jasmine.attachToDOM(workspaceElement)
+        callback = jasmine.createSpy("onDirectoryCreated")
+        treeView.onDirectoryCreated(callback)
 
         waitsForFileToOpen ->
           fileView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
@@ -1997,20 +2061,24 @@ describe "TreeView", ->
               expect(fs.isDirectorySync(newPath)).toBeTruthy()
               expect(atom.workspace.getModalPanels().length).toBe 0
               expect(atom.workspace.getActivePaneItem().getPath()).not.toBe newPath
+
               expect(document.activeElement).toBe(treeView.element.querySelector(".tree-view"))
               expect(dirView.querySelector('.directory.selected').textContent).toBe('new')
+              expect(callback).toHaveBeenCalledWith({path: newPath})
 
         describe "when the path with a trailing '#{path.sep}' is changed and confirmed", ->
           describe "when no directory exists at the given path", ->
-            it "adds a directory and closes the dialog", ->
+            it "adds a directory, closes the dialog, and emits an event", ->
               newPath = path.join(dirPath, 'new', 'dir')
               addDialog.miniEditor.insertText("new#{path.sep}dir#{path.sep}")
               atom.commands.dispatch addDialog.element, 'core:confirm'
               expect(fs.isDirectorySync(newPath)).toBeTruthy()
               expect(atom.workspace.getModalPanels().length).toBe 0
               expect(atom.workspace.getActivePaneItem().getPath()).not.toBe newPath
+
               expect(document.activeElement).toBe(treeView.element.querySelector(".tree-view"))
               expect(dirView.querySelector('.directory.selected').textContent).toBe('new')
+              expect(callback).toHaveBeenCalledWith({path: newPath + path.sep})
 
             it "selects the created directory and does not change the expansion state of existing directories", ->
               expandedPath = path.join(dirPath, 'expanded-dir')
@@ -2026,9 +2094,11 @@ describe "TreeView", ->
               expect(fs.isDirectorySync(newPath)).toBeTruthy()
               expect(atom.workspace.getModalPanels().length).toBe 0
               expect(atom.workspace.getActivePaneItem().getPath()).not.toBe newPath
+
               expect(document.activeElement).toBe(treeView.element.querySelector(".tree-view"))
               expect(dirView.querySelector('.directory.selected').textContent).toBe('new2')
               expect(treeView.entryForPath(expandedPath).isExpanded).toBeTruthy()
+              expect(callback).toHaveBeenCalledWith({path: newPath})
 
             describe "when the project has no path", ->
               it "adds a directory and closes the dialog", ->
@@ -2044,6 +2114,7 @@ describe "TreeView", ->
                 atom.commands.dispatch addDialog.element, 'core:confirm'
                 expect(fs.isDirectorySync(newPath)).toBeTruthy()
                 expect(atom.workspace.getModalPanels().length).toBe 0
+                expect(callback).toHaveBeenCalledWith({path: newPath})
 
           describe "when a directory already exists at the given path", ->
             it "shows an error message and does not close the dialog", ->
@@ -2055,13 +2126,16 @@ describe "TreeView", ->
               expect(addDialog.errorMessage.textContent).toContain 'already exists'
               expect(addDialog.element).toHaveClass('error')
               expect(atom.workspace.getModalPanels()[0]).toBe addPanel
+              expect(callback).not.toHaveBeenCalled()
 
     describe "tree-view:move", ->
       describe "when a file is selected", ->
-        moveDialog = null
+        [moveDialog, callback] = []
 
         beforeEach ->
           jasmine.attachToDOM(workspaceElement)
+          callback = jasmine.createSpy("onEntryMoved")
+          treeView.onEntryMoved(callback)
 
           waitsForFileToOpen ->
             fileView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
@@ -2084,7 +2158,7 @@ describe "TreeView", ->
 
         describe "when the path is changed and confirmed", ->
           describe "when all the directories along the new path exist", ->
-            it "moves the file, updates the tree view, and closes the dialog", ->
+            it "moves the file, updates the tree view, closes the dialog, and emits an event", ->
               newPath = path.join(rootDirPath, 'renamed-test-file.txt')
               moveDialog.miniEditor.setText(path.basename(newPath))
 
@@ -2102,6 +2176,7 @@ describe "TreeView", ->
                 dirView = treeView.roots[0].querySelector('.directory')
                 dirView.expand()
                 expect(dirView.entries.children.length).toBe 0
+                expect(callback).toHaveBeenCalledWith({initialPath: filePath, newPath})
 
           describe "when the directories along the new path don't exist", ->
             it "creates the target directory before moving the file", ->
@@ -2117,6 +2192,7 @@ describe "TreeView", ->
               runs ->
                 expect(fs.existsSync(newPath)).toBeTruthy()
                 expect(fs.existsSync(filePath)).toBeFalsy()
+                expect(callback).toHaveBeenCalledWith({initialPath: filePath, newPath})
 
           describe "when a file or directory already exists at the target path", ->
             it "shows an error message and does not close the dialog", ->
@@ -2130,6 +2206,7 @@ describe "TreeView", ->
                 expect(moveDialog.errorMessage.textContent).toContain 'already exists'
                 expect(moveDialog.element).toHaveClass('error')
                 expect(moveDialog.element.parentElement).toBeTruthy()
+                expect(callback).not.toHaveBeenCalled()
 
         describe "when 'core:cancel' is triggered on the move dialog", ->
           it "removes the dialog and focuses the tree view", ->
@@ -2164,6 +2241,42 @@ describe "TreeView", ->
           expect(moveDialog.element).toExist()
           expect(moveDialog.miniEditor.getText()).toBe(atom.project.relativize(dotFilePath))
           expect(moveDialog.miniEditor.getSelectedText()).toBe '.dotfile'
+
+      describe "when a subdirectory is selected", ->
+        moveDialog = null
+
+        beforeEach ->
+          jasmine.attachToDOM(workspaceElement)
+
+          waitsForFileToOpen ->
+            atom.workspace.open(filePath)
+
+          runs ->
+            dirView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+            treeView.toggleFocus()
+            atom.commands.dispatch(treeView.element, "tree-view:move")
+            moveDialog = atom.workspace.getModalPanels()[0].getItem()
+
+        afterEach ->
+          waits 50 # The move specs cause too many false positives because of their async nature, so wait a little bit before we cleanup
+
+        it "opens a move dialog with the folder's current path populated", ->
+          extension = path.extname(dirPath)
+          expect(moveDialog.element).toExist()
+          expect(moveDialog.promptText.textContent).toBe "Enter the new path for the directory."
+          expect(moveDialog.miniEditor.getText()).toBe(atom.project.relativize(dirPath))
+          expect(moveDialog.miniEditor.element).toHaveFocus()
+
+        describe "when the path is changed and confirmed", ->
+          it "updates text editor paths accordingly", ->
+            editor = atom.workspace.getActiveTextEditor()
+            expect(editor.getPath()).toBe(filePath)
+
+            newPath = path.join(rootDirPath, 'renamed-dir')
+            moveDialog.miniEditor.setText(newPath)
+
+            atom.commands.dispatch moveDialog.element, 'core:confirm'
+            expect(editor.getPath()).toBe(filePath.replace('test-dir', 'renamed-dir'))
 
       describe "when the project is selected", ->
         it "doesn't display the move dialog", ->
@@ -2367,6 +2480,29 @@ describe "TreeView", ->
 
         expect(atom.confirm.mostRecentCall).not.toExist
         expect(atom.notifications.getNotifications().length).toBe 0
+
+      describe "when a directory is removed", ->
+        it "closes editors with files belonging to the removed folder", ->
+          jasmine.attachToDOM(workspaceElement)
+
+          waitsForFileToOpen ->
+            atom.workspace.open(filePath2)
+
+          waitsForFileToOpen ->
+            atom.workspace.open(filePath3)
+
+          runs ->
+            openFilePaths = atom.workspace.getTextEditors().map((e) -> e.getPath())
+            expect(openFilePaths).toEqual([filePath2, filePath3])
+            dirView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+            treeView.toggleFocus()
+
+            spyOn(atom, 'confirm').andCallFake (dialog) ->
+              dialog.buttons["Move to Trash"]()
+
+            atom.commands.dispatch(treeView.element, 'tree-view:remove')
+            openFilePaths = (editor.getPath() for editor in atom.workspace.getTextEditors())
+            expect(openFilePaths).toEqual([])
 
   describe "file system events", ->
     temporaryFilePath = null
@@ -2711,6 +2847,10 @@ describe "TreeView", ->
 
       describe "when the file is deleted", ->
         it "updates the style of the directory", ->
+          callback = jasmine.createSpy("onEntryDeleted")
+          treeView.onEntryDeleted(callback)
+
+          deletedPath = treeView.selectedEntry().getPath()
           expect(treeView.selectedEntry().getPath()).toContain(path.join('dir2', 'new2'))
           dirView = findDirectoryContainingText(treeView.roots[0], 'dir2')
           expect(dirView).not.toBeNull()
@@ -2719,6 +2859,7 @@ describe "TreeView", ->
             dialog.buttons["Move to Trash"]()
           atom.commands.dispatch(treeView.element, 'tree-view:remove')
           expect(dirView.directory.updateStatus).toHaveBeenCalled()
+          expect(callback).toHaveBeenCalledWith({path: deletedPath})
 
     describe "on #darwin, when the project is a symbolic link to the repository root", ->
       beforeEach ->
@@ -2850,7 +2991,7 @@ describe "TreeView", ->
           expect(fileView3).toHaveClass('selected')
 
       describe 'using the metakey(cmd) key', ->
-        it 'selects the cmd clicked item in addition to the original selected item', ->
+        it 'selects the cmd-clicked item in addition to the original selected item', ->
           fileView1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
           fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, metaKey: true}))
           expect(fileView1).toHaveClass('selected')
@@ -2865,11 +3006,11 @@ describe "TreeView", ->
           Object.defineProperty(process, "platform", {__proto__: null, value: 'win32'})
 
         afterEach ->
-          # Ensure that process.platform is set back to it's original value
+          # Ensure that process.platform is set back to its original value
           Object.defineProperty(process, "platform", {__proto__: null, value: originalPlatform})
 
         describe 'using the ctrl key', ->
-          it 'selects the ctrl clicked item in addition to the original selected item', ->
+          it 'selects the ctrl-clicked item in addition to the original selected item', ->
             fileView1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
             fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, ctrlKey: true}))
             expect(fileView1).toHaveClass('selected')
@@ -2884,11 +3025,11 @@ describe "TreeView", ->
           Object.defineProperty(process, "platform", {__proto__: null, value: 'darwin'})
 
         afterEach ->
-          # Ensure that process.platform is set back to it's original value
+          # Ensure that process.platform is set back to its original value
           Object.defineProperty(process, "platform", {__proto__: null, value: originalPlatform})
 
         describe 'using the ctrl key', ->
-          describe "previous item is selected but the ctrl clicked item is not", ->
+          describe "previous item is selected but the ctrl-clicked item is not", ->
             it 'selects the clicked item, but deselects the previous item', ->
               fileView1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
               fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, ctrlKey: true}))
@@ -2902,7 +3043,7 @@ describe "TreeView", ->
               expect(treeView.list).toHaveClass('full-menu')
               expect(treeView.list).not.toHaveClass('multi-select')
 
-          describe 'previous item is selected including the ctrl clicked', ->
+          describe 'previous item is selected including the ctrl-clicked', ->
             it 'displays the multi-select menu', ->
               fileView1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
               fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, metaKey: true}))
@@ -2925,7 +3066,7 @@ describe "TreeView", ->
               expect(treeView.list).not.toHaveClass('multi-select')
 
           describe 'when no item is selected', ->
-            it 'selects the ctrl clicked item', ->
+            it 'selects the ctrl-clicked item', ->
               fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, ctrlKey: true}))
               expect(fileView3).toHaveClass('selected')
 
@@ -2952,18 +3093,18 @@ describe "TreeView", ->
               expect(treeView.list).toHaveClass('full-menu')
               expect(treeView.list).not.toHaveClass('multi-select')
 
-            it 'selects right clicked item', ->
+            it 'selects right-clicked item', ->
               fileView1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
               fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, button: 2}))
               expect(fileView3).toHaveClass('selected')
 
-            it 'de-selects the previously selected item', ->
+            it 'deselects the previously selected item', ->
               fileView1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
               fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, button: 2}))
               expect(fileView1).not.toHaveClass('selected')
 
           describe 'when no item is selected', ->
-            it 'selects the right clicked item', ->
+            it 'selects the right-clicked item', ->
               fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, button: 2}))
               expect(fileView3).toHaveClass('selected')
 
@@ -3158,6 +3299,7 @@ describe "TreeView", ->
   describe "Dragging and dropping files", ->
     deltaFilePath = null
     gammaDirPath = null
+    thetaFilePath = null
 
     beforeEach ->
       rootDirPath = fs.absolute(temp.mkdirSync('tree-view'))
@@ -3173,6 +3315,7 @@ describe "TreeView", ->
       deltaFilePath = path.join(gammaDirPath, "delta.txt")
       epsilonFilePath = path.join(gammaDirPath, "epsilon.txt")
       thetaDirPath = path.join(gammaDirPath, "theta")
+      thetaFilePath = path.join(thetaDirPath, "theta.txt")
 
       fs.writeFileSync(alphaFilePath, "doesn't matter")
       fs.writeFileSync(zetaFilePath, "doesn't matter")
@@ -3185,6 +3328,7 @@ describe "TreeView", ->
       fs.writeFileSync(deltaFilePath, "doesn't matter")
       fs.writeFileSync(epsilonFilePath, "doesn't matter")
       fs.makeTreeSync(thetaDirPath)
+      fs.writeFileSync(thetaFilePath, "doesn't matter")
 
       atom.project.setPaths([rootDirPath])
 
@@ -3245,11 +3389,14 @@ describe "TreeView", ->
         gammaDir = findDirectoryContainingText(treeView.roots[0], 'gamma')
         gammaDir.expand()
         thetaDir = gammaDir.entries.children[0]
+        thetaDir.expand()
 
-        [dragStartEvent, dragEnterEvent, dropEvent] =
-            eventHelpers.buildInternalDragEvents(thetaDir, alphaDir.querySelector('.header'), alphaDir)
+        waitsForFileToOpen ->
+          atom.workspace.open(thetaFilePath)
 
         runs ->
+          [dragStartEvent, dragEnterEvent, dropEvent] =
+            eventHelpers.buildInternalDragEvents(thetaDir, alphaDir.querySelector('.header'), alphaDir)
           treeView.onDragStart(dragStartEvent)
           treeView.onDrop(dropEvent)
           expect(alphaDir.children.length).toBe 2
@@ -3259,6 +3406,8 @@ describe "TreeView", ->
 
         runs ->
           expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe 3
+          editor = atom.workspace.getActiveTextEditor()
+          expect(editor.getPath()).toBe(thetaFilePath.replace('gamma', 'alpha'))
 
     describe "when dragging a file from the OS onto a DirectoryView's header", ->
       it "should move the file to the hovered directory", ->

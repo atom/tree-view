@@ -2,8 +2,8 @@ path = require 'path'
 {shell} = require 'electron'
 
 _ = require 'underscore-plus'
-{BufferedProcess, CompositeDisposable} = require 'atom'
-{repoForPath, getStyleObject, getFullExtension} = require "./helpers"
+{BufferedProcess, CompositeDisposable, Emitter} = require 'atom'
+{repoForPath, getStyleObject, getFullExtension, updateEditorsForPath} = require "./helpers"
 fs = require 'fs-plus'
 
 AddDialog = require './add-dialog'
@@ -41,6 +41,7 @@ class TreeView
     @element.appendChild(@resizeHandle)
 
     @disposables = new CompositeDisposable
+    @emitter = new Emitter
     @focusAfterAttach = false
     @roots = []
     @scrollLeftAfterAttach = -1
@@ -73,6 +74,14 @@ class TreeView
     @element.style.width = "#{state.width}px" if state.width > 0
     @attach() if state.attached
 
+    @disposables.add @onEntryMoved ({initialPath, newPath}) ->
+      updateEditorsForPath(initialPath, newPath)
+
+    @disposables.add @onEntryDeleted ({path}) ->
+      for editor in atom.workspace.getTextEditors()
+        if editor?.getPath()?.startsWith(path)
+          editor.destroy()
+
   serialize: ->
     directoryExpansionStates: new ((roots) ->
       @[root.directory.path] = root.directory.serializeExpansionState() for root in roots
@@ -89,6 +98,21 @@ class TreeView
     @disposables.dispose()
     @rootDragAndDrop.dispose()
     @detach() if @panel?
+
+  onDirectoryCreated: (callback) ->
+    @emitter.on('directory-created', callback)
+
+  onEntryCopied: (callback) ->
+    @emitter.on('entry-copied', callback)
+
+  onEntryDeleted: (callback) ->
+    @emitter.on('entry-deleted', callback)
+
+  onEntryMoved: (callback) ->
+    @emitter.on('entry-moved', callback)
+
+  onFileCreated: (callback) ->
+    @emitter.on('file-created', callback)
 
   handleEvents: ->
     @resizeHandle.addEventListener 'dblclick', => @resizeToFitContent()
@@ -493,7 +517,9 @@ class TreeView
       oldPath = @getActivePath()
 
     if oldPath
-      dialog = new MoveDialog(oldPath)
+      dialog = new MoveDialog oldPath,
+        onMove: ({initialPath, newPath}) =>
+          @emitter.emit 'entry-moved', {initialPath, newPath}
       dialog.attach()
 
   # Get the outline of a system call to the current platform's file manager.
@@ -580,7 +606,9 @@ class TreeView
       oldPath = @getActivePath()
     return unless oldPath
 
-    dialog = new CopyDialog(oldPath)
+    dialog = new CopyDialog oldPath,
+      onCopy: ({initialPath, newPath}) =>
+        @emitter.emit 'entry-copied', {initialPath, newPath}
     dialog.attach()
 
   removeSelectedEntries: ->
@@ -606,9 +634,7 @@ class TreeView
           failedDeletions = []
           for selectedPath in selectedPaths
             if shell.moveItemToTrash(selectedPath)
-              for editor in atom.workspace.getTextEditors()
-                if editor?.getPath() is selectedPath
-                  editor.destroy()
+              @emitter.emit 'entry-deleted', {path: selectedPath}
             else
               failedDeletions.push "#{selectedPath}"
             if repo = repoForPath(selectedPath)
@@ -698,15 +724,21 @@ class TreeView
 
           if fs.isDirectorySync(initialPath)
             # use fs.copy to copy directories since read/write will fail for directories
-            catchAndShowFileErrors -> fs.copySync(initialPath, newPath)
+            catchAndShowFileErrors =>
+              fs.copySync(initialPath, newPath)
+              @emitter.emit 'entry-copied', {initialPath, newPath}
           else
             # read the old file and write a new one at target location
-            catchAndShowFileErrors -> fs.writeFileSync(newPath, fs.readFileSync(initialPath))
+            catchAndShowFileErrors =>
+              fs.writeFileSync(newPath, fs.readFileSync(initialPath))
+              @emitter.emit 'entry-copied', {initialPath, newPath}
         else if cutPaths
-          # Only move the target if the cut target doesn't exists and if the newPath
+          # Only move the target if the cut target doesn't exist and if the newPath
           # is not within the initial path
           unless fs.existsSync(newPath) or newPath.startsWith(initialPath)
-            catchAndShowFileErrors -> fs.moveSync(initialPath, newPath)
+            catchAndShowFileErrors =>
+              fs.moveSync(initialPath, newPath)
+              @emitter.emit 'entry-moved', {initialPath, newPath}
 
   add: (isCreatingFile) ->
     selectedEntry = @selectedEntry() ? @roots[0]
@@ -717,9 +749,11 @@ class TreeView
       @entryForPath(createdPath)?.reload()
       @selectEntryForPath(createdPath)
       @updateRoots() if atom.config.get('tree-view.squashDirectoryNames')
+      @emitter.emit 'directory-created', {path: createdPath}
     dialog.onDidCreateFile (createdPath) =>
       atom.workspace.open(createdPath)
       @updateRoots() if atom.config.get('tree-view.squashDirectoryNames')
+      @emitter.emit 'file-created', {path: createdPath}
     dialog.attach()
 
   removeProjectFolder: (e) ->
@@ -795,6 +829,7 @@ class TreeView
     try
       fs.makeTreeSync(newDirectoryPath) unless fs.existsSync(newDirectoryPath)
       fs.moveSync(initialPath, newPath)
+      @emitter.emit 'entry-moved', {initialPath, newPath}
 
       if repo = repoForPath(newPath)
         repo.getPathStatus(initialPath)
