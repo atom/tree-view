@@ -45,7 +45,7 @@ onRefresh = ->
 
 onSave = ->
   editor = atomHelper.findActiveTextEditor()
-  path = editor.getPath()
+  path = editor?.getPath()
 
   if not path
     # TODO: untitled editor is saved
