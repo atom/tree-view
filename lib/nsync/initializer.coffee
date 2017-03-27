@@ -51,6 +51,9 @@ onSave = ->
     # TODO: untitled editor is saved
     return console.warn 'Cannot save file without path'
 
+  if process.platform is 'win32'
+    atomHelper.convertToLF()
+
   text = convertEOL(editor.getText())
   content = new Buffer(text).toString('base64')
   nsync.save(path, content)

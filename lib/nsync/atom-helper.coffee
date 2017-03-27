@@ -88,6 +88,10 @@ module.exports = helper =
 
     document.title = title
 
+  convertToLF: ->
+    view = atom.views.getView(atom.workspace)
+    atom.commands.dispatch(view, 'line-ending-selector:convert-to-LF')
+
   treeView: ->
     pkg = atom.packages.getActivePackage(name)
     pkg?.mainModule.treeView
