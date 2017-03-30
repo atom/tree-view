@@ -141,6 +141,7 @@ class TreeView
      'tree-view:collapse-directory': => @collapseDirectory()
      'tree-view:recursive-collapse-directory': => @collapseDirectory(true)
      'tree-view:open-selected-entry': => @openSelectedEntry()
+     'tree-view:open-selected-entry-without-activate': => @openSelectedEntry(pending: true, activatePane: false)
      'tree-view:open-selected-entry-right': => @openSelectedEntryRight()
      'tree-view:open-selected-entry-left': => @openSelectedEntryLeft()
      'tree-view:open-selected-entry-up': => @openSelectedEntryUp()
