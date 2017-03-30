@@ -966,6 +966,10 @@ class TreeView
       fileNameElement.style.position = 'absolute'
       fileNameElement.style.top = 0
       fileNameElement.style.left = 0
+      # Ensure the cloned file name element is rendered on a separate GPU layer
+      # to prevent overlapping elements located at (0px, 0px) from being used as
+      # the drag image.
+      fileNameElement.style.willChange = 'transform'
 
       document.body.appendChild(fileNameElement)
 
