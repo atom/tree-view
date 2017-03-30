@@ -10,33 +10,30 @@ module.exports =
   treeView: null
 
   activate: (@state) ->
-    treeViewisDisabled = localStorage.disableTreeView is 'true'
+    @nsyncDisposables = nsyncInitializer(@state)
 
-    if not treeViewisDisabled
-      @nsyncDisposables = nsyncInitializer(@state)
+    @warnIfAtomsTreeViewIsActive()
 
-      @warnIfAtomsTreeViewIsActive()
+    document.body.classList.add('learn-ide')
 
-      document.body.classList.add('learn-ide')
+    @disposables = new CompositeDisposable
+    @state.attached ?= true if @shouldAttach()
 
-      @disposables = new CompositeDisposable
-      @state.attached ?= true if @shouldAttach()
+    @createView() if @state.attached
 
-      @createView() if @state.attached
-
-      @disposables.add atom.commands.add('atom-workspace', {
-        'tree-view:show': => @createView().show()
-        'tree-view:toggle': => @createView().toggle()
-        'tree-view:toggle-focus': => @createView().toggleFocus()
-        'tree-view:reveal-active-file': => @createView().revealActiveFile()
-        'tree-view:toggle-side': => @createView().toggleSide()
-        'tree-view:add-file': => @createView().add(true)
-        'tree-view:add-folder': => @createView().add(false)
-        'tree-view:duplicate': => @createView().copySelectedEntry()
-        'tree-view:remove': => @createView().removeSelectedEntries()
-        'tree-view:rename': => @createView().moveSelectedEntry()
-        'tree-view:show-current-file-in-file-manager': => @createView().showCurrentFileInFileManager()
-      })
+    @disposables.add atom.commands.add('atom-workspace', {
+      'tree-view:show': => @createView().show()
+      'tree-view:toggle': => @createView().toggle()
+      'tree-view:toggle-focus': => @createView().toggleFocus()
+      'tree-view:reveal-active-file': => @createView().revealActiveFile()
+      'tree-view:toggle-side': => @createView().toggleSide()
+      'tree-view:add-file': => @createView().add(true)
+      'tree-view:add-folder': => @createView().add(false)
+      'tree-view:duplicate': => @createView().copySelectedEntry()
+      'tree-view:remove': => @createView().removeSelectedEntries()
+      'tree-view:rename': => @createView().moveSelectedEntry()
+      'tree-view:show-current-file-in-file-manager': => @createView().showCurrentFileInFileManager()
+    })
 
   deactivate: ->
     nsync.cache() unless @preventCache
