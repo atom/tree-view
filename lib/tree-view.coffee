@@ -351,7 +351,6 @@ class TreeView
   revealActiveFile: ->
     return if _.isEmpty(atom.project.getPaths())
 
-    @attach()
     @focus() if atom.config.get('tree-view.focusOnReveal')
 
     return unless activeFilePath = @getActivePath()
