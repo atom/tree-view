@@ -43,15 +43,21 @@ unimplemented = ({type}) ->
 onRefresh = ->
   atomHelper.resetPackage()
 
-onSave = ({target}) ->
-  editor = atomHelper.findTextEditorByElement(target)
-  path = editor.getPath()
+onSave = ->
+  editor = atomHelper.findActiveTextEditor()
+  path = editor?.getPath()
 
   if not path
     # TODO: untitled editor is saved
     return console.warn 'Cannot save file without path'
 
   text = convertEOL(editor.getText())
+
+  if process.platform is 'win32'
+    buffer = editor.getBuffer()
+    buffer.setPreferredLineEnding('\n')
+    buffer.setText(text)
+
   content = new Buffer(text).toString('base64')
   nsync.save(path, content)
 
