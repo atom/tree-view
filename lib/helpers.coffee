@@ -21,7 +21,7 @@ module.exports =
     while extension = path.extname(filePath)
       fullExtension = extension + fullExtension
       filePath = path.basename(filePath, extension)
-    fullExtension
+    return fullExtension
 
   updateEditorsForPath: (oldPath, newPath) ->
     editors = atom.workspace.getTextEditors()
