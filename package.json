@@ -20,6 +20,9 @@
   "devDependencies": {
     "coffeelint": "^1.9.7"
   },
+  "deserializers": {
+    "TreeView": "getTreeViewInstance"
+  },
   "consumedServices": {
     "atom.file-icons": {
       "versions": {
@@ -44,11 +47,6 @@
       "type": "boolean",
       "default": false,
       "description": "Don't show items matched by the `Ignored Names` core config setting."
-    },
-    "showOnRightSide": {
-      "type": "boolean",
-      "default": false,
-      "description": "Show the tree view on the right side of the editor instead of the left."
     },
     "sortFoldersBeforeFiles": {
       "type": "boolean",
