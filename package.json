@@ -10,11 +10,11 @@
   },
   "private": true,
   "dependencies": {
-    "event-kit": "^1.0.0",
+    "event-kit": "^2.2.0",
     "fs-plus": "^3.0.0",
-    "minimatch": "~0.3.0",
+    "minimatch": "^3.0.3",
     "pathwatcher": "^7.0.0",
-    "temp": "~0.8.1",
+    "temp": "~0.8.3",
     "underscore-plus": "^1.0.0"
   },
   "devDependencies": {
