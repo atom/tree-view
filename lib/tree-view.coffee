@@ -25,11 +25,11 @@ class TreeView
 
   constructor: (state) ->
     @element = document.createElement('div')
-    @element.classList.add('tool-panel', 'tree-view-element', 'order--center')
+    @element.classList.add('tool-panel', 'tree-view')
     @element.tabIndex = -1
 
     @list = document.createElement('ol')
-    @list.classList.add('tree-view', 'full-menu', 'list-tree', 'has-collapsable-children', 'focusable-panel')
+    @list.classList.add('full-menu', 'list-tree', 'has-collapsable-children', 'focusable-panel')
     @element.appendChild(@list)
 
     @disposables = new CompositeDisposable
