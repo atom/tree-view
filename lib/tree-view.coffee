@@ -34,10 +34,7 @@ class TreeView
 
     @disposables = new CompositeDisposable
     @emitter = new Emitter
-    @focusAfterAttach = false
     @roots = []
-    @scrollLeftAfterAttach = -1
-    @scrollTopAfterAttach = -1
     @selectedPath = null
     @ignoredPatterns = []
     @useSyncFS = false
@@ -59,8 +56,16 @@ class TreeView
     @selectEntry(@roots[0])
 
     @selectEntryForPath(state.selectedPath) if state.selectedPath
-    @scrollTopAfterAttach = state.scrollTop if state.scrollTop
-    @scrollLeftAfterAttach = state.scrollLeft if state.scrollLeft
+
+    if state.scrollTop? or state.scrollLeft?
+      observer = new IntersectionObserver(=>
+        if @isVisible()
+          @element.scrollTop = state.scrollTop
+          @element.scrollLeft = state.scrollLeft
+          observer.disconnect()
+      )
+      observer.observe(@element)
+
     @element.style.width = "#{state.width}px" if state.width > 0
 
     @disposables.add @onEntryMoved ({initialPath, newPath}) ->
@@ -775,7 +780,7 @@ class TreeView
   onStylesheetsChanged: =>
     # If visible, force a redraw so the scrollbars are styled correctly based on
     # the theme
-    return if @element.offsetWidth is 0 and @element.offsetHeight is 0
+    return unless @isVisible()
     @element.style.display = 'none'
     @element.offsetWidth
     @element.style.display = ''
@@ -943,3 +948,6 @@ class TreeView
         # Drop event from OS
         for file in e.dataTransfer.files
           @moveEntry(file.path, newDirectoryPath)
+
+  isVisible: ->
+    @element.offsetWidth isnt 0 or @element.offsetHeight isnt 0
