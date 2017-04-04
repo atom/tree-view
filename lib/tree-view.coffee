@@ -4,7 +4,6 @@ path = require 'path'
 _ = require 'underscore-plus'
 {BufferedProcess, CompositeDisposable, Emitter} = require 'atom'
 {repoForPath, getStyleObject, getFullExtension, updateEditorsForPath} = require "./helpers"
-{TREE_VIEW_URI} = require "./constants"
 fs = require 'fs-plus'
 
 AddDialog = require './add-dialog'
@@ -15,6 +14,8 @@ Minimatch = null  # Defer requiring until actually needed
 Directory = require './directory'
 DirectoryView = require './directory-view'
 RootDragAndDrop = require './root-drag-and-drop'
+
+TREE_VIEW_URI = 'atom://tree-view'
 
 toggleConfig = (keyPath) ->
   atom.config.set(keyPath, not atom.config.get(keyPath))
