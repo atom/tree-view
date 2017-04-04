@@ -261,6 +261,21 @@ describe "TreeView", ->
             expect(atom.workspace.getLeftDock().isOpen()).toBe(true)
             expect(treeView.element).not.toHaveFocus()
 
+  describe "when the tree-view is destroyed", ->
+    it "can correctly re-create the tree-view", ->
+      treeView = atom.workspace.getLeftDock().getActivePaneItem()
+      treeViewHTML = treeView.element.outerHTML
+      treeView.roots[0].collapse()
+      atom.workspace.getLeftDock().getActivePane().close()
+
+      waitForWorkspaceOpenEvent ->
+        atom.commands.dispatch(atom.views.getView(atom.workspace), 'tree-view:toggle')
+
+      runs ->
+        treeView2 = atom.workspace.getLeftDock().getActivePaneItem()
+        treeView2.roots[0].expand()
+        expect(treeView2.element.outerHTML).toBe(treeViewHTML)
+
   describe "when revealActiveFile", ->
     beforeEach ->
       atom.workspace.getLeftDock().hide()
