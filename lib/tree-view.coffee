@@ -612,6 +612,9 @@ class TreeView
     dialog.attach()
 
   removeSelectedEntries: ->
+    selectedEntry = @selectedEntry()
+    if selectedEntry?
+      entryToSelectAfterDelete = @previousEntry(selectedEntry) ? selectedEntry.parentElement.closest('.directory')
     if @hasFocus()
       selectedPaths = @selectedPaths()
     else if activePath = @getActivePath()
@@ -645,6 +648,7 @@ class TreeView
               detail: "#{failedDeletions.join('\n')}"
               dismissable: true
           @updateRoots() if atom.config.get('tree-view.squashDirectoryNames')
+          @selectEntry(entryToSelectAfterDelete)
         "Cancel": null
 
   formatTrashFailureMessage: (failedDeletions) ->
