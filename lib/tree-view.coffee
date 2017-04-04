@@ -20,11 +20,12 @@ TREE_VIEW_URI = 'atom://tree-view'
 toggleConfig = (keyPath) ->
   atom.config.set(keyPath, not atom.config.get(keyPath))
 
+nextId = 1
+
 module.exports =
 class TreeView
-  panel: null
-
   constructor: (state) ->
+    @id = nextId++
     @element = document.createElement('div')
     @element.classList.add('tool-panel', 'tree-view')
     @element.tabIndex = -1
@@ -87,11 +88,14 @@ class TreeView
     scrollTop: @element.scrollTop
     width: parseInt(@element.style.width or 0)
 
-  deactivate: ->
+  destroy: ->
     root.directory.destroy() for root in @roots
     @disposables.dispose()
     @rootDragAndDrop.dispose()
-    @detach() if @panel?
+    @emitter.emit('did-destroy')
+
+  onDidDestroy: (callback) ->
+    @emitter.on('did-destroy', callback)
 
   getTitle: -> "Project"
 
@@ -185,14 +189,14 @@ class TreeView
       @updateRoots()
 
   toggle: ->
-    atom.workspace.toggle(TREE_VIEW_URI)
+    atom.workspace.toggle(this)
 
   show: (options) ->
-    atom.workspace.open(TREE_VIEW_URI)
-    @focus() unless options?.focus is false
+    atom.workspace.open(this, {searchAllPanes: true}).then =>
+      @focus() unless options?.focus is false
 
   hide: ->
-    atom.workspace.hide(TREE_VIEW_URI)
+    atom.workspace.hide(this)
 
   focus: ->
     @element.focus()
@@ -260,7 +264,8 @@ class TreeView
     @loadIgnoredPatterns()
 
     @roots = for projectPath in atom.project.getPaths()
-      continue unless stats = fs.lstatSyncNoException(projectPath)
+      stats = fs.lstatSyncNoException(projectPath)
+      continue unless stats
       stats = _.pick stats, _.keys(stats)...
       for key in ["atime", "birthtime", "ctime", "mtime"]
         stats[key] = stats[key].getTime()
@@ -290,25 +295,25 @@ class TreeView
       @deselect()
 
   revealActiveFile: ->
-    return if _.isEmpty(atom.project.getPaths())
+    if _.isEmpty(atom.project.getPaths())
+      return Promise.resolve()
 
-    @show({focus: atom.config.get('tree-view.focusOnReveal')})
+    @show({focus: atom.config.get('tree-view.focusOnReveal')}).then =>
+      return unless activeFilePath = @getActivePath()
 
-    return unless activeFilePath = @getActivePath()
+      [rootPath, relativePath] = atom.project.relativizePath(activeFilePath)
+      return unless rootPath?
 
-    [rootPath, relativePath] = atom.project.relativizePath(activeFilePath)
-    return unless rootPath?
-
-    activePathComponents = relativePath.split(path.sep)
-    currentPath = rootPath
-    for pathComponent in activePathComponents
-      currentPath += path.sep + pathComponent
-      entry = @entryForPath(currentPath)
-      if entry.classList.contains('directory')
-        entry.expand()
-      else
-        @selectEntry(entry)
-        @scrollToEntry(entry)
+      activePathComponents = relativePath.split(path.sep)
+      currentPath = rootPath
+      for pathComponent in activePathComponents
+        currentPath += path.sep + pathComponent
+        entry = @entryForPath(currentPath)
+        if entry.classList.contains('directory')
+          entry.expand()
+        else
+          @selectEntry(entry)
+          @scrollToEntry(entry)
 
   copySelectedEntryPath: (relativePath = false) ->
     if pathToCopy = @selectedPath
@@ -755,9 +760,6 @@ class TreeView
 
   pageDown: ->
     @element.scrollTop += @element.offsetHeight
-
-  toggleSide: ->
-    toggleConfig('tree-view.showOnRightSide')
 
   moveEntry: (initialPath, newDirectoryPath) ->
     if initialPath is newDirectoryPath
