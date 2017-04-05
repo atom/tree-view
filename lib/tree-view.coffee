@@ -111,6 +111,9 @@ class TreeView
 
   isPermanentDockItem: -> true
 
+  getPreferredWidth: ->
+    @list.offsetWidth
+
   onDirectoryCreated: (callback) ->
     @emitter.on('directory-created', callback)
 
