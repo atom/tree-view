@@ -203,6 +203,26 @@ class Directory
         else
           files.push(new File({name, fullPath, symlink, realpathCache, @useSyncFS, stats: statFlat}))
 
+    files.sort (first, second) =>
+      firstName = @normalizeEntryName(first)
+      secondName = @normalizeEntryName(second)
+      firstExtName = path.extname(firstName)
+      secondExtName = path.extname(secondName)
+      firstBaseName = path.basename(firstName, firstExtName)
+      secondBaseName = path.basename(secondName, secondExtName)
+      if firstBaseName.indexOf('.') == 0 && secondBaseName.indexOf('.') != 0
+        return -1
+      else if firstBaseName.indexOf('.') != 0 && secondBaseName.indexOf('.') == 0
+        return 1
+      else if firstExtName == '' && secondExtName != ''
+        return -1
+      else if firstExtName != '' && secondExtName == ''
+        return 1
+      else
+        name1 = firstExtName + firstBaseName
+        name2 = secondExtName + secondBaseName
+        return name1.localeCompare(name2)
+
     @sortEntries(directories.concat(files))
 
   normalizeEntryName: (value) ->
