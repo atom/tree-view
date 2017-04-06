@@ -5,7 +5,7 @@
 }
 
 .tree-view {
-  contain: strict;
+  contain: size;
   overflow: auto;
   z-index: 2;
   -webkit-user-select: none;
@@ -26,6 +26,7 @@
     width: min-content;
     padding-left: @component-icon-padding;
     padding-right: @component-padding;
+    background-color: inherit;
   }
 
   .header {
