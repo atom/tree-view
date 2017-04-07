@@ -175,7 +175,7 @@ class TreeView
       atom.commands.add @element, "tree-view:open-selected-entry-in-pane-#{index + 1}", =>
         @openSelectedEntryInPane index
 
-    @disposables.add atom.workspace.onDidChangeActivePaneItem =>
+    @disposables.add atom.workspace.getCenter().onDidChangeActivePaneItem =>
       @selectActiveFile()
       @revealActiveFile() if atom.config.get('tree-view.autoReveal')
     @disposables.add atom.project.onDidChangePaths =>
@@ -205,7 +205,7 @@ class TreeView
     @element.focus()
 
   unfocus: ->
-    atom.workspace.getActivePane().activate()
+    atom.workspace.getCenter().activate()
 
   hasFocus: ->
     document.activeElement is @element
@@ -289,13 +289,11 @@ class TreeView
       @list.appendChild(root)
       root
 
-  getActivePath: -> atom.workspace.getActivePaneItem()?.getPath?()
+  getActivePath: -> atom.workspace.getCenter().getActivePaneItem()?.getPath?()
 
   selectActiveFile: ->
     if activeFilePath = @getActivePath()
       @selectEntryForPath(activeFilePath)
-    else
-      @deselect()
 
   revealActiveFile: ->
     if _.isEmpty(atom.project.getPaths())
@@ -428,9 +426,9 @@ class TreeView
     selectedEntry = @selectedEntry()
     return unless selectedEntry?
 
-    pane = atom.workspace.getActivePane()
+    pane = atom.workspace.getCenter().getActivePane()
     if pane and selectedEntry.classList.contains('file')
-      if atom.workspace.getActivePaneItem()
+      if atom.workspace.getCenter().getActivePaneItem()
         split = pane.split orientation, side
         atom.workspace.openURIInPane selectedEntry.getPath(), split
       else
@@ -452,7 +450,7 @@ class TreeView
     selectedEntry = @selectedEntry()
     return unless selectedEntry?
 
-    pane = atom.workspace.getPanes()[index]
+    pane = atom.workspace.getCenter().getPanes()[index]
     if pane and selectedEntry.classList.contains('file')
       atom.workspace.openURIInPane selectedEntry.getPath(), pane
 
@@ -536,7 +534,7 @@ class TreeView
     @openInFileManager(command, args, label, isFile)
 
   showCurrentFileInFileManager: ->
-    return unless editor = atom.workspace.getActiveTextEditor()
+    return unless editor = atom.workspace.getCenter().getActiveTextEditor()
     return unless editor.getPath()
     {command, args, label} = @fileManagerCommandForPath(editor.getPath(), true)
     @openInFileManager(command, args, label, true)

@@ -56,7 +56,7 @@ class Dialog
     @emitter.dispose()
     @disposables.dispose()
     @miniEditor.destroy()
-    activePane = atom.workspace.getActivePane()
+    activePane = atom.workspace.getCenter().getActivePane()
     activePane.activate() unless activePane.isDestroyed()
 
   cancel: ->
