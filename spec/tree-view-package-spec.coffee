@@ -166,7 +166,7 @@ describe "TreeView", ->
         atom.packages.deactivatePackage("tree-view")
         atom.packages.packageStates = {}
         atom.workspace.getLeftDock().hide()
-        expect(atom.workspace.getLeftDock().isOpen()).toBe(false)
+        expect(atom.workspace.getLeftDock().isVisible()).toBe(false)
 
         waitsForPromise ->
           atom.workspace.open('tree-view.js')
@@ -175,7 +175,7 @@ describe "TreeView", ->
 
         runs ->
           # This assertion is failing because we auto-open docks when adding an item
-          expect(atom.workspace.getLeftDock().isOpen()).toBe(false)
+          expect(atom.workspace.getLeftDock().isVisible()).toBe(false)
 
     describe "when the root view is opened to a directory", ->
       it "attaches to the workspace", ->
@@ -206,21 +206,21 @@ describe "TreeView", ->
 
     describe "when the tree view is visible", ->
       beforeEach ->
-        expect(atom.workspace.getLeftDock().isOpen()).toBe(true)
+        expect(atom.workspace.getLeftDock().isVisible()).toBe(true)
 
       it "hides the tree view", ->
         workspaceElement.focus()
         waitsForPromise -> treeView.toggle()
         runs ->
-          expect(atom.workspace.getLeftDock().isOpen()).toBe(false)
+          expect(atom.workspace.getLeftDock().isVisible()).toBe(false)
 
     describe "when the tree view is hidden", ->
       it "shows and focuses the tree view", ->
         atom.workspace.getLeftDock().hide()
-        expect(atom.workspace.getLeftDock().isOpen()).toBe(false)
+        expect(atom.workspace.getLeftDock().isVisible()).toBe(false)
         waitsForPromise -> treeView.toggle()
         runs ->
-          expect(atom.workspace.getLeftDock().isOpen()).toBe(true)
+          expect(atom.workspace.getLeftDock().isVisible()).toBe(true)
           expect(treeView.element).toHaveFocus()
 
   describe "when tree-view:toggle-focus is triggered on the root view", ->
@@ -232,7 +232,7 @@ describe "TreeView", ->
         atom.workspace.getLeftDock().hide()
         waitsForPromise -> treeView.toggleFocus()
         runs ->
-          expect(atom.workspace.getLeftDock().isOpen()).toBe(true)
+          expect(atom.workspace.getLeftDock().isVisible()).toBe(true)
           expect(treeView.element).toHaveFocus()
 
     describe "when the tree view is shown", ->
@@ -242,11 +242,11 @@ describe "TreeView", ->
 
         runs ->
           workspaceElement.focus()
-          expect(atom.workspace.getLeftDock().isOpen()).toBe(true)
-          expect(atom.workspace.getLeftDock().isOpen()).toBe(true)
+          expect(atom.workspace.getLeftDock().isVisible()).toBe(true)
+          expect(atom.workspace.getLeftDock().isVisible()).toBe(true)
           waitsForPromise -> treeView.toggleFocus()
           runs ->
-            expect(atom.workspace.getLeftDock().isOpen()).toBe(true)
+            expect(atom.workspace.getLeftDock().isVisible()).toBe(true)
             expect(treeView.element).toHaveFocus()
 
       describe "when the tree view is focused", ->
@@ -256,9 +256,9 @@ describe "TreeView", ->
 
           runs ->
             treeView.focus()
-            expect(atom.workspace.getLeftDock().isOpen()).toBe(true)
+            expect(atom.workspace.getLeftDock().isVisible()).toBe(true)
             treeView.toggleFocus()
-            expect(atom.workspace.getLeftDock().isOpen()).toBe(true)
+            expect(atom.workspace.getLeftDock().isVisible()).toBe(true)
             expect(treeView.element).not.toHaveFocus()
 
   describe "when the tree-view is destroyed", ->
@@ -339,25 +339,25 @@ describe "TreeView", ->
 
         runs ->
           expect(atom.workspace.getActivePaneItem().getPath()).toBeUndefined()
-          expect(atom.workspace.getLeftDock().isOpen()).toBe(false)
+          expect(atom.workspace.getLeftDock().isVisible()).toBe(false)
 
         waitsForPromise ->
           treeView.revealActiveFile()
 
         runs ->
-          expect(atom.workspace.getLeftDock().isOpen()).toBe(true)
+          expect(atom.workspace.getLeftDock().isVisible()).toBe(true)
           expect(treeView.focus).toHaveBeenCalled()
 
     describe "if there is no editor open", ->
       it "shows and focuses the tree view, but does not attempt to select a specific file", ->
         expect(atom.workspace.getActivePaneItem()).toBeUndefined()
-        expect(atom.workspace.getLeftDock().isOpen()).toBe(false)
+        expect(atom.workspace.getLeftDock().isVisible()).toBe(false)
 
         waitsForPromise ->
           treeView.revealActiveFile()
 
         runs ->
-          expect(atom.workspace.getLeftDock().isOpen()).toBe(true)
+          expect(atom.workspace.getLeftDock().isVisible()).toBe(true)
           expect(treeView.focus).toHaveBeenCalled()
 
     describe 'if there are more items than can be visible in the viewport', ->
@@ -407,7 +407,7 @@ describe "TreeView", ->
         treeView.focus()
         expect(treeView.element).toHaveFocus()
         atom.commands.dispatch(treeView.element, 'tool-panel:unfocus')
-        expect(atom.workspace.getLeftDock().isOpen()).toBe(true)
+        expect(atom.workspace.getLeftDock().isVisible()).toBe(true)
         expect(treeView.element).not.toHaveFocus()
         expect(atom.workspace.getActivePane().isActive()).toBe(true)
 
