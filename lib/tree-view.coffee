@@ -414,9 +414,9 @@ class TreeView
     selectedEntry = @selectedEntry()
     if selectedEntry?
       if previousEntry = @previousEntry(selectedEntry)
+        while previousEntry.classList.contains('directory', 'expanded') and previousEntry.entries.children.length > 0
+          previousEntry = _.last(previousEntry.entries.children)
         @selectEntry(previousEntry)
-        while previousEntry?.classList.contains('directory')
-          previousEntry = @selectEntry(_.last(previousEntry.entries.children))
       else
         @selectEntry(selectedEntry.parentElement.closest('.directory'))
     else
