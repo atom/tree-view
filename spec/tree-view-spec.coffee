@@ -902,7 +902,8 @@ describe "TreeView", ->
 
     describe "core:move-up", ->
       describe "when there is an expanded directory before the currently selected entry", ->
-        it "selects the last entry in the expanded directory", ->
+        [directories, lastDir, fileAfterDir] = []
+        beforeEach ->
           directories = root1.querySelectorAll('.directory')
           lastDir = directories[directories.length - 1]
           fileAfterDir = lastDir.nextSibling
@@ -910,10 +911,21 @@ describe "TreeView", ->
           waitsForFileToOpen ->
             fileAfterDir.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
 
+        it "selects the last entry in the expanded directory", ->
           runs ->
             atom.commands.dispatch(treeView.element, 'core:move-up')
             entries = lastDir.querySelectorAll('.entry')
             expect(entries[entries.length - 1]).toHaveClass 'selected'
+
+        describe "when the last child of the expanded directory is another expanded directory", ->
+          it "selects the last entry in the expanded directory", ->
+            subDir = lastDir.querySelectorAll('.directory')[0]
+            subDir.expand()
+            runs ->
+              atom.commands.dispatch(treeView.element, 'core:move-up')
+              selected = root1.querySelectorAll('.selected')[0]
+              expect(selected).toHaveClass 'file'
+              expect(selected).toHaveText '.gitkeep'
 
       describe "when there is an entry before the currently selected entry", ->
         it "selects the previous entry", ->
