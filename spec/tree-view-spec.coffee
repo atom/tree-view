@@ -1379,7 +1379,7 @@ describe "TreeView", ->
   describe "removing a project folder", ->
     it "removes the folder from the project", ->
       rootHeader = treeView.roots[1].querySelector(".header")
-      atom.commands.dispatch(rootHeader, "tree-view:remove-project-folder")
+      atom.commands.dispatch(rootHeader, "tree-view:detach-project-folder")
       expect(atom.project.getPaths()).toHaveLength(1)
 
   describe "file modification", ->
