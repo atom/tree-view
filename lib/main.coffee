@@ -55,7 +55,7 @@ module.exports =
     projectPath = atom.project.getPaths()[0] ? ''
     if atom.workspace.getActivePaneItem()
       false
-    else if path.basename(projectPath) is '.git'
+    else if projectPath and path.basename(projectPath) is '.git'
       # Only attach when the project path matches the path to open signifying
       # the .git folder was opened explicitly and not by using Atom as the Git
       # editor.
