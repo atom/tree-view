@@ -177,7 +177,7 @@ class TreeView
 
     @disposables.add atom.workspace.getCenter().onDidChangeActivePaneItem =>
       @selectActiveFile()
-      @revealActiveFile() if atom.config.get('tree-view.autoReveal')
+      @revealActiveFile(false) if atom.config.get('tree-view.autoReveal')
     @disposables.add atom.project.onDidChangePaths =>
       @updateRoots()
     @disposables.add atom.config.onDidChange 'tree-view.hideVcsIgnoredFiles', =>
@@ -194,9 +194,15 @@ class TreeView
   toggle: ->
     atom.workspace.toggle(this)
 
-  show: (options) ->
-    atom.workspace.open(this, {searchAllPanes: true}).then =>
-      @focus() unless options?.focus is false
+  show: (focus) ->
+    atom.workspace.open(this, {
+      searchAllPanes: true,
+      activatePane: false,
+      activateItem: false,
+    }).then(() =>
+      atom.workspace.paneContainerForURI(@getURI()).show()
+      @focus() if focus
+    )
 
   hide: ->
     atom.workspace.hide(this)
@@ -214,7 +220,7 @@ class TreeView
     if @hasFocus()
       @unfocus()
     else
-      @show()
+      @show(true)
 
   entryClicked: (e) ->
     if entry = e.target.closest('.entry')
@@ -295,11 +301,11 @@ class TreeView
     if activeFilePath = @getActivePath()
       @selectEntryForPath(activeFilePath)
 
-  revealActiveFile: ->
+  revealActiveFile: (focus) ->
     if _.isEmpty(atom.project.getPaths())
       return Promise.resolve()
 
-    @show({focus: atom.config.get('tree-view.focusOnReveal')}).then =>
+    @show(focus ? atom.config.get('tree-view.focusOnReveal')).then =>
       return unless activeFilePath = @getActivePath()
 
       [rootPath, relativePath] = atom.project.relativizePath(activeFilePath)

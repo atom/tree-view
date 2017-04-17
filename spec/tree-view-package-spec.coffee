@@ -280,7 +280,7 @@ describe "TreeView", ->
         treeView2.roots[0].expand()
         expect(treeView2.element.outerHTML).toBe(treeViewHTML)
 
-  describe "when revealActiveFile", ->
+  describe "when tree-view:reveal-active-file is triggered", ->
     beforeEach ->
       atom.workspace.getLeftDock().hide()
       spyOn(treeView, 'focus')
@@ -729,6 +729,7 @@ describe "TreeView", ->
 
       describe "when the tree-view.autoReveal config setting is true", ->
         beforeEach ->
+          jasmine.attachToDOM(atom.workspace.getElement())
           atom.config.set "tree-view.autoReveal", true
 
         it "selects the active item's entry in the tree view, expanding parent directories if needed", ->
@@ -737,6 +738,9 @@ describe "TreeView", ->
 
           waitsFor ->
             treeView.getSelectedEntries()[0].textContent is 'sub-file1'
+
+          runs ->
+            expect(atom.workspace.getActiveTextEditor().getElement()).toHaveFocus()
 
   describe "when a different editor becomes active", ->
     beforeEach ->
