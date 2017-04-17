@@ -177,6 +177,9 @@ describe "TreeView", ->
 
         runs ->
           expect(atom.workspace.getLeftDock().isVisible()).toBe(false)
+          atom.project.addPath(path.join(__dirname, 'fixtures'))
+
+        waitsFor -> atom.workspace.getLeftDock().isVisible()
 
     describe "when the root view is opened to a directory", ->
       it "attaches to the workspace", ->
