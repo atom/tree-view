@@ -270,7 +270,7 @@ describe "TreeView", ->
       treeView = atom.workspace.getLeftDock().getActivePaneItem()
       treeViewHTML = treeView.element.outerHTML
       treeView.roots[0].collapse()
-      atom.workspace.getLeftDock().getActivePane().close()
+      treeView.destroy()
 
       waitForWorkspaceOpenEvent ->
         atom.commands.dispatch(atom.views.getView(atom.workspace), 'tree-view:toggle')
