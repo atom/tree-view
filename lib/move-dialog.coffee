@@ -2,6 +2,7 @@ path = require 'path'
 fs = require 'fs-plus'
 Dialog = require './dialog'
 {repoForPath} = require "./helpers"
+ipc = require 'ipc'
 
 module.exports =
 class MoveDialog extends Dialog
@@ -41,6 +42,8 @@ class MoveDialog extends Dialog
         repo.getPathStatus(@initialPath)
         repo.getPathStatus(newPath)
       @close()
+
+      ipc.send 'file-moved', {from: @initialPath, to: newPath}
     catch error
       @showError("#{error.message}.")
 
