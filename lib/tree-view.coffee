@@ -112,7 +112,10 @@ class TreeView
   isPermanentDockItem: -> true
 
   getPreferredWidth: ->
-    @list.offsetWidth
+    @list.style.width = 'min-content'
+    result = @list.offsetWidth
+    @list.style.width = ''
+    result
 
   onDirectoryCreated: (callback) ->
     @emitter.on('directory-created', callback)
