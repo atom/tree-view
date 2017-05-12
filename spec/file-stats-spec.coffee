@@ -8,6 +8,7 @@ describe "FileStats", ->
     [file1Data, file2Data, timeStarted, treeView] = ["ABCDEFGHIJKLMNOPQRSTUVWXYZ", "0123456789"]
 
     beforeEach ->
+      jasmine.useRealClock()
       timeStarted = Date.now()
       rootDirPath = fs.absolute(temp.mkdirSync("tree-view"))
       subdirPath = path.join(rootDirPath, "subdir")
