@@ -5,11 +5,17 @@ FileIcons = require './file-icons'
 
 nsync = require 'nsync-fs'
 nsyncInitializer = require './nsync/initializer'
+{primaryLearnIDEPackage} = require '../package.json'
 
 module.exports =
   treeView: null
 
-  activate: (@state) ->
+  activate: (state) ->
+    primaryPkg = atom.packages.loadPackage(primaryLearnIDEPackage)
+    primaryPkg.activate().then =>
+      @activateLearnIdeTree(state)
+
+  activateLearnIdeTree: (@state) ->
     treeViewisDisabled = localStorage.disableTreeView is 'true'
 
     if not treeViewisDisabled
