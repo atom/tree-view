@@ -197,13 +197,15 @@ module.exports = helper = (activationState) ->
 
   disposables.forEach (disposable) -> composite.add(disposable)
 
-  atomHelper.waitForTerminalConnection().then ->
+  connect = ->
     atomHelper.getToken().then (token) ->
       nsync.configure
         expansionState: activationState.directoryExpansionStates
         localRoot: _path.join(atom.configDirPath, '.learn-ide')
         connection:
           url: "#{WS_SERVER_URL}?token=#{token}&version=#{atomHelper.learnIdeVersion()}"
+
+  atomHelper.waitForTerminalConnection().then(connect).catch(connect)
 
   return composite
 
