@@ -101,6 +101,10 @@ module.exports = helper =
         if value?
           resolve(value)
 
+  waitForTerminalConnection: ->
+    pkg = atom.packages.loadPackage(primaryLearnIDEPackage)
+    pkg.mainModule.getTermConnectionPromise()
+
   learnIdeVersion: ->
     if not LEARN_IDE_VERSION?
       pkg = atom.packages.loadPackage(primaryLearnIDEPackage)
