@@ -8,12 +8,14 @@
   'ctrl-\\': 'tree-view:toggle'
   'ctrl-k ctrl-b': 'tree-view:toggle'
   'ctrl-|': 'tree-view:reveal-active-file'
+  'ctrl-f': 'tree-view:search-selected-entry'
   'alt-\\': 'tree-view:toggle-focus'
 
 '.platform-darwin .tree-view':
   'cmd-c': 'tree-view:copy'
   'cmd-x': 'tree-view:cut'
   'cmd-v': 'tree-view:paste'
+  'cmd-f': 'tree-view:search-selected-entry'
   'ctrl-f': 'tree-view:expand-item'
   'ctrl-b': 'tree-view:collapse-directory'
   'cmd-k right': 'tree-view:open-selected-entry-right'

@@ -3114,6 +3114,34 @@ describe "TreeView", ->
               expect(treeView.list).toHaveClass('full-menu')
               expect(treeView.list).not.toHaveClass('multi-select')
 
+  describe "search based on selected items", ->
+    [rootDirPath] = []
+
+    beforeEach ->
+      rootDirPath = fs.absolute(temp.mkdirSync('tree-view'))
+      dirPath = path.join(rootDirPath, 'a-directory')
+      filePath = path.join(rootDirPath, "a-file.txt")
+
+      fs.makeTreeSync(dirPath)
+      fs.writeFileSync(filePath, "doesn't matter")
+
+      atom.project.setPaths([rootDirPath])
+      spyOn(atom.commands, 'dispatch').andCallThrough()
+
+    describe 'when a file is selected', ->
+      it 'dispatches the command to show the `find and replace` dialog', ->
+        fileView = findFileContainingText(treeView.roots[0], 'a-file.txt')
+        fileView.click()
+        atom.commands.dispatch(treeView.element, 'tree-view:search-selected-entry')
+        expect(atom.commands.dispatch.calls[1].args[1]).toEqual('find-and-replace:show')
+
+    describe 'when a directory is selected', ->
+      it 'dispatches the command to show the `find in project` dialog', ->
+        dirView = findDirectoryContainingText(treeView.roots[0], 'a-directory')
+        dirView.click()
+        atom.commands.dispatch(treeView.element, 'tree-view:search-selected-entry')
+        expect(atom.commands.dispatch.calls[1].args[1]).toEqual('project-find:show-in-current-directory')
+
   describe "the sortFoldersBeforeFiles config option", ->
     [dirView, fileView, dirView2, fileView2, fileView3, rootDirPath, dirPath, filePath, dirPath2, filePath2, filePath3] = []
 
