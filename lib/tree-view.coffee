@@ -426,7 +426,6 @@ class TreeView
 
     @scrollToEntry(@selectedEntry())
 
-
   nextEntry: (entry) ->
     currentEntry = entry
     while currentEntry?

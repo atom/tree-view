@@ -2946,8 +2946,6 @@ describe "TreeView", ->
 
       expect(parseInt(treeView.element.style.width)).toBe(150)
 
-
-
   describe "selecting items", ->
     [dirView, fileView1, fileView2, fileView3, treeView, rootDirPath, dirPath, filePath1, filePath2, filePath3] = []
 
