@@ -202,10 +202,9 @@ class TreeView
       searchAllPanes: true,
       activatePane: false,
       activateItem: false,
-    }).then(() =>
+    }).then =>
       atom.workspace.paneContainerForURI(@getURI()).show()
       @focus() if focus
-    )
 
   hide: ->
     atom.workspace.hide(this)
