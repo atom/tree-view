@@ -4,11 +4,11 @@ path = require 'path'
 temp = require('temp').track()
 
 describe "FileStats", ->
-
   describe "provision of filesystem stats", ->
     [file1Data, file2Data, timeStarted, treeView] = ["ABCDEFGHIJKLMNOPQRSTUVWXYZ", "0123456789"]
 
     beforeEach ->
+      jasmine.useRealClock()
       timeStarted = Date.now()
       rootDirPath = fs.absolute(temp.mkdirSync("tree-view"))
       subdirPath = path.join(rootDirPath, "subdir")
@@ -20,11 +20,12 @@ describe "FileStats", ->
       fs.writeFileSync(filePath2, file2Data)
       atom.project.setPaths([rootDirPath])
 
-      waitsForPromise ->
+      waitsFor (done) ->
+        atom.workspace.onDidOpen(done)
         atom.packages.activatePackage("tree-view")
 
       runs ->
-        treeView = atom.workspace.getLeftPanels()[0].getItem()
+        treeView = atom.workspace.getLeftDock().getActivePaneItem()
 
     afterEach ->
       temp.cleanup()

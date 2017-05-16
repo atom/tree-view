@@ -50,13 +50,14 @@ class Dialog
     @miniEditor.scrollToCursorPosition()
 
   close: ->
-    panelToDestroy = @panel
+    panel = @panel
     @panel = null
-    panelToDestroy?.destroy()
+    panel?.destroy()
     @emitter.dispose()
     @disposables.dispose()
     @miniEditor.destroy()
-    atom.workspace.getActivePane().activate()
+    activePane = atom.workspace.getCenter().getActivePane()
+    activePane.activate() unless activePane.isDestroyed()
 
   cancel: ->
     @close()
