@@ -8,6 +8,8 @@
   contain: size;
   overflow: auto;
   z-index: 2;
+  display: flex;
+  flex-direction: column;
   -webkit-user-select: none;
 
   > ol {
@@ -34,6 +36,8 @@
 
   .list-tree {
     position: static;
+    flex-grow: 1;
+    flex-shrink: 0;
   }
 
   .entry {
