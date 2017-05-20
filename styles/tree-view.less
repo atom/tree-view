@@ -10,7 +10,10 @@
   z-index: 2;
   -webkit-user-select: none;
 
-  > ol {
+  display: flex;
+  flex-direction: column;
+
+  .full-menu {
     /*
      * Force a new stacking context to prevent a large, duplicate paint layer from
      * being created for tree-view's scrolling contents that can make the cost of
@@ -26,6 +29,12 @@
     padding-left: @component-icon-padding;
     padding-right: @component-padding;
     background-color: inherit;
+
+    // Expands .full-menu to take up full height.
+    // This makes sure that the context menu can still be openend in the empty
+    // area underneath the files.
+    flex-grow: 1;
+  }
   }
 
   .header {
