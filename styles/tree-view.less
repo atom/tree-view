@@ -35,6 +35,12 @@
     // area underneath the files.
     flex-grow: 1;
   }
+
+  .full-menu.list-tree {
+    // Expands .full-menu to take up as much width as needed by the content.
+    // This makes sure that the selected item's "bar/background" expands to full width.
+    position: relative;
+    min-width: min-content;
   }
 
   .header {
