@@ -11,7 +11,7 @@
       'label': 'Tree View'
       'submenu': [
         { 'label': 'Focus', 'command': 'tree-view:toggle-focus' }
-        { 'label': 'Toggle', 'command': 'tree-view:toggle' }
+        { 'label': 'Toggle Tree View', 'command': 'tree-view:toggle' }
         { 'label': 'Reveal Active File', 'command': 'tree-view:reveal-active-file' }
         { 'label': 'Toggle Tree Side', 'command': 'tree-view:toggle-side' }
       ]
@@ -39,6 +39,9 @@
     {'label': 'Copy Full Path', 'command': 'tree-view:copy-full-path'}
     {'label': 'Copy Project Path', 'command': 'tree-view:copy-project-path'}
     {'label': 'Open In New Window', 'command': 'tree-view:open-in-new-window'}
+    {'type': 'separator'}
+    
+    { 'label': 'Toggle Tree View', 'command': 'tree-view:toggle' }
   ]
 
   '.tree-view .full-menu [is="tree-view-file"]': [
@@ -69,6 +72,9 @@
     {'label': 'Copy Full Path', 'command': 'tree-view:copy-full-path'}
     {'label': 'Copy Project Path', 'command': 'tree-view:copy-project-path'}
     {'label': 'Open In New Window', 'command': 'tree-view:open-in-new-window'}
+    {'type': 'separator'}
+
+    { 'label': 'Toggle Tree View', 'command': 'tree-view:toggle' }
   ]
 
   '.platform-darwin .tree-view .full-menu': [
