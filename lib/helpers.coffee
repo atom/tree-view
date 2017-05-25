@@ -17,11 +17,9 @@ module.exports =
     styleObject
 
   getFullExtension: (filePath) ->
-    fullExtension = ''
-    while extension = path.extname(filePath)
-      fullExtension = extension + fullExtension
-      filePath = path.basename(filePath, extension)
-    fullExtension
+    basename = path.basename(filePath)
+    position = basename.indexOf('.')
+    if position > 0 then basename[position..] else ''
 
   updateEditorsForPath: (oldPath, newPath) ->
     editors = atom.workspace.getTextEditors()
