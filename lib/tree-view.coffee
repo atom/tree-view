@@ -145,6 +145,9 @@ class TreeView
     @element.addEventListener 'dragover', (e) => @onDragOver(e)
     @element.addEventListener 'drop', (e) => @onDrop(e)
 
+    @on 'dblclick', 'li[is=tree-view-file]', (e) =>
+      $(document.body).find('li.active[is=tabs-tab]').get(0)?.clearPreview?()
+
     atom.commands.add @element,
      'core:move-up': @moveUp.bind(this)
      'core:move-down': @moveDown.bind(this)
