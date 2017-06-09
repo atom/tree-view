@@ -169,7 +169,7 @@ class TreeView
      'tree-view:show-in-file-manager': => @showSelectedEntryInFileManager()
      'tree-view:open-in-new-window': => @openSelectedEntryInNewWindow()
      'tree-view:copy-project-path': => @copySelectedEntryPath(true)
-     'tool-panel:unfocus': => @unfocus()
+     'tree-view:unfocus': => @unfocus()
      'tree-view:toggle-vcs-ignored-files': -> toggleConfig 'tree-view.hideVcsIgnoredFiles'
      'tree-view:toggle-ignored-names': -> toggleConfig 'tree-view.hideIgnoredNames'
      'tree-view:remove-project-folder': (e) => @removeProjectFolder(e)
