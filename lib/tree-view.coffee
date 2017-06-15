@@ -429,6 +429,7 @@ class TreeView
       if atom.config.get('tree-view.alwaysOpenExisting')
         options = Object.assign searchAllPanes: true, options
       @openAfterPromise(selectedEntry.getPath(), options)
+      @toggle() if atom.config.get('tree-view.closeOnKeyboardFileOpen')
 
   openSelectedEntrySplit: (orientation, side) ->
     selectedEntry = @selectedEntry()
