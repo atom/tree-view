@@ -401,16 +401,16 @@ describe "TreeView", ->
         runs ->
           expect(treeView.scrollTop()).toEqual 0
 
-  describe "when tool-panel:unfocus is triggered on the tree view", ->
+  describe "when tree-view:unfocus is triggered on the tree view", ->
     it "surrenders focus to the workspace but remains open", ->
       waitsForPromise ->
-        atom.workspace.open() # When we trigger 'tool-panel:unfocus' below, we want an editor to become focused
+        atom.workspace.open() # When we trigger 'tree-view:unfocus' below, we want an editor to become focused
 
       runs ->
         jasmine.attachToDOM(workspaceElement)
         treeView.focus()
         expect(treeView.element).toHaveFocus()
-        atom.commands.dispatch(treeView.element, 'tool-panel:unfocus')
+        atom.commands.dispatch(treeView.element, 'tree-view:unfocus')
         expect(atom.workspace.getLeftDock().isVisible()).toBe(true)
         expect(treeView.element).not.toHaveFocus()
         expect(atom.workspace.getCenter().getActivePane().isActive()).toBe(true)
