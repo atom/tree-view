@@ -705,6 +705,7 @@ class TreeView
       @updateRoots() if atom.config.get('tree-view.squashDirectoryNames')
       @emitter.emit 'directory-created', {path: createdPath}
     dialog.onDidCreateFile (createdPath) =>
+      @entryForPath(createdPath)?.reload()
       atom.workspace.open(createdPath)
       @updateRoots() if atom.config.get('tree-view.squashDirectoryNames')
       @emitter.emit 'file-created', {path: createdPath}
