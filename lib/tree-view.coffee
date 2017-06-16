@@ -31,7 +31,7 @@ class TreeView
     @element.tabIndex = -1
 
     @list = document.createElement('ol')
-    @list.classList.add('full-menu', 'list-tree', 'has-collapsable-children', 'focusable-panel')
+    @list.classList.add('tree-view-root', 'full-menu', 'list-tree', 'has-collapsable-children', 'focusable-panel')
     @element.appendChild(@list)
 
     @disposables = new CompositeDisposable
