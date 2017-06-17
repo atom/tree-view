@@ -169,7 +169,7 @@ class TreeView
      'tree-view:show-in-file-manager': => @showSelectedEntryInFileManager()
      'tree-view:open-in-new-window': => @openSelectedEntryInNewWindow()
      'tree-view:copy-project-path': => @copySelectedEntryPath(true)
-     'tool-panel:unfocus': => @unfocus()
+     'tree-view:unfocus': => @unfocus()
      'tree-view:toggle-vcs-ignored-files': -> toggleConfig 'tree-view.hideVcsIgnoredFiles'
      'tree-view:toggle-ignored-names': -> toggleConfig 'tree-view.hideIgnoredNames'
      'tree-view:remove-project-folder': (e) => @removeProjectFolder(e)
@@ -705,6 +705,7 @@ class TreeView
       @updateRoots() if atom.config.get('tree-view.squashDirectoryNames')
       @emitter.emit 'directory-created', {path: createdPath}
     dialog.onDidCreateFile (createdPath) =>
+      @entryForPath(createdPath)?.reload()
       atom.workspace.open(createdPath)
       @updateRoots() if atom.config.get('tree-view.squashDirectoryNames')
       @emitter.emit 'file-created', {path: createdPath}
