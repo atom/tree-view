@@ -2095,7 +2095,7 @@ describe "TreeView", ->
           expect(moveDialog.element).toExist()
           expect(moveDialog.promptText.textContent).toBe "Enter the new path for the file."
           expect(moveDialog.miniEditor.getText()).toBe(atom.project.relativize(filePath))
-          expect(moveDialog.miniEditor.getSelectedText()).toBe path.basename(fileNameWithoutExtension)
+          expect(moveDialog.miniEditor.getSelectedText()).toBe fileNameWithoutExtension
           expect(moveDialog.miniEditor.element).toHaveFocus()
 
         describe "when the path is changed and confirmed", ->
@@ -2184,6 +2184,28 @@ describe "TreeView", ->
           expect(moveDialog.miniEditor.getText()).toBe(atom.project.relativize(dotFilePath))
           expect(moveDialog.miniEditor.getSelectedText()).toBe '.dotfile'
 
+      describe "when a file is selected that has multiple extensions", ->
+        [dotFilePath, dotFileView, moveDialog] = []
+
+        beforeEach ->
+          dotFilePath = path.join(dirPath, "test.file.txt")
+          fs.writeFileSync(dotFilePath, "dot dot")
+          dirView.collapse()
+          dirView.expand()
+          dotFileView = treeView.entryForPath(dotFilePath)
+
+          waitForWorkspaceOpenEvent ->
+            dotFileView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+
+          runs ->
+            atom.commands.dispatch(treeView.element, "tree-view:move")
+            moveDialog = atom.workspace.getModalPanels()[0].getItem()
+
+        it "selects only the part of the filename up to the first extension", ->
+          expect(moveDialog.element).toExist()
+          expect(moveDialog.miniEditor.getText()).toBe(atom.project.relativize(dotFilePath))
+          expect(moveDialog.miniEditor.getSelectedText()).toBe 'test'
+
       describe "when a subdirectory is selected", ->
         moveDialog = null
 
@@ -2250,7 +2272,7 @@ describe "TreeView", ->
           expect(copyDialog.element).toExist()
           expect(copyDialog.promptText.textContent).toBe "Enter the new path for the duplicate."
           expect(copyDialog.miniEditor.getText()).toBe(atom.project.relativize(filePath))
-          expect(copyDialog.miniEditor.getSelectedText()).toBe path.basename(fileNameWithoutExtension)
+          expect(copyDialog.miniEditor.getSelectedText()).toBe fileNameWithoutExtension
           expect(copyDialog.miniEditor.element).toHaveFocus()
 
         describe "when the path is changed and confirmed", ->
@@ -2338,6 +2360,28 @@ describe "TreeView", ->
           expect(copyDialog.element).toExist()
           expect(copyDialog.miniEditor.getText()).toBe(atom.project.relativize(dotFilePath))
           expect(copyDialog.miniEditor.getSelectedText()).toBe '.dotfile'
+
+      describe "when a file is selected that has multiple extensions", ->
+        [dotFilePath, dotFileView, copyDialog] = []
+
+        beforeEach ->
+          dotFilePath = path.join(dirPath, "test.file.txt")
+          fs.writeFileSync(dotFilePath, "dot dot")
+          dirView.collapse()
+          dirView.expand()
+          dotFileView = treeView.entryForPath(dotFilePath)
+
+          waitForWorkspaceOpenEvent ->
+            dotFileView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+
+          runs ->
+            atom.commands.dispatch(treeView.element, "tree-view:duplicate")
+            copyDialog = atom.workspace.getModalPanels()[0].getItem()
+
+        it "selects only the part of the filename up to the first extension", ->
+          expect(copyDialog.element).toExist()
+          expect(copyDialog.miniEditor.getText()).toBe(atom.project.relativize(dotFilePath))
+          expect(copyDialog.miniEditor.getSelectedText()).toBe 'test'
 
       describe "when the project is selected", ->
         it "doesn't display the copy dialog", ->
