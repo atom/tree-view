@@ -1029,6 +1029,24 @@ describe "TreeView", ->
           for child in children
             expect(child).toHaveClass 'expanded'
 
+      describe "when a file is selected and ordered to recursively expand", ->
+        it "recursively expands the selected file's parent directory", ->
+          dir1 = root1.querySelector('.entries > .directory')
+          dir2 = root1.querySelectorAll('.entries > .directory')[1]
+          dir1.expand()
+          file1 = dir1.querySelector('.file')
+          subdir1 = dir1.querySelector('.entries > .directory')
+
+          waitForWorkspaceOpenEvent ->
+            file1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+
+          runs ->
+            atom.commands.dispatch(treeView.element, 'tree-view:recursive-expand-directory')
+            expect(dir1).toHaveClass 'expanded'
+            expect(subdir1).toHaveClass 'expanded'
+            expect(file1).toHaveClass 'selected'
+            expect(dir2).toHaveClass 'collapsed'
+
     describe "tree-view:collapse-directory", ->
       subdir = null
 
