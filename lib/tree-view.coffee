@@ -403,10 +403,12 @@ class TreeView
     selectedEntry = @selectedEntry()
     return unless selectedEntry?
 
-    if isRecursive is false and selectedEntry.isExpanded
-      @moveDown() if selectedEntry.directory.getEntries().length > 0
+    directory = selectedEntry.closest('.directory')
+    if isRecursive is false and directory.isExpanded
+      # Select the first entry in the expanded folder if it exists
+      @moveDown() if directory.directory.getEntries().length > 0
     else
-      selectedEntry.expand(isRecursive)
+      directory.expand(isRecursive)
 
   collapseDirectory: (isRecursive=false) ->
     selectedEntry = @selectedEntry()
