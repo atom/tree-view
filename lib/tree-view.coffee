@@ -568,15 +568,14 @@ class TreeView
     dialog.attach()
 
   removeSelectedEntries: ->
-    parents = _.uniq(_.map(@selectedPaths(),  (selectedPath) ->
-      return selectedPath.substring(0, selectedPath.lastIndexOf(path.sep))
-    ))
     if @hasFocus()
       selectedPaths = @selectedPaths()
+      selectedEntries = @getSelectedEntries()
     else if activePath = @getActivePath()
       selectedPaths = [activePath]
+      selectedEntries = [@entryForPath(activePath)]
 
-    return unless selectedPaths and selectedPaths.length > 0
+    return unless selectedPaths?.length > 0
 
     for root in @roots
       if root.getPath() in selectedPaths
@@ -596,14 +595,18 @@ class TreeView
               @emitter.emit 'entry-deleted', {path: selectedPath}
             else
               failedDeletions.push "#{selectedPath}"
+
             if repo = repoForPath(selectedPath)
               repo.getPathStatus(selectedPath)
+
           if failedDeletions.length > 0
             atom.notifications.addError @formatTrashFailureMessage(failedDeletions),
               description: @formatTrashEnabledMessage()
               detail: "#{failedDeletions.join('\n')}"
               dismissable: true
-          @selectEntry(@list.find("[data-path='#{parents[0]}']").parents('li').first()?[0])
+
+          # Focus the first parent folder
+          @selectEntry(selectedEntries[0].closest('.directory:not(.selected)'))
           @updateRoots() if atom.config.get('tree-view.squashDirectoryNames')
         "Cancel": null
 
