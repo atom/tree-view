@@ -3,7 +3,7 @@ fs = require 'fs-plus'
 path = require 'path'
 temp = require('temp').track()
 os = require 'os'
-{remote} = require 'electron'
+{remote, shell} = require 'electron'
 eventHelpers = require "./event-helpers"
 
 DefaultFileIcons = require '../lib/default-file-icons'
@@ -2435,27 +2435,24 @@ describe "TreeView", ->
           expect(Object.keys(args.buttons)).toEqual ['Move to Trash', 'Cancel']
 
       it "shows a notification on failure", ->
+        jasmine.attachToDOM(workspaceElement)
         atom.notifications.clear()
 
-        spyOn(atom, 'confirm')
+        fileView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+        treeView.focus()
 
-        waitForWorkspaceOpenEvent ->
-          fileView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+        spyOn(shell, 'moveItemToTrash').andReturn(false)
+        spyOn(atom, 'confirm').andCallFake (dialog) ->
+          dialog.buttons["Move to Trash"]()
 
-        runs ->
-          repeat = 2
-          while (repeat > 0)
-            atom.commands.dispatch(treeView.element, 'tree-view:remove')
-            args = atom.confirm.mostRecentCall.args[0]
-            args.buttons["Move to Trash"]()
-            --repeat
+        atom.commands.dispatch(treeView.element, 'tree-view:remove')
 
-          notificationsNumber = atom.notifications.getNotifications().length
-          expect(notificationsNumber).toBe 1
-          if notificationsNumber is 1
-            notification = atom.notifications.getNotifications()[0]
-            expect(notification.getMessage()).toContain 'The following file couldn\'t be moved to the trash'
-            expect(notification.getDetail()).toContain 'test-file.txt'
+        notificationsNumber = atom.notifications.getNotifications().length
+        expect(notificationsNumber).toBe 1
+        if notificationsNumber is 1
+          notification = atom.notifications.getNotifications()[0]
+          expect(notification.getMessage()).toContain 'The following file couldn\'t be moved to the trash'
+          expect(notification.getDetail()).toContain 'test-file.txt'
 
       it "does nothing when no file is selected", ->
         atom.notifications.clear()
@@ -2527,6 +2524,7 @@ describe "TreeView", ->
           jasmine.attachToDOM(workspaceElement)
 
           fileView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+          treeView.focus()
 
           runs ->
             spyOn(atom, 'confirm').andCallFake (dialog) ->
@@ -2536,6 +2534,22 @@ describe "TreeView", ->
             expect(dirView2).toHaveClass('selected')
 
       describe "when multiple files and folders are deleted", ->
+        it "does not error when the selected entries form a parent/child relationship", ->
+          # If dir1 and dir1/file1 are both selected for deletion,
+          # and dir1 is deleted first, do not error when attempting to delete dir1/file1
+          jasmine.attachToDOM(workspaceElement)
+          atom.notifications.clear()
+
+          fileView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+          dirView.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, metaKey: true}))
+          treeView.focus()
+
+          spyOn(atom, 'confirm').andCallFake (dialog) ->
+            dialog.buttons["Move to Trash"]()
+
+          atom.commands.dispatch(treeView.element, 'tree-view:remove')
+          expect(atom.notifications.getNotifications().length).toBe 0
+          
         it "focuses the first selected entry's parent folder", ->
           jasmine.attachToDOM(workspaceElement)
 
@@ -2548,6 +2562,24 @@ describe "TreeView", ->
 
           atom.commands.dispatch(treeView.element, 'tree-view:remove')
           expect(root1).toHaveClass('selected')
+
+      describe "when the entry is deleted before 'Move to Trash' is selected", ->
+        it "does not error", ->
+          # If the file is marked for deletion but has already been deleted
+          # outside of Atom by the time the deletion is confirmed, do not error
+          jasmine.attachToDOM(workspaceElement)
+          atom.notifications.clear()
+
+          fileView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+          treeView.focus()
+
+          spyOn(atom, 'confirm').andCallFake (dialog) ->
+            # Remove the directory before confirming the deletion
+            fs.unlinkSync(filePath)
+            dialog.buttons["Move to Trash"]()
+
+          atom.commands.dispatch(treeView.element, 'tree-view:remove')
+          expect(atom.notifications.getNotifications().length).toBe 0
 
   describe "file system events", ->
     temporaryFilePath = null
