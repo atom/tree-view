@@ -39,6 +39,7 @@
     {'label': 'Copy Full Path', 'command': 'tree-view:copy-full-path'}
     {'label': 'Copy Project Path', 'command': 'tree-view:copy-project-path'}
     {'label': 'Open In New Window', 'command': 'tree-view:open-in-new-window'}
+    {'label': 'Show in File Manager', 'command': 'tree-view:show-in-file-manager'}
   ]
 
   '.tree-view .full-menu [is="tree-view-file"]': [
@@ -69,18 +70,6 @@
     {'label': 'Copy Full Path', 'command': 'tree-view:copy-full-path'}
     {'label': 'Copy Project Path', 'command': 'tree-view:copy-project-path'}
     {'label': 'Open In New Window', 'command': 'tree-view:open-in-new-window'}
-  ]
-
-  '.platform-darwin .tree-view .full-menu': [
-    {'label': 'Show in Finder', 'command': 'tree-view:show-in-file-manager'}
-  ]
-
-  '.platform-win32 .tree-view .full-menu': [
-    {'label': 'Show in Explorer', 'command': 'tree-view:show-in-file-manager'}
-  ]
-
-  '.platform-linux .tree-view .full-menu': [
-    {'label': 'Show in File Manager', 'command': 'tree-view:show-in-file-manager'}
   ]
 
   '.tree-view .multi-select': [
