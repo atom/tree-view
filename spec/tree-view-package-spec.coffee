@@ -2482,17 +2482,72 @@ describe "TreeView", ->
             openFilePaths = atom.workspace.getTextEditors().map((e) -> e.getPath())
             expect(openFilePaths).toEqual([filePath2, filePath3])
             dirView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+            treeView.focus()
 
-          waitsForPromise ->
-            treeView.toggleFocus()
-
-          runs ->
             spyOn(atom, 'confirm').andCallFake (dialog) ->
               dialog.buttons["Move to Trash"]()
 
             atom.commands.dispatch(treeView.element, 'tree-view:remove')
             openFilePaths = (editor.getPath() for editor in atom.workspace.getTextEditors())
             expect(openFilePaths).toEqual([])
+
+        it "focuses the directory's parent folder", ->
+          jasmine.attachToDOM(workspaceElement)
+
+          dirView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+          treeView.focus()
+
+          spyOn(atom, 'confirm').andCallFake (dialog) ->
+            dialog.buttons["Move to Trash"]()
+
+          atom.commands.dispatch(treeView.element, 'tree-view:remove')
+          expect(root1).toHaveClass('selected')
+
+      describe "when a file is removed", ->
+        it "closes editors with filepaths belonging to the removed file", ->
+          jasmine.attachToDOM(workspaceElement)
+
+          waitForWorkspaceOpenEvent ->
+            atom.workspace.open(filePath2)
+
+          runs ->
+            openFilePaths = atom.workspace.getTextEditors().map((e) -> e.getPath())
+            expect(openFilePaths).toEqual([filePath2])
+            fileView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+            treeView.focus()
+
+            spyOn(atom, 'confirm').andCallFake (dialog) ->
+              dialog.buttons["Move to Trash"]()
+
+            atom.commands.dispatch(treeView.element, 'tree-view:remove')
+            openFilePaths = (editor.getPath() for editor in atom.workspace.getTextEditors())
+            expect(openFilePaths).toEqual([])
+
+        it "focuses the file's parent folder", ->
+          jasmine.attachToDOM(workspaceElement)
+
+          fileView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+
+          runs ->
+            spyOn(atom, 'confirm').andCallFake (dialog) ->
+              dialog.buttons["Move to Trash"]()
+
+            atom.commands.dispatch(treeView.element, 'tree-view:remove')
+            expect(dirView2).toHaveClass('selected')
+
+      describe "when multiple files and folders are deleted", ->
+        it "focuses the first selected entry's parent folder", ->
+          jasmine.attachToDOM(workspaceElement)
+
+          dirView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+          fileView2.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, metaKey: true}))
+          treeView.focus()
+
+          spyOn(atom, 'confirm').andCallFake (dialog) ->
+            dialog.buttons["Move to Trash"]()
+
+          atom.commands.dispatch(treeView.element, 'tree-view:remove')
+          expect(root1).toHaveClass('selected')
 
   describe "file system events", ->
     temporaryFilePath = null
