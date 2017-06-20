@@ -591,6 +591,12 @@ class TreeView
         "Move to Trash": =>
           failedDeletions = []
           for selectedPath in selectedPaths
+            # Don't delete entries which no longer exist. This can happen, for example, when:
+            # * The entry is deleted outside of Atom before "Move to Trash" is selected
+            # * A folder and one of its children are both selected for deletion,
+            #   but the parent folder is deleted first
+            continue unless fs.existsSync(selectedPath)
+
             if shell.moveItemToTrash(selectedPath)
               @emitter.emit 'entry-deleted', {path: selectedPath}
             else
