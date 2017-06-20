@@ -568,6 +568,9 @@ class TreeView
     dialog.attach()
 
   removeSelectedEntries: ->
+    parents = _.uniq(_.map(@selectedPaths(),  (selectedPath) ->
+      return selectedPath.substring(0, selectedPath.lastIndexOf(path.sep))
+    ))
     if @hasFocus()
       selectedPaths = @selectedPaths()
     else if activePath = @getActivePath()
@@ -600,6 +603,7 @@ class TreeView
               description: @formatTrashEnabledMessage()
               detail: "#{failedDeletions.join('\n')}"
               dismissable: true
+          @selectEntry(@list.find("[data-path='#{parents[0]}']").parents('li').first()?[0])
           @updateRoots() if atom.config.get('tree-view.squashDirectoryNames')
         "Cancel": null
 
