@@ -6,9 +6,6 @@ os = require 'os'
 {remote, shell} = require 'electron'
 eventHelpers = require "./event-helpers"
 
-DefaultFileIcons = require '../lib/default-file-icons'
-FileIcons = require '../lib/file-icons'
-
 waitForPackageActivation = ->
   waitsForPromise ->
     atom.packages.activatePackage('tree-view')
