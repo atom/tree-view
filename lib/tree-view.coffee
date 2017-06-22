@@ -442,7 +442,7 @@ class TreeView
         split = pane.split orientation, side
         atom.workspace.openURIInPane selectedEntry.getPath(), split
       else
-        @openSelectedEntry yes
+        @openSelectedEntry({}, yes)
 
   openSelectedEntryRight: ->
     @openSelectedEntrySplit 'horizontal', 'after'
