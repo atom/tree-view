@@ -56,8 +56,9 @@ class DirectoryView
       @header.classList.add('project-root-header')
     else
       @element.draggable = true
-      @subscriptions.add @directory.onDidStatusChange => @updateStatus()
-      @updateStatus()
+
+    @subscriptions.add @directory.onDidStatusChange => @updateStatus()
+    @updateStatus()
 
     @expand() if @directory.expansionState.isExpanded
 
