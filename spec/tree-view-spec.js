@@ -53,7 +53,9 @@ describe('TreeView', () => {
       treeView.showMultiSelectMenu()
 
       let child = entries.children[0];
-      while (child.children.length > 0 && (child = child.firstChild));
+      while (child.children.length > 0) {
+        child = child.firstChild;
+      }
 
       treeView.onMouseDown({
         stopPropagation() {},
@@ -62,6 +64,7 @@ describe('TreeView', () => {
       })
 
       expect(treeView.getSelectedEntries().length).toBe(2);
+      expect(treeView.multiSelectEnabled()).toBe(true);
     })
   });
 })
