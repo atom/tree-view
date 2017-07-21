@@ -48,9 +48,19 @@ describe('TreeView', () => {
     it('should leave multiple entries selected on right click', () => {
       const treeView = new TreeView({})
       const entries = treeView.roots[0].entries
-      treeView.selectEntry(entries.children[0])
-      treeView.selectMultipleEntries(entries.children[1])
-      treeView.showMultiSelectMenu()
+
+      treeView.onMouseDown({
+        stopPropagation() {},
+        target: entries.children[0],
+        button: 0,
+      })
+
+      treeView.onMouseDown({
+        stopPropagation() {},
+        target: entries.children[1],
+        button: 0,
+        metaKey: true,
+      })
 
       let child = entries.children[0];
       while (child.children.length > 0) {
@@ -60,7 +70,7 @@ describe('TreeView', () => {
       treeView.onMouseDown({
         stopPropagation() {},
         target: child,
-        button: 2
+        button: 2,
       })
 
       expect(treeView.getSelectedEntries().length).toBe(2);
