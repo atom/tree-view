@@ -403,10 +403,12 @@ class TreeView
     selectedEntry = @selectedEntry()
     return unless selectedEntry?
 
-    if isRecursive is false and selectedEntry.isExpanded
-      @moveDown() if selectedEntry.directory.getEntries().length > 0
+    directory = selectedEntry.closest('.directory')
+    if isRecursive is false and directory.isExpanded
+      # Select the first entry in the expanded folder if it exists
+      @moveDown() if directory.directory.getEntries().length > 0
     else
-      selectedEntry.expand(isRecursive)
+      directory.expand(isRecursive)
 
   collapseDirectory: (isRecursive=false) ->
     selectedEntry = @selectedEntry()
@@ -568,10 +570,12 @@ class TreeView
   removeSelectedEntries: ->
     if @hasFocus()
       selectedPaths = @selectedPaths()
+      selectedEntries = @getSelectedEntries()
     else if activePath = @getActivePath()
       selectedPaths = [activePath]
+      selectedEntries = [@entryForPath(activePath)]
 
-    return unless selectedPaths and selectedPaths.length > 0
+    return unless selectedPaths?.length > 0
 
     for root in @roots
       if root.getPath() in selectedPaths
@@ -587,17 +591,28 @@ class TreeView
         "Move to Trash": =>
           failedDeletions = []
           for selectedPath in selectedPaths
+            # Don't delete entries which no longer exist. This can happen, for example, when:
+            # * The entry is deleted outside of Atom before "Move to Trash" is selected
+            # * A folder and one of its children are both selected for deletion,
+            #   but the parent folder is deleted first
+            continue unless fs.existsSync(selectedPath)
+
             if shell.moveItemToTrash(selectedPath)
               @emitter.emit 'entry-deleted', {path: selectedPath}
             else
               failedDeletions.push "#{selectedPath}"
+
             if repo = repoForPath(selectedPath)
               repo.getPathStatus(selectedPath)
+
           if failedDeletions.length > 0
             atom.notifications.addError @formatTrashFailureMessage(failedDeletions),
               description: @formatTrashEnabledMessage()
               detail: "#{failedDeletions.join('\n')}"
               dismissable: true
+
+          # Focus the first parent folder
+          @selectEntry(selectedEntries[0].closest('.directory:not(.selected)'))
           @updateRoots() if atom.config.get('tree-view.squashDirectoryNames')
         "Cancel": null
 
@@ -705,6 +720,7 @@ class TreeView
       @updateRoots() if atom.config.get('tree-view.squashDirectoryNames')
       @emitter.emit 'directory-created', {path: createdPath}
     dialog.onDidCreateFile (createdPath) =>
+      @entryForPath(createdPath)?.reload()
       atom.workspace.open(createdPath)
       @updateRoots() if atom.config.get('tree-view.squashDirectoryNames')
       @emitter.emit 'file-created', {path: createdPath}
