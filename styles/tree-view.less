@@ -13,7 +13,11 @@
   display: flex;
   flex-direction: column;
 
-  .full-menu {
+  .tree-view-root {
+    padding-left: @component-icon-padding;
+    padding-right: @component-padding;
+    background-color: inherit;
+
     /*
      * Force a new stacking context to prevent a large, duplicate paint layer from
      * being created for tree-view's scrolling contents that can make the cost of
@@ -26,18 +30,13 @@
      * auto-created layer.
      */
     isolation: isolate;
-    padding-left: @component-icon-padding;
-    padding-right: @component-padding;
-    background-color: inherit;
 
-    // Expands .full-menu to take up full height.
+    // Expands tree-view root to take up full height.
     // This makes sure that the context menu can still be openend in the empty
     // area underneath the files.
     flex-grow: 1;
-  }
 
-  .full-menu.list-tree {
-    // Expands .full-menu to take up as much width as needed by the content.
+    // Expands tree-view root to take up as much width as needed by the content.
     // This makes sure that the selected item's "bar/background" expands to full width.
     position: relative;
     min-width: min-content;
@@ -47,7 +46,8 @@
     position: relative;
   }
 
-  .list-tree {
+  .tree-view-root .list-tree {
+    // Keeps selections expanded while dragging
     position: static;
   }
 
