@@ -189,7 +189,7 @@ class TreeView
       @updateRoots()
     @disposables.add atom.config.onDidChange 'core.ignoredNames', =>
       @updateRoots() if atom.config.get('tree-view.hideIgnoredNames')
-    @disposables.add atom.config.onDidChange 'tree-view.sortFoldersBeforeFiles', =>
+    @disposables.add atom.config.onDidChange 'tree-view.sortFolders', =>
       @updateRoots()
     @disposables.add atom.config.onDidChange 'tree-view.squashDirectoryNames', =>
       @updateRoots()
