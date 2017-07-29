@@ -31,7 +31,7 @@ class TreeView
     @element.tabIndex = -1
 
     @list = document.createElement('ol')
-    @list.classList.add('full-menu', 'list-tree', 'has-collapsable-children', 'focusable-panel')
+    @list.classList.add('tree-view-root', 'full-menu', 'list-tree', 'has-collapsable-children', 'focusable-panel')
     @element.appendChild(@list)
 
     @disposables = new CompositeDisposable
@@ -819,7 +819,7 @@ class TreeView
 
       # return early if we're opening a contextual menu (right click) during multi-select mode
       if @multiSelectEnabled() and
-         e.target.classList.contains('selected') and
+         entryToSelect.classList.contains('selected') and
          # mouse right click or ctrl click as right click on darwin platforms
          (e.button is 2 or e.ctrlKey and process.platform is 'darwin')
         return
