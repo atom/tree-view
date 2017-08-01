@@ -55,7 +55,7 @@ class DirectoryView
       @element.classList.add('project-root')
       @header.classList.add('project-root-header')
     else
-      @element.draggable = true
+      @element.draggable = (not process.env.atom_tree_view_disable_drag_drop)
       @subscriptions.add @directory.onDidStatusChange => @updateStatus()
       @updateStatus()
 
