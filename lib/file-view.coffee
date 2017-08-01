@@ -9,7 +9,7 @@ class FileView
 
     @element = document.createElement('li')
     @element.setAttribute('is', 'tree-view-file')
-    @element.draggable = true
+    @element.draggable = (not process.env.atom_tree_view_disable_drag_drop)
     @element.classList.add('file', 'entry', 'list-item')
 
     @fileName = document.createElement('span')
