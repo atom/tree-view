@@ -1824,8 +1824,11 @@ describe "TreeView", ->
                 expect(atom.workspace.getModalPanels().length).toBe 0
                 expect(atom.workspace.getCenter().getActivePaneItem().getPath()).toBe newPath
 
-              waitsFor "tree view to be updated", ->
+              waitsFor "file to be added to tree view", ->
                 dirView.entries.querySelectorAll(".file").length > 1
+
+              waitsFor "tree view selection to be updated", ->
+                treeView.element.querySelector('.file.selected') isnt null
 
               runs ->
                 expect(treeView.element.querySelector('.selected').textContent).toBe path.basename(newPath)
@@ -1849,11 +1852,14 @@ describe "TreeView", ->
                 expect(atom.workspace.getModalPanels().length).toBe 0
                 expect(atom.workspace.getCenter().getActivePaneItem().getPath()).toBe newPath
 
-              waitsFor "tree view to be updated", ->
+              waitsFor "file to be added to tree view", ->
                 dirView3.entries.querySelectorAll(".file").length > 1
 
+              waitsFor "tree view selection to be updated", ->
+                treeView.element.querySelector('.file.selected') isnt null
+
               runs ->
-                expect(treeView.element.querySelector('.file.selected').textContent).toBe path.basename(newPath)
+                expect(treeView.element.querySelector('.selected').textContent).toBe path.basename(newPath)
                 expect(callback).toHaveBeenCalledWith({path: newPath})
 
           describe "when a file already exists at that location", ->
