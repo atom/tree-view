@@ -1814,6 +1814,7 @@ describe "TreeView", ->
 
               waitsFor "tree view selection to be updated", ->
                 treeView.element.querySelector('.file.selected')
+
               runs ->
                 expect(treeView.element.querySelector('.selected').textContent).toBe path.basename(newPath)
                 expect(callback).toHaveBeenCalledWith({path: newPath})
