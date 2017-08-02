@@ -1813,7 +1813,7 @@ describe "TreeView", ->
                 dirView.entries.querySelectorAll(".file").length > 1
 
               waitsFor "tree view selection to be updated", ->
-                treeView.element.querySelector('.file.selected')
+                treeView.element.querySelector('.file.selected') isnt null
 
               runs ->
                 expect(treeView.element.querySelector('.selected').textContent).toBe path.basename(newPath)
