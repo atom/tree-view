@@ -2555,7 +2555,7 @@ describe "TreeView", ->
 
           atom.commands.dispatch(treeView.element, 'tree-view:remove')
           expect(atom.notifications.getNotifications().length).toBe 0
-          
+
         it "focuses the first selected entry's parent folder", ->
           jasmine.attachToDOM(workspaceElement)
 
@@ -3137,7 +3137,7 @@ describe "TreeView", ->
               expect(treeView.list).toHaveClass('full-menu')
               expect(treeView.list).not.toHaveClass('multi-select')
 
-  describe "the sortFoldersBeforeFiles config option", ->
+  describe "the sortFolders config option", ->
     [dirView, fileView, dirView2, fileView2, fileView3, rootDirPath, dirPath, filePath, dirPath2, filePath2, filePath3] = []
 
     beforeEach ->
@@ -3170,11 +3170,11 @@ describe "TreeView", ->
       atom.project.setPaths([rootDirPath])
 
 
-    it "defaults to set", ->
-      expect(atom.config.get("tree-view.sortFoldersBeforeFiles")).toBeTruthy()
+    it "defaults to Before Files", ->
+      expect(atom.config.get("tree-view.sortFolders")).toBe("Before Files")
 
-    it "lists folders first if the option is set", ->
-      atom.config.set "tree-view.sortFoldersBeforeFiles", true
+    it "lists folders first if the option is set to Before Files", ->
+      atom.config.set "tree-view.sortFolders", "Before Files"
 
       topLevelEntries = [].slice.call(treeView.roots[0].entries.children).map (element) ->
         element.innerText
@@ -3195,8 +3195,30 @@ describe "TreeView", ->
 
       expect(gammaEntries).toEqual(["theta", "delta.txt", "epsilon.txt"])
 
-    it "sorts folders as files if the option is not set", ->
-      atom.config.set "tree-view.sortFoldersBeforeFiles", false
+    it "lists folders last if the option is set to After Files", ->
+      atom.config.set "tree-view.sortFolders", "After Files"
+
+      topLevelEntries = [].slice.call(treeView.roots[0].entries.children).map (element) ->
+        element.innerText
+
+      expect(topLevelEntries).toEqual(["alpha.txt", "zeta.txt", "alpha", "gamma"])
+
+      alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
+      alphaDir.expand()
+      alphaEntries = [].slice.call(alphaDir.children[1].children).map (element) ->
+        element.innerText
+
+      expect(alphaEntries).toEqual(["beta.txt", "eta"])
+
+      gammaDir = findDirectoryContainingText(treeView.roots[0], 'gamma')
+      gammaDir.expand()
+      gammaEntries = [].slice.call(gammaDir.children[1].children).map (element) ->
+        element.innerText
+
+      expect(gammaEntries).toEqual(["delta.txt", "epsilon.txt", "theta"])
+
+    it "sorts folders as files if the option is set to Alongside Files", ->
+      atom.config.set "tree-view.sortFolders", "Alongside Files"
 
       topLevelEntries = [].slice.call(treeView.roots[0].entries.children).map (element) ->
         element.innerText

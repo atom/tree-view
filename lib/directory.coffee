@@ -203,7 +203,7 @@ class Directory
         else
           files.push(new File({name, fullPath, symlink, realpathCache, @useSyncFS, stats: statFlat}))
 
-    @sortEntries(directories.concat(files))
+    @sortEntries(directories, files)
 
   normalizeEntryName: (value) ->
     normalizedValue = value.name
@@ -213,11 +213,14 @@ class Directory
       normalizedValue = normalizedValue.toLowerCase()
     normalizedValue
 
-  sortEntries: (combinedEntries) ->
-    if atom.config.get('tree-view.sortFoldersBeforeFiles')
-      combinedEntries
+  sortEntries: (directories, files) ->
+    sortFolders = atom.config.get('tree-view.sortFolders')
+    if sortFolders is "Before Files"
+      directories.concat(files)
+    else if sortFolders is "After Files"
+      files.concat(directories)
     else
-      combinedEntries.sort (first, second) =>
+      directories.concat(files).sort (first, second) =>
         firstName = @normalizeEntryName(first)
         secondName = @normalizeEntryName(second)
         firstName.localeCompare(secondName)

@@ -48,10 +48,15 @@
       "default": false,
       "description": "Don't show items matched by the `Ignored Names` core config setting."
     },
-    "sortFoldersBeforeFiles": {
-      "type": "boolean",
-      "default": true,
-      "description": "When listing directory items, list subdirectories before listing files."
+    "sortFolders": {
+      "type": "string",
+      "default": "Before Files",
+      "description": "When listing directory items, where subdirectories will be listed.",
+      "enum": [
+        "Before Files",
+        "After Files",
+        "Alongside Files"
+      ]
     },
     "autoReveal": {
       "type": "boolean",
