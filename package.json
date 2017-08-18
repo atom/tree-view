@@ -13,7 +13,7 @@
     "event-kit": "^1.0.0",
     "fs-plus": "^3.0.0",
     "minimatch": "~0.3.0",
-    "pathwatcher": "^7.0.0",
+    "pathwatcher": "^8.0.0",
     "temp": "~0.8.1",
     "underscore-plus": "^1.0.0"
   },
