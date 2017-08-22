@@ -288,7 +288,7 @@ describe "TreeView", ->
           atom.config.set "tree-view.focusOnReveal", true
 
           waitsForPromise ->
-            atom.workspace.open(path.join(atom.project.getPaths()[0], 'dir1', 'file1'))
+            atom.workspace.open(path.join(path1, 'dir1', 'file1'))
 
           waitsForPromise ->
             treeView.revealActiveFile()
@@ -299,7 +299,7 @@ describe "TreeView", ->
 
           waitsForPromise ->
             treeView.focus.reset()
-            atom.workspace.open(path.join(atom.project.getPaths()[1], 'dir3', 'file3'))
+            atom.workspace.open(path.join(path2, 'dir3', 'file3'))
 
           waitsForPromise ->
             treeView.revealActiveFile()
@@ -313,7 +313,7 @@ describe "TreeView", ->
           atom.config.set "tree-view.focusOnReveal", false
 
           waitsForPromise ->
-            atom.workspace.open(path.join(atom.project.getPaths()[0], 'dir1', 'file1'))
+            atom.workspace.open(path.join(path1, 'dir1', 'file1'))
 
           waitsForPromise ->
             treeView.revealActiveFile()
@@ -324,7 +324,7 @@ describe "TreeView", ->
 
           waitsForPromise ->
             treeView.focus.reset()
-            atom.workspace.open(path.join(atom.project.getPaths()[1], 'dir3', 'file3'))
+            atom.workspace.open(path.join(path2, 'dir3', 'file3'))
 
           waitsForPromise ->
             treeView.revealActiveFile()
@@ -332,6 +332,24 @@ describe "TreeView", ->
           runs ->
             expect(treeView.element.parentElement).toBeTruthy()
             expect(treeView.focus).not.toHaveBeenCalled()
+
+      describe "if the file is located under collapsed folders", ->
+        it "expands all the folders and selects the file", ->
+          waitsForPromise ->
+            atom.workspace.open(path.join(path1, 'dir1', 'file1'))
+
+          runs ->
+            treeView.selectEntry(root1)
+            treeView.collapseDirectory(true) # Recursively collapse all directories
+
+          waitsForPromise ->
+            treeView.revealActiveFile()
+
+          runs ->
+            expect(treeView.entryForPath(path1).classList.contains('expanded')).toBe true
+            expect(treeView.entryForPath(path.join(path1, 'dir1')).classList.contains('expanded')).toBe true
+            expect(treeView.selectedEntry()).toBeTruthy()
+            expect(treeView.selectedEntry().getPath()).toBe path.join(path1, 'dir1', 'file1')
 
     describe "if the current file has no path", ->
       it "shows and focuses the tree view, but does not attempt to select a specific file", ->

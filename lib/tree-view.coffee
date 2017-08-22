@@ -304,8 +304,7 @@ class TreeView
       @selectEntryForPath(activeFilePath)
 
   revealActiveFile: (focus) ->
-    if _.isEmpty(atom.project.getPaths())
-      return Promise.resolve()
+    return Promise.resolve() unless atom.project.getPaths().length
 
     @show(focus ? atom.config.get('tree-view.focusOnReveal')).then =>
       return unless activeFilePath = @getActivePath()
@@ -314,7 +313,10 @@ class TreeView
       return unless rootPath?
 
       activePathComponents = relativePath.split(path.sep)
-      currentPath = rootPath
+      # Add the root folder to the path components
+      activePathComponents.unshift(rootPath.substr(rootPath.lastIndexOf(path.sep) + 1))
+      # And remove it from the current path
+      currentPath = rootPath.substr(0, rootPath.lastIndexOf(path.sep))
       for pathComponent in activePathComponents
         currentPath += path.sep + pathComponent
         entry = @entryForPath(currentPath)
