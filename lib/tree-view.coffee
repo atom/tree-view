@@ -727,12 +727,13 @@ class TreeView
     dialog.attach()
 
   removeProjectFolder: (e) ->
+    # Remove the targeted project folder (generally this only happens through the context menu)
     pathToRemove = e.target.closest(".project-root > .header")?.querySelector(".name")?.dataset.path
-
-    # TODO: remove this conditional once the addition of Project::removePath
-    # is released.
-    if atom.project.removePath?
-      atom.project.removePath(pathToRemove) if pathToRemove?
+    # If an entry is selected, remove that entry's project folder
+    pathToRemove ?= @selectedEntry()?.closest(".project-root")?.querySelector(".header")?.querySelector(".name")?.dataset.path
+    # Finally, if only one project folder exists and nothing is selected, remove that folder
+    pathToRemove ?= @roots[0].querySelector(".header")?.querySelector(".name")?.dataset.path if @roots.length is 1
+    atom.project.removePath(pathToRemove) if pathToRemove?
 
   selectedEntry: ->
     @list.querySelector('.selected')

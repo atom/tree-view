@@ -1319,10 +1319,29 @@ describe "TreeView", ->
               expect(item.getPath()).toBe atom.project.getDirectories()[0].resolve(fileName)
 
   describe "removing a project folder", ->
-    it "removes the folder from the project", ->
-      rootHeader = treeView.roots[1].querySelector(".header")
-      atom.commands.dispatch(rootHeader, "tree-view:remove-project-folder")
-      expect(atom.project.getPaths()).toHaveLength(1)
+    describe "when the project folder is selected", ->
+      it "removes the folder from the project", ->
+        rootHeader = treeView.roots[1].querySelector(".header")
+        atom.commands.dispatch(rootHeader, "tree-view:remove-project-folder")
+        expect(atom.project.getPaths()).toEqual [path1]
+
+    describe "when an entry is selected", ->
+      it "removes the project folder containing the entry", ->
+        treeView.selectEntry(treeView.roots[1].querySelector(".entries").querySelector("li"))
+        atom.commands.dispatch(treeView.element, "tree-view:remove-project-folder")
+        expect(atom.project.getPaths()).toEqual [path1]
+
+    describe "when nothing is selected and there is only one project folder", ->
+      it "removes the project folder", ->
+        atom.project.removePath(path2)
+        atom.commands.dispatch(treeView.element, "tree-view:remove-project-folder")
+        expect(atom.project.getPaths()).toHaveLength 0
+
+    describe "when nothing is selected and there are multiple project folders", ->
+      it "does nothing", ->
+        treeView.deselect(treeView.getSelectedEntries())
+        atom.commands.dispatch(treeView.element, "tree-view:remove-project-folder")
+        expect(atom.project.getPaths()).toHaveLength 2
 
   describe "file modification", ->
     [dirView, dirView2, dirView3, fileView, fileView2, fileView3, fileView4] = []
@@ -2555,7 +2574,7 @@ describe "TreeView", ->
 
           atom.commands.dispatch(treeView.element, 'tree-view:remove')
           expect(atom.notifications.getNotifications().length).toBe 0
-          
+
         it "focuses the first selected entry's parent folder", ->
           jasmine.attachToDOM(workspaceElement)
 
