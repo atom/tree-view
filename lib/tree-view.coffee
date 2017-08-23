@@ -769,7 +769,7 @@ class TreeView
 
   scrollToEntry: (entry) ->
     element = if entry?.classList.contains('directory') then entry.header else entry
-    element?.scrollIntoViewIfNeeded(true) # true = center around item if possible
+    element?.scrollIntoViewIfNeeded(false) # false = just enough to make the item visible
 
   scrollToBottom: ->
     if lastEntry = _.last(@list.querySelectorAll('.entry'))
