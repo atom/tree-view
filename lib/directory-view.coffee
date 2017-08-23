@@ -108,10 +108,12 @@ class DirectoryView
       view = new FileView(entry)
 
     subscription = @directory.onDidRemoveEntries (removedEntries) ->
-      for removedName, removedEntry of removedEntries when entry is removedEntry
+      removedEntries.forEach (removedEntry, removedName) ->
+        return unless entry is removedEntry
         view.element.remove()
         subscription.dispose()
-        break
+        # TODO: When this file is converted to JS, convert this forEach loop
+        # to a for...of loop and add a break here for performance
     @subscriptions.add(subscription)
 
     view

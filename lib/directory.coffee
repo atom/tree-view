@@ -26,9 +26,9 @@ class Directory
     @isRoot ?= false
     @expansionState ?= {}
     @expansionState.isExpanded ?= false
-    @expansionState.entries ?= {}
+    @expansionState.entries ?= new Map()
     @status = null
-    @entries = {}
+    @entries = new Map()
 
     @submodule = repoForPath(@path)?.isSubmodule(@path)
 
@@ -154,9 +154,9 @@ class Directory
       @watchSubscription.close()
       @watchSubscription = null
 
-    for key, entry of @entries
+    @entries.forEach (entry, key) =>
       entry.destroy()
-      delete @entries[key]
+      @entries.delete(key)
 
   # Public: Watch this directory for changes.
   watch: ->
@@ -188,15 +188,15 @@ class Directory
         statFlat[key] = statFlat[key]?.getTime()
 
       if stat.isDirectory?()
-        if @entries.hasOwnProperty(name)
+        if @entries.has(name)
           # push a placeholder since this entry already exists but this helps
           # track the insertion index for the created views
           directories.push(name)
         else
-          expansionState = @expansionState.entries[name]
+          expansionState = @expansionState.entries.get(name)
           directories.push(new Directory({name, fullPath, symlink, expansionState, @ignoredPatterns, @useSyncFS, stats: statFlat}))
       else if stat.isFile?()
-        if @entries.hasOwnProperty(name)
+        if @entries.has(name)
           # push a placeholder since this entry already exists but this helps
           # track the insertion index for the created views
           files.push(name)
@@ -225,12 +225,12 @@ class Directory
   # Public: Perform a synchronous reload of the directory.
   reload: ->
     newEntries = []
-    removedEntries = _.clone(@entries)
+    removedEntries = new Map(@entries)
     index = 0
 
     for entry in @getEntries()
-      if @entries.hasOwnProperty(entry)
-        delete removedEntries[entry]
+      if @entries.has(entry)
+        removedEntries.delete(entry)
         index++
         continue
 
@@ -239,20 +239,20 @@ class Directory
       newEntries.push(entry)
 
     entriesRemoved = false
-    for name, entry of removedEntries
+    removedEntries.forEach (entry, name) =>
       entriesRemoved = true
       entry.destroy()
 
-      if @entries.hasOwnProperty(name)
-        delete @entries[name]
+      if @entries.has(name)
+        @entries.delete(name)
 
-      if @expansionState.entries.hasOwnProperty(name)
-        delete @expansionState.entries[name]
+      if @expansionState.entries.has(name)
+        @expansionState.entries.delete(name)
 
     @emitter.emit('did-remove-entries', removedEntries) if entriesRemoved
 
     if newEntries.length > 0
-      @entries[entry.name] = entry for entry in newEntries
+      @entries.set(entry.name, entry) for entry in newEntries
       @emitter.emit('did-add-entries', newEntries)
 
   # Public: Collapse this directory and stop watching it.
@@ -273,9 +273,10 @@ class Directory
   serializeExpansionState: ->
     expansionState = {}
     expansionState.isExpanded = @expansionState.isExpanded
-    expansionState.entries = {}
-    for name, entry of @entries when entry.expansionState?
-      expansionState.entries[name] = entry.serializeExpansionState()
+    expansionState.entries = new Map()
+    @entries.forEach (entry, name) ->
+      return unless entry.expansionState?
+      expansionState.entries.set(name, entry.serializeExpansionState())
     expansionState
 
   squashDirectoryNames: (fullPath) ->

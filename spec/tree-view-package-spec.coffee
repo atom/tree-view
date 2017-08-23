@@ -1844,7 +1844,7 @@ describe "TreeView", ->
 
         describe "when the parent directory of the selected file changes", ->
           it "still shows the active file as selected", ->
-            dirView.directory.emitter.emit 'did-remove-entries', {'deleted.txt': {}}
+            dirView.directory.emitter.emit 'did-remove-entries', new Map().set('deleted.txt', {})
             expect(treeView.element.querySelector('.selected').textContent).toBe path.basename(filePath)
 
         describe "when the path without a trailing '#{path.sep}' is changed and confirmed", ->
@@ -3336,25 +3336,23 @@ describe "TreeView", ->
       treeView.roots[0].expand()
       expect(treeView.roots[0].directory.serializeExpansionState()).toEqual
         isExpanded: true
-        entries:
-          entries:
-            isExpanded: false
-            entries: {}
+        entries: new Map().set('entries',
+          isExpanded: false
+          entries: new Map())
 
       fs.removeSync(entriesPath)
       treeView.roots[0].reload()
       expect(treeView.roots[0].directory.serializeExpansionState()).toEqual
         isExpanded: true
-        entries: {}
+        entries: new Map()
 
       fs.mkdirSync(path.join(projectPath, 'other'))
       treeView.roots[0].reload()
       expect(treeView.roots[0].directory.serializeExpansionState()).toEqual
         isExpanded: true
-        entries:
-          other:
-            isExpanded: false
-            entries: {}
+        entries: new Map().set('other',
+          isExpanded: false
+          entries: new Map())
 
   describe "Dragging and dropping files", ->
     deltaFilePath = null
