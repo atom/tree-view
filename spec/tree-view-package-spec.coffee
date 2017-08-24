@@ -3822,6 +3822,14 @@ describe "TreeView", ->
         expect(atom.project.getPaths()).toEqual [alphaDirPath, thetaDirPath]
         expect(document.querySelector('.placeholder')).not.toExist()
 
+  describe "when there is a __proto__ entry present", ->
+    it "does not break anything", ->
+      # No assertions needed - multiple exceptions will be thrown if this test fails
+      projectPath = temp.mkdirSync('atom-project')
+      protoPath = path.join(projectPath, "__proto__")
+      fs.writeFileSync(protoPath, 'test')
+      atom.project.setPaths([projectPath])
+
   describe "directory expansion serialization", ->
     it "converts legacy expansion serialization Objects to Maps", ->
       # The conversion actually happens when a new Directory
