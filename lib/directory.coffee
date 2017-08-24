@@ -31,10 +31,14 @@ class Directory
     # of time has passed since @expansionState.entries
     # has been converted to a Map
     unless @expansionState.entries instanceof Map
-      temp = new Map()
-      for name, entry of @expansionState.entries
-        temp.set(name, entry)
-      @expansionState.entries = temp
+      convertEntriesToMap = (entries) ->
+        temp = new Map()
+        for name, entry of entries
+          entry.entries = convertEntriesToMap(entry.entries) if entry.entries?
+          temp.set(name, entry)
+        return temp
+
+      @expansionState.entries = convertEntriesToMap(@expansionState.entries)
 
     @expansionState.entries ?= new Map()
     @status = null
