@@ -4,6 +4,7 @@ path = require 'path'
 temp = require('temp').track()
 os = require 'os'
 {remote, shell} = require 'electron'
+Directory = require '../lib/directory'
 eventHelpers = require "./event-helpers"
 
 DefaultFileIcons = require '../lib/default-file-icons'
@@ -3820,6 +3821,40 @@ describe "TreeView", ->
 
         expect(atom.project.getPaths()).toEqual [alphaDirPath, thetaDirPath]
         expect(document.querySelector('.placeholder')).not.toExist()
+
+  describe "directory expansion serialization", ->
+    it "converts legacy expansion serialization Objects to Maps", ->
+      # The conversion actually happens when a new Directory
+      # is instantiated with a serialized expansion state,
+      # not when serialization occurs
+      legacyState =
+        isExpanded: true
+        entries:
+          'a':
+            isExpanded: true
+          'tree-view':
+            isExpanded: false
+            entries:
+              'sub-folder':
+                isExpanded: true
+
+      convertedState =
+        isExpanded: true
+        entries: new Map().set('a', {isExpanded: true}).set('tree-view',
+          isExpanded: false
+          entries: new Map().set 'sub-folder',
+            isExpanded: true)
+
+      directory = new Directory({name: 'test', fullPath: 'path', symlink: false, expansionState: legacyState})
+      expect(directory.expansionState.entries instanceof Map).toBe true
+
+      assertEntriesDeepEqual = (expansionEntries, convertedEntries) ->
+        expansionEntries.forEach (entry, name) ->
+          if entry.entries? or convertedEntries.get(name).entries?
+            assertEntriesDeepEqual(entry.entries, convertedEntries.get(name).entries)
+          expect(entry).toEqual convertedEntries.get(name)
+
+      assertEntriesDeepEqual(directory.expansionState.entries, convertedState.entries)
 
   findDirectoryContainingText = (element, text) ->
     directories = Array.from(element.querySelectorAll('.entries .directory'))
