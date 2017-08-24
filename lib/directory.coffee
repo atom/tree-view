@@ -26,6 +26,16 @@ class Directory
     @isRoot ?= false
     @expansionState ?= {}
     @expansionState.isExpanded ?= false
+
+    # TODO: This can be removed after a sufficient amount
+    # of time has passed since @expansionState.entries
+    # has been converted to a Map
+    unless @expansionState.entries instanceof Map
+      temp = new Map()
+      for name, entry of @expansionState.entries
+        temp.set(name, entry)
+      @expansionState.entries = temp
+
     @expansionState.entries ?= new Map()
     @status = null
     @entries = new Map()
