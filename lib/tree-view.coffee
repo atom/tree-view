@@ -353,7 +353,7 @@ class TreeView
     if selectedEntry?
       if selectedEntry.classList.contains('directory')
         if @selectEntry(selectedEntry.entries.children[0])
-          @scrollToEntry(@selectedEntry())
+          @scrollToEntry(@selectedEntry(), false)
           return
 
       if nextEntry = @nextEntry(selectedEntry)
@@ -361,7 +361,7 @@ class TreeView
     else
       @selectEntry(@roots[0])
 
-    @scrollToEntry(@selectedEntry())
+    @scrollToEntry(@selectedEntry(), false)
 
   moveUp: (event) ->
     event.stopImmediatePropagation()
@@ -377,7 +377,7 @@ class TreeView
       entries = @list.querySelectorAll('.entry')
       @selectEntry(entries[entries.length - 1])
 
-    @scrollToEntry(@selectedEntry())
+    @scrollToEntry(@selectedEntry(), false)
 
   nextEntry: (entry) ->
     currentEntry = entry
@@ -767,9 +767,9 @@ class TreeView
     else
       @element.scrollTop + @element.offsetHeight
 
-  scrollToEntry: (entry) ->
+  scrollToEntry: (entry, center = true) ->
     element = if entry?.classList.contains('directory') then entry.header else entry
-    element?.scrollIntoViewIfNeeded(false) # false = just enough to make the item visible
+    element?.scrollIntoViewIfNeeded(center)
 
   scrollToBottom: ->
     if lastEntry = _.last(@list.querySelectorAll('.entry'))
