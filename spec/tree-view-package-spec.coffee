@@ -400,6 +400,12 @@ describe "TreeView", ->
           treeView.revealActiveFile()
         runs ->
           expect(treeView.scrollTop()).toBeGreaterThan 400
+          entries = treeView.element.querySelectorAll('.entry')
+          scrollTop = treeView.element.scrollTop
+          for i in [0...entries.length]
+            atom.commands.dispatch(treeView.element, 'core:move-up')
+            expect(treeView.element.scrollTop - scrollTop).toBeLessThan entries[i].clientHeight
+            scrollTop = treeView.element.scrollTop
 
         # Open file in the middle, should be centered in scroll
         waitsForPromise -> atom.workspace.open(path.join(rootDirPath, 'file-10.txt'))
