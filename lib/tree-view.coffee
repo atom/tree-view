@@ -767,7 +767,7 @@ class TreeView
     else
       @element.scrollTop + @element.offsetHeight
 
-  scrollToEntry: (entry, center = true) ->
+  scrollToEntry: (entry, center=true) ->
     element = if entry?.classList.contains('directory') then entry.header else entry
     element?.scrollIntoViewIfNeeded(center)
 
