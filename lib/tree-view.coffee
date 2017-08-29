@@ -706,7 +706,7 @@ class TreeView
     window.localStorage.removeItem('tree-view:cutPath')
     window.localStorage['tree-view:copyPath'] = JSON.stringify(selectedPaths)
 
-  # Public: Copy the path of the selected entry element.
+  # Public: Cut the path of the selected entry element.
   #         Save the path in localStorage, so that cutting from 2 different
   #         instances of atom works as intended
   #
@@ -743,6 +743,10 @@ class TreeView
         basePath = selectedEntry.getPath()
         basePath = path.dirname(basePath) if selectedEntry.classList.contains('file')
         newPath = path.join(basePath, path.basename(initialPath))
+
+        if basePath.startsWith(initialPath) # For example, trying to copy test/a/ into test/a/b/
+          atom.notifications.addWarning('Cannot copy a folder into itself')
+          continue
 
         if copiedPaths
           # append a number to the file if an item with the same name exists
