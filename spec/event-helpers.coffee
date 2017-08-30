@@ -104,8 +104,4 @@ module.exports.buildPositionalDragEvents = (dragged, target, currentTargetSelect
   Object.defineProperty(dragEndEvent, 'currentTarget', value: dragged)
   Object.defineProperty(dragEndEvent, 'dataTransfer', value: dataTransfer)
 
-<<<<<<< HEAD
   [dragStartEvent, buildElementPositionalDragEvents(target, dataTransfer, currentTargetSelector), dragEndEvent]
-=======
-  dropEvent
->>>>>>> refactor event helpers for multiple targets in drag
