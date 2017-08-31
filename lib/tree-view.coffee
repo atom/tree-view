@@ -38,6 +38,7 @@ class TreeView
     @emitter = new Emitter
     @roots = []
     @selectedPath = null
+    @selectOnMouseUp = false
     @ignoredPatterns = []
     @useSyncFS = false
     @currentlyOpening = new Map
@@ -196,6 +197,7 @@ class TreeView
 
       @entryClicked(e) unless e.shiftKey or e.metaKey or e.ctrlKey
     @element.addEventListener 'mousedown', (e) => @onMouseDown(e)
+    @element.addEventListener 'mouseup', (e) => @onMouseUp(e)
     @element.addEventListener 'dragstart', (e) => @onDragStart(e)
     @element.addEventListener 'dragenter', (e) => @onDragEnter(e)
     @element.addEventListener 'dragleave', (e) => @onDragLeave(e)
@@ -869,7 +871,7 @@ class TreeView
       return
 
     entryName = path.basename(initialPath)
-    newPath = "#{newDirectoryPath}/#{entryName}".replace(/\s+$/, '')
+    newPath = "#{newDirectoryPath}#{path.sep}#{entryName}".replace(/\s+$/, '')
 
     try
       @emitter.emit 'will-move-entry', {initialPath, newPath}
@@ -898,11 +900,15 @@ class TreeView
       e.stopPropagation()
 
       # return early if we're opening a contextual menu (right click) during multi-select mode
-      if @multiSelectEnabled() and
-         entryToSelect.classList.contains('selected') and
-         # mouse right click or ctrl click as right click on darwin platforms
-         (e.button is 2 or e.ctrlKey and process.platform is 'darwin')
-        return
+      if @multiSelectEnabled() and entryToSelect.classList.contains('selected')
+
+        # mouse right click or ctrl click as right click on darwin platforms
+        if (e.button is 2 or e.ctrlKey and process.platform is 'darwin')
+          return
+        # stop unselect if dragging
+        else
+          @selectOnMouseUp = true
+          return
 
       if e.shiftKey
         @selectContinuousEntries(entryToSelect)
@@ -916,6 +922,11 @@ class TreeView
       else
         @selectEntry(entryToSelect)
         @showFullMenu()
+
+  onMouseUp: (e) ->
+    if @selectOnMouseUp
+      @selectEntry(entryToSelect)
+      @showFullMenu()
 
   # Public: Return an array of paths from all selected items
   #
@@ -992,6 +1003,7 @@ class TreeView
 
   # Handle entry name object dragstart event
   onDragStart: (e) ->
+    @selectOnMouseUp = false
     if entry = e.target.closest('.entry')
       e.stopPropagation()
 
@@ -1000,7 +1012,7 @@ class TreeView
 
       initialPaths = []
       dragImage = document.createElement("ol")
-      dragImage.classList.add("entries list-tree")
+      dragImage.classList.add("entries", "list-tree")
       dragImage.style.position = "absolute"
       dragImage.style.top = 0
       dragImage.style.left = 0
