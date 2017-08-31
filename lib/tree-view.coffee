@@ -970,6 +970,7 @@ class TreeView
   selectContinuousEntries: (entry, deselectOthers = true) ->
     currentSelectedEntry = @lastFocusedElement ? @selectedEntry()
     parentContainer = entry.parentElement
+    elements = []
     if parentContainer.contains(currentSelectedEntry)
       entries = Array.from(parentContainer.querySelectorAll('.entry'))
       entryIndex = entries.indexOf(entry)
