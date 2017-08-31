@@ -3215,7 +3215,7 @@ describe "TreeView", ->
           expect(treeView.element.querySelector('.directory.status-modified')).not.toExist()
 
   describe "selecting items", ->
-    [dirView, fileView1, fileView2, fileView3, treeView, rootDirPath, dirPath, filePath1, filePath2, filePath3] = []
+    [dirView, fileView1, fileView2, fileView3, fileView4, fileView5, treeView, rootDirPath, dirPath, filePath1, filePath2, filePath3, filePath4, filePath5] = []
 
     beforeEach ->
       rootDirPath = fs.absolute(temp.mkdirSync('tree-view'))
@@ -3224,17 +3224,21 @@ describe "TreeView", ->
       filePath1 = path.join(dirPath, "test-file1.txt")
       filePath2 = path.join(dirPath, "test-file2.txt")
       filePath3 = path.join(dirPath, "test-file3.txt")
+      filePath4 = path.join(dirPath, "test-file4.txt")
+      filePath5 = path.join(dirPath, "test-file5.txt")
 
       fs.makeTreeSync(dirPath)
       fs.writeFileSync(filePath1, "doesn't matter")
       fs.writeFileSync(filePath2, "doesn't matter")
       fs.writeFileSync(filePath3, "doesn't matter")
+      fs.writeFileSync(filePath4, "doesn't matter")
+      fs.writeFileSync(filePath5, "doesn't matter")
 
       atom.project.setPaths([rootDirPath])
 
       dirView = treeView.entryForPath(dirPath)
       dirView.expand()
-      [fileView1, fileView2, fileView3] = dirView.querySelectorAll('.file')
+      [fileView1, fileView2, fileView3, fileView4, fileView5] = dirView.querySelectorAll('.file')
 
     describe 'selecting multiple items', ->
       it 'switches the contextual menu to muli-select mode', ->
@@ -3273,8 +3277,29 @@ describe "TreeView", ->
           fileView1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
           fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, metaKey: true}))
           expect(fileView1).toHaveClass('selected')
-          expect(fileView3).toHaveClass('selected')
           expect(fileView2).not.toHaveClass('selected')
+          expect(fileView3).toHaveClass('selected')
+
+      describe 'using the metakey(cmd) key on already selected item', ->
+        it 'deselects just the cmd-clicked item', ->
+          fileView1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+          fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, metaKey: true}))
+          fileView1.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, metaKey: true}))
+          fileView1.dispatchEvent(new MouseEvent('mouseup', {bubbles: true, metaKey: true}))
+          expect(fileView1).not.toHaveClass('selected')
+          expect(fileView2).not.toHaveClass('selected')
+          expect(fileView3).toHaveClass('selected')
+
+      describe 'using the shift and metakey(cmd) keys', ->
+        it 'selects the items between the last cmd-clicked item and the clicked item', ->
+          fileView1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+          fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, metaKey: true}))
+          fileView5.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, metaKey: true, shiftKey: true}))
+          expect(fileView1).toHaveClass('selected')
+          expect(fileView2).not.toHaveClass('selected')
+          expect(fileView3).toHaveClass('selected')
+          expect(fileView4).toHaveClass('selected')
+          expect(fileView5).toHaveClass('selected')
 
       describe 'non-darwin platform', ->
         originalPlatform = process.platform

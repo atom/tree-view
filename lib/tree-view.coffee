@@ -38,7 +38,8 @@ class TreeView
     @emitter = new Emitter
     @roots = []
     @selectedPath = null
-    @selectOnMouseUp = false
+    @selectOnMouseUp = null
+    @lastFocusedElement = null
     @ignoredPatterns = []
     @useSyncFS = false
     @currentlyOpening = new Map
@@ -821,6 +822,7 @@ class TreeView
     return unless entry?
 
     @selectedPath = entry.getPath()
+    @lastFocusedElement = entry
 
     selectedEntries = @getSelectedEntries()
     if selectedEntries.length > 1 or selectedEntries[0] isnt entry
@@ -903,33 +905,55 @@ class TreeView
       if @multiSelectEnabled() and entryToSelect.classList.contains('selected')
 
         # mouse right click or ctrl click as right click on darwin platforms
-        if (e.button is 2 or e.ctrlKey and process.platform is 'darwin')
+        if e.button is 2 or (e.ctrlKey and process.platform is 'darwin')
           return
-        # stop unselect if dragging
         else
-          @selectOnMouseUp = true
+          # allow select if not dragging
+          {shiftKey, metaKey, ctrlKey} = e
+          @selectOnMouseUp = {shiftKey, metaKey, ctrlKey}
           return
 
-      if e.shiftKey
+      if e.shiftKey and (e.metaKey or (e.ctrlKey and process.platform isnt 'darwin'))
+        # select continuous from @lastFocusedElement but leave others
+        @selectContinuousEntries(entryToSelect, false)
+        @toggleMultiSelectMenu()
+      else if e.shiftKey
+        # select continuous from @lastFocusedElement and deselect rest
         @selectContinuousEntries(entryToSelect)
-        @showMultiSelectMenu()
+        @toggleMultiSelectMenu()
       # only allow ctrl click for multi selection on non darwin systems
       else if e.metaKey or (e.ctrlKey and process.platform isnt 'darwin')
         @selectMultipleEntries(entryToSelect)
-
-        # only show the multi select menu if more then one file/directory is selected
-        @showMultiSelectMenu() if @selectedPaths().length > 1
+        @lastFocusedElement = entryToSelect
+        @toggleMultiSelectMenu()
       else
         @selectEntry(entryToSelect)
         @showFullMenu()
 
   onMouseUp: (e) ->
-    if @selectOnMouseUp
-      @selectOnMouseUp = false
+    return unless @selectOnMouseUp?
 
-      if entryToSelect = e.target.closest('.entry')
-        @selectEntry(entryToSelect)
-        @showFullMenu()
+    {shiftKey, metaKey, ctrlKey} = @selectOnMouseUp
+    @selectOnMouseUp = null
+
+    return unless entryToSelect = e.target.closest('.entry')
+
+    if shiftKey and (metaKey or (ctrlKey and process.platform isnt 'darwin'))
+      # select continuous from @lastFocusedElement but leave others
+      @selectContinuousEntries(entryToSelect, false)
+      @toggleMultiSelectMenu()
+    else if shiftKey
+      # select continuous from @lastFocusedElement and deselect rest
+      @selectContinuousEntries(entryToSelect)
+      @toggleMultiSelectMenu()
+    # only allow ctrl click for multi selection on non darwin systems
+    else if metaKey or (ctrlKey and process.platform isnt 'darwin')
+      @deselect([entryToSelect])
+      @lastFocusedElement = entryToSelect
+      @toggleMultiSelectMenu()
+    else
+      @selectEntry(entryToSelect)
+      @showFullMenu()
 
   # Public: Return an array of paths from all selected items
   #
@@ -943,8 +967,8 @@ class TreeView
   #         a new given entry. This is shift+click functionality
   #
   # Returns array of selected elements
-  selectContinuousEntries: (entry) ->
-    currentSelectedEntry = @selectedEntry()
+  selectContinuousEntries: (entry, deselectOthers = true) ->
+    currentSelectedEntry = @lastFocusedElement ? @selectedEntry()
     parentContainer = entry.parentElement
     if parentContainer.contains(currentSelectedEntry)
       entries = Array.from(parentContainer.querySelectorAll('.entry'))
@@ -952,7 +976,7 @@ class TreeView
       selectedIndex = entries.indexOf(currentSelectedEntry)
       elements = (entries[i] for i in [entryIndex..selectedIndex])
 
-      @deselect()
+      @deselect() if deselectOthers
       element.classList.add('selected') for element in elements
 
     elements
@@ -971,11 +995,17 @@ class TreeView
     @list.classList.remove('multi-select')
     @list.classList.add('full-menu')
 
-  # Public: Toggle multi-select class on the main list element to display the the
+  # Public: Toggle multi-select class on the main list element to display the
   #         menu with only items that make sense for multi select functionality
   showMultiSelectMenu: ->
     @list.classList.remove('full-menu')
     @list.classList.add('multi-select')
+
+  toggleMultiSelectMenu: ->
+    if @getSelectedEntries().length > 1
+      @showMultiSelectMenu()
+    else
+      @showFullMenu()
 
   # Public: Check for multi-select class on the main list
   #
@@ -1006,7 +1036,7 @@ class TreeView
 
   # Handle entry name object dragstart event
   onDragStart: (e) ->
-    @selectOnMouseUp = false
+    @selectOnMouseUp = null
     if entry = e.target.closest('.entry')
       e.stopPropagation()
 
