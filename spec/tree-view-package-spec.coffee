@@ -3805,6 +3805,24 @@ describe "TreeView", ->
             expect(editors[0].getPath()).toBe thetaFilePath.replace('gamma', 'alpha')
             expect(editors[1].getPath()).toBe thetaFilePath2
 
+    describe "when dropping a DirectoryView and FileViews onto the same DirectoryView's header", ->
+      it "should not move the files and directory to the hovered directory", ->
+        # Dragging alpha.txt and alphaDir into alphaDir
+        alphaFile = treeView.roots[0].entries.children[2]
+        alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
+        alphaDir.expand()
+
+        dragged = [alphaFile, alphaDir]
+
+        [dragStartEvent, dragEnterEvent, dropEvent] =
+            eventHelpers.buildInternalDragEvents(dragged, alphaDir.querySelector('.header'), alphaDir)
+
+        spyOn(treeView, 'moveEntry')
+
+        treeView.onDragStart(dragStartEvent)
+        treeView.onDrop(dropEvent)
+        expect(treeView.moveEntry).not.toHaveBeenCalled()
+
     describe "when dragging a file from the OS onto a DirectoryView's header", ->
       it "should move the file to the hovered directory", ->
         # Dragging delta.txt from OS file explorer onto alphaDir

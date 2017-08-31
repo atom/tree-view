@@ -1066,22 +1066,26 @@ class TreeView
       e.preventDefault()
       e.stopPropagation()
 
-      entry.classList.remove('selected')
-
       return unless entry.classList.contains('directory')
 
       newDirectoryPath = entry.querySelector('.name')?.dataset.path
       return false unless newDirectoryPath
 
-      initialPaths = e.dataTransfer.getData("initialPaths")
+      initialPaths = e.dataTransfer.getData('initialPaths')
 
       if initialPaths
         # Drop event from Atom
+        initialPaths = initialPaths.split(',')
+        return if initialPaths.includes(newDirectoryPath)
+
+        entry.classList.remove('selected')
+
         # iterate backwards so files in a dir are moved before the dir itself
-        for initialPath in initialPaths.split(',') by -1
+        for initialPath in initialPaths by -1
           @moveEntry(initialPath, newDirectoryPath)
       else
         # Drop event from OS
+        entry.classList.remove('selected')
         for file in e.dataTransfer.files
           @moveEntry(file.path, newDirectoryPath)
 
