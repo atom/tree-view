@@ -1025,14 +1025,17 @@ class TreeView
       dragImage.style.willChange = "transform"
 
       for target in @getSelectedEntries()
-        nameElement = target.querySelector(".name")
-        entryPath = nameElement.dataset.path
+        entryPath = target.querySelector(".name").dataset.path
         unless path.dirname(entryPath) in initialPaths
           initialPaths.push(entryPath)
-          newNameElement = nameElement.cloneNode(true)
-          for key, value of getStyleObject(nameElement)
-            newNameElement.style[key] = value
-          dragImage.append(newNameElement)
+          newElement = target.cloneNode(true)
+          if newElement.classList.contains("directory")
+            newElement.querySelector(".entries").remove()
+          for key, value of getStyleObject(target)
+            newElement.style[key] = value
+          newElement.style.paddingLeft = "1em"
+          newElement.style.paddingRight = "1em"
+          dragImage.append(newElement)
 
 
       document.body.appendChild(dragImage)
