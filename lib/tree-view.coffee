@@ -925,8 +925,11 @@ class TreeView
 
   onMouseUp: (e) ->
     if @selectOnMouseUp
-      @selectEntry(entryToSelect)
-      @showFullMenu()
+      @selectOnMouseUp = false
+
+      if entryToSelect = e.target.closest('.entry')
+        @selectEntry(entryToSelect)
+        @showFullMenu()
 
   # Public: Return an array of paths from all selected items
   #
