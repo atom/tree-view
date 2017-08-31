@@ -3244,12 +3244,6 @@ describe "TreeView", ->
         fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}))
         expect(treeView.list).toHaveClass('full-menu')
 
-    describe 'selecting multiple items', ->
-      it 'switches the contextual menu to muli-select mode', ->
-        fileView1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
-        fileView2.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, shiftKey: true}))
-        expect(treeView.list).toHaveClass('multi-select')
-
       describe 'using the shift key', ->
         it 'selects the items between the already selected item and the shift clicked item', ->
           fileView1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
