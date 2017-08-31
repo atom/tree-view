@@ -12,9 +12,12 @@ module.exports.buildInternalDragEvents = (dragged, enterTarget, dropTarget) ->
       Object.keys(dataTransfer.data).map((key) -> {type: key})
   )
 
+  for entry in dragged
+    entry.classList.add('selected')
+
   dragStartEvent = new DragEvent('dragstart')
-  Object.defineProperty(dragStartEvent, 'target', value: dragged)
-  Object.defineProperty(dragStartEvent, 'currentTarget', value: dragged)
+  Object.defineProperty(dragStartEvent, 'target', value: dragged[0])
+  Object.defineProperty(dragStartEvent, 'currentTarget', value: dragged[0])
   Object.defineProperty(dragStartEvent, 'dataTransfer', value: dataTransfer)
 
   dropEvent = new DragEvent('drop')
