@@ -898,47 +898,56 @@ class TreeView
     @element.style.display = ''
 
   onMouseDown: (e) ->
-    if entryToSelect = e.target.closest('.entry')
-      e.stopPropagation()
+    return unless entryToSelect = e.target.closest('.entry')
 
-      # return early if we're opening a contextual menu (right click) during multi-select mode
-      if @multiSelectEnabled() and entryToSelect.classList.contains('selected')
+    e.stopPropagation()
 
-        # mouse right click or ctrl click as right click on darwin platforms
-        if e.button is 2 or (e.ctrlKey and process.platform is 'darwin')
-          return
-        else
-          # allow select if not dragging
-          {shiftKey, metaKey, ctrlKey} = e
-          @selectOnMouseUp = {shiftKey, metaKey, ctrlKey}
-          return
+    # TODO: meta+click and ctrl+click should not do the same thing on Windows.
+    #       Right now removing metaKey if platform is not darwin breaks tests
+    #       that set the metaKey to true when simulating a cmd+click on macos
+    #       and ctrl+click on windows and linux.
+    cmdKey = e.metaKey or (e.ctrlKey and process.platform isnt 'darwin')
 
-      if e.shiftKey and (e.metaKey or (e.ctrlKey and process.platform isnt 'darwin'))
-        # select continuous from @lastFocusedElement but leave others
-        @selectContinuousEntries(entryToSelect, false)
-        @toggleMultiSelectMenu()
-      else if e.shiftKey
-        # select continuous from @lastFocusedElement and deselect rest
-        @selectContinuousEntries(entryToSelect)
-        @toggleMultiSelectMenu()
-      # only allow ctrl click for multi selection on non darwin systems
-      else if e.metaKey or (e.ctrlKey and process.platform isnt 'darwin')
-        @selectMultipleEntries(entryToSelect)
-        @lastFocusedElement = entryToSelect
-        @toggleMultiSelectMenu()
+    # return early if clicking on a selected entry
+    if entryToSelect.classList.contains('selected')
+
+      # mouse right click or ctrl click as right click on darwin platforms
+      if e.button is 2 or (e.ctrlKey and process.platform is 'darwin')
+        return
       else
-        @selectEntry(entryToSelect)
-        @showFullMenu()
+        # allow click on mouseup if not dragging
+        {shiftKey} = e
+        @selectOnMouseUp = {shiftKey, cmdKey}
+        return
+
+    if e.shiftKey and cmdKey
+      # select continuous from @lastFocusedElement but leave others
+      @selectContinuousEntries(entryToSelect, false)
+      @toggleMultiSelectMenu()
+    else if e.shiftKey
+      # select continuous from @lastFocusedElement and deselect rest
+      @selectContinuousEntries(entryToSelect)
+      @toggleMultiSelectMenu()
+    # only allow ctrl click for multi selection on non darwin systems
+    else if cmdKey
+      @selectMultipleEntries(entryToSelect)
+      @lastFocusedElement = entryToSelect
+      @toggleMultiSelectMenu()
+    else
+      @selectEntry(entryToSelect)
+      @showFullMenu()
 
   onMouseUp: (e) ->
     return unless @selectOnMouseUp?
 
-    {shiftKey, metaKey, ctrlKey} = @selectOnMouseUp
+    {shiftKey, cmdKey} = @selectOnMouseUp
     @selectOnMouseUp = null
 
     return unless entryToSelect = e.target.closest('.entry')
 
-    if shiftKey and (metaKey or (ctrlKey and process.platform isnt 'darwin'))
+    e.stopPropagation()
+
+    if shiftKey and cmdKey
       # select continuous from @lastFocusedElement but leave others
       @selectContinuousEntries(entryToSelect, false)
       @toggleMultiSelectMenu()
@@ -947,7 +956,7 @@ class TreeView
       @selectContinuousEntries(entryToSelect)
       @toggleMultiSelectMenu()
     # only allow ctrl click for multi selection on non darwin systems
-    else if metaKey or (ctrlKey and process.platform isnt 'darwin')
+    else if cmdKey
       @deselect([entryToSelect])
       @lastFocusedElement = entryToSelect
       @toggleMultiSelectMenu()
