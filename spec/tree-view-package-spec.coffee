@@ -1510,41 +1510,35 @@ describe "TreeView", ->
         LocalStorage.clear()
 
       describe "when attempting to paste a directory into itself", ->
-        describe "when copied", ->
-          beforeEach ->
-            LocalStorage['tree-view:copyPath'] = JSON.stringify([dirPath])
+        beforeEach ->
+          atom.notifications.clear()
 
-          it "makes a copy inside itself", ->
-            newPath = path.join(dirPath, path.basename(dirPath))
-            dirView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
-            expect(-> atom.commands.dispatch(treeView.element, "tree-view:paste")).not.toThrow()
-            expect(fs.existsSync(newPath)).toBeTruthy()
+        operations =
+          "copy": "copied"
+          "cut": "cut"
 
-          it "dispatches an event to the tree-view", ->
-            newPath = path.join(dirPath, path.basename(dirPath))
-            callback = jasmine.createSpy("onEntryCopied")
-            treeView.onEntryCopied(callback)
+        for operation, text of operations
+          describe "when #{text}", ->
+            it "shows a warning notification and does not paste", ->
+              LocalStorage["tree-view:#{operation}Path"] = JSON.stringify([dirPath])
+              newPath = path.join(dirPath, path.basename(dirPath))
+              dirView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+              expect(-> atom.commands.dispatch(treeView.element, "tree-view:paste")).not.toThrow()
+              expect(fs.existsSync(newPath)).toBe false
+              expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Cannot paste a folder into itself'
+              atom.notifications.clear()
 
-            dirView.click()
-            atom.commands.dispatch(treeView.element, "tree-view:paste")
-            expect(callback).toHaveBeenCalledWith(initialPath: dirPath, newPath: newPath)
+              nestedPath = path.join(dirPath, 'nested')
+              fs.makeTreeSync(nestedPath)
 
-          it 'does not keep copying recursively', ->
-            LocalStorage['tree-view:copyPath'] = JSON.stringify([dirPath])
-            dirView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
-
-            newPath = path.join(dirPath, path.basename(dirPath))
-            expect(-> atom.commands.dispatch(treeView.element, "tree-view:paste")).not.toThrow()
-            expect(fs.existsSync(newPath)).toBeTruthy()
-            expect(fs.existsSync(path.join(newPath, path.basename(dirPath)))).toBeFalsy()
-
-        describe "when cut", ->
-          it "does nothing", ->
-            LocalStorage['tree-view:cutPath'] = JSON.stringify([dirPath])
-            dirView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
-
-            expect(fs.existsSync(dirPath)).toBeTruthy()
-            expect(fs.existsSync(path.join(dirPath, path.basename(dirPath)))).toBeFalsy()
+              LocalStorage["tree-view:#{operation}Path"] = JSON.stringify([dirPath])
+              newPath = path.join(nestedPath, path.basename(dirPath))
+              dirView.expand()
+              nestedView = dirView.querySelector('.directory')
+              nestedView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+              expect(-> atom.commands.dispatch(treeView.element, "tree-view:paste")).not.toThrow()
+              expect(fs.existsSync(newPath)).toBe false
+              expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Cannot paste a folder into itself'
 
       describe "when pasting entries which don't exist anymore", ->
         it "skips the entry which doesn't exist", ->
@@ -3716,6 +3710,24 @@ describe "TreeView", ->
             editors = atom.workspace.getTextEditors()
             expect(editors[0].getPath()).toBe thetaFilePath.replace('gamma', 'alpha')
             expect(editors[1].getPath()).toBe thetaFilePath2
+
+      it "shows a warning notification and does not move the directory if it would result in recursive copying", ->
+        # Dragging alphaDir onto etaDir, which is a child of alphaDir's
+        alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
+        alphaDir.expand()
+
+        etaDir = alphaDir.entries.children[0]
+        etaDir.expand()
+
+        [dragStartEvent, dragEnterEvent, dropEvent] =
+          eventHelpers.buildInternalDragEvents(alphaDir, etaDir.querySelector('.header'), etaDir)
+        treeView.onDragStart(dragStartEvent)
+        treeView.onDrop(dropEvent)
+        expect(etaDir.children.length).toBe 2
+        etaDir.expand()
+        expect(etaDir.querySelector('.entries').children.length).toBe 0
+
+        expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Cannot move a folder into itself'
 
     describe "when dragging a file from the OS onto a DirectoryView's header", ->
       it "should move the file to the hovered directory", ->
