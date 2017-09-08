@@ -742,13 +742,16 @@ class TreeView
       if selectedEntry and initialPath and fs.existsSync(initialPath)
         basePath = selectedEntry.getPath()
         basePath = path.dirname(basePath) if selectedEntry.classList.contains('file')
-        basePath += path.sep # Helps out with the recursive copying check below
         newPath = path.join(basePath, path.basename(initialPath))
 
         # Do not allow copying test/a/ into test/a/b/
-        if initialPathIsDirectory and basePath.startsWith(initialPath + path.sep)
-          atom.notifications.addWarning('Cannot paste a folder into itself')
-          continue
+        # Note: A trailing path.sep is added to prevent false positives, such as test/a -> test/ab
+        realBasePath = fs.realpathSync(basePath) + path.sep
+        realInitialPath = fs.realpathSync(initialPath) + path.sep
+        if initialPathIsDirectory and realBasePath.startsWith(realInitialPath)
+          unless fs.isSymbolicLinkSync(initialPath)
+            atom.notifications.addWarning('Cannot paste a folder into itself')
+            continue
 
         if copiedPaths
           # append a number to the file if an item with the same name exists
@@ -866,10 +869,12 @@ class TreeView
     if initialPath is newDirectoryPath
       return
 
-    console.log newDirectoryPath
-    if fs.isDirectorySync(initialPath) and newDirectoryPath.startsWith(initialPath + path.sep)
-      atom.notifications.addWarning('Cannot move a folder into itself')
-      return
+    realNewDirectoryPath = fs.realpathSync(newDirectoryPath) + path.sep
+    realInitialPath = fs.realpathSync(initialPath) + path.sep
+    if fs.isDirectorySync(initialPath) and realNewDirectoryPath.startsWith(realInitialPath)
+      unless fs.isSymbolicLinkSync(initialPath)
+        atom.notifications.addWarning('Cannot move a folder into itself')
+        return
 
     entryName = path.basename(initialPath)
     newPath = path.join(newDirectoryPath, entryName).replace(/\s+$/, '')
