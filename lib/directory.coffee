@@ -263,7 +263,8 @@ class Directory
       if @expansionState.entries.has(name)
         @expansionState.entries.delete(name)
 
-    @emitter.emit('did-remove-entries', removedEntries) if entriesRemoved
+    # Convert removedEntries to a Set containing only the entries for O(1) lookup
+    @emitter.emit('did-remove-entries', new Set(removedEntries.values())) if entriesRemoved
 
     if newEntries.length > 0
       @entries.set(entry.name, entry) for entry in newEntries
