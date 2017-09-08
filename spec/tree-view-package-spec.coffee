@@ -104,9 +104,10 @@ describe "TreeView", ->
     describe "when the project has no path", ->
       beforeEach ->
         atom.project.setPaths([])
-        atom.packages.deactivatePackage("tree-view")
-
-        expect(atom.workspace.getLeftDock().getActivePaneItem()).toBeUndefined()
+        waitsForPromise ->
+          Promise.resolve(atom.packages.deactivatePackage("tree-view")) # Wrapped for both async and non-async versions of Atom
+        runs ->
+          expect(atom.workspace.getLeftDock().getActivePaneItem()).toBeUndefined()
 
         waitsForPromise -> atom.packages.activatePackage("tree-view")
 
@@ -159,10 +160,14 @@ describe "TreeView", ->
 
     describe "when the root view is opened to a file path", ->
       it "does not show the dock on activation", ->
-        atom.packages.deactivatePackage("tree-view")
-        atom.packages.packageStates = {}
-        atom.workspace.getLeftDock().hide()
-        expect(atom.workspace.getLeftDock().isVisible()).toBe(false)
+
+        waitsForPromise ->
+          Promise.resolve(atom.packages.deactivatePackage("tree-view")) # Wrapped for both async and non-async versions of Atom
+
+        runs ->
+          atom.packages.packageStates = {}
+          atom.workspace.getLeftDock().hide()
+          expect(atom.workspace.getLeftDock().isVisible()).toBe(false)
 
         waitsForPromise ->
           atom.workspace.open('tree-view.js')
@@ -192,10 +197,15 @@ describe "TreeView", ->
         dotGit = path.join(temp.mkdirSync('repo'), '.git')
         fs.makeTreeSync(dotGit)
         atom.project.setPaths([dotGit])
-        atom.packages.deactivatePackage("tree-view")
-        atom.packages.packageStates = {}
 
-        waitsForPromise -> atom.packages.activatePackage('tree-view')
+        waitsForPromise ->
+          Promise.resolve(atom.packages.deactivatePackage("tree-view")) # Wrapped for both async and non-async versions of Atom
+
+        runs ->
+          atom.packages.packageStates = {}
+
+        waitsForPromise ->
+          atom.packages.activatePackage('tree-view')
 
         runs ->
           {treeView} = atom.packages.getActivePackage("tree-view").mainModule
