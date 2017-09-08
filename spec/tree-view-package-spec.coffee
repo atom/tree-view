@@ -1508,49 +1508,69 @@ describe "TreeView", ->
 
       beforeEach ->
         LocalStorage.clear()
+        atom.notifications.clear()
 
-      describe "when attempting to paste a directory into itself", ->
-        beforeEach ->
-          atom.notifications.clear()
+      for operation in ['copy', 'cut']
+        describe "when attempting to #{operation} and paste a directory into itself", ->
+          it "shows a warning notification and does not paste", ->
+            # /dir-1/ -> /dir-1/
+            LocalStorage["tree-view:#{operation}Path"] = JSON.stringify([dirPath])
+            newPath = path.join(dirPath, path.basename(dirPath))
+            dirView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+            expect(-> atom.commands.dispatch(treeView.element, "tree-view:paste")).not.toThrow()
+            expect(fs.existsSync(newPath)).toBe false
+            expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Cannot paste a folder into itself'
 
-        operations =
-          "copy": "copied"
-          "cut": "cut"
+        describe "when attempting to #{operation} and paste a directory into a nested child directory", ->
+          it "shows a warning notification and does not paste", ->
+            nestedPath = path.join(dirPath, 'nested')
+            fs.makeTreeSync(nestedPath)
 
-        for operation, text of operations
-          describe "when #{text}", ->
-            it "shows a warning notification and does not paste", ->
-              # /dir-1/ -> /dir-1/
-              LocalStorage["tree-view:#{operation}Path"] = JSON.stringify([dirPath])
-              newPath = path.join(dirPath, path.basename(dirPath))
-              dirView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
-              expect(-> atom.commands.dispatch(treeView.element, "tree-view:paste")).not.toThrow()
-              expect(fs.existsSync(newPath)).toBe false
-              expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Cannot paste a folder into itself'
-              atom.notifications.clear()
+            # /dir-1/ -> /dir-1/nested/
+            LocalStorage["tree-view:#{operation}Path"] = JSON.stringify([dirPath])
+            newPath = path.join(nestedPath, path.basename(dirPath))
+            dirView.reload()
+            nestedView = dirView.querySelector('.directory')
+            nestedView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+            expect(-> atom.commands.dispatch(treeView.element, "tree-view:paste")).not.toThrow()
+            expect(fs.existsSync(newPath)).toBe false
+            expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Cannot paste a folder into itself'
 
-              nestedPath = path.join(dirPath, 'nested')
-              fs.makeTreeSync(nestedPath)
+        describe "when attempting to #{operation} and paste a directory into a sibling directory that starts with the same letter", ->
+          it "allows the paste to occur", ->
+            # /dir-1/ -> /dir-2/
+            LocalStorage["tree-view:#{operation}Path"] = JSON.stringify([dirPath])
+            newPath = path.join(dirPath2, path.basename(dirPath))
+            dirView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+            expect(-> atom.commands.dispatch(treeView.element, "tree-view:paste")).not.toThrow()
+            expect(fs.existsSync(newPath)).toBe true
+            expect(atom.notifications.getNotifications()[0]).toBeUndefined()
 
-              # /dir-1/ -> /dir-1/nested
-              LocalStorage["tree-view:#{operation}Path"] = JSON.stringify([dirPath])
-              newPath = path.join(nestedPath, path.basename(dirPath))
-              dirView.expand()
-              nestedView = dirView.querySelector('.directory')
-              nestedView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
-              expect(-> atom.commands.dispatch(treeView.element, "tree-view:paste")).not.toThrow()
-              expect(fs.existsSync(newPath)).toBe false
-              expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Cannot paste a folder into itself'
-              atom.notifications.clear()
-              dirView.collapse()
+        describe "when attempting to #{operation} and paste a directory into a symlink of itself", ->
+          it "shows a warning notification and does not paste", ->
+            fs.symlinkSync(dirPath, path.join(rootDirPath, 'symdir'), 'junction')
 
-              # /dir-1/ -> /dir-2/
-              LocalStorage["tree-view:#{operation}Path"] = JSON.stringify([dirPath])
-              newPath = path.join(dirPath2, path.basename(dirPath))
-              dirView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
-              expect(-> atom.commands.dispatch(treeView.element, "tree-view:paste")).not.toThrow()
-              expect(fs.existsSync(newPath)).toBe true
-              expect(atom.notifications.getNotifications()[0]).toBeUndefined()
+            # /dir-1/ -> symlink of /dir-1/
+            LocalStorage["tree-view:#{operation}Path"] = JSON.stringify([dirPath])
+            newPath = path.join(dirPath, path.basename(dirPath))
+            symlinkView = root1.querySelector('.directory')
+            symlinkView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+            expect(-> atom.commands.dispatch(treeView.element, "tree-view:paste")).not.toThrow()
+            expect(fs.existsSync(newPath)).toBe false
+            expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Cannot paste a folder into itself'
+
+        describe "when attempting to #{operation} and paste a symlink into its target directory", ->
+          it "allows the paste to occur", ->
+            symlinkedPath = path.join(rootDirPath, 'symdir')
+            fs.symlinkSync(dirPath, symlinkedPath, 'junction')
+
+            # symlink of /dir-1/ -> /dir-1/
+            LocalStorage["tree-view:#{operation}Path"] = JSON.stringify([symlinkedPath])
+            newPath = path.join(dirPath, path.basename(symlinkedPath))
+            dirView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+            expect(-> atom.commands.dispatch(treeView.element, "tree-view:paste")).not.toThrow()
+            expect(fs.existsSync(newPath)).toBe true
+            expect(atom.notifications.getNotifications()[0]).toBeUndefined()
 
       describe "when pasting entries which don't exist anymore", ->
         it "skips the entry which doesn't exist", ->
@@ -3571,6 +3591,8 @@ describe "TreeView", ->
 
       alpha2DirPath = path.join(rootDirPath, "alpha2")
 
+      symlinkToAlphaDirPath = path.join(rootDirPath, "symalpha")
+
       fs.writeFileSync(alphaFilePath, "doesn't matter")
       fs.writeFileSync(zetaFilePath, "doesn't matter")
 
@@ -3586,7 +3608,10 @@ describe "TreeView", ->
 
       fs.makeTreeSync(alpha2DirPath)
 
+      fs.symlinkSync(alphaDirPath, symlinkToAlphaDirPath, 'junction')
+
       atom.project.setPaths([rootDirPath])
+      atom.notifications.clear()
 
     describe "when dragging a FileView onto a DirectoryView's header", ->
       it "should add the selected class to the DirectoryView", ->
@@ -3744,18 +3769,56 @@ describe "TreeView", ->
         expect(etaDir.querySelector('.entries').children.length).toBe 0
 
         expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Cannot move a folder into itself'
-        atom.notifications.clear()
-        alphaDir.collapse()
 
+      it "shows a warning notification and does not move the directory if it would result in recursive copying (symlink)", ->
+        # Dragging alphaDir onto symalpha, which is a symlink to alphaDir
+        alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
+        alphaDir.expand()
+
+        symlinkDir = treeView.roots[0].entries.children[3]
+        symlinkDir.expand()
+
+        [dragStartEvent, dragEnterEvent, dropEvent] =
+          eventHelpers.buildInternalDragEvents(alphaDir, symlinkDir.querySelector('.header'), symlinkDir)
+        treeView.onDragStart(dragStartEvent)
+        treeView.onDrop(dropEvent)
+        expect(symlinkDir.children.length).toBe 2
+        symlinkDir.expand()
+        expect(symlinkDir.querySelector('.entries').children.length).toBe 2
+
+        expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Cannot move a folder into itself'
+
+      it "moves successfully when dragging a directory onto a sibling directory that starts with the same letter", ->
         # Dragging alpha onto alpha2, which is a sibling of alpha's
+        alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
+        alphaDir.expand()
+
         alpha2Dir = findDirectoryContainingText(treeView.roots[0], 'alpha2')
         [dragStartEvent, dragEnterEvent, dropEvent] =
-          eventHelpers.buildInternalDragEvents(alphaDir, etaDir.querySelector('.header'), alpha2Dir)
+          eventHelpers.buildInternalDragEvents(alphaDir, alpha2Dir.querySelector('.header'), alpha2Dir)
         treeView.onDragStart(dragStartEvent)
         treeView.onDrop(dropEvent)
         expect(alpha2Dir.children.length).toBe 2
         alpha2Dir.expand()
         expect(alpha2Dir.querySelector('.entries').children.length).toBe 1
+
+        expect(atom.notifications.getNotifications()[0]).toBeUndefined()
+
+      it "moves successfully when dragging a symlink into its target directory", ->
+        # Dragging alphaDir onto symalpha, which is a symlink to alphaDir
+        alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
+        alphaDir.expand()
+
+        symlinkDir = treeView.roots[0].entries.children[3]
+        symlinkDir.expand()
+
+        [dragStartEvent, dragEnterEvent, dropEvent] =
+          eventHelpers.buildInternalDragEvents(symlinkDir, alphaDir.querySelector('.header'), alphaDir)
+        treeView.onDragStart(dragStartEvent)
+        treeView.onDrop(dropEvent)
+        expect(alphaDir.children.length).toBe 2
+        alphaDir.reload()
+        expect(alphaDir.querySelector('.entries').children.length).toBe 3
 
         expect(atom.notifications.getNotifications()[0]).toBeUndefined()
 
