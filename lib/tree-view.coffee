@@ -742,9 +742,11 @@ class TreeView
       if selectedEntry and initialPath and fs.existsSync(initialPath)
         basePath = selectedEntry.getPath()
         basePath = path.dirname(basePath) if selectedEntry.classList.contains('file')
+        basePath += path.sep # Helps out with the recursive copying check below
         newPath = path.join(basePath, path.basename(initialPath))
 
-        if basePath.startsWith(initialPath) # For example, trying to copy test/a/ into test/a/b/
+        # Do not allow copying test/a/ into test/a/b/
+        if initialPathIsDirectory and basePath.startsWith(initialPath + path.sep)
           atom.notifications.addWarning('Cannot paste a folder into itself')
           continue
 
@@ -761,7 +763,7 @@ class TreeView
               newPath = "#{filePath}#{fileCounter}#{extension}"
             fileCounter += 1
 
-          if fs.isDirectorySync(initialPath)
+          if initialPathIsDirectory
             # use fs.copy to copy directories since read/write will fail for directories
             catchAndShowFileErrors =>
               fs.copySync(initialPath, newPath)
@@ -864,7 +866,8 @@ class TreeView
     if initialPath is newDirectoryPath
       return
 
-    if newDirectoryPath.startsWith(initialPath)
+    console.log newDirectoryPath
+    if fs.isDirectorySync(initialPath) and newDirectoryPath.startsWith(initialPath + path.sep)
       atom.notifications.addWarning('Cannot move a folder into itself')
       return
 

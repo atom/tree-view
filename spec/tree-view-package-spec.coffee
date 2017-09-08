@@ -1520,6 +1520,7 @@ describe "TreeView", ->
         for operation, text of operations
           describe "when #{text}", ->
             it "shows a warning notification and does not paste", ->
+              # /dir-1/ -> /dir-1/
               LocalStorage["tree-view:#{operation}Path"] = JSON.stringify([dirPath])
               newPath = path.join(dirPath, path.basename(dirPath))
               dirView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
@@ -1531,6 +1532,7 @@ describe "TreeView", ->
               nestedPath = path.join(dirPath, 'nested')
               fs.makeTreeSync(nestedPath)
 
+              # /dir-1/ -> /dir-1/nested
               LocalStorage["tree-view:#{operation}Path"] = JSON.stringify([dirPath])
               newPath = path.join(nestedPath, path.basename(dirPath))
               dirView.expand()
@@ -1539,6 +1541,16 @@ describe "TreeView", ->
               expect(-> atom.commands.dispatch(treeView.element, "tree-view:paste")).not.toThrow()
               expect(fs.existsSync(newPath)).toBe false
               expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Cannot paste a folder into itself'
+              atom.notifications.clear()
+              dirView.collapse()
+
+              # /dir-1/ -> /dir-2/
+              LocalStorage["tree-view:#{operation}Path"] = JSON.stringify([dirPath])
+              newPath = path.join(dirPath2, path.basename(dirPath))
+              dirView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+              expect(-> atom.commands.dispatch(treeView.element, "tree-view:paste")).not.toThrow()
+              expect(fs.existsSync(newPath)).toBe true
+              expect(atom.notifications.getNotifications()[0]).toBeUndefined()
 
       describe "when pasting entries which don't exist anymore", ->
         it "skips the entry which doesn't exist", ->
@@ -3557,6 +3569,8 @@ describe "TreeView", ->
       thetaDirPath = path.join(gammaDirPath, "theta")
       thetaFilePath = path.join(thetaDirPath, "theta.txt")
 
+      alpha2DirPath = path.join(rootDirPath, "alpha2")
+
       fs.writeFileSync(alphaFilePath, "doesn't matter")
       fs.writeFileSync(zetaFilePath, "doesn't matter")
 
@@ -3569,6 +3583,8 @@ describe "TreeView", ->
       fs.writeFileSync(epsilonFilePath, "doesn't matter")
       fs.makeTreeSync(thetaDirPath)
       fs.writeFileSync(thetaFilePath, "doesn't matter")
+
+      fs.makeTreeSync(alpha2DirPath)
 
       atom.project.setPaths([rootDirPath])
 
@@ -3728,6 +3744,20 @@ describe "TreeView", ->
         expect(etaDir.querySelector('.entries').children.length).toBe 0
 
         expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Cannot move a folder into itself'
+        atom.notifications.clear()
+        alphaDir.collapse()
+
+        # Dragging alpha onto alpha2, which is a sibling of alpha's
+        alpha2Dir = findDirectoryContainingText(treeView.roots[0], 'alpha2')
+        [dragStartEvent, dragEnterEvent, dropEvent] =
+          eventHelpers.buildInternalDragEvents(alphaDir, etaDir.querySelector('.header'), alpha2Dir)
+        treeView.onDragStart(dragStartEvent)
+        treeView.onDrop(dropEvent)
+        expect(alpha2Dir.children.length).toBe 2
+        alpha2Dir.expand()
+        expect(alpha2Dir.querySelector('.entries').children.length).toBe 1
+
+        expect(atom.notifications.getNotifications()[0]).toBeUndefined()
 
     describe "when dragging a file from the OS onto a DirectoryView's header", ->
       it "should move the file to the hovered directory", ->
