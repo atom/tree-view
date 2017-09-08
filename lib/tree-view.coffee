@@ -282,7 +282,7 @@ class TreeView
         stats[key] = stats[key].getTime()
 
       directory = new Directory({
-        name: path.basename(projectPath)
+        name: path.basename(projectPath) or projectPath
         fullPath: projectPath
         symlink: false
         isRoot: true
