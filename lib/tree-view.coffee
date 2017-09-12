@@ -201,8 +201,8 @@ class TreeView
     @element.addEventListener 'drop', (e) => @onDrop(e)
 
     atom.commands.add @element,
-     'core:move-up': @moveUp.bind(this)
-     'core:move-down': @moveDown.bind(this)
+     'core:move-up': (e) => @moveUp(e)
+     'core:move-down': (e) => @moveDown(e)
      'core:page-up': => @pageUp()
      'core:page-down': => @pageDown()
      'core:move-to-top': => @scrollToTop()
@@ -875,8 +875,48 @@ class TreeView
         repo.getPathStatus(newPath)
 
     catch error
+      if error.code is 'EEXIST'
+        return @moveConflictingEntry(initialPath, newPath, newDirectoryPath)
+      else
+        @emitter.emit 'move-entry-failed', {initialPath, newPath}
+        atom.notifications.addWarning("Failed to move entry #{initialPath} to #{newDirectoryPath}", detail: error.message)
+
+    return true
+
+  moveConflictingEntry: (initialPath, newPath, newDirectoryPath) =>
+    try
+      if fs.isFileSync(initialPath)
+        chosen = atom.confirm
+          message: "'#{path.relative(newDirectoryPath, newPath)}' already exists"
+          detailedMessage: 'Do you want to replace it?'
+          buttons: ['Replace file', 'Skip', 'Cancel']
+
+        switch chosen
+          when 0 # Replace
+            fs.renameSync(initialPath, newPath)
+            @emitter.emit 'entry-moved', {initialPath, newPath}
+
+            if repo = repoForPath(newPath)
+              repo.getPathStatus(initialPath)
+              repo.getPathStatus(newPath)
+            break
+          when 2 # Cancel
+            return false
+      else
+        entries = fs.readdirSync(initialPath)
+        for entry in entries
+          if fs.existsSync(path.join(newPath, entry))
+            return false unless @moveConflictingEntry(path.join(initialPath, entry), path.join(newPath, entry), newDirectoryPath)
+          else
+            @moveEntry(path.join(initialPath, entry), newPath)
+
+        # "Move" the containing folder by deleting it, since we've already moved everything in it
+        fs.rmdirSync(initialPath) unless fs.readdirSync(initialPath).length
+    catch error
       @emitter.emit 'move-entry-failed', {initialPath, newPath}
-      atom.notifications.addWarning("Failed to move entry #{initialPath} to #{newDirectoryPath}", detail: error.message)
+      atom.notifications.addWarning("Failed to move entry #{initialPath} to #{newPath}", detail: error.message)
+
+    return true
 
   onStylesheetsChanged: =>
     # If visible, force a redraw so the scrollbars are styled correctly based on
@@ -1048,7 +1088,7 @@ class TreeView
       else
         # Drop event from OS
         for file in e.dataTransfer.files
-          @moveEntry(file.path, newDirectoryPath)
+          break unless @moveEntry(file.path, newDirectoryPath)
 
   isVisible: ->
     @element.offsetWidth isnt 0 or @element.offsetHeight isnt 0
