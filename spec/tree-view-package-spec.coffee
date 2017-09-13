@@ -3770,7 +3770,7 @@ describe "TreeView", ->
         runs ->
           expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe 4
 
-    fdescribe "when dragging entries that already exist", ->
+    xdescribe "when dragging entries that already exist", ->
       deltaAlphaFilePath = null
 
       beforeEach ->
