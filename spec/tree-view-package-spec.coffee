@@ -3770,13 +3770,12 @@ describe "TreeView", ->
         runs ->
           expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe 4
 
-    xdescribe "when dragging entries that already exist", ->
+    fdescribe "when dragging entries that already exist", ->
       deltaAlphaFilePath = null
 
-      beforeEach ->
-        spyOn(remote.dialog, 'showMessageBox')
-
       describe "when dragging a single file", ->
+        [dragStartEvent, dragEnterEvent, dropEvent] = []
+
         beforeEach ->
           alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
           alphaDir.expand()
@@ -3789,30 +3788,38 @@ describe "TreeView", ->
 
           [dragStartEvent, dragEnterEvent, dropEvent] =
             eventHelpers.buildInternalDragEvents(deltaFile, alphaDir.querySelector('.header'), alphaDir)
-          treeView.onDragStart(dragStartEvent)
-          treeView.onDrop(dropEvent)
 
         it "prompts to replace the file", ->
-          expect(remote.dialog.showMessageBox).toHaveBeenCalled()
+          spyOn(atom, 'confirm')
+          treeView.onDragStart(dragStartEvent)
+          treeView.onDrop(dropEvent)
+          expect(atom.confirm).toHaveBeenCalled()
 
         describe "when selecting the replace option", ->
           it "replaces the existing file", ->
-            remote.dialog.showMessageBox.mostRecentCall.args[2](0)
+            spyOn(atom, 'confirm').andReturn 0
+            treeView.onDragStart(dragStartEvent)
+            treeView.onDrop(dropEvent)
             expect(fs.readFileSync(deltaAlphaFilePath, 'utf8')).toBe "doesn't matter"
 
         describe "when selecting the skip option", ->
           it "does not replace the existing file", ->
-            remote.dialog.showMessageBox.mostRecentCall.args[2](1)
+            spyOn(atom, 'confirm').andReturn 1
+            treeView.onDragStart(dragStartEvent)
+            treeView.onDrop(dropEvent)
             expect(fs.readFileSync(deltaAlphaFilePath, 'utf8')).toBe 'old'
 
         describe "when cancelling the dialog", ->
           it "does not replace the existing file", ->
-            remote.dialog.showMessageBox.mostRecentCall.args[2](2)
+            spyOn(atom, 'confirm').andReturn 2
+            treeView.onDragStart(dragStartEvent)
+            treeView.onDrop(dropEvent)
             expect(fs.readFileSync(deltaAlphaFilePath, 'utf8')).toBe 'old'
 
-      describe "when dragging multiple files", ->
+      fdescribe "when dragging multiple files", ->
         [aAlphaFilePath, bAlphaFilePath, cAlphaFilePath,
          aGammaFilePath, bGammaFilePath, cGammaFilePath] = []
+        dropEvent = null
 
         beforeEach ->
           alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
@@ -3832,18 +3839,25 @@ describe "TreeView", ->
           fs.writeFileSync(cGammaFilePath, 'new')
 
           dropEvent = eventHelpers.buildExternalDropEvent([aGammaFilePath, bGammaFilePath, cGammaFilePath], alphaDir)
-          treeView.onDrop(dropEvent)
 
         it "prompts for each file as long as cancel is not chosen", ->
-          expect(remote.dialog.showMessageBox.calls.length).toBe 3
+          calls = 0
+          getButton = ->
+            calls++
+            switch calls
+              when 1
+                return 0
+              when 2
+                return 1
+              when 3
+                return 0
 
-          remote.dialog.showMessageBox.calls[0].args[2](0)
+          spyOn(atom, 'confirm').andCallFake -> getButton()
+          treeView.onDrop(dropEvent)
+          expect(atom.confirm.calls.length).toBe 3
+
           expect(fs.readFileSync(aAlphaFilePath, 'utf8')).toBe 'new'
-
-          remote.dialog.showMessageBox.calls[1].args[2](1)
           expect(fs.readFileSync(bAlphaFilePath, 'utf8')).toBe 'old'
-
-          remote.dialog.showMessageBox.calls[2].args[2](0)
           expect(fs.readFileSync(cAlphaFilePath, 'utf8')).toBe 'new'
 
   describe "the alwaysOpenExisting config option", ->
