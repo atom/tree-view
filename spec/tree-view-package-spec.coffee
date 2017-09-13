@@ -3543,9 +3543,8 @@ describe "TreeView", ->
           entries: new Map())
 
   describe "Dragging and dropping files", ->
-    deltaFilePath = null
-    gammaDirPath = null
-    thetaFilePath = null
+    [rootDirPath, alphaDirPath, zetaFilePath, betaFilePath, etaDirPath, gammaDirPath,
+     deltaFilePath, epsilonFilePath, thetaDirPath, thetaFilePath] = []
 
     beforeEach ->
       rootDirPath = fs.absolute(temp.mkdirSync('tree-view'))
@@ -3770,6 +3769,82 @@ describe "TreeView", ->
 
         runs ->
           expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe 4
+
+    fdescribe "when dragging entries that already exist", ->
+      deltaAlphaFilePath = null
+
+      beforeEach ->
+        spyOn(remote.dialog, 'showMessageBox')
+
+      describe "when dragging a single file", ->
+        beforeEach ->
+          alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
+          alphaDir.expand()
+          deltaAlphaFilePath = path.join(alphaDirPath, 'delta.txt')
+          fs.writeFileSync(deltaAlphaFilePath, 'old')
+
+          gammaDir = findDirectoryContainingText(treeView.roots[0], 'gamma')
+          gammaDir.expand()
+          deltaFile = findFileContainingText(treeView.roots[0], 'delta.txt')
+
+          [dragStartEvent, dragEnterEvent, dropEvent] =
+            eventHelpers.buildInternalDragEvents(deltaFile, alphaDir.querySelector('.header'), alphaDir)
+          treeView.onDragStart(dragStartEvent)
+          treeView.onDrop(dropEvent)
+
+        it "prompts to replace the file", ->
+          expect(remote.dialog.showMessageBox).toHaveBeenCalled()
+
+        describe "when selecting the replace option", ->
+          it "replaces the existing file", ->
+            remote.dialog.showMessageBox.mostRecentCall.args[2](0)
+            expect(fs.readFileSync(deltaAlphaFilePath, 'utf8')).toBe "doesn't matter"
+
+        describe "when selecting the skip option", ->
+          it "does not replace the existing file", ->
+            remote.dialog.showMessageBox.mostRecentCall.args[2](1)
+            expect(fs.readFileSync(deltaAlphaFilePath, 'utf8')).toBe 'old'
+
+        describe "when cancelling the dialog", ->
+          it "does not replace the existing file", ->
+            remote.dialog.showMessageBox.mostRecentCall.args[2](2)
+            expect(fs.readFileSync(deltaAlphaFilePath, 'utf8')).toBe 'old'
+
+      describe "when dragging multiple files", ->
+        [aAlphaFilePath, bAlphaFilePath, cAlphaFilePath,
+         aGammaFilePath, bGammaFilePath, cGammaFilePath] = []
+
+        beforeEach ->
+          alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
+          alphaDir.expand()
+          aAlphaFilePath = path.join(alphaDirPath, 'a.txt')
+          fs.writeFileSync(aAlphaFilePath, 'old')
+          bAlphaFilePath = path.join(alphaDirPath, 'b.txt')
+          fs.writeFileSync(bAlphaFilePath, 'old')
+          cAlphaFilePath = path.join(alphaDirPath, 'c.txt')
+          fs.writeFileSync(cAlphaFilePath, 'old')
+
+          aGammaFilePath = path.join(gammaDirPath, 'a.txt')
+          fs.writeFileSync(aGammaFilePath, 'new')
+          bGammaFilePath = path.join(gammaDirPath, 'b.txt')
+          fs.writeFileSync(bGammaFilePath, 'new')
+          cGammaFilePath = path.join(gammaDirPath, 'c.txt')
+          fs.writeFileSync(cGammaFilePath, 'new')
+
+          dropEvent = eventHelpers.buildExternalDropEvent([aGammaFilePath, bGammaFilePath, cGammaFilePath], alphaDir)
+          treeView.onDrop(dropEvent)
+
+        it "prompts for each file as long as cancel is not chosen", ->
+          expect(remote.dialog.showMessageBox.calls.length).toBe 3
+
+          remote.dialog.showMessageBox.calls[0].args[2](0)
+          expect(fs.readFileSync(aAlphaFilePath, 'utf8')).toBe 'new'
+
+          remote.dialog.showMessageBox.calls[1].args[2](1)
+          expect(fs.readFileSync(bAlphaFilePath, 'utf8')).toBe 'old'
+
+          remote.dialog.showMessageBox.calls[2].args[2](0)
+          expect(fs.readFileSync(cAlphaFilePath, 'utf8')).toBe 'new'
 
   describe "the alwaysOpenExisting config option", ->
     it "defaults to unset", ->

@@ -1,5 +1,5 @@
 path = require 'path'
-{shell} = require 'electron'
+{remote, shell} = require 'electron'
 
 _ = require 'underscore-plus'
 {BufferedProcess, CompositeDisposable, Emitter} = require 'atom'
@@ -886,22 +886,24 @@ class TreeView
   moveConflictingEntry: (initialPath, newPath, newDirectoryPath) =>
     try
       if fs.isFileSync(initialPath)
-        chosen = atom.confirm
+        remote.dialog.showMessageBox remote.getCurrentWindow(),
+          type: 'question'
           message: "'#{path.relative(newDirectoryPath, newPath)}' already exists"
-          detailedMessage: 'Do you want to replace it?'
+          detail: 'Do you want to replace it?'
           buttons: ['Replace file', 'Skip', 'Cancel']
+          normalizeAccessKeys: true
+        , (response) =>
+          switch response
+            when 0 # Replace
+              fs.renameSync(initialPath, newPath)
+              @emitter.emit 'entry-moved', {initialPath, newPath}
 
-        switch chosen
-          when 0 # Replace
-            fs.renameSync(initialPath, newPath)
-            @emitter.emit 'entry-moved', {initialPath, newPath}
-
-            if repo = repoForPath(newPath)
-              repo.getPathStatus(initialPath)
-              repo.getPathStatus(newPath)
-            break
-          when 2 # Cancel
-            return false
+              if repo = repoForPath(newPath)
+                repo.getPathStatus(initialPath)
+                repo.getPathStatus(newPath)
+              break
+            when 2 # Cancel
+              return false
       else
         entries = fs.readdirSync(initialPath)
         for entry in entries
