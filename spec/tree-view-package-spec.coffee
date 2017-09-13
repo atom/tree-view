@@ -3816,7 +3816,7 @@ describe "TreeView", ->
             treeView.onDrop(dropEvent)
             expect(fs.readFileSync(deltaAlphaFilePath, 'utf8')).toBe 'old'
 
-      fdescribe "when dragging multiple files", ->
+      describe "when dragging multiple files", ->
         [aAlphaFilePath, bAlphaFilePath, cAlphaFilePath,
          aGammaFilePath, bGammaFilePath, cGammaFilePath] = []
         dropEvent = null
@@ -3859,6 +3859,130 @@ describe "TreeView", ->
           expect(fs.readFileSync(aAlphaFilePath, 'utf8')).toBe 'new'
           expect(fs.readFileSync(bAlphaFilePath, 'utf8')).toBe 'old'
           expect(fs.readFileSync(cAlphaFilePath, 'utf8')).toBe 'new'
+
+        it "immediately cancels any pending file moves when cancel is chosen", ->
+          calls = 0
+          getButton = ->
+            calls++
+            switch calls
+              when 1
+                return 0
+              when 2
+                return 2
+
+          spyOn(atom, 'confirm').andCallFake -> getButton()
+          treeView.onDrop(dropEvent)
+          expect(atom.confirm.calls.length).toBe 2
+
+          expect(fs.readFileSync(aAlphaFilePath, 'utf8')).toBe 'new'
+          expect(fs.readFileSync(bAlphaFilePath, 'utf8')).toBe 'old'
+          expect(fs.readFileSync(cAlphaFilePath, 'utf8')).toBe 'old'
+
+      describe "when dragging a single directory", ->
+        [oldAFilePath, oldBFilePath, oldCFilePath, oldNestedDirPath, oldNestedFilePath,
+         onlyOldDirPath, onlyOldFilePath, newAlphaDirPath, newAFilePath, newBFilePath,
+        newCFilePath, newNestedDirPath, newNestedFilePath, onlyNewDirPath, onlyNewFilePath] = []
+        [dragStartEvent, dragEnterEvent, dropEvent] = []
+
+        beforeEach ->
+          alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
+          alphaDir.expand()
+          oldAFilePath = path.join(alphaDirPath, 'a.txt')
+          fs.writeFileSync(oldAFilePath, 'old')
+          oldBFilePath = path.join(alphaDirPath, 'b.txt')
+          fs.writeFileSync(oldBFilePath, 'old')
+          oldCFilePath = path.join(alphaDirPath, 'c.txt')
+          fs.writeFileSync(oldCFilePath, 'old')
+
+          oldNestedDirPath = path.join(alphaDirPath, 'nested')
+          fs.mkdirSync(oldNestedDirPath)
+          oldNestedFilePath = path.join(oldNestedDirPath, 'nested.txt')
+          fs.writeFileSync(oldNestedFilePath, 'old')
+
+          onlyOldDirPath = path.join(alphaDirPath, 'old')
+          fs.mkdirSync(onlyOldDirPath)
+          onlyOldFilePath = path.join(onlyOldDirPath, 'no-conflict.txt')
+          fs.writeFileSync(onlyOldFilePath, 'neither')
+
+          gammaDir = findDirectoryContainingText(treeView.roots[0], 'gamma')
+          gammaDir.expand()
+
+          newAlphaDirPath = path.join(gammaDirPath, 'alpha')
+          fs.mkdirSync(newAlphaDirPath)
+          newAFilePath = path.join(newAlphaDirPath, 'a.txt')
+          fs.writeFileSync(newAFilePath, 'new')
+          newBFilePath = path.join(newAlphaDirPath, 'b.txt')
+          fs.writeFileSync(newBFilePath, 'new')
+          newCFilePath = path.join(newAlphaDirPath, 'c.txt')
+          fs.writeFileSync(newCFilePath, 'new')
+
+          newNestedDirPath = path.join(newAlphaDirPath, 'nested')
+          fs.mkdirSync(newNestedDirPath)
+          newNestedFilePath = path.join(newNestedDirPath, 'nested.txt')
+          fs.writeFileSync(newNestedFilePath, 'new')
+
+          onlyNewDirPath = path.join(alphaDirPath, 'new')
+          fs.mkdirSync(onlyNewDirPath)
+          onlyNewFilePath = path.join(onlyNewDirPath, 'no-conflict.txt')
+          fs.writeFileSync(onlyNewFilePath, 'neither')
+
+          gammaDir.reload()
+          newAlphaDir = findDirectoryContainingText(gammaDir, 'alpha')
+
+          [dragStartEvent, dragEnterEvent, dropEvent] =
+            eventHelpers.buildInternalDragEvents(newAlphaDir, treeView.roots[0].querySelector('.header'), treeView.roots[0])
+
+        it "recursively walks the directory structure and prompts to replace each conflicting file", ->
+          spyOn(atom, 'confirm').andReturn 1
+          treeView.onDragStart(dragStartEvent)
+          treeView.onDrop(dropEvent)
+          expect(atom.confirm.calls.length).toBe 4
+          expect(atom.confirm.calls[0].args[0].message).toContain 'a.txt'
+          expect(atom.confirm.calls[1].args[0].message).toContain 'b.txt'
+          expect(atom.confirm.calls[2].args[0].message).toContain 'c.txt'
+          expect(atom.confirm.calls[3].args[0].message).toContain 'nested.txt'
+
+        it "removes the containing folder only if it is empty after all entries have finished moving", ->
+          calls = 0
+          getButton = ->
+            calls++
+            switch calls
+              when 1
+                return 1
+              when 2
+                return 1
+              when 3
+                return 1
+              when 4
+                return 0
+
+          spyOn(atom, 'confirm').andCallFake -> getButton()
+          treeView.onDragStart(dragStartEvent)
+          treeView.onDrop(dropEvent)
+          expect(fs.existsSync(newAlphaDirPath)).toBe true
+          expect(fs.existsSync(newNestedDirPath)).toBe false
+
+        it "immediately cancels any pending file moves when cancel is chosen", ->
+          calls = 0
+          getButton = ->
+            calls++
+            switch calls
+              when 1
+                return 0
+              when 2
+                return 2
+
+          spyOn(atom, 'confirm').andCallFake -> getButton()
+          spyOn(fs, 'renameSync').andCallThrough()
+          treeView.onDragStart(dragStartEvent)
+          treeView.onDrop(dropEvent)
+          expect(atom.confirm.calls.length).toBe 2
+          expect(fs.renameSync.calls.length).toBe 1
+          expect(fs.existsSync(newAFilePath)).toBe false
+          expect(fs.readFileSync(oldAFilePath, 'utf8')).toBe 'new'
+          expect(fs.existsSync(newBFilePath)).toBe true
+          expect(fs.existsSync(onlyNewDirPath)).toBe true # true since this comes after b.txt
+          expect(fs.existsSync(newNestedFilePath)).toBe true
 
   describe "the alwaysOpenExisting config option", ->
     it "defaults to unset", ->
