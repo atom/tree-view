@@ -3770,7 +3770,7 @@ describe "TreeView", ->
         runs ->
           expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe 4
 
-    fdescribe "when dragging entries that already exist", ->
+    describe "when dragging entries that already exist", ->
       deltaAlphaFilePath = null
 
       describe "when dragging a single file", ->
@@ -3878,7 +3878,7 @@ describe "TreeView", ->
           expect(fs.readFileSync(bAlphaFilePath, 'utf8')).toBe 'old'
           expect(fs.readFileSync(cAlphaFilePath, 'utf8')).toBe 'old'
 
-      describe "when dragging a single directory", ->
+      describe "when dragging directories", ->
         [oldAFilePath, oldBFilePath, oldCFilePath, oldNestedDirPath, oldNestedFilePath,
          onlyOldDirPath, onlyOldFilePath, newAlphaDirPath, newAFilePath, newBFilePath,
         newCFilePath, newNestedDirPath, newNestedFilePath, onlyNewDirPath, onlyNewFilePath] = []
@@ -3921,7 +3921,7 @@ describe "TreeView", ->
           newNestedFilePath = path.join(newNestedDirPath, 'nested.txt')
           fs.writeFileSync(newNestedFilePath, 'new')
 
-          onlyNewDirPath = path.join(alphaDirPath, 'new')
+          onlyNewDirPath = path.join(newAlphaDirPath, 'new')
           fs.mkdirSync(onlyNewDirPath)
           onlyNewFilePath = path.join(onlyNewDirPath, 'no-conflict.txt')
           fs.writeFileSync(onlyNewFilePath, 'neither')
@@ -3983,6 +3983,26 @@ describe "TreeView", ->
           expect(fs.existsSync(newBFilePath)).toBe true
           expect(fs.existsSync(onlyNewDirPath)).toBe true # true since this comes after b.txt
           expect(fs.existsSync(newNestedFilePath)).toBe true
+
+        it "moves everything as expected", ->
+          spyOn(atom, 'confirm').andReturn 0
+          spyOn(fs, 'renameSync').andCallThrough()
+          treeView.onDragStart(dragStartEvent)
+          treeView.onDrop(dropEvent)
+          expect(fs.renameSync.calls.length).toBe 4 # new/ is handled internally by fs-plus
+          expect(fs.existsSync(newAFilePath)).toBe false
+          expect(fs.readFileSync(oldAFilePath, 'utf8')).toBe 'new'
+          expect(fs.existsSync(newBFilePath)).toBe false
+          expect(fs.readFileSync(oldBFilePath, 'utf8')).toBe 'new'
+          expect(fs.readFileSync(oldCFilePath, 'utf8')).toBe 'new'
+          expect(fs.existsSync(newNestedFilePath)).toBe false
+          expect(fs.readFileSync(oldNestedFilePath, 'utf8')).toBe 'new'
+          expect(fs.existsSync(onlyOldDirPath)).toBe true
+          expect(fs.readFileSync(onlyOldFilePath, 'utf8')).toBe 'neither'
+          expect(fs.existsSync(path.join(alphaDirPath, 'new'))).toBe true
+          expect(fs.readFileSync(path.join(alphaDirPath, 'new', 'no-conflict.txt'), 'utf8')).toBe 'neither'
+          expect(fs.existsSync(onlyNewDirPath)).toBe false
+          expect(fs.existsSync(newAlphaDirPath)).toBe false
 
   describe "the alwaysOpenExisting config option", ->
     it "defaults to unset", ->
