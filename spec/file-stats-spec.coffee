@@ -31,13 +31,13 @@ describe "FileStats", ->
       temp.cleanup()
 
     it "passes stats to File instances", ->
-      stats = treeView.roots[0].directory.entries["file1.txt"].stats
+      stats = treeView.roots[0].directory.entries.get("file1.txt").stats
       expect(stats).toBeDefined()
       expect(stats.mtime).toBeDefined()
       expect(stats.size).toEqual(file1Data.length)
 
     it "passes stats to Directory instances", ->
-      stats = treeView.roots[0].directory.entries["subdir"].stats
+      stats = treeView.roots[0].directory.entries.get("subdir").stats
       expect(stats).toBeDefined()
       expect(stats.mtime).toBeDefined()
 
@@ -46,20 +46,20 @@ describe "FileStats", ->
 
     it "passes stats to File instances in subdirectories", ->
       treeView.element.querySelector(".entries > li").expand()
-      subdir = treeView.roots[0].directory.entries["subdir"]
-      stats = subdir.entries["file2.txt"].stats
+      subdir = treeView.roots[0].directory.entries.get("subdir")
+      stats = subdir.entries.get("file2.txt").stats
       expect(stats).toBeDefined()
       expect(stats.size).toEqual(file2Data.length)
 
     it "converts date-stats to timestamps", ->
-      stats = treeView.roots[0].directory.entries["file1.txt"].stats
+      stats = treeView.roots[0].directory.entries.get("file1.txt").stats
       stamp = stats.mtime
       expect(_.isDate stamp).toBe(false)
       expect(typeof stamp).toBe("number")
       expect(Number.isNaN stamp).toBe(false)
 
     it "accurately converts timestamps", ->
-      stats = treeView.roots[0].directory.entries["file1.txt"].stats
+      stats = treeView.roots[0].directory.entries.get("file1.txt").stats
       # Two minutes should be enough
       expect(Math.abs stats.mtime - timeStarted).toBeLessThan(120000)
 

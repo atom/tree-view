@@ -108,10 +108,9 @@ class DirectoryView
       view = new FileView(entry)
 
     subscription = @directory.onDidRemoveEntries (removedEntries) ->
-      for removedName, removedEntry of removedEntries when entry is removedEntry
+      if removedEntries.has(entry)
         view.element.remove()
         subscription.dispose()
-        break
     @subscriptions.add(subscription)
 
     view
