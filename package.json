@@ -1,6 +1,6 @@
 {
   "name": "tree-view",
-  "version": "0.217.9",
+  "version": "0.218.0",
   "main": "./lib/main",
   "description": "Explore and open files in the current project.",
   "repository": "https://github.com/atom/tree-view",
