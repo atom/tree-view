@@ -3847,6 +3847,18 @@ describe "TreeView", ->
     files = Array.from(element.querySelectorAll('.entries .file'))
     files.find((file) -> file.fileName.textContent is text)
 
+describe "Service provider", ->
+  [provideTreeView] = []
+  beforeEach ->
+    waitForPackageActivation()
+
+    runs ->
+      provideTreeView = atom.packages.getActivePackage('tree-view').mainModule.provideTreeView()
+
+  it "should provide selected paths", ->
+    console.log()
+    expect(provideTreeView.getSelectedPaths()).toEqual([atom.project.getPaths()[0]])
+
 describe 'Icon class handling', ->
   it 'allows multiple classes to be passed', ->
     rootDirPath = fs.absolute(temp.mkdirSync('tree-view-root1'))
