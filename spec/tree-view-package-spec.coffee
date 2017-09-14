@@ -3856,7 +3856,6 @@ describe "Service provider", ->
       provideTreeView = atom.packages.getActivePackage('tree-view').mainModule.provideTreeView()
 
   it "should provide selected paths", ->
-    console.log()
     expect(provideTreeView.getSelectedPaths()).toEqual([atom.project.getPaths()[0]])
 
 describe 'Icon class handling', ->
