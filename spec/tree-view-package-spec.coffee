@@ -2987,7 +2987,7 @@ describe "TreeView", ->
           callback = jasmine.createSpy("onEntryDeleted")
           treeView.onEntryDeleted(callback)
 
-          deletedPath = treeView.selectedEntry().getPath()
+          pathToDelete = treeView.selectedEntry().getPath()
           expect(treeView.selectedEntry().getPath()).toContain(path.join('dir2', 'new2'))
           dirView = findDirectoryContainingText(treeView.roots[0], 'dir2')
           expect(dirView).not.toBeNull()
@@ -2996,7 +2996,7 @@ describe "TreeView", ->
             dialog.buttons["Move to Trash"]()
           atom.commands.dispatch(treeView.element, 'tree-view:remove')
           expect(dirView.directory.updateStatus).toHaveBeenCalled()
-          expect(callback).toHaveBeenCalledWith({path: deletedPath})
+          expect(callback).toHaveBeenCalledWith({pathToDelete})
 
     describe "on #darwin, when the project is a symbolic link to the repository root", ->
       beforeEach ->

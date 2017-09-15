@@ -41,6 +41,7 @@ class TreeView
     @ignoredPatterns = []
     @useSyncFS = false
     @currentlyOpening = new Map
+    @editorsToDestroy = []
 
     @dragEventCounts = new WeakMap
     @rootDragAndDrop = new RootDragAndDrop(this)
@@ -73,10 +74,27 @@ class TreeView
     @disposables.add @onEntryMoved ({initialPath, newPath}) ->
       updateEditorsForPath(initialPath, newPath)
 
-    @disposables.add @onEntryDeleted ({path}) ->
+    @disposables.add @onWillDeleteEntry ({pathToDelete}) =>
+      if fs.isDirectorySync(pathToDelete)
+        pathToDelete += path.sep # Avoid destroying lib2's editors when lib was deleted
+        for editor in atom.workspace.getTextEditors()
+          if editor.getPath().startsWith(pathToDelete) and not editor.isModified()
+            @editorsToDestroy.push(editor.getPath())
+      else
+        for editor in atom.workspace.getTextEditors()
+          if editor.getPath() is pathToDelete and not editor.isModified()
+            @editorsToDestroy.push(pathToDelete)
+
+    @disposables.add @onEntryDeleted ({pathToDelete}) =>
       for editor in atom.workspace.getTextEditors()
-        if editor?.getPath()?.startsWith(path)
+        index = @editorsToDestroy.indexOf(editor.getPath())
+        if index isnt -1
           editor.destroy()
+          @editorsToDestroy.splice(index, 1)
+
+    @disposables.add @onDeleteEntryFailed ({pathToDelete}) =>
+      index = @editorsToDestroy.indexOf(pathToDelete)
+      @editorsToDestroy.splice(index, 1) if index isnt -1
 
   serialize: ->
     directoryExpansionStates: new ((roots) ->
@@ -123,8 +141,14 @@ class TreeView
   onEntryCopied: (callback) ->
     @emitter.on('entry-copied', callback)
 
+  onWillDeleteEntry: (callback) ->
+    @emitter.on('will-delete-entry', callback)
+
   onEntryDeleted: (callback) ->
     @emitter.on('entry-deleted', callback)
+
+  onDeleteEntryFailed: (callback) ->
+    @emitter.on('delete-entry-failed', callback)
 
   onEntryMoved: (callback) ->
     @emitter.on('entry-moved', callback)
@@ -599,10 +623,12 @@ class TreeView
             #   but the parent folder is deleted first
             continue unless fs.existsSync(selectedPath)
 
+            @emitter.emit 'will-delete-entry', {pathToDelete: selectedPath}
             if shell.moveItemToTrash(selectedPath)
-              @emitter.emit 'entry-deleted', {path: selectedPath}
+              @emitter.emit 'entry-deleted', {pathToDelete: selectedPath}
             else
-              failedDeletions.push "#{selectedPath}"
+              @emitter.emit 'delete-entry-failed', {pathToDelete: selectedPath}
+              failedDeletions.push selectedPath
 
             if repo = repoForPath(selectedPath)
               repo.getPathStatus(selectedPath)
