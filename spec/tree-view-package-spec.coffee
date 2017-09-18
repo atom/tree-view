@@ -4,6 +4,7 @@ path = require 'path'
 temp = require('temp').track()
 os = require 'os'
 {remote, shell} = require 'electron'
+Directory = require '../lib/directory'
 eventHelpers = require "./event-helpers"
 
 waitForPackageActivation = ->
@@ -101,9 +102,10 @@ describe "TreeView", ->
     describe "when the project has no path", ->
       beforeEach ->
         atom.project.setPaths([])
-        atom.packages.deactivatePackage("tree-view")
-
-        expect(atom.workspace.getLeftDock().getActivePaneItem()).toBeUndefined()
+        waitsForPromise ->
+          Promise.resolve(atom.packages.deactivatePackage("tree-view")) # Wrapped for both async and non-async versions of Atom
+        runs ->
+          expect(atom.workspace.getLeftDock().getActivePaneItem()).toBeUndefined()
 
         waitsForPromise -> atom.packages.activatePackage("tree-view")
 
@@ -156,10 +158,14 @@ describe "TreeView", ->
 
     describe "when the root view is opened to a file path", ->
       it "does not show the dock on activation", ->
-        atom.packages.deactivatePackage("tree-view")
-        atom.packages.packageStates = {}
-        atom.workspace.getLeftDock().hide()
-        expect(atom.workspace.getLeftDock().isVisible()).toBe(false)
+
+        waitsForPromise ->
+          Promise.resolve(atom.packages.deactivatePackage("tree-view")) # Wrapped for both async and non-async versions of Atom
+
+        runs ->
+          atom.packages.packageStates = {}
+          atom.workspace.getLeftDock().hide()
+          expect(atom.workspace.getLeftDock().isVisible()).toBe(false)
 
         waitsForPromise ->
           atom.workspace.open('tree-view.js')
@@ -189,10 +195,15 @@ describe "TreeView", ->
         dotGit = path.join(temp.mkdirSync('repo'), '.git')
         fs.makeTreeSync(dotGit)
         atom.project.setPaths([dotGit])
-        atom.packages.deactivatePackage("tree-view")
-        atom.packages.packageStates = {}
 
-        waitsForPromise -> atom.packages.activatePackage('tree-view')
+        waitsForPromise ->
+          Promise.resolve(atom.packages.deactivatePackage("tree-view")) # Wrapped for both async and non-async versions of Atom
+
+        runs ->
+          atom.packages.packageStates = {}
+
+        waitsForPromise ->
+          atom.packages.activatePackage('tree-view')
 
         runs ->
           {treeView} = atom.packages.getActivePackage("tree-view").mainModule
@@ -285,7 +296,7 @@ describe "TreeView", ->
           atom.config.set "tree-view.focusOnReveal", true
 
           waitsForPromise ->
-            atom.workspace.open(path.join(atom.project.getPaths()[0], 'dir1', 'file1'))
+            atom.workspace.open(path.join(path1, 'dir1', 'file1'))
 
           waitsForPromise ->
             treeView.revealActiveFile()
@@ -296,7 +307,7 @@ describe "TreeView", ->
 
           waitsForPromise ->
             treeView.focus.reset()
-            atom.workspace.open(path.join(atom.project.getPaths()[1], 'dir3', 'file3'))
+            atom.workspace.open(path.join(path2, 'dir3', 'file3'))
 
           waitsForPromise ->
             treeView.revealActiveFile()
@@ -310,7 +321,7 @@ describe "TreeView", ->
           atom.config.set "tree-view.focusOnReveal", false
 
           waitsForPromise ->
-            atom.workspace.open(path.join(atom.project.getPaths()[0], 'dir1', 'file1'))
+            atom.workspace.open(path.join(path1, 'dir1', 'file1'))
 
           waitsForPromise ->
             treeView.revealActiveFile()
@@ -321,7 +332,7 @@ describe "TreeView", ->
 
           waitsForPromise ->
             treeView.focus.reset()
-            atom.workspace.open(path.join(atom.project.getPaths()[1], 'dir3', 'file3'))
+            atom.workspace.open(path.join(path2, 'dir3', 'file3'))
 
           waitsForPromise ->
             treeView.revealActiveFile()
@@ -329,6 +340,24 @@ describe "TreeView", ->
           runs ->
             expect(treeView.element.parentElement).toBeTruthy()
             expect(treeView.focus).not.toHaveBeenCalled()
+
+      describe "if the file is located under collapsed folders", ->
+        it "expands all the folders and selects the file", ->
+          waitsForPromise ->
+            atom.workspace.open(path.join(path1, 'dir1', 'file1'))
+
+          runs ->
+            treeView.selectEntry(root1)
+            treeView.collapseDirectory(true) # Recursively collapse all directories
+
+          waitsForPromise ->
+            treeView.revealActiveFile()
+
+          runs ->
+            expect(treeView.entryForPath(path1).classList.contains('expanded')).toBe true
+            expect(treeView.entryForPath(path.join(path1, 'dir1')).classList.contains('expanded')).toBe true
+            expect(treeView.selectedEntry()).toBeTruthy()
+            expect(treeView.selectedEntry().getPath()).toBe path.join(path1, 'dir1', 'file1')
 
     describe "if the current file has no path", ->
       it "shows and focuses the tree view, but does not attempt to select a specific file", ->
@@ -379,6 +408,12 @@ describe "TreeView", ->
           treeView.revealActiveFile()
         runs ->
           expect(treeView.scrollTop()).toBeGreaterThan 400
+          entries = treeView.element.querySelectorAll('.entry')
+          scrollTop = treeView.element.scrollTop
+          for i in [0...entries.length]
+            atom.commands.dispatch(treeView.element, 'core:move-up')
+            expect(treeView.element.scrollTop - scrollTop).toBeLessThan entries[i].clientHeight
+            scrollTop = treeView.element.scrollTop
 
         # Open file in the middle, should be centered in scroll
         waitsForPromise -> atom.workspace.open(path.join(rootDirPath, 'file-10.txt'))
@@ -1316,10 +1351,29 @@ describe "TreeView", ->
               expect(item.getPath()).toBe atom.project.getDirectories()[0].resolve(fileName)
 
   describe "removing a project folder", ->
-    it "removes the folder from the project", ->
-      rootHeader = treeView.roots[1].querySelector(".header")
-      atom.commands.dispatch(rootHeader, "tree-view:remove-project-folder")
-      expect(atom.project.getPaths()).toHaveLength(1)
+    describe "when the project folder is selected", ->
+      it "removes the folder from the project", ->
+        rootHeader = treeView.roots[1].querySelector(".header")
+        atom.commands.dispatch(rootHeader, "tree-view:remove-project-folder")
+        expect(atom.project.getPaths()).toEqual [path1]
+
+    describe "when an entry is selected", ->
+      it "removes the project folder containing the entry", ->
+        treeView.selectEntry(treeView.roots[1].querySelector(".entries").querySelector("li"))
+        atom.commands.dispatch(treeView.element, "tree-view:remove-project-folder")
+        expect(atom.project.getPaths()).toEqual [path1]
+
+    describe "when nothing is selected and there is only one project folder", ->
+      it "removes the project folder", ->
+        atom.project.removePath(path2)
+        atom.commands.dispatch(treeView.element, "tree-view:remove-project-folder")
+        expect(atom.project.getPaths()).toHaveLength 0
+
+    describe "when nothing is selected and there are multiple project folders", ->
+      it "does nothing", ->
+        treeView.deselect(treeView.getSelectedEntries())
+        atom.commands.dispatch(treeView.element, "tree-view:remove-project-folder")
+        expect(atom.project.getPaths()).toHaveLength 2
 
   describe "file modification", ->
     [dirView, dirView2, dirView3, fileView, fileView2, fileView3, fileView4] = []
@@ -1804,7 +1858,7 @@ describe "TreeView", ->
 
         describe "when the parent directory of the selected file changes", ->
           it "still shows the active file as selected", ->
-            dirView.directory.emitter.emit 'did-remove-entries', {'deleted.txt': {}}
+            dirView.directory.emitter.emit 'did-remove-entries', new Map().set('deleted.txt', {})
             expect(treeView.element.querySelector('.selected').textContent).toBe path.basename(filePath)
 
         describe "when the path without a trailing '#{path.sep}' is changed and confirmed", ->
@@ -2552,7 +2606,7 @@ describe "TreeView", ->
 
           atom.commands.dispatch(treeView.element, 'tree-view:remove')
           expect(atom.notifications.getNotifications().length).toBe 0
-          
+
         it "focuses the first selected entry's parent folder", ->
           jasmine.attachToDOM(workspaceElement)
 
@@ -3296,25 +3350,23 @@ describe "TreeView", ->
       treeView.roots[0].expand()
       expect(treeView.roots[0].directory.serializeExpansionState()).toEqual
         isExpanded: true
-        entries:
-          entries:
-            isExpanded: false
-            entries: {}
+        entries: new Map().set('entries',
+          isExpanded: false
+          entries: new Map())
 
       fs.removeSync(entriesPath)
       treeView.roots[0].reload()
       expect(treeView.roots[0].directory.serializeExpansionState()).toEqual
         isExpanded: true
-        entries: {}
+        entries: new Map()
 
       fs.mkdirSync(path.join(projectPath, 'other'))
       treeView.roots[0].reload()
       expect(treeView.roots[0].directory.serializeExpansionState()).toEqual
         isExpanded: true
-        entries:
-          other:
-            isExpanded: false
-            entries: {}
+        entries: new Map().set('other',
+          isExpanded: false
+          entries: new Map())
 
   describe "Dragging and dropping files", ->
     deltaFilePath = null
@@ -3782,6 +3834,48 @@ describe "TreeView", ->
 
         expect(atom.project.getPaths()).toEqual [alphaDirPath, thetaDirPath]
         expect(document.querySelector('.placeholder')).not.toExist()
+
+  describe "when there is a __proto__ entry present", ->
+    it "does not break anything", ->
+      # No assertions needed - multiple exceptions will be thrown if this test fails
+      projectPath = temp.mkdirSync('atom-project')
+      protoPath = path.join(projectPath, "__proto__")
+      fs.writeFileSync(protoPath, 'test')
+      atom.project.setPaths([projectPath])
+
+  describe "directory expansion serialization", ->
+    it "converts legacy expansion serialization Objects to Maps", ->
+      # The conversion actually happens when a new Directory
+      # is instantiated with a serialized expansion state,
+      # not when serialization occurs
+      legacyState =
+        isExpanded: true
+        entries:
+          'a':
+            isExpanded: true
+          'tree-view':
+            isExpanded: false
+            entries:
+              'sub-folder':
+                isExpanded: true
+
+      convertedState =
+        isExpanded: true
+        entries: new Map().set('a', {isExpanded: true}).set('tree-view',
+          isExpanded: false
+          entries: new Map().set 'sub-folder',
+            isExpanded: true)
+
+      directory = new Directory({name: 'test', fullPath: 'path', symlink: false, expansionState: legacyState})
+      expect(directory.expansionState.entries instanceof Map).toBe true
+
+      assertEntriesDeepEqual = (expansionEntries, convertedEntries) ->
+        expansionEntries.forEach (entry, name) ->
+          if entry.entries? or convertedEntries.get(name).entries?
+            assertEntriesDeepEqual(entry.entries, convertedEntries.get(name).entries)
+          expect(entry).toEqual convertedEntries.get(name)
+
+      assertEntriesDeepEqual(directory.expansionState.entries, convertedState.entries)
 
   findDirectoryContainingText = (element, text) ->
     directories = Array.from(element.querySelectorAll('.entries .directory'))

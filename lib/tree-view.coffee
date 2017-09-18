@@ -304,8 +304,7 @@ class TreeView
       @selectEntryForPath(activeFilePath)
 
   revealActiveFile: (focus) ->
-    if _.isEmpty(atom.project.getPaths())
-      return Promise.resolve()
+    return Promise.resolve() unless atom.project.getPaths().length
 
     @show(focus ? atom.config.get('tree-view.focusOnReveal')).then =>
       return unless activeFilePath = @getActivePath()
@@ -314,7 +313,10 @@ class TreeView
       return unless rootPath?
 
       activePathComponents = relativePath.split(path.sep)
-      currentPath = rootPath
+      # Add the root folder to the path components
+      activePathComponents.unshift(rootPath.substr(rootPath.lastIndexOf(path.sep) + 1))
+      # And remove it from the current path
+      currentPath = rootPath.substr(0, rootPath.lastIndexOf(path.sep))
       for pathComponent in activePathComponents
         currentPath += path.sep + pathComponent
         entry = @entryForPath(currentPath)
@@ -353,7 +355,7 @@ class TreeView
     if selectedEntry?
       if selectedEntry.classList.contains('directory')
         if @selectEntry(selectedEntry.entries.children[0])
-          @scrollToEntry(@selectedEntry())
+          @scrollToEntry(@selectedEntry(), false)
           return
 
       if nextEntry = @nextEntry(selectedEntry)
@@ -361,7 +363,7 @@ class TreeView
     else
       @selectEntry(@roots[0])
 
-    @scrollToEntry(@selectedEntry())
+    @scrollToEntry(@selectedEntry(), false)
 
   moveUp: (event) ->
     event.stopImmediatePropagation()
@@ -377,7 +379,7 @@ class TreeView
       entries = @list.querySelectorAll('.entry')
       @selectEntry(entries[entries.length - 1])
 
-    @scrollToEntry(@selectedEntry())
+    @scrollToEntry(@selectedEntry(), false)
 
   nextEntry: (entry) ->
     currentEntry = entry
@@ -727,12 +729,13 @@ class TreeView
     dialog.attach()
 
   removeProjectFolder: (e) ->
+    # Remove the targeted project folder (generally this only happens through the context menu)
     pathToRemove = e.target.closest(".project-root > .header")?.querySelector(".name")?.dataset.path
-
-    # TODO: remove this conditional once the addition of Project::removePath
-    # is released.
-    if atom.project.removePath?
-      atom.project.removePath(pathToRemove) if pathToRemove?
+    # If an entry is selected, remove that entry's project folder
+    pathToRemove ?= @selectedEntry()?.closest(".project-root")?.querySelector(".header")?.querySelector(".name")?.dataset.path
+    # Finally, if only one project folder exists and nothing is selected, remove that folder
+    pathToRemove ?= @roots[0].querySelector(".header")?.querySelector(".name")?.dataset.path if @roots.length is 1
+    atom.project.removePath(pathToRemove) if pathToRemove?
 
   selectedEntry: ->
     @list.querySelector('.selected')
@@ -767,9 +770,9 @@ class TreeView
     else
       @element.scrollTop + @element.offsetHeight
 
-  scrollToEntry: (entry) ->
+  scrollToEntry: (entry, center=true) ->
     element = if entry?.classList.contains('directory') then entry.header else entry
-    element?.scrollIntoViewIfNeeded(true) # true = center around item if possible
+    element?.scrollIntoViewIfNeeded(center)
 
   scrollToBottom: ->
     if lastEntry = _.last(@list.querySelectorAll('.entry'))
