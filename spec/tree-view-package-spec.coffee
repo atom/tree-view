@@ -3857,11 +3857,11 @@ describe "Service provider", ->
       treeView = atom.workspace.getLeftDock().getActivePaneItem()
 
   it "should provide selected paths", ->
-    expect(provideTreeView.getSelectedPaths()).toEqual([atom.project.getPaths()[0]])
+    expect(provideTreeView.selectedPaths()).toEqual([atom.project.getPaths()[0]])
 
   it "should provide entry for a path", ->
     root = atom.project.getPaths()[0]
-    expect(provideTreeView.getEntry(root)).toEqual(treeView.roots[0])
+    expect(provideTreeView.entryForPath(root)).toEqual(treeView.roots[0])
 
 
 describe 'Icon class handling', ->
