@@ -10,6 +10,8 @@ Press <kbd>ctrl-\\</kbd> or <kbd>cmd-\\</kbd> to open/close the Tree view and <k
 When the Tree view has focus you can press <kbd>a</kbd>, <kbd>shift-a</kbd>, <kbd>m</kbd>, or <kbd>delete</kbd> to add, move
 or delete files and folders.
 
+To move the Tree view to the opposite side, select and drag the Tree view dock to the other side.
+
 ![](https://f.cloud.github.com/assets/671378/2241932/6d9cface-9ceb-11e3-9026-31d5011d889d.png)
 
 ## API
