@@ -1158,15 +1158,15 @@ describe "TreeView", ->
       expandAll = ->
         for root in treeView.roots
           root.expand(true)
-          children = $(root).find('.directory')
-          children.each (index, child) ->
+          children = root1.querySelectorAll('.directory')
+          for child in children
             expect(child).toHaveClass 'expanded'
           expect(root).toHaveClass 'expanded'
 
       checkAllCollapsed = ->
         for root in treeView.roots
-          children = $(root).find('.directory')
-          children.each (index, child) ->
+          children = root1.querySelectorAll('.directory')
+          for child in children
             expect(child).not.toHaveClass 'expanded'
           expect(root).not.toHaveClass 'expanded'
 

@@ -443,7 +443,7 @@ class TreeView
 
     if allDirectories
       root.collapse(true) for root in @roots
-    else if directory = $(selectedEntry).closest('.expanded.directory')[0]
+    else if directory = selectedEntry.closest('.expanded.directory')
       directory.collapse(isRecursive)
       @selectEntry(directory)
 
