@@ -463,12 +463,25 @@ class TreeView
     return unless selectedEntry?
 
     pane = atom.workspace.getCenter().getActivePane()
-    if pane and selectedEntry.classList.contains('file')
-      if atom.workspace.getCenter().getActivePaneItem()
-        split = pane.split orientation, side
-        atom.workspace.openURIInPane selectedEntry.getPath(), split
-      else
-        @openSelectedEntry yes
+    if pane
+      if selectedEntry.classList.contains('file')
+        if atom.workspace.getCenter().getActivePaneItem()
+          split = pane.split orientation, side
+          atom.workspace.openURIInPane selectedEntry.getPath(), split
+        else
+          @openSelectedEntry yes
+      else if selectedEntry.classList.contains('directory')
+        if atom.workspace.getCenter().getActivePaneItem()
+          split = pane.split orientation, side
+          selectedEntry.directory.entries.forEach((subEntry) ->
+            unless subEntry instanceof Directory
+              atom.workspace.openURIInPane subEntry.realPath, split
+          )
+        else
+          selectedEntry.directory.entries.forEach((subEntry) ->
+            unless subEntry instanceof Directory
+              atom.workspace.openURIInPane subEntry.realPath, pane
+          )
 
   openSelectedEntryRight: ->
     @openSelectedEntrySplit 'horizontal', 'after'
