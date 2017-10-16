@@ -32,7 +32,7 @@
   },
   "providedServices": {
     "tree-view": {
-      "description": "Get treeView Instance",
+      "description": "A tree-like view of directories and files",
       "versions": {
         "1.0.0": "provideTreeView"
       }

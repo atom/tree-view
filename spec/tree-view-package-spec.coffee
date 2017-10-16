@@ -3848,20 +3848,20 @@ describe "TreeView", ->
     files.find((file) -> file.fileName.textContent is text)
 
 describe "Service provider", ->
-  [provideTreeView, treeView] = []
+  [treeView, treeViewService] = []
   beforeEach ->
     waitForPackageActivation()
 
     runs ->
-      provideTreeView = atom.packages.getActivePackage('tree-view').mainModule.provideTreeView()
       treeView = atom.workspace.getLeftDock().getActivePaneItem()
+      treeViewService = atom.packages.getActivePackage('tree-view').mainModule.provideTreeView()
 
   it "should provide selected paths", ->
-    expect(provideTreeView.selectedPaths()).toEqual([atom.project.getPaths()[0]])
+    expect(treeViewService.selectedPaths()).toEqual([atom.project.getPaths()[0]])
 
   it "should provide entry for a path", ->
     root = atom.project.getPaths()[0]
-    expect(provideTreeView.entryForPath(root)).toEqual(treeView.roots[0])
+    expect(treeViewService.entryForPath(root)).toEqual(treeView.roots[0])
 
 
 describe 'Icon class handling', ->
