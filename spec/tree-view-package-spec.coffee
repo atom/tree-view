@@ -1154,6 +1154,27 @@ describe "TreeView", ->
             expect(child).not.toHaveClass 'expanded'
           expect(treeView.roots[0]).toHaveClass 'expanded'
 
+    describe "tree-view:collapse-all", ->
+      expandAll = ->
+        for root in treeView.roots
+          root.expand(true)
+          children = root1.querySelectorAll('.directory')
+          for child in children
+            expect(child).toHaveClass 'expanded'
+          expect(root).toHaveClass 'expanded'
+
+      checkAllCollapsed = ->
+        for root in treeView.roots
+          children = root1.querySelectorAll('.directory')
+          for child in children
+            expect(child).not.toHaveClass 'expanded'
+          expect(root).not.toHaveClass 'expanded'
+
+      it "collapses all the project directories recursively", ->
+        expandAll()
+        atom.commands.dispatch(treeView.element, 'tree-view:collapse-all')
+        checkAllCollapsed()
+
     describe "tree-view:open-selected-entry", ->
       describe "when a file is selected", ->
         it "opens the file in the editor and focuses it", ->
