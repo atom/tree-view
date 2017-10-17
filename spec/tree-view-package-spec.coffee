@@ -3856,10 +3856,10 @@ describe "Service provider", ->
       treeView = atom.workspace.getLeftDock().getActivePaneItem()
       treeViewService = atom.packages.getActivePackage('tree-view').mainModule.provideTreeView()
 
-  it "should provide selected paths", ->
+  it "provides the `selectedPaths` method which should return the selected paths in the Tree View", ->
     expect(treeViewService.selectedPaths()).toEqual([atom.project.getPaths()[0]])
 
-  it "should provide entry for a path", ->
+  it "provides the `entryForPath` method which should return the Tree View entry for a given path", ->
     root = atom.project.getPaths()[0]
     expect(treeViewService.entryForPath(root)).toEqual(treeView.roots[0])
 
