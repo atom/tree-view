@@ -14,6 +14,39 @@ When the tree view has focus you can press <kbd>a</kbd>, <kbd>shift-a</kbd>,
 ![](https://f.cloud.github.com/assets/671378/2241932/6d9cface-9ceb-11e3-9026-31d5011d889d.png)
 
 ## API
+This package provides a service that you can use in other Atom packages.
+To use it, include `tree-view` in the `consumedServices` section of your
+`package.json`:
+
+``` json
+{
+  "name": "my-package",
+  "consumedServices": {
+    "tree-view": {
+      "versions": {
+        "^1.0.0": "consumeTreeView"
+      }
+    }
+  }
+}
+```
+
+Then, in your package's main module, call methods on the service:
+
+``` coffee
+module.exports =
+  activate: -> # ...
+
+  consumeTreeView: (treeView) ->
+    selectedPaths = treeView.selectedPaths()
+    # Do something with the paths...
+```
+
+The `tree-view` API has two methods:
+* `selectedPaths()` - Returns the paths to the selected tree view entries.
+* `entryForPath(entryPath)` - Returns a tree view entry for the given path.
+
+## Customization
 The tree view displays icons next to files. These icons are customizable by
 installing a package that provides an `atom.file-icons` service.
 
