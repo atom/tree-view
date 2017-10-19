@@ -3644,7 +3644,7 @@ describe "TreeView", ->
         deltaFile = gammaDir.entries.children[1]
 
         [dragStartEvent, dragEnterEvent, dropEvent] =
-            eventHelpers.buildInternalDragEvents([deltaFile], alphaDir.querySelector('.header'))
+            eventHelpers.buildInternalDragEvents([deltaFile], alphaDir.querySelector('.header'), null, treeView)
         treeView.onDragStart(dragStartEvent)
         expect(deltaFile).toHaveClass('selected')
         treeView.onDragEnter(dragEnterEvent)
@@ -3669,7 +3669,7 @@ describe "TreeView", ->
         deltaFile = gammaDir.entries.children[1]
 
         [dragStartEvent, dragEnterEvent, dropEvent] =
-            eventHelpers.buildInternalDragEvents([deltaFile], alphaDir.querySelector('.header'), alphaDir)
+            eventHelpers.buildInternalDragEvents([deltaFile], alphaDir.querySelector('.header'), alphaDir, treeView)
 
         treeView.onDragStart(dragStartEvent)
         treeView.onDrop(dropEvent)
@@ -3703,7 +3703,7 @@ describe "TreeView", ->
           treeView.deselect()
 
           [dragStartEvent, dragEnterEvent, dropEvent] =
-              eventHelpers.buildInternalDragEvents([deltaFile], alphaDir.querySelector('.header'), alphaDir)
+              eventHelpers.buildInternalDragEvents([deltaFile], alphaDir.querySelector('.header'), alphaDir, treeView)
           console.log treeView.getSelectedEntries()
 
           treeView.onDragStart(dragStartEvent)
@@ -3725,7 +3725,7 @@ describe "TreeView", ->
         gammaFiles = [].slice.call(gammaDir.entries.children, 1, 3)
 
         [dragStartEvent, dragEnterEvent, dropEvent] =
-            eventHelpers.buildInternalDragEvents(gammaFiles, alphaDir.querySelector('.header'), alphaDir)
+            eventHelpers.buildInternalDragEvents(gammaFiles, alphaDir.querySelector('.header'), alphaDir, treeView)
 
         runs ->
           treeView.onDragStart(dragStartEvent)
@@ -3753,7 +3753,7 @@ describe "TreeView", ->
         dragged = [alphaFile, alphaDir]
 
         [dragStartEvent, dragEnterEvent, dropEvent] =
-            eventHelpers.buildInternalDragEvents(dragged, thetaDir.querySelector('.header'), thetaDir)
+            eventHelpers.buildInternalDragEvents(dragged, thetaDir.querySelector('.header'), thetaDir, treeView)
 
         runs ->
           treeView.onDragStart(dragStartEvent)
@@ -3790,7 +3790,7 @@ describe "TreeView", ->
         thetaDir.expand()
 
         [dragStartEvent, dragEnterEvent, dropEvent] =
-          eventHelpers.buildInternalDragEvents([thetaDir], alphaDir.querySelector('.header'), alphaDir)
+          eventHelpers.buildInternalDragEvents([thetaDir], alphaDir.querySelector('.header'), alphaDir, treeView)
         treeView.onDragStart(dragStartEvent)
         treeView.onDrop(dropEvent)
         expect(alphaDir.children.length).toBe 2
@@ -3827,7 +3827,7 @@ describe "TreeView", ->
 
           runs ->
             [dragStartEvent, dragEnterEvent, dropEvent] =
-              eventHelpers.buildInternalDragEvents([thetaDir], alphaDir.querySelector('.header'), alphaDir)
+              eventHelpers.buildInternalDragEvents([thetaDir], alphaDir.querySelector('.header'), alphaDir, treeView)
             treeView.onDragStart(dragStartEvent)
             treeView.onDrop(dropEvent)
             expect(alphaDir.children.length).toBe 2
@@ -3846,7 +3846,7 @@ describe "TreeView", ->
         dragged = [alphaFile, alphaDir]
 
         [dragStartEvent, dragEnterEvent, dropEvent] =
-            eventHelpers.buildInternalDragEvents(dragged, alphaDir.querySelector('.header'), alphaDir)
+            eventHelpers.buildInternalDragEvents(dragged, alphaDir.querySelector('.header'), alphaDir, treeView)
 
         spyOn(treeView, 'moveEntry')
 
