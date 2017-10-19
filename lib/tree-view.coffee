@@ -3,7 +3,7 @@ path = require 'path'
 
 _ = require 'underscore-plus'
 {BufferedProcess, CompositeDisposable, Emitter} = require 'atom'
-{repoForPath, getStyleObject, getFullExtension, updateEditorsForPath} = require "./helpers"
+{repoForPath, getStyleObject, getFullExtension} = require "./helpers"
 fs = require 'fs-plus'
 
 AddDialog = require './add-dialog'
@@ -41,6 +41,7 @@ class TreeView
     @ignoredPatterns = []
     @useSyncFS = false
     @currentlyOpening = new Map
+    @editorsToMove = []
     @editorsToDestroy = []
 
     @dragEventCounts = new WeakMap
@@ -71,17 +72,41 @@ class TreeView
 
     @element.style.width = "#{state.width}px" if state.width > 0
 
-    @disposables.add @onEntryMoved ({initialPath, newPath}) ->
-      updateEditorsForPath(initialPath, newPath)
+    @disposables.add @onWillMoveEntry ({initialPath, newPath}) =>
+      editors = atom.workspace.getTextEditors()
+      if fs.isDirectorySync(initialPath)
+        initialPath += path.sep # Avoid moving lib2's editors when lib was moved
+        for editor in editors
+          filePath = editor.getPath()
+          if filePath?.startsWith(initialPath)
+            @editorsToMove.push(filePath)
+      else
+        for editor in editors
+          filePath = editor.getPath()
+          if filePath is initialPath
+            @editorsToMove.push(filePath)
+
+    @disposables.add @onEntryMoved ({initialPath, newPath}) =>
+      for editor in atom.workspace.getTextEditors()
+        filePath = editor.getPath()
+        index = @editorsToMove.indexOf(filePath)
+        if index isnt -1
+          editor.getBuffer().setPath(filePath.replace(initialPath, newPath))
+          @editorsToMove.splice(index, 1)
+
+    @disposables.add @onMoveEntryFailed ({initialPath, newPath}) =>
+      index = @editorsToMove.indexOf(initialPath)
+      @editorsToMove.splice(index, 1) if index isnt -1
 
     @disposables.add @onWillDeleteEntry ({pathToDelete}) =>
+      editors = atom.workspace.getTextEditors()
       if fs.isDirectorySync(pathToDelete)
         pathToDelete += path.sep # Avoid destroying lib2's editors when lib was deleted
-        for editor in atom.workspace.getTextEditors()
+        for editor in editors
           if editor.getPath().startsWith(pathToDelete) and not editor.isModified()
             @editorsToDestroy.push(editor.getPath())
       else
-        for editor in atom.workspace.getTextEditors()
+        for editor in editors
           if editor.getPath() is pathToDelete and not editor.isModified()
             @editorsToDestroy.push(pathToDelete)
 
@@ -150,8 +175,14 @@ class TreeView
   onDeleteEntryFailed: (callback) ->
     @emitter.on('delete-entry-failed', callback)
 
+  onWillMoveEntry: (callback) ->
+    @emitter.on('will-move-entry', callback)
+
   onEntryMoved: (callback) ->
     @emitter.on('entry-moved', callback)
+
+  onMoveEntryFailed: (callback) ->
+    @emitter.on('move-entry-failed', callback)
 
   onFileCreated: (callback) ->
     @emitter.on('file-created', callback)
@@ -503,8 +534,12 @@ class TreeView
 
     if oldPath
       dialog = new MoveDialog oldPath,
+        willMove: ({initialPath, newPath}) =>
+          @emitter.emit 'will-move-entry', {initialPath, newPath}
         onMove: ({initialPath, newPath}) =>
           @emitter.emit 'entry-moved', {initialPath, newPath}
+        onMoveFailed: ({initialPath, newPath}) =>
+          @emitter.emit 'move-entry-failed', {initialPath, newPath}
       dialog.attach()
 
   # Get the outline of a system call to the current platform's file manager.
@@ -736,9 +771,13 @@ class TreeView
           # Only move the target if the cut target doesn't exist and if the newPath
           # is not within the initial path
           unless fs.existsSync(newPath) or newPath.startsWith(initialPath)
-            catchAndShowFileErrors =>
+            try
+              @emitter.emit 'will-move-entry', {initialPath, newPath}
               fs.moveSync(initialPath, newPath)
               @emitter.emit 'entry-moved', {initialPath, newPath}
+            catch error
+              @emitter.emit 'move-entry-failed', {initialPath, newPath}
+              atom.notifications.addWarning("Unable to paste paths: #{initialPaths}", detail: error.message)
 
   add: (isCreatingFile) ->
     selectedEntry = @selectedEntry() ? @roots[0]
@@ -826,6 +865,7 @@ class TreeView
     newPath = "#{newDirectoryPath}/#{entryName}".replace(/\s+$/, '')
 
     try
+      @emitter.emit 'will-move-entry', {initialPath, newPath}
       fs.makeTreeSync(newDirectoryPath) unless fs.existsSync(newDirectoryPath)
       fs.moveSync(initialPath, newPath)
       @emitter.emit 'entry-moved', {initialPath, newPath}
@@ -835,6 +875,7 @@ class TreeView
         repo.getPathStatus(newPath)
 
     catch error
+      @emitter.emit 'move-entry-failed', {initialPath, newPath}
       atom.notifications.addWarning("Failed to move entry #{initialPath} to #{newDirectoryPath}", detail: error.message)
 
   onStylesheetsChanged: =>
