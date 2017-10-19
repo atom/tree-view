@@ -3700,8 +3700,6 @@ describe "TreeView", ->
           gammaDir.expand()
           deltaFile = gammaDir.entries.children[1]
 
-          treeView.deselect()
-
           [dragStartEvent, dragEnterEvent, dropEvent] =
               eventHelpers.buildInternalDragEvents([deltaFile], alphaDir.querySelector('.header'), alphaDir, treeView)
           console.log treeView.getSelectedEntries()
@@ -3775,9 +3773,6 @@ describe "TreeView", ->
       beforeEach ->
         waitForWorkspaceOpenEvent ->
           atom.workspace.open(thetaFilePath)
-
-        runs ->
-          treeView.deselect()
 
       it "should move the directory to the hovered directory", ->
         # Dragging thetaDir onto alphaDir
