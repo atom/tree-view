@@ -3700,8 +3700,11 @@ describe "TreeView", ->
           gammaDir.expand()
           deltaFile = gammaDir.entries.children[1]
 
+          treeView.deselect()
+
           [dragStartEvent, dragEnterEvent, dropEvent] =
-              eventHelpers.buildInternalDragEvents(deltaFile, alphaDir.querySelector('.header'), alphaDir)
+              eventHelpers.buildInternalDragEvents([deltaFile], alphaDir.querySelector('.header'), alphaDir)
+          console.log treeView.getSelectedEntries()
 
           treeView.onDragStart(dragStartEvent)
           treeView.onDrop(dropEvent)
@@ -3773,6 +3776,9 @@ describe "TreeView", ->
         waitForWorkspaceOpenEvent ->
           atom.workspace.open(thetaFilePath)
 
+        runs ->
+          treeView.deselect()
+
       it "should move the directory to the hovered directory", ->
         # Dragging thetaDir onto alphaDir
         alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
@@ -3784,7 +3790,7 @@ describe "TreeView", ->
         thetaDir.expand()
 
         [dragStartEvent, dragEnterEvent, dropEvent] =
-          eventHelpers.buildInternalDragEvents(thetaDir, alphaDir.querySelector('.header'), alphaDir)
+          eventHelpers.buildInternalDragEvents([thetaDir], alphaDir.querySelector('.header'), alphaDir)
         treeView.onDragStart(dragStartEvent)
         treeView.onDrop(dropEvent)
         expect(alphaDir.children.length).toBe 2
@@ -3821,7 +3827,7 @@ describe "TreeView", ->
 
           runs ->
             [dragStartEvent, dragEnterEvent, dropEvent] =
-              eventHelpers.buildInternalDragEvents(thetaDir, alphaDir.querySelector('.header'), alphaDir)
+              eventHelpers.buildInternalDragEvents([thetaDir], alphaDir.querySelector('.header'), alphaDir)
             treeView.onDragStart(dragStartEvent)
             treeView.onDrop(dropEvent)
             expect(alphaDir.children.length).toBe 2
