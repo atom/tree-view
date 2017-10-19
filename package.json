@@ -1,6 +1,6 @@
 {
   "name": "tree-view",
-  "version": "0.218.0",
+  "version": "0.219.0",
   "main": "./lib/main",
   "description": "Explore and open files in the current project.",
   "repository": "https://github.com/atom/tree-view",
@@ -32,6 +32,14 @@
     "file-icons.element-icons": {
       "versions": {
         "1.0.0": "consumeElementIcons"
+      }
+    }
+  },
+  "providedServices": {
+    "tree-view": {
+      "description": "A tree-like view of directories and files",
+      "versions": {
+        "1.0.0": "provideTreeView"
       }
     }
   },

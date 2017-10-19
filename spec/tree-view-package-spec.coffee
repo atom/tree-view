@@ -1151,6 +1151,27 @@ describe "TreeView", ->
             expect(child).not.toHaveClass 'expanded'
           expect(treeView.roots[0]).toHaveClass 'expanded'
 
+    describe "tree-view:collapse-all", ->
+      expandAll = ->
+        for root in treeView.roots
+          root.expand(true)
+          children = root1.querySelectorAll('.directory')
+          for child in children
+            expect(child).toHaveClass 'expanded'
+          expect(root).toHaveClass 'expanded'
+
+      checkAllCollapsed = ->
+        for root in treeView.roots
+          children = root1.querySelectorAll('.directory')
+          for child in children
+            expect(child).not.toHaveClass 'expanded'
+          expect(root).not.toHaveClass 'expanded'
+
+      it "collapses all the project directories recursively", ->
+        expandAll()
+        atom.commands.dispatch(treeView.element, 'tree-view:collapse-all')
+        checkAllCollapsed()
+
     describe "tree-view:open-selected-entry", ->
       describe "when a file is selected", ->
         it "opens the file in the editor and focuses it", ->
@@ -3969,6 +3990,23 @@ describe "TreeView", ->
   findFileContainingText = (element, text) ->
     files = Array.from(element.querySelectorAll('.entries .file'))
     files.find((file) -> file.fileName.textContent is text)
+
+describe "Service provider", ->
+  [treeView, treeViewService] = []
+  beforeEach ->
+    waitForPackageActivation()
+
+    runs ->
+      treeView = atom.workspace.getLeftDock().getActivePaneItem()
+      treeViewService = atom.packages.getActivePackage('tree-view').mainModule.provideTreeView()
+
+  it "provides the `selectedPaths` method which should return the selected paths in the Tree View", ->
+    expect(treeViewService.selectedPaths()).toEqual([atom.project.getPaths()[0]])
+
+  it "provides the `entryForPath` method which should return the Tree View entry for a given path", ->
+    root = atom.project.getPaths()[0]
+    expect(treeViewService.entryForPath(root)).toEqual(treeView.roots[0])
+
 
 describe 'Icon class handling', ->
   it 'allows multiple classes to be passed', ->
