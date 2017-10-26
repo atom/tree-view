@@ -21,6 +21,7 @@ class IconServices
   setElementIcons: (service) ->
     if service isnt @elementIcons
       @elementIconDisposables?.dispose()
+      @elementIconDisposables = new CompositeDisposable if service
       @elementIcons = service
       @emitter.emit 'did-change'
 
