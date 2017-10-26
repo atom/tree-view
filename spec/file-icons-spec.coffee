@@ -1,23 +1,23 @@
 DefaultFileIcons = require '../lib/default-file-icons'
-FileIcons = require '../lib/file-icons'
+IconServices = require '../lib/icon-services'
 
-describe 'FileIcons', ->
-  afterEach ->
-    FileIcons.setService(new DefaultFileIcons)
+describe 'IconServices', ->
+  describe 'FileIcons', ->
+    afterEach ->
+      IconServices.resetFileIcons()
+      IconServices.resetElementIcons()
 
-  it 'provides a default', ->
-    expect(FileIcons.getService()).toBeDefined()
-    expect(FileIcons.getService()).not.toBeNull()
+    it 'provides a default', ->
+      expect(IconServices.fileIcons).toBeDefined()
+      expect(IconServices.fileIcons).toBe(DefaultFileIcons)
 
-  it 'allows the default to be overridden', ->
-    service = new Object
-    FileIcons.setService(service)
+    it 'allows the default to be overridden', ->
+      service = new Object
+      IconServices.setFileIcons service
+      expect(IconServices.fileIcons).toBe(service)
 
-    expect(FileIcons.getService()).toBe(service)
-
-  it 'allows the service to be reset to the default easily', ->
-    service = new Object
-    FileIcons.setService(service)
-    FileIcons.resetService()
-
-    expect(FileIcons.getService()).not.toBe(service)
+    it 'allows the service to be reset to the default easily', ->
+      service = new Object
+      IconServices.setFileIcons service
+      IconServices.resetFileIcons()
+      expect(IconServices.fileIcons).toBe(DefaultFileIcons)

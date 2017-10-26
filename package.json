@@ -28,6 +28,11 @@
       "versions": {
         "1.0.0": "consumeFileIcons"
       }
+    },
+    "file-icons.element-icons": {
+      "versions": {
+        "1.0.0": "consumeElementIcons"
+      }
     }
   },
   "providedServices": {

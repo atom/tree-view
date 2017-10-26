@@ -7,9 +7,6 @@ os = require 'os'
 Directory = require '../lib/directory'
 eventHelpers = require "./event-helpers"
 
-DefaultFileIcons = require '../lib/default-file-icons'
-FileIcons = require '../lib/file-icons'
-
 waitForPackageActivation = ->
   waitsForPromise ->
     atom.packages.activatePackage('tree-view')
