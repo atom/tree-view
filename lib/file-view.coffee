@@ -26,19 +26,7 @@ class FileView
     @updateStatus()
 
   updateIcon: ->
-    if service = IconServices.get 'element-icons'
-      @subscriptions.add service @fileName, @file.path
-    else
-      service = IconServices.get 'file-icons'
-      iconClass = service.iconClassForPath(@file.path, "tree-view")
-
-    classes = ['name', 'icon']
-    if iconClass
-      unless Array.isArray iconClass
-        iconClass = iconClass.toString().split(/\s+/g)
-      classes.push(iconClass...)
-    @fileName.classList.add(classes...)
-
+    IconServices.updateFileIcon(this)
     @element.getPath = @getPath.bind(this)
     @element.isPathEqual = @isPathEqual.bind(this)
     @element.file = @file

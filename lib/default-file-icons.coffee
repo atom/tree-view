@@ -20,4 +20,4 @@ class DefaultFileIcons
     else
       'icon-file-text'
 
-module.exports = DefaultFileIcons
+module.exports = new DefaultFileIcons

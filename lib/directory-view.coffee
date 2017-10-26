@@ -2,7 +2,6 @@
 IconServices = require './icon-services'
 Directory = require './directory'
 FileView = require './file-view'
-{repoForPath} = require './helpers'
 
 module.exports =
 class DirectoryView
@@ -69,18 +68,7 @@ class DirectoryView
     @element.directoryName = @directoryName
 
   updateIcon: ->
-    if service = IconServices.get 'element-icons'
-      @subscriptions.add service @directoryName, @directory.path
-    else
-      if @directory.symlink
-        iconClass = 'icon-file-symlink-directory'
-      else
-        iconClass = 'icon-file-directory'
-        if @directory.isRoot
-          iconClass = 'icon-repo' if repoForPath(@directory.path)?.isProjectAtRoot()
-        else
-          iconClass = 'icon-file-submodule' if @directory.submodule
-      @directoryName.classList.add(iconClass)
+    IconServices.updateDirectoryIcon(this)
 
   updateStatus: ->
     @element.classList.remove('status-ignored', 'status-modified', 'status-added')
