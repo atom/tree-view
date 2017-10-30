@@ -1291,7 +1291,7 @@ describe "TreeView", ->
           atom.commands.dispatch(treeView.element, 'tree-view:expand-item')
           expect(atom.workspace.getCenter().getActivePaneItem()).toBeUndefined()
 
-  fdescribe "opening directory in a split pane", ->
+  describe "opening directory in a split pane", ->
     beforeEach ->
       jasmine.attachToDOM(workspaceElement)
       treeView.selectEntryForPath path1
