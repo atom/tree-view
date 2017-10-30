@@ -1291,6 +1291,31 @@ describe "TreeView", ->
           atom.commands.dispatch(treeView.element, 'tree-view:expand-item')
           expect(atom.workspace.getCenter().getActivePaneItem()).toBeUndefined()
 
+  describe "opening directory in a split pane", ->
+    beforeEach ->
+      jasmine.attachToDOM(workspaceElement)
+      waitForWorkspaceOpenEvent ->
+        treeView.selectEntryForPath path1
+        atom.commands.dispatch(treeView.element, 'tree-view:open-selected-entry-right')
+
+    it "opens a single pane", ->
+      expect(atom.workspace.getCenter().getPanes().length).toBe 1
+
+    it "opens the directory files in pane 0 and focuses it", ->
+      pane = atom.workspace.getCenter().getPanes()[0]
+      expect(atom.views.getView(pane)).toHaveFocus()
+
+      waitsFor ->
+        pane.getItems().length > 1
+
+      runs ->
+        itemPaths = pane.getItems().map (item) -> item.getPath()
+        expect(itemPaths.length).toBe(2)
+
+        expect(itemPaths).toContain atom.project.getDirectories()[0].resolve('tree-view.js')
+        expect(itemPaths).toContain atom.project.getDirectories()[0].resolve('tree-view.txt')
+
+
   describe "opening in existing split panes", ->
     beforeEach ->
       jasmine.attachToDOM(workspaceElement)
