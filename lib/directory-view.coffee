@@ -1,5 +1,5 @@
-{CompositeDisposable} = require 'event-kit'
-IconServices = require './icon-services'
+{CompositeDisposable} = require 'atom'
+getIconServices = require './get-icon-services'
 Directory = require './directory'
 FileView = require './file-view'
 
@@ -24,7 +24,7 @@ class DirectoryView
     @entries.classList.add('entries', 'list-tree')
 
     @updateIcon()
-    @subscriptions.add IconServices.onDidChange => @updateIcon()
+    @subscriptions.add getIconServices().onDidChange => @updateIcon()
     @directoryName.dataset.path = @directory.path
 
     if @directory.squashedNames?
@@ -68,7 +68,7 @@ class DirectoryView
     @element.directoryName = @directoryName
 
   updateIcon: ->
-    IconServices.updateDirectoryIcon(this)
+    getIconServices().updateDirectoryIcon(this)
 
   updateStatus: ->
     @element.classList.remove('status-ignored', 'status-modified', 'status-added')
