@@ -1,5 +1,5 @@
 {CompositeDisposable} = require 'atom'
-IconServices = require './icon-services'
+getIconServices = require './get-icon-services'
 
 module.exports =
 class FileView
@@ -22,11 +22,11 @@ class FileView
 
     @updateIcon()
     @subscriptions.add @file.onDidStatusChange => @updateStatus()
-    @subscriptions.add IconServices.onDidChange => @updateIcon()
+    @subscriptions.add getIconServices().onDidChange => @updateIcon()
     @updateStatus()
 
   updateIcon: ->
-    IconServices.updateFileIcon(this)
+    getIconServices().updateFileIcon(this)
     @element.getPath = @getPath.bind(this)
     @element.isPathEqual = @isPathEqual.bind(this)
     @element.file = @file
