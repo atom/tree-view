@@ -1,5 +1,5 @@
 DefaultFileIcons = require './default-file-icons'
-{Emitter, CompositeDisposable} = require 'event-kit'
+{Emitter, CompositeDisposable} = require 'atom'
 {repoForPath} = require './helpers'
 
 class IconServices

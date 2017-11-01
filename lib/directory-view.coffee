@@ -1,4 +1,4 @@
-{CompositeDisposable} = require 'event-kit'
+{CompositeDisposable} = require 'atom'
 IconServices = require './icon-services'
 Directory = require './directory'
 FileView = require './file-view'
