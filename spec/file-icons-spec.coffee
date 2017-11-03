@@ -1,4 +1,3 @@
-# vim: ts=2
 DefaultFileIcons = require '../lib/default-file-icons'
 getIconServices = require '../lib/get-icon-services'
 {Disposable} = require 'atom'
