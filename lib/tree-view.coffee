@@ -678,7 +678,8 @@ class TreeView
               dismissable: true
 
           # Focus the first parent folder
-          @selectEntry(selectedEntries[0].closest('.directory:not(.selected)'))
+          if firstSelectedEntry = selectedEntries[0]
+            @selectEntry(firstSelectedEntry.closest('.directory:not(.selected)'))
           @updateRoots() if atom.config.get('tree-view.squashDirectoryNames')
         "Cancel": null
 

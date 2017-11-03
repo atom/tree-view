@@ -2577,6 +2577,22 @@ describe "TreeView", ->
           args = atom.confirm.mostRecentCall.args[0]
           expect(Object.keys(args.buttons)).toEqual ['Move to Trash', 'Cancel']
 
+      it "can delete an active path that isn't in the project", ->
+        spyOn(atom, 'confirm')
+
+        filePath = path.join(os.tmpdir(), 'non-project-file.txt')
+        fs.writeFileSync(filePath, 'test')
+
+        waitsForPromise ->
+          atom.workspace.open(filePath)
+
+        runs ->
+          atom.commands.dispatch(treeView.element, 'tree-view:remove')
+          args = atom.confirm.mostRecentCall.args[0]
+          args.buttons['Move to Trash']()
+
+          expect(fs.existsSync(filePath)).toBe(false)
+
       it "shows a notification on failure", ->
         jasmine.attachToDOM(workspaceElement)
         atom.notifications.clear()
