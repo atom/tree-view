@@ -13,7 +13,7 @@ When the tree view has focus you can press <kbd>a</kbd>, <kbd>shift-a</kbd>,
 
 To move the Tree view to the opposite side, select and drag the Tree view dock to the other side.
 
-![](https://f.cloud.github.com/assets/671378/2241932/6d9cface-9ceb-11e3-9026-31d5011d889d.png)
+![tree-view](https://f.cloud.github.com/assets/671378/2241932/6d9cface-9ceb-11e3-9026-31d5011d889d.png)
 
 ## API
 This package provides a service that you can use in other Atom packages.
