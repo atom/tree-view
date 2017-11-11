@@ -103,12 +103,14 @@ class TreeView
       if fs.isDirectorySync(pathToDelete)
         pathToDelete += path.sep # Avoid destroying lib2's editors when lib was deleted
         for editor in editors
-          if editor.getPath().startsWith(pathToDelete) and not editor.isModified()
-            @editorsToDestroy.push(editor.getPath())
+          filePath = editor.getPath()
+          if filePath?.startsWith(pathToDelete) and not editor.isModified()
+            @editorsToDestroy.push(filePath)
       else
         for editor in editors
-          if editor.getPath() is pathToDelete and not editor.isModified()
-            @editorsToDestroy.push(pathToDelete)
+          filePath = editor.getPath()
+          if filePath is pathToDelete and not editor.isModified()
+            @editorsToDestroy.push(filePath)
 
     @disposables.add @onEntryDeleted ({pathToDelete}) =>
       for editor in atom.workspace.getTextEditors()

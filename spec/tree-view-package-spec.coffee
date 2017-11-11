@@ -2697,6 +2697,32 @@ describe "TreeView", ->
             openFilePaths = atom.workspace.getTextEditors().map((editor) -> editor.getPath())
             expect(openFilePaths).toEqual([filePath20])
 
+        it "does not error when Untitled editors are also open (regresssion)", ->
+          jasmine.attachToDOM(workspaceElement)
+
+          waitForWorkspaceOpenEvent ->
+            atom.workspace.open(filePath2)
+
+          waitForWorkspaceOpenEvent ->
+            atom.workspace.open(filePath3)
+
+          waitForWorkspaceOpenEvent ->
+            # Untitled editors (which have an undefined path) should not affect file deletion
+            # https://github.com/atom/atom/issues/16147
+            atom.workspace.open()
+
+          runs ->
+            openFilePaths = atom.workspace.getTextEditors().map((editor) -> editor.getPath())
+            expect(openFilePaths).toEqual([filePath2, filePath3, undefined])
+            dirView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+            treeView.focus()
+
+            spyOn(atom, 'confirm').andCallFake (dialog) -> dialog.buttons["Move to Trash"]()
+
+            atom.commands.dispatch(treeView.element, 'tree-view:remove')
+            openFilePaths = atom.workspace.getTextEditors().map((editor) -> editor.getPath())
+            expect(openFilePaths).toEqual([undefined])
+
         it "focuses the directory's parent folder", ->
           jasmine.attachToDOM(workspaceElement)
 
