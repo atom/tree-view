@@ -2556,9 +2556,11 @@ describe "TreeView", ->
           expect(atom.workspace.getModalPanels().length).toBe(0)
 
     describe "tree-view:remove", ->
+      beforeEach ->
+        jasmine.attachToDOM(workspaceElement)
+
       it "won't remove the root directory", ->
         spyOn(atom, 'confirm')
-        jasmine.attachToDOM(workspaceElement)
         treeView.focus()
         root1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
         atom.commands.dispatch(treeView.element, 'tree-view:remove')
@@ -2594,7 +2596,6 @@ describe "TreeView", ->
           expect(fs.existsSync(filePath)).toBe(false)
 
       it "shows a notification on failure", ->
-        jasmine.attachToDOM(workspaceElement)
         atom.notifications.clear()
 
         fileView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
@@ -2615,7 +2616,6 @@ describe "TreeView", ->
       it "does nothing when no file is selected", ->
         atom.notifications.clear()
 
-        jasmine.attachToDOM(workspaceElement)
         treeView.focus()
         treeView.deselect()
         atom.commands.dispatch(treeView.element, 'tree-view:remove')
@@ -2625,8 +2625,6 @@ describe "TreeView", ->
 
       describe "when a directory is removed", ->
         it "closes editors with filepaths belonging to the removed folder", ->
-          jasmine.attachToDOM(workspaceElement)
-
           waitForWorkspaceOpenEvent ->
             atom.workspace.open(filePath2)
 
@@ -2646,8 +2644,6 @@ describe "TreeView", ->
             expect(openFilePaths).toEqual([])
 
         it "does not close modified editors with filepaths belonging to the removed folder", ->
-          jasmine.attachToDOM(workspaceElement)
-
           waitForWorkspaceOpenEvent ->
             atom.workspace.open(filePath2)
 
@@ -2674,8 +2670,6 @@ describe "TreeView", ->
           fs.makeTreeSync(dirPath20)
           fs.writeFileSync(filePath20, "doesn't matter 20")
 
-          jasmine.attachToDOM(workspaceElement)
-
           waitForWorkspaceOpenEvent ->
             atom.workspace.open(filePath2)
 
@@ -2698,8 +2692,6 @@ describe "TreeView", ->
             expect(openFilePaths).toEqual([filePath20])
 
         it "does not error when Untitled editors are also open (regresssion)", ->
-          jasmine.attachToDOM(workspaceElement)
-
           waitForWorkspaceOpenEvent ->
             atom.workspace.open(filePath2)
 
@@ -2724,8 +2716,6 @@ describe "TreeView", ->
             expect(openFilePaths).toEqual([undefined])
 
         it "focuses the directory's parent folder", ->
-          jasmine.attachToDOM(workspaceElement)
-
           dirView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
           treeView.focus()
 
@@ -2736,8 +2726,6 @@ describe "TreeView", ->
 
       describe "when a file is removed", ->
         it "closes editors with filepaths belonging to the removed file", ->
-          jasmine.attachToDOM(workspaceElement)
-
           waitForWorkspaceOpenEvent ->
             atom.workspace.open(filePath2)
 
@@ -2754,8 +2742,6 @@ describe "TreeView", ->
             expect(openFilePaths).toEqual([])
 
         it "does not close editors that have been modified", ->
-          jasmine.attachToDOM(workspaceElement)
-
           waitForWorkspaceOpenEvent ->
             atom.workspace.open(filePath2)
 
@@ -2776,7 +2762,6 @@ describe "TreeView", ->
         it "does not close editors with filepaths that begin with the removed file", ->
           filePath2Copy = path.join(dirPath2, 'test-file2.txt0')
           fs.writeFileSync(filePath2Copy, "doesn't matter 2 copy")
-          jasmine.attachToDOM(workspaceElement)
 
           waitForWorkspaceOpenEvent ->
             atom.workspace.open(filePath2Copy)
@@ -2794,8 +2779,6 @@ describe "TreeView", ->
             expect(openFilePaths).toEqual([filePath2Copy])
 
         it "focuses the file's parent folder", ->
-          jasmine.attachToDOM(workspaceElement)
-
           fileView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
           treeView.focus()
 
@@ -2809,7 +2792,6 @@ describe "TreeView", ->
         it "does not error when the selected entries form a parent/child relationship", ->
           # If dir1 and dir1/file1 are both selected for deletion,
           # and dir1 is deleted first, do not error when attempting to delete dir1/file1
-          jasmine.attachToDOM(workspaceElement)
           atom.notifications.clear()
 
           fileView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
@@ -2837,7 +2819,6 @@ describe "TreeView", ->
         it "does not error", ->
           # If the file is marked for deletion but has already been deleted
           # outside of Atom by the time the deletion is confirmed, do not error
-          jasmine.attachToDOM(workspaceElement)
           atom.notifications.clear()
 
           fileView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
