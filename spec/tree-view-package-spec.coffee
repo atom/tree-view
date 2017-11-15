@@ -2353,11 +2353,13 @@ describe "TreeView", ->
               expect(callback).not.toHaveBeenCalled()
 
     describe "tree-view:move", ->
+      beforeEach ->
+        jasmine.attachToDOM(workspaceElement)
+
       describe "when a file is selected", ->
         [moveDialog, callback] = []
 
         beforeEach ->
-          jasmine.attachToDOM(workspaceElement)
           callback = jasmine.createSpy("onEntryMoved")
           treeView.onEntryMoved(callback)
 
@@ -2518,8 +2520,6 @@ describe "TreeView", ->
         moveDialog = null
 
         beforeEach ->
-          jasmine.attachToDOM(workspaceElement)
-
           waitForWorkspaceOpenEvent ->
             atom.workspace.open(filePath)
 
@@ -3848,7 +3848,26 @@ describe "TreeView", ->
 
   describe "showSelectedEntryInFileManager()", ->
     beforeEach ->
-      spyOn(shell, 'showItemInFolder').andReturn(false)
+      atom.notifications.clear()
+      jasmine.attachToDOM(workspaceElement)
+
+    it "displays the standard error output when the process fails", ->
+      {BufferedProcess} = require 'atom'
+      spyOn(BufferedProcess.prototype, 'spawn').andCallFake ->
+        EventEmitter = require 'events'
+        fakeProcess = new EventEmitter()
+        fakeProcess.send = ->
+        fakeProcess.kill = ->
+        fakeProcess.stdout = new EventEmitter()
+        fakeProcess.stdout.setEncoding = ->
+        fakeProcess.stderr = new EventEmitter()
+        fakeProcess.stderr.setEncoding = ->
+        @process = fakeProcess
+        process.nextTick ->
+          fakeProcess.stderr.emit('data', 'bad process')
+          fakeProcess.stderr.emit('close')
+          fakeProcess.stdout.emit('close')
+          fakeProcess.emit('exit')
 
     it "does nothing if no entry is selected", ->
       treeView.deselect()
