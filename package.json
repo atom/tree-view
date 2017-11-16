@@ -12,6 +12,7 @@
   "dependencies": {
     "fs-plus": "^3.0.0",
     "minimatch": "~0.3.0",
+    "nan": "2.7.0",
     "pathwatcher": "^8.0.0",
     "temp": "~0.8.1",
     "underscore-plus": "^1.0.0"
