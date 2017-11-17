@@ -225,7 +225,7 @@ class TreeView
      'tree-view:open-selected-entry-left': => @openSelectedEntryLeft()
      'tree-view:open-selected-entry-up': => @openSelectedEntryUp()
      'tree-view:open-selected-entry-down': => @openSelectedEntryDown()
-     'tree-view:move': (event) => @moveSelectedEntry(event)
+     'tree-view:move': => @moveSelectedEntry()
      'tree-view:copy': => @copySelectedEntries()
      'tree-view:cut': => @cutSelectedEntries()
      'tree-view:paste': => @pasteEntries()
