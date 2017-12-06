@@ -3563,9 +3563,7 @@ describe "TreeView", ->
           entries: new Map())
 
   describe "Dragging and dropping files", ->
-    deltaFilePath = null
-    gammaDirPath = null
-    thetaFilePath = null
+    [alphaDirPath, betaFilePath, etaDirPath, gammaDirPath, deltaFilePath, epsilonFilePath, thetaFilePath] = []
 
     beforeEach ->
       rootDirPath = fs.absolute(temp.mkdirSync('tree-view'))
@@ -3762,10 +3760,8 @@ describe "TreeView", ->
         alphaDir.expand()
 
         dropEvent = eventHelpers.buildExternalDropEvent([gammaDirPath], alphaDir)
-
-        runs ->
-          treeView.onDrop(dropEvent)
-          expect(alphaDir.children.length).toBe 2
+        treeView.onDrop(dropEvent)
+        expect(alphaDir.children.length).toBe 2
 
         waitsFor "directory view contents to refresh", ->
           findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > 2
@@ -3790,6 +3786,38 @@ describe "TreeView", ->
 
         runs ->
           expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe 4
+
+    describe "when dragging a directory from the OS onto a blank section of the Tree View", ->
+      it "should create a new project folder", ->
+        # Dragging gammaDir from OS file explorer onto blank section of Tree View
+        dropEvent = eventHelpers.buildExternalDropEvent([gammaDirPath], treeView.element)
+        treeView.onDrop(dropEvent)
+
+        waitsFor "project folder to be added", ->
+          treeView.roots.length is 2
+
+        runs ->
+          expect(treeView.roots[1].querySelector('.header .name')).toHaveText('gamma')
+
+    describe "when dragging a file from the OS onto a blank section of the Tree View", ->
+      it "should create a new project folder using the file's parent directory", ->
+        # Dragging multiple entries from OS file explorer onto blank section of Tree View
+        # Should add gammaDir, alphaDir, etaDir to the project
+        dropEvent = eventHelpers.buildExternalDropEvent([
+          deltaFilePath, epsilonFilePath, # directly under gammaDir
+          alphaDirPath, betaFilePath, etaDirPath # betaFile and etaDir directly under alphaDir
+        ], treeView.element)
+        treeView.onDrop(dropEvent)
+
+        waitsFor "project folder to be added", ->
+          treeView.roots.length is 4
+
+        runs ->
+          # Adding project folders is async - don't rely on a specific order
+          names = treeView.roots.map((root) -> root.querySelector('.header .name').innerText)
+          expect(names.includes('gamma')).toBe(true)
+          expect(names.includes('alpha')).toBe(true)
+          expect(names.includes('eta')).toBe(true)
 
   describe "the alwaysOpenExisting config option", ->
     it "defaults to unset", ->
