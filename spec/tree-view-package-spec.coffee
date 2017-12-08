@@ -209,6 +209,41 @@ describe "TreeView", ->
           {treeView} = atom.packages.getActivePackage("tree-view").mainModule
           expect(treeView).toBeFalsy()
 
+  describe "on package deactivation", ->
+    it "destroys the Tree View", ->
+      spyOn(treeView, 'destroy').andCallThrough()
+
+      waitsForPromise ->
+        atom.packages.deactivatePackage('tree-view')
+
+      runs ->
+        expect(treeView.destroy).toHaveBeenCalled()
+
+    it "waits for the Tree View to open before destroying it", ->
+      jasmine.useRealClock()
+      resolveOpenPromise = null
+      opened = false
+
+      waitsForPromise ->
+        # First deactivate the package so that we can start from scratch
+        atom.packages.deactivatePackage('tree-view')
+
+      runs ->
+        spyOn(atom.workspace, 'open').andReturn(new Promise (resolve) -> resolveOpenPromise = resolve)
+
+      waitsForPromise ->
+        atom.packages.activatePackage('tree-view')
+
+      runs ->
+        atom.packages.deactivatePackage('tree-view').then -> expect(opened).toBe(true)
+
+        # Wait what should be a sufficient amount of time for Tree View
+        # to deactivate if it wasn't waiting for the open promise
+        window.setTimeout ->
+          opened = true
+          resolveOpenPromise()
+        , 1000
+
   describe "when tree-view:toggle is triggered on the root view", ->
     beforeEach ->
       jasmine.attachToDOM(workspaceElement)
