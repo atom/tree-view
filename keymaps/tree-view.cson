@@ -82,10 +82,9 @@
   'i': 'tree-view:toggle-vcs-ignored-files'
   'home': 'core:move-to-top'
   'end': 'core:move-to-bottom'
+  'alt-f2': 'tree-view:move'
 
 '.tree-view-dialog atom-text-editor[mini]':
   'enter': 'core:confirm'
   'escape': 'core:cancel'
-  
-'.atom-text-editor':
-'alt-f2': 'tree-view:move'
+
