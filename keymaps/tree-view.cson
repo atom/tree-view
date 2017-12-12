@@ -87,5 +87,5 @@
   'enter': 'core:confirm'
   'escape': 'core:cancel'
   
-'atom-text-editor':
+'.atom-text-editor':
 'alt-f2': 'tree-view:move'
