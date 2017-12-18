@@ -1128,6 +1128,9 @@ class TreeView
         entry.classList.remove('selected')
         for file in e.dataTransfer.files
           @moveEntry(file.path, newDirectoryPath)
+    else if e.dataTransfer.files.length
+      # Drop event from OS that isn't targeting a folder: add a new project folder
+      atom.project.addPath(entry.path) for entry in e.dataTransfer.files
 
   isVisible: ->
     @element.offsetWidth isnt 0 or @element.offsetHeight isnt 0

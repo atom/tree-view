@@ -209,6 +209,41 @@ describe "TreeView", ->
           {treeView} = atom.packages.getActivePackage("tree-view").mainModule
           expect(treeView).toBeFalsy()
 
+  describe "on package deactivation", ->
+    it "destroys the Tree View", ->
+      spyOn(treeView, 'destroy').andCallThrough()
+
+      waitsForPromise ->
+        atom.packages.deactivatePackage('tree-view')
+
+      runs ->
+        expect(treeView.destroy).toHaveBeenCalled()
+
+    it "waits for the Tree View to open before destroying it", ->
+      jasmine.useRealClock()
+      resolveOpenPromise = null
+      opened = false
+
+      waitsForPromise ->
+        # First deactivate the package so that we can start from scratch
+        atom.packages.deactivatePackage('tree-view')
+
+      runs ->
+        spyOn(atom.workspace, 'open').andReturn(new Promise (resolve) -> resolveOpenPromise = resolve)
+
+      waitsForPromise ->
+        atom.packages.activatePackage('tree-view')
+
+      runs ->
+        atom.packages.deactivatePackage('tree-view').then -> expect(opened).toBe(true)
+
+        # Wait what should be a sufficient amount of time for Tree View
+        # to deactivate if it wasn't waiting for the open promise
+        window.setTimeout ->
+          opened = true
+          resolveOpenPromise()
+        , 1000
+
   describe "when tree-view:toggle is triggered on the root view", ->
     beforeEach ->
       jasmine.attachToDOM(workspaceElement)
@@ -3598,9 +3633,7 @@ describe "TreeView", ->
           entries: new Map())
 
   describe "Dragging and dropping files", ->
-    deltaFilePath = null
-    gammaDirPath = null
-    thetaFilePath = null
+    [alphaDirPath, betaFilePath, etaDirPath, gammaDirPath, deltaFilePath, epsilonFilePath, thetaFilePath] = []
 
     beforeEach ->
       rootDirPath = fs.absolute(temp.mkdirSync('tree-view'))
@@ -3874,10 +3907,8 @@ describe "TreeView", ->
         alphaDir.expand()
 
         dropEvent = eventHelpers.buildExternalDropEvent([gammaDirPath], alphaDir)
-
-        runs ->
-          treeView.onDrop(dropEvent)
-          expect(alphaDir.children.length).toBe 2
+        treeView.onDrop(dropEvent)
+        expect(alphaDir.children.length).toBe 2
 
         waitsFor "directory view contents to refresh", ->
           findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > 2
@@ -3902,6 +3933,38 @@ describe "TreeView", ->
 
         runs ->
           expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe 4
+
+    describe "when dragging a directory from the OS onto a blank section of the Tree View", ->
+      it "should create a new project folder", ->
+        # Dragging gammaDir from OS file explorer onto blank section of Tree View
+        dropEvent = eventHelpers.buildExternalDropEvent([gammaDirPath], treeView.element)
+        treeView.onDrop(dropEvent)
+
+        waitsFor "project folder to be added", ->
+          treeView.roots.length is 2
+
+        runs ->
+          expect(treeView.roots[1].querySelector('.header .name')).toHaveText('gamma')
+
+    describe "when dragging a file from the OS onto a blank section of the Tree View", ->
+      it "should create a new project folder using the file's parent directory", ->
+        # Dragging multiple entries from OS file explorer onto blank section of Tree View
+        # Should add gammaDir, alphaDir, etaDir to the project
+        dropEvent = eventHelpers.buildExternalDropEvent([
+          deltaFilePath, epsilonFilePath, # directly under gammaDir
+          alphaDirPath, betaFilePath, etaDirPath # betaFile and etaDir directly under alphaDir
+        ], treeView.element)
+        treeView.onDrop(dropEvent)
+
+        waitsFor "project folder to be added", ->
+          treeView.roots.length is 4
+
+        runs ->
+          # Adding project folders is async - don't rely on a specific order
+          names = treeView.roots.map((root) -> root.querySelector('.header .name').innerText)
+          expect(names.includes('gamma')).toBe(true)
+          expect(names.includes('alpha')).toBe(true)
+          expect(names.includes('eta')).toBe(true)
 
   describe "the alwaysOpenExisting config option", ->
     it "defaults to unset", ->
