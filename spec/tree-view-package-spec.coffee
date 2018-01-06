@@ -2981,14 +2981,14 @@ describe "TreeView", ->
       atom.config.set "tree-view.hideIgnoredNames", false
 
       expect(Array.from(treeView.roots[0].querySelectorAll('.entry')).map((e) -> e.textContent)).toEqual(['dir1', 'dir2', 'nested', 'tree-view.js', 'tree-view.txt'])
-      expect(Array.from(treeView.roots[0].querySelectorAll('.status-ignored')).map((e) -> e.textContent)).toEqual(['dir2', 'tree-view.js'])
+      expect(Array.from(treeView.roots[0].querySelectorAll('.status-ignored-name')).map((e) -> e.textContent)).toEqual(['dir2', 'tree-view.js'])
 
       atom.config.set("tree-view.hideIgnoredNames", true)
       expect(Array.from(treeView.roots[0].querySelectorAll('.entry')).map((e) -> e.textContent)).toEqual(['dir1', 'nested', 'tree-view.txt'])
 
       atom.config.set("core.ignoredNames", [])
       expect(Array.from(treeView.roots[0].querySelectorAll('.entry')).map((e) -> e.textContent)).toEqual(['dir1', 'dir2', 'nested', 'tree-view.js', 'tree-view.txt'])
-      expect(Array.from(treeView.roots[0].querySelectorAll('.status-ignored')).map((e) -> e.textContent)).toEqual([])
+      expect(Array.from(treeView.roots[0].querySelectorAll('.status-ignored-name')).map((e) -> e.textContent)).toEqual([])
 
   describe "the squashedDirectoryName config option", ->
     beforeEach ->

@@ -54,14 +54,14 @@ class File
     newStatus = null
     if repo.isPathIgnored(@path)
       newStatus = 'ignored'
+    else if @ignoredNames.matches(@path)
+      newStatus = 'ignored-name'
     else
       status = repo.getCachedPathStatus(@path)
       if repo.isStatusModified(status)
         newStatus = 'modified'
       else if repo.isStatusNew(status)
         newStatus = 'added'
-      else if @ignoredNames.matches(@path)
-        newStatus = 'ignored'
 
     if newStatus isnt @status
       @status = newStatus
