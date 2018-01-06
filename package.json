@@ -1,6 +1,6 @@
 {
   "name": "tree-view",
-  "version": "0.215.3",
+  "version": "0.222.0",
   "main": "./lib/main",
   "description": "Explore and open files in the current project.",
   "repository": "https://github.com/atom/tree-view",
@@ -10,20 +10,36 @@
   },
   "private": true,
   "dependencies": {
-    "event-kit": "^1.0.0",
     "fs-plus": "^3.0.0",
     "minimatch": "~0.3.0",
-    "pathwatcher": "^7.0.0",
+    "nan": "2.7.0",
+    "pathwatcher": "^8.0.0",
     "temp": "~0.8.1",
     "underscore-plus": "^1.0.0"
   },
   "devDependencies": {
     "coffeelint": "^1.9.7"
   },
+  "deserializers": {
+    "TreeView": "getTreeViewInstance"
+  },
   "consumedServices": {
     "atom.file-icons": {
       "versions": {
         "1.0.0": "consumeFileIcons"
+      }
+    },
+    "file-icons.element-icons": {
+      "versions": {
+        "1.0.0": "consumeElementIcons"
+      }
+    }
+  },
+  "providedServices": {
+    "tree-view": {
+      "description": "A tree-like view of directories and files",
+      "versions": {
+        "1.0.0": "provideTreeView"
       }
     }
   },
@@ -44,11 +60,6 @@
       "type": "boolean",
       "default": false,
       "description": "Don't show items matched by the `Ignored Names` core config setting."
-    },
-    "showOnRightSide": {
-      "type": "boolean",
-      "default": false,
-      "description": "Show the tree view on the right side of the editor instead of the left."
     },
     "sortFoldersBeforeFiles": {
       "type": "boolean",

@@ -2,14 +2,9 @@ fs = require 'fs-plus'
 path = require 'path'
 temp = require('temp').track()
 
-DefaultFileIcons = require '../lib/default-file-icons'
+fileIcons = require '../lib/default-file-icons'
 
 describe 'DefaultFileIcons', ->
-  [fileIcons] = []
-
-  beforeEach ->
-    fileIcons = new DefaultFileIcons
-
   it 'defaults to text', ->
     expect(fileIcons.iconClassForPath('foo.bar')).toEqual('icon-file-text')
 

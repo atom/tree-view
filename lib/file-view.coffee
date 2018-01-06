@@ -1,5 +1,5 @@
-{CompositeDisposable} = require 'event-kit'
-FileIcons = require './file-icons'
+{CompositeDisposable} = require 'atom'
+getIconServices = require './get-icon-services'
 
 module.exports =
 class FileView
@@ -20,15 +20,13 @@ class FileView
     @fileName.dataset.name = @file.name
     @fileName.dataset.path = @file.path
 
-    iconClass = FileIcons.getService().iconClassForPath(@file.path, "tree-view")
-    if iconClass
-      unless Array.isArray iconClass
-        iconClass = iconClass.toString().split(/\s+/g)
-      @fileName.classList.add(iconClass...)
-
+    @updateIcon()
     @subscriptions.add @file.onDidStatusChange => @updateStatus()
+    @subscriptions.add getIconServices().onDidChange => @updateIcon()
     @updateStatus()
 
+  updateIcon: ->
+    getIconServices().updateFileIcon(this)
     @element.getPath = @getPath.bind(this)
     @element.isPathEqual = @isPathEqual.bind(this)
     @element.file = @file

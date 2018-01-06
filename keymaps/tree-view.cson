@@ -68,6 +68,7 @@
   'alt-left': 'tree-view:recursive-collapse-directory'
   'h': 'tree-view:collapse-directory'
   'enter': 'tree-view:open-selected-entry'
+  'escape': 'tree-view:unfocus'
   'ctrl-C': 'tree-view:copy-full-path'
   'm': 'tree-view:move'
   'f2': 'tree-view:move'

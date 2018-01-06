@@ -5,6 +5,13 @@ module.exports.buildInternalDragEvents = (dragged, enterTarget, dropTarget) ->
     getData: (key) -> @data[key]
     setDragImage: (@image) -> return
 
+  Object.defineProperty(
+    dataTransfer,
+    'items',
+    get: ->
+      Object.keys(dataTransfer.data).map((key) -> {type: key})
+  )
+
   dragStartEvent = new DragEvent('dragstart')
   Object.defineProperty(dragStartEvent, 'target', value: dragged)
   Object.defineProperty(dragStartEvent, 'currentTarget', value: dragged)
@@ -28,6 +35,13 @@ module.exports.buildExternalDropEvent = (filePaths, dropTarget) ->
     setData: (key, value) -> @data[key] = "#{value}" # Drag events stringify data values
     getData: (key) -> @data[key]
     files: []
+
+  Object.defineProperty(
+    dataTransfer,
+    'items',
+    get: ->
+      Object.keys(dataTransfer.data).map((key) -> {type: key})
+  )
 
   dropEvent = new DragEvent('drop')
   Object.defineProperty(dropEvent, 'target', value: dropTarget)
@@ -72,6 +86,13 @@ module.exports.buildPositionalDragEvents = (dragged, target, currentTargetSelect
     setData: (key, value) -> @data[key] = "#{value}" # Drag events stringify data values
     getData: (key) -> @data[key]
     setDragImage: (@image) -> return
+
+  Object.defineProperty(
+    dataTransfer,
+    'items',
+    get: ->
+      Object.keys(dataTransfer.data).map((key) -> {type: key})
+  )
 
   dragStartEvent = new DragEvent('dragstart')
   Object.defineProperty(dragStartEvent, 'target', value: dragged)

@@ -1,7 +1,7 @@
-{CompositeDisposable} = require 'event-kit'
+{CompositeDisposable} = require 'atom'
+getIconServices = require './get-icon-services'
 Directory = require './directory'
 FileView = require './file-view'
-{repoForPath} = require './helpers'
 
 module.exports =
 class DirectoryView
@@ -23,15 +23,8 @@ class DirectoryView
     @entries = document.createElement('ol')
     @entries.classList.add('entries', 'list-tree')
 
-    if @directory.symlink
-      iconClass = 'icon-file-symlink-directory'
-    else
-      iconClass = 'icon-file-directory'
-      if @directory.isRoot
-        iconClass = 'icon-repo' if repoForPath(@directory.path)?.isProjectAtRoot()
-      else
-        iconClass = 'icon-file-submodule' if @directory.submodule
-    @directoryName.classList.add(iconClass)
+    @updateIcon()
+    @subscriptions.add getIconServices().onDidChange => @updateIcon()
     @directoryName.dataset.path = @directory.path
 
     if @directory.squashedNames?
@@ -74,6 +67,9 @@ class DirectoryView
     @element.entries = @entries
     @element.directoryName = @directoryName
 
+  updateIcon: ->
+    getIconServices().updateDirectoryIcon(this)
+
   updateStatus: ->
     @element.classList.remove('status-ignored', 'status-modified', 'status-added')
     @element.classList.add("status-#{@directory.status}") if @directory.status?
@@ -108,10 +104,9 @@ class DirectoryView
       view = new FileView(entry)
 
     subscription = @directory.onDidRemoveEntries (removedEntries) ->
-      for removedName, removedEntry of removedEntries when entry is removedEntry
+      if removedEntries.has(entry)
         view.element.remove()
         subscription.dispose()
-        break
     @subscriptions.add(subscription)
 
     view

@@ -1,6 +1,6 @@
 path = require 'path'
 fs = require 'fs-plus'
-{CompositeDisposable, Emitter} = require 'event-kit'
+{CompositeDisposable, Emitter} = require 'atom'
 {repoForPath} = require './helpers'
 
 module.exports =

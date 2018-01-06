@@ -2,7 +2,8 @@ url = require 'url'
 
 {ipcRenderer, remote} = require 'electron'
 
-_ = require 'underscore-plus'
+# TODO: Support dragging external folders and using the drag-and-drop indicators for them
+# Currently they're handled in TreeView's drag listeners
 
 module.exports =
 class RootDragAndDropHandler
@@ -71,7 +72,7 @@ class RootDragAndDropHandler
   onDragOver: (e) =>
     return unless @treeView.list.contains(e.target)
 
-    unless e.dataTransfer.getData('atom-tree-view-event') is 'true'
+    unless @isAtomTreeViewEvent(e)
       return
 
     e.preventDefault()
@@ -120,8 +121,7 @@ class RootDragAndDropHandler
 
     {dataTransfer} = e
 
-    # TODO: support dragging folders from the filesystem -- electron needs to add support first
-    return unless dataTransfer.getData('atom-tree-view-event') is 'true'
+    return unless @isAtomTreeViewEvent(e)
 
     fromWindowId = parseInt(dataTransfer.getData('from-window-id'))
     fromRootPath  = dataTransfer.getData('from-root-path')
@@ -171,7 +171,18 @@ class RootDragAndDropHandler
     e.target.closest('.project-root-header')
 
   isDragging: (e) ->
-    Boolean e.dataTransfer.getData 'from-root-path'
+    for item in e.dataTransfer.items
+      if item.type is 'from-root-path'
+        return true
+
+    return false
+
+  isAtomTreeViewEvent: (e) ->
+    for item in e.dataTransfer.items
+      if item.type is 'atom-tree-view-event'
+        return true
+
+    return false
 
   getPlaceholder: ->
     unless @placeholderEl
