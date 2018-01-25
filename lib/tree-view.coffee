@@ -47,6 +47,7 @@ class TreeView
     @editorsToDestroy = []
 
     @dragEventCounts = new WeakMap
+    @dragPaths = []
     @rootDragAndDrop = new RootDragAndDrop(this)
 
     @handleEvents()
@@ -1041,11 +1042,16 @@ class TreeView
       e.stopPropagation()
 
       entry = header.parentNode
+      directoryPath = entry.querySelector('.name')?.dataset.path
+      directorySelected = directoryPath? and @dragPaths.includes(directoryPath)
+
       @dragEventCounts.set(entry, @dragEventCounts.get(entry) - 1)
-      entry.classList.remove('selected') if @dragEventCounts.get(entry) is 0
+      entry.classList.remove('selected') if @dragEventCounts.get(entry) is 0 and not directorySelected
 
   # Handle entry name object dragstart event
   onDragStart: (e) ->
+    @dragEventCounts = new WeakMap
+    @dragPaths = []
     @selectOnMouseUp = null
     if entry = e.target.closest('.entry')
       e.stopPropagation()
@@ -1053,7 +1059,6 @@ class TreeView
       if @rootDragAndDrop.canDragStart(e)
         return @rootDragAndDrop.onDragStart(e)
 
-      initialPaths = []
       dragImage = document.createElement("ol")
       dragImage.classList.add("entries", "list-tree")
       dragImage.style.position = "absolute"
@@ -1066,8 +1071,8 @@ class TreeView
 
       for target in @getSelectedEntries()
         entryPath = target.querySelector(".name").dataset.path
-        unless path.dirname(entryPath) in initialPaths
-          initialPaths.push(entryPath)
+        unless path.dirname(entryPath) in @dragPaths
+          @dragPaths.push(entryPath)
           newElement = target.cloneNode(true)
           if newElement.classList.contains("directory")
             newElement.querySelector(".entries").remove()
@@ -1082,7 +1087,7 @@ class TreeView
 
       e.dataTransfer.effectAllowed = "move"
       e.dataTransfer.setDragImage(dragImage, 0, 0)
-      e.dataTransfer.setData("initialPaths", initialPaths)
+      e.dataTransfer.setData("initialPaths", @dragPaths)
 
       window.requestAnimationFrame ->
         dragImage.remove()
@@ -1100,6 +1105,8 @@ class TreeView
 
   # Handle entry drop event
   onDrop: (e) ->
+    @dragEventCounts = new WeakMap
+    @dragPaths = []
     if entry = e.target.closest('.entry')
       return if @rootDragAndDrop.isDragging(e)
 
