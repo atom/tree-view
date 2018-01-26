@@ -1069,11 +1069,13 @@ class TreeView
       # the drag image.
       dragImage.style.willChange = "transform"
 
+      initialPaths = []
       for target in @getSelectedEntries()
         entryPath = target.querySelector(".name").dataset.path
         parentSelected = target.parentNode.closest(".entry.selected")
         @dragPaths.push(entryPath)
         unless parentSelected
+          initialPaths.push(entryPath)
           newElement = target.cloneNode(true)
           if newElement.classList.contains("directory")
             newElement.querySelector(".entries").remove()
@@ -1088,7 +1090,7 @@ class TreeView
 
       e.dataTransfer.effectAllowed = "move"
       e.dataTransfer.setDragImage(dragImage, 0, 0)
-      e.dataTransfer.setData("initialPaths", @dragPaths)
+      e.dataTransfer.setData("initialPaths", initialPaths)
 
       window.requestAnimationFrame ->
         dragImage.remove()
