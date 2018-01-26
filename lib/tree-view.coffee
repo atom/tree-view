@@ -1134,6 +1134,7 @@ class TreeView
 
         # iterate backwards so files in a dir are moved before the dir itself
         for initialPath in initialPaths by -1
+          @entryForPath(initialPath).collapse?()
           @moveEntry(initialPath, newDirectoryPath)
       else
         # Drop event from OS
