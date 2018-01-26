@@ -981,7 +981,7 @@ class TreeView
     currentSelectedEntry = @lastFocusedElement ? @selectedEntry()
     parentContainer = entry.parentElement
     elements = []
-    if parentContainer.contains(currentSelectedEntry)
+    if parentContainer is currentSelectedEntry.parentElement
       entries = Array.from(parentContainer.querySelectorAll('.entry'))
       entryIndex = entries.indexOf(entry)
       selectedIndex = entries.indexOf(currentSelectedEntry)
