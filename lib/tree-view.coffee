@@ -1071,7 +1071,7 @@ class TreeView
 
       for target in @getSelectedEntries()
         entryPath = target.querySelector(".name").dataset.path
-        parentSelected = @dragPaths.some (path) -> entryPath.startsWith path
+        parentSelected = target.parentNode.closest(".entry.selected")
 
         if parentSelected
           @deselect [target]
@@ -1130,8 +1130,7 @@ class TreeView
         return if initialPaths.includes(newDirectoryPath)
 
         entry.classList.remove('selected')
-
-        parentSelected = initialPaths.some (path) -> newDirectoryPath.startsWith path
+        parentSelected = entry.parentNode.closest('.entry.selected')
         return if parentSelected
 
         # iterate backwards so files in a dir are moved before the dir itself
