@@ -1072,11 +1072,8 @@ class TreeView
       for target in @getSelectedEntries()
         entryPath = target.querySelector(".name").dataset.path
         parentSelected = target.parentNode.closest(".entry.selected")
-
-        if parentSelected
-          @deselect [target]
-        else
-          @dragPaths.push(entryPath)
+        @dragPaths.push(entryPath)
+        unless parentSelected
           newElement = target.cloneNode(true)
           if newElement.classList.contains("directory")
             newElement.querySelector(".entries").remove()
