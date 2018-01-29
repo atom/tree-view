@@ -3735,7 +3735,6 @@ describe "TreeView", ->
 
           [dragStartEvent, dragEnterEvent, dropEvent] =
               eventHelpers.buildInternalDragEvents([deltaFile], alphaDir.querySelector('.header'), alphaDir, treeView)
-          console.log treeView.getSelectedEntries()
 
           treeView.onDragStart(dragStartEvent)
           treeView.onDrop(dropEvent)
