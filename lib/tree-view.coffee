@@ -39,7 +39,7 @@ class TreeView
     @roots = []
     @selectedPath = null
     @selectOnMouseUp = null
-    @lastFocusedElement = null
+    @lastFocusedEntry = null
     @ignoredPatterns = []
     @useSyncFS = false
     @currentlyOpening = new Map
@@ -822,7 +822,7 @@ class TreeView
     return unless entry?
 
     @selectedPath = entry.getPath()
-    @lastFocusedElement = entry
+    @lastFocusedEntry = entry
 
     selectedEntries = @getSelectedEntries()
     if selectedEntries.length > 1 or selectedEntries[0] isnt entry
@@ -873,7 +873,7 @@ class TreeView
       return
 
     entryName = path.basename(initialPath)
-    newPath = "#{newDirectoryPath}#{path.sep}#{entryName}".replace(/\s+$/, '')
+    newPath = "#{newDirectoryPath}/#{entryName}".replace(/\s+$/, '')
 
     try
       @emitter.emit 'will-move-entry', {initialPath, newPath}
@@ -910,7 +910,6 @@ class TreeView
 
     # return early if clicking on a selected entry
     if entryToSelect.classList.contains('selected')
-
       # mouse right click or ctrl click as right click on darwin platforms
       if e.button is 2 or (e.ctrlKey and process.platform is 'darwin')
         return
@@ -921,18 +920,18 @@ class TreeView
         return
 
     if e.shiftKey and cmdKey
-      # select continuous from @lastFocusedElement but leave others
+      # select continuous from @lastFocusedEntry but leave others
       @selectContinuousEntries(entryToSelect, false)
-      @toggleMultiSelectMenu()
+      @showMultiSelectMenuIfNecessary()
     else if e.shiftKey
-      # select continuous from @lastFocusedElement and deselect rest
+      # select continuous from @lastFocusedEntry and deselect rest
       @selectContinuousEntries(entryToSelect)
-      @toggleMultiSelectMenu()
+      @showMultiSelectMenuIfNecessary()
     # only allow ctrl click for multi selection on non darwin systems
     else if cmdKey
       @selectMultipleEntries(entryToSelect)
-      @lastFocusedElement = entryToSelect
-      @toggleMultiSelectMenu()
+      @lastFocusedEntry = entryToSelect
+      @showMultiSelectMenuIfNecessary()
     else
       @selectEntry(entryToSelect)
       @showFullMenu()
@@ -948,18 +947,18 @@ class TreeView
     e.stopPropagation()
 
     if shiftKey and cmdKey
-      # select continuous from @lastFocusedElement but leave others
+      # select continuous from @lastFocusedEntry but leave others
       @selectContinuousEntries(entryToSelect, false)
-      @toggleMultiSelectMenu()
+      @showMultiSelectMenuIfNecessary()
     else if shiftKey
-      # select continuous from @lastFocusedElement and deselect rest
+      # select continuous from @lastFocusedEntry and deselect rest
       @selectContinuousEntries(entryToSelect)
-      @toggleMultiSelectMenu()
+      @showMultiSelectMenuIfNecessary()
     # only allow ctrl click for multi selection on non darwin systems
     else if cmdKey
       @deselect([entryToSelect])
-      @lastFocusedElement = entryToSelect
-      @toggleMultiSelectMenu()
+      @lastFocusedEntry = entryToSelect
+      @showMultiSelectMenuIfNecessary()
     else
       @selectEntry(entryToSelect)
       @showFullMenu()
@@ -977,7 +976,7 @@ class TreeView
   #
   # Returns array of selected elements
   selectContinuousEntries: (entry, deselectOthers = true) ->
-    currentSelectedEntry = @lastFocusedElement ? @selectedEntry()
+    currentSelectedEntry = @lastFocusedEntry ? @selectedEntry()
     parentContainer = entry.parentElement
     elements = []
     if parentContainer is currentSelectedEntry.parentElement
@@ -1011,7 +1010,7 @@ class TreeView
     @list.classList.remove('full-menu')
     @list.classList.add('multi-select')
 
-  toggleMultiSelectMenu: ->
+  showMultiSelectMenuIfNecessary: ->
     if @getSelectedEntries().length > 1
       @showMultiSelectMenu()
     else
@@ -1079,7 +1078,6 @@ class TreeView
           newElement.style.paddingLeft = "1em"
           newElement.style.paddingRight = "1em"
           dragImage.append(newElement)
-
 
       document.body.appendChild(dragImage)
 
