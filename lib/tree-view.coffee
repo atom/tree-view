@@ -1024,12 +1024,11 @@ class TreeView
     @list.classList.contains('multi-select')
 
   onDragEnter: (e) =>
-    if header = e.target.closest('.entry.directory > .header')
+    if entry = e.target.closest('.entry.directory')
       return if @rootDragAndDrop.isDragging(e)
 
       e.stopPropagation()
 
-      entry = header.parentNode
       @dragEventCounts.set(entry, 0) unless @dragEventCounts.get(entry)
       unless @dragEventCounts.get(entry) isnt 0 or entry.classList.contains('selected')
         entry.classList.add('drag-over', 'selected')
@@ -1037,12 +1036,11 @@ class TreeView
       @dragEventCounts.set(entry, @dragEventCounts.get(entry) + 1)
 
   onDragLeave: (e) =>
-    if header = e.target.closest('.entry.directory > .header')
+    if entry = e.target.closest('.entry.directory')
       return if @rootDragAndDrop.isDragging(e)
 
       e.stopPropagation()
 
-      entry = header.parentNode
       @dragEventCounts.set(entry, @dragEventCounts.get(entry) - 1)
       if @dragEventCounts.get(entry) is 0 and entry.classList.contains('drag-over')
         entry.classList.remove('drag-over', 'selected')
@@ -1094,7 +1092,7 @@ class TreeView
 
   # Handle entry dragover event; reset default dragover actions
   onDragOver: (e) ->
-    if entry = e.target.closest('.entry')
+    if entry = e.target.closest('.entry.directory')
       return if @rootDragAndDrop.isDragging(e)
 
       e.preventDefault()
@@ -1106,13 +1104,11 @@ class TreeView
   # Handle entry drop event
   onDrop: (e) ->
     @dragEventCounts = new WeakMap
-    if entry = e.target.closest('.entry')
+    if entry = e.target.closest('.entry.directory')
       return if @rootDragAndDrop.isDragging(e)
 
       e.preventDefault()
       e.stopPropagation()
-
-      return unless entry.classList.contains('directory')
 
       newDirectoryPath = entry.querySelector('.name')?.dataset.path
       return false unless newDirectoryPath
