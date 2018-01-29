@@ -47,7 +47,6 @@ class TreeView
     @editorsToDestroy = []
 
     @dragEventCounts = new WeakMap
-    @dragPaths = []
     @rootDragAndDrop = new RootDragAndDrop(this)
 
     @handleEvents()
@@ -1032,7 +1031,9 @@ class TreeView
 
       entry = header.parentNode
       @dragEventCounts.set(entry, 0) unless @dragEventCounts.get(entry)
-      entry.classList.add('selected') if @dragEventCounts.get(entry) is 0
+      unless @dragEventCounts.get(entry) isnt 0 or entry.classList.contains('selected')
+        entry.classList.add('drag-over', 'selected')
+
       @dragEventCounts.set(entry, @dragEventCounts.get(entry) + 1)
 
   onDragLeave: (e) =>
@@ -1042,16 +1043,13 @@ class TreeView
       e.stopPropagation()
 
       entry = header.parentNode
-      directoryPath = entry.querySelector('.name')?.dataset.path
-      directorySelected = directoryPath? and @dragPaths.includes(directoryPath)
-
       @dragEventCounts.set(entry, @dragEventCounts.get(entry) - 1)
-      entry.classList.remove('selected') if @dragEventCounts.get(entry) is 0 and not directorySelected
+      if @dragEventCounts.get(entry) is 0 and entry.classList.contains('drag-over')
+        entry.classList.remove('drag-over', 'selected')
 
   # Handle entry name object dragstart event
   onDragStart: (e) ->
     @dragEventCounts = new WeakMap
-    @dragPaths = []
     @selectOnMouseUp = null
     if entry = e.target.closest('.entry')
       e.stopPropagation()
@@ -1073,7 +1071,6 @@ class TreeView
       for target in @getSelectedEntries()
         entryPath = target.querySelector(".name").dataset.path
         parentSelected = target.parentNode.closest(".entry.selected")
-        @dragPaths.push(entryPath)
         unless parentSelected
           initialPaths.push(entryPath)
           newElement = target.cloneNode(true)
@@ -1104,12 +1101,11 @@ class TreeView
       e.stopPropagation()
 
       if @dragEventCounts.get(entry) > 0 and not entry.classList.contains('selected')
-        entry.classList.add('selected')
+        entry.classList.add('drag-over', 'selected')
 
   # Handle entry drop event
   onDrop: (e) ->
     @dragEventCounts = new WeakMap
-    @dragPaths = []
     if entry = e.target.closest('.entry')
       return if @rootDragAndDrop.isDragging(e)
 
@@ -1128,7 +1124,7 @@ class TreeView
         initialPaths = initialPaths.split(',')
         return if initialPaths.includes(newDirectoryPath)
 
-        entry.classList.remove('selected')
+        entry.classList.remove('drag-over', 'selected')
         parentSelected = entry.parentNode.closest('.entry.selected')
         return if parentSelected
 
