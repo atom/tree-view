@@ -869,7 +869,7 @@ class TreeView
       return
 
     entryName = path.basename(initialPath)
-    newPath = "#{newDirectoryPath}/#{entryName}".replace(/\s+$/, '')
+    newPath = path.join(newDirectoryPath, entryName).replace(/\s+$/, '')
 
     try
       @emitter.emit 'will-move-entry', {initialPath, newPath}
