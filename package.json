@@ -1,6 +1,6 @@
 {
   "name": "tree-view",
-  "version": "0.220.0",
+  "version": "0.222.0",
   "main": "./lib/main",
   "description": "Explore and open files in the current project.",
   "repository": "https://github.com/atom/tree-view",
@@ -10,9 +10,9 @@
   },
   "private": true,
   "dependencies": {
-    "event-kit": "^1.0.0",
     "fs-plus": "^3.0.0",
     "minimatch": "~0.3.0",
+    "nan": "2.7.0",
     "pathwatcher": "^8.0.0",
     "temp": "~0.8.1",
     "underscore-plus": "^1.0.0"
@@ -27,6 +27,11 @@
     "atom.file-icons": {
       "versions": {
         "1.0.0": "consumeFileIcons"
+      }
+    },
+    "file-icons.element-icons": {
+      "versions": {
+        "1.0.0": "consumeElementIcons"
       }
     }
   },

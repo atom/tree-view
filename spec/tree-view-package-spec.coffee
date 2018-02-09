@@ -7,9 +7,6 @@ os = require 'os'
 Directory = require '../lib/directory'
 eventHelpers = require "./event-helpers"
 
-DefaultFileIcons = require '../lib/default-file-icons'
-FileIcons = require '../lib/file-icons'
-
 waitForPackageActivation = ->
   waitsForPromise ->
     atom.packages.activatePackage('tree-view')
@@ -211,6 +208,41 @@ describe "TreeView", ->
         runs ->
           {treeView} = atom.packages.getActivePackage("tree-view").mainModule
           expect(treeView).toBeFalsy()
+
+  describe "on package deactivation", ->
+    it "destroys the Tree View", ->
+      spyOn(treeView, 'destroy').andCallThrough()
+
+      waitsForPromise ->
+        atom.packages.deactivatePackage('tree-view')
+
+      runs ->
+        expect(treeView.destroy).toHaveBeenCalled()
+
+    it "waits for the Tree View to open before destroying it", ->
+      jasmine.useRealClock()
+      resolveOpenPromise = null
+      opened = false
+
+      waitsForPromise ->
+        # First deactivate the package so that we can start from scratch
+        atom.packages.deactivatePackage('tree-view')
+
+      runs ->
+        spyOn(atom.workspace, 'open').andReturn(new Promise (resolve) -> resolveOpenPromise = resolve)
+
+      waitsForPromise ->
+        atom.packages.activatePackage('tree-view')
+
+      runs ->
+        atom.packages.deactivatePackage('tree-view').then -> expect(opened).toBe(true)
+
+        # Wait what should be a sufficient amount of time for Tree View
+        # to deactivate if it wasn't waiting for the open promise
+        window.setTimeout ->
+          opened = true
+          resolveOpenPromise()
+        , 1000
 
   describe "when tree-view:toggle is triggered on the root view", ->
     beforeEach ->
@@ -2585,9 +2617,11 @@ describe "TreeView", ->
           expect(atom.workspace.getModalPanels().length).toBe(0)
 
     describe "tree-view:remove", ->
+      beforeEach ->
+        jasmine.attachToDOM(workspaceElement)
+
       it "won't remove the root directory", ->
         spyOn(atom, 'confirm')
-        jasmine.attachToDOM(workspaceElement)
         treeView.focus()
         root1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
         atom.commands.dispatch(treeView.element, 'tree-view:remove')
@@ -2606,8 +2640,23 @@ describe "TreeView", ->
           args = atom.confirm.mostRecentCall.args[0]
           expect(Object.keys(args.buttons)).toEqual ['Move to Trash', 'Cancel']
 
+      it "can delete an active path that isn't in the project", ->
+        spyOn(atom, 'confirm')
+
+        filePath = path.join(os.tmpdir(), 'non-project-file.txt')
+        fs.writeFileSync(filePath, 'test')
+
+        waitsForPromise ->
+          atom.workspace.open(filePath)
+
+        runs ->
+          atom.commands.dispatch(treeView.element, 'tree-view:remove')
+          args = atom.confirm.mostRecentCall.args[0]
+          args.buttons['Move to Trash']()
+
+          expect(fs.existsSync(filePath)).toBe(false)
+
       it "shows a notification on failure", ->
-        jasmine.attachToDOM(workspaceElement)
         atom.notifications.clear()
 
         fileView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
@@ -2628,7 +2677,6 @@ describe "TreeView", ->
       it "does nothing when no file is selected", ->
         atom.notifications.clear()
 
-        jasmine.attachToDOM(workspaceElement)
         treeView.focus()
         treeView.deselect()
         atom.commands.dispatch(treeView.element, 'tree-view:remove')
@@ -2638,8 +2686,6 @@ describe "TreeView", ->
 
       describe "when a directory is removed", ->
         it "closes editors with filepaths belonging to the removed folder", ->
-          jasmine.attachToDOM(workspaceElement)
-
           waitForWorkspaceOpenEvent ->
             atom.workspace.open(filePath2)
 
@@ -2659,8 +2705,6 @@ describe "TreeView", ->
             expect(openFilePaths).toEqual([])
 
         it "does not close modified editors with filepaths belonging to the removed folder", ->
-          jasmine.attachToDOM(workspaceElement)
-
           waitForWorkspaceOpenEvent ->
             atom.workspace.open(filePath2)
 
@@ -2687,8 +2731,6 @@ describe "TreeView", ->
           fs.makeTreeSync(dirPath20)
           fs.writeFileSync(filePath20, "doesn't matter 20")
 
-          jasmine.attachToDOM(workspaceElement)
-
           waitForWorkspaceOpenEvent ->
             atom.workspace.open(filePath2)
 
@@ -2710,9 +2752,31 @@ describe "TreeView", ->
             openFilePaths = atom.workspace.getTextEditors().map((editor) -> editor.getPath())
             expect(openFilePaths).toEqual([filePath20])
 
-        it "focuses the directory's parent folder", ->
-          jasmine.attachToDOM(workspaceElement)
+        it "does not error when Untitled editors are also open (regresssion)", ->
+          waitForWorkspaceOpenEvent ->
+            atom.workspace.open(filePath2)
 
+          waitForWorkspaceOpenEvent ->
+            atom.workspace.open(filePath3)
+
+          waitForWorkspaceOpenEvent ->
+            # Untitled editors (which have an undefined path) should not affect file deletion
+            # https://github.com/atom/atom/issues/16147
+            atom.workspace.open()
+
+          runs ->
+            openFilePaths = atom.workspace.getTextEditors().map((editor) -> editor.getPath())
+            expect(openFilePaths).toEqual([filePath2, filePath3, undefined])
+            dirView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+            treeView.focus()
+
+            spyOn(atom, 'confirm').andCallFake (dialog) -> dialog.buttons["Move to Trash"]()
+
+            atom.commands.dispatch(treeView.element, 'tree-view:remove')
+            openFilePaths = atom.workspace.getTextEditors().map((editor) -> editor.getPath())
+            expect(openFilePaths).toEqual([undefined])
+
+        it "focuses the directory's parent folder", ->
           dirView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
           treeView.focus()
 
@@ -2723,8 +2787,6 @@ describe "TreeView", ->
 
       describe "when a file is removed", ->
         it "closes editors with filepaths belonging to the removed file", ->
-          jasmine.attachToDOM(workspaceElement)
-
           waitForWorkspaceOpenEvent ->
             atom.workspace.open(filePath2)
 
@@ -2741,8 +2803,6 @@ describe "TreeView", ->
             expect(openFilePaths).toEqual([])
 
         it "does not close editors that have been modified", ->
-          jasmine.attachToDOM(workspaceElement)
-
           waitForWorkspaceOpenEvent ->
             atom.workspace.open(filePath2)
 
@@ -2763,7 +2823,6 @@ describe "TreeView", ->
         it "does not close editors with filepaths that begin with the removed file", ->
           filePath2Copy = path.join(dirPath2, 'test-file2.txt0')
           fs.writeFileSync(filePath2Copy, "doesn't matter 2 copy")
-          jasmine.attachToDOM(workspaceElement)
 
           waitForWorkspaceOpenEvent ->
             atom.workspace.open(filePath2Copy)
@@ -2781,8 +2840,6 @@ describe "TreeView", ->
             expect(openFilePaths).toEqual([filePath2Copy])
 
         it "focuses the file's parent folder", ->
-          jasmine.attachToDOM(workspaceElement)
-
           fileView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
           treeView.focus()
 
@@ -2796,7 +2853,6 @@ describe "TreeView", ->
         it "does not error when the selected entries form a parent/child relationship", ->
           # If dir1 and dir1/file1 are both selected for deletion,
           # and dir1 is deleted first, do not error when attempting to delete dir1/file1
-          jasmine.attachToDOM(workspaceElement)
           atom.notifications.clear()
 
           fileView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
@@ -2824,7 +2880,6 @@ describe "TreeView", ->
         it "does not error", ->
           # If the file is marked for deletion but has already been deleted
           # outside of Atom by the time the deletion is confirmed, do not error
-          jasmine.attachToDOM(workspaceElement)
           atom.notifications.clear()
 
           fileView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
@@ -3569,9 +3624,7 @@ describe "TreeView", ->
           entries: new Map())
 
   describe "Dragging and dropping files", ->
-    deltaFilePath = null
-    gammaDirPath = null
-    thetaFilePath = null
+    [alphaDirPath, betaFilePath, etaDirPath, gammaDirPath, deltaFilePath, epsilonFilePath, thetaFilePath] = []
 
     beforeEach ->
       rootDirPath = fs.absolute(temp.mkdirSync('tree-view'))
@@ -3847,10 +3900,8 @@ describe "TreeView", ->
         alphaDir.expand()
 
         dropEvent = eventHelpers.buildExternalDropEvent([gammaDirPath], alphaDir)
-
-        runs ->
-          treeView.onDrop(dropEvent)
-          expect(alphaDir.children.length).toBe 2
+        treeView.onDrop(dropEvent)
+        expect(alphaDir.children.length).toBe 2
 
         waitsFor "directory view contents to refresh", ->
           findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > 2
@@ -3875,6 +3926,38 @@ describe "TreeView", ->
 
         runs ->
           expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe 4
+
+    describe "when dragging a directory from the OS onto a blank section of the Tree View", ->
+      it "should create a new project folder", ->
+        # Dragging gammaDir from OS file explorer onto blank section of Tree View
+        dropEvent = eventHelpers.buildExternalDropEvent([gammaDirPath], treeView.element)
+        treeView.onDrop(dropEvent)
+
+        waitsFor "project folder to be added", ->
+          treeView.roots.length is 2
+
+        runs ->
+          expect(treeView.roots[1].querySelector('.header .name')).toHaveText('gamma')
+
+    describe "when dragging a file from the OS onto a blank section of the Tree View", ->
+      it "should create a new project folder using the file's parent directory", ->
+        # Dragging multiple entries from OS file explorer onto blank section of Tree View
+        # Should add gammaDir, alphaDir, etaDir to the project
+        dropEvent = eventHelpers.buildExternalDropEvent([
+          deltaFilePath, epsilonFilePath, # directly under gammaDir
+          alphaDirPath, betaFilePath, etaDirPath # betaFile and etaDir directly under alphaDir
+        ], treeView.element)
+        treeView.onDrop(dropEvent)
+
+        waitsFor "project folder to be added", ->
+          treeView.roots.length is 4
+
+        runs ->
+          # Adding project folders is async - don't rely on a specific order
+          names = treeView.roots.map((root) -> root.querySelector('.header .name').innerText)
+          expect(names.includes('gamma')).toBe(true)
+          expect(names.includes('alpha')).toBe(true)
+          expect(names.includes('eta')).toBe(true)
 
   describe "the alwaysOpenExisting config option", ->
     it "defaults to unset", ->

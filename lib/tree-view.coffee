@@ -103,12 +103,14 @@ class TreeView
       if fs.isDirectorySync(pathToDelete)
         pathToDelete += path.sep # Avoid destroying lib2's editors when lib was deleted
         for editor in editors
-          if editor.getPath().startsWith(pathToDelete) and not editor.isModified()
-            @editorsToDestroy.push(editor.getPath())
+          filePath = editor.getPath()
+          if filePath?.startsWith(pathToDelete) and not editor.isModified()
+            @editorsToDestroy.push(filePath)
       else
         for editor in editors
-          if editor.getPath() is pathToDelete and not editor.isModified()
-            @editorsToDestroy.push(pathToDelete)
+          filePath = editor.getPath()
+          if filePath is pathToDelete and not editor.isModified()
+            @editorsToDestroy.push(filePath)
 
     @disposables.add @onEntryDeleted ({pathToDelete}) =>
       for editor in atom.workspace.getTextEditors()
@@ -236,7 +238,7 @@ class TreeView
 
     @disposables.add atom.workspace.getCenter().onDidChangeActivePaneItem =>
       @selectActiveFile()
-      @revealActiveFile(false) if atom.config.get('tree-view.autoReveal')
+      @revealActiveFile({show: false, focus: false}) if atom.config.get('tree-view.autoReveal')
     @disposables.add atom.project.onDidChangePaths =>
       @updateRoots()
     @disposables.add atom.config.onDidChange 'tree-view.hideVcsIgnoredFiles', =>
@@ -359,10 +361,14 @@ class TreeView
     if activeFilePath = @getActivePath()
       @selectEntryForPath(activeFilePath)
 
-  revealActiveFile: (focus) ->
+  revealActiveFile: (options = {}) ->
     return Promise.resolve() unless atom.project.getPaths().length
 
-    @show(focus ? atom.config.get('tree-view.focusOnReveal')).then =>
+    {show, focus} = options
+
+    focus ?= atom.config.get('tree-view.focusOnReveal')
+    promise = if show or focus then @show(focus) else Promise.resolve()
+    promise.then =>
       return unless activeFilePath = @getActivePath()
 
       [rootPath, relativePath] = atom.project.relativizePath(activeFilePath)
@@ -678,7 +684,8 @@ class TreeView
               dismissable: true
 
           # Focus the first parent folder
-          @selectEntry(selectedEntries[0].closest('.directory:not(.selected)'))
+          if firstSelectedEntry = selectedEntries[0]
+            @selectEntry(firstSelectedEntry.closest('.directory:not(.selected)'))
           @updateRoots() if atom.config.get('tree-view.squashDirectoryNames')
         "Cancel": null
 
@@ -877,7 +884,7 @@ class TreeView
         return
 
     entryName = path.basename(initialPath)
-    newPath = path.join(newDirectoryPath, entryName).replace(/\s+$/, '')
+    newPath = path.join(newDirectoryPath, entryName)
 
     try
       @emitter.emit 'will-move-entry', {initialPath, newPath}
@@ -1064,6 +1071,9 @@ class TreeView
         # Drop event from OS
         for file in e.dataTransfer.files
           @moveEntry(file.path, newDirectoryPath)
+    else if e.dataTransfer.files.length
+      # Drop event from OS that isn't targeting a folder: add a new project folder
+      atom.project.addPath(entry.path) for entry in e.dataTransfer.files
 
   isVisible: ->
     @element.offsetWidth isnt 0 or @element.offsetHeight isnt 0
