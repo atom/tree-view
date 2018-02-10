@@ -38,6 +38,8 @@ class TreeView
     @emitter = new Emitter
     @roots = []
     @selectedPath = null
+    @selectOnMouseUp = null
+    @lastFocusedEntry = null
     @ignoredPatterns = []
     @useSyncFS = false
     @currentlyOpening = new Map
@@ -196,6 +198,7 @@ class TreeView
 
       @entryClicked(e) unless e.shiftKey or e.metaKey or e.ctrlKey
     @element.addEventListener 'mousedown', (e) => @onMouseDown(e)
+    @element.addEventListener 'mouseup', (e) => @onMouseUp(e)
     @element.addEventListener 'dragstart', (e) => @onDragStart(e)
     @element.addEventListener 'dragenter', (e) => @onDragEnter(e)
     @element.addEventListener 'dragleave', (e) => @onDragLeave(e)
@@ -819,6 +822,7 @@ class TreeView
     return unless entry?
 
     @selectedPath = entry.getPath()
+    @lastFocusedEntry = entry
 
     selectedEntries = @getSelectedEntries()
     if selectedEntries.length > 1 or selectedEntries[0] isnt entry
@@ -894,28 +898,70 @@ class TreeView
     @element.style.display = ''
 
   onMouseDown: (e) ->
-    if entryToSelect = e.target.closest('.entry')
-      e.stopPropagation()
+    return unless entryToSelect = e.target.closest('.entry')
 
-      # return early if we're opening a contextual menu (right click) during multi-select mode
-      if @multiSelectEnabled() and
-         entryToSelect.classList.contains('selected') and
-         # mouse right click or ctrl click as right click on darwin platforms
-         (e.button is 2 or e.ctrlKey and process.platform is 'darwin')
+    e.stopPropagation()
+
+    # TODO: meta+click and ctrl+click should not do the same thing on Windows.
+    #       Right now removing metaKey if platform is not darwin breaks tests
+    #       that set the metaKey to true when simulating a cmd+click on macos
+    #       and ctrl+click on windows and linux.
+    cmdKey = e.metaKey or (e.ctrlKey and process.platform isnt 'darwin')
+
+    # return early if clicking on a selected entry
+    if entryToSelect.classList.contains('selected')
+      # mouse right click or ctrl click as right click on darwin platforms
+      if e.button is 2 or (e.ctrlKey and process.platform is 'darwin')
+        return
+      else
+        # allow click on mouseup if not dragging
+        {shiftKey} = e
+        @selectOnMouseUp = {shiftKey, cmdKey}
         return
 
-      if e.shiftKey
-        @selectContinuousEntries(entryToSelect)
-        @showMultiSelectMenu()
-      # only allow ctrl click for multi selection on non darwin systems
-      else if e.metaKey or (e.ctrlKey and process.platform isnt 'darwin')
-        @selectMultipleEntries(entryToSelect)
+    if e.shiftKey and cmdKey
+      # select continuous from @lastFocusedEntry but leave others
+      @selectContinuousEntries(entryToSelect, false)
+      @showMultiSelectMenuIfNecessary()
+    else if e.shiftKey
+      # select continuous from @lastFocusedEntry and deselect rest
+      @selectContinuousEntries(entryToSelect)
+      @showMultiSelectMenuIfNecessary()
+    # only allow ctrl click for multi selection on non darwin systems
+    else if cmdKey
+      @selectMultipleEntries(entryToSelect)
+      @lastFocusedEntry = entryToSelect
+      @showMultiSelectMenuIfNecessary()
+    else
+      @selectEntry(entryToSelect)
+      @showFullMenu()
 
-        # only show the multi select menu if more then one file/directory is selected
-        @showMultiSelectMenu() if @selectedPaths().length > 1
-      else
-        @selectEntry(entryToSelect)
-        @showFullMenu()
+  onMouseUp: (e) ->
+    return unless @selectOnMouseUp?
+
+    {shiftKey, cmdKey} = @selectOnMouseUp
+    @selectOnMouseUp = null
+
+    return unless entryToSelect = e.target.closest('.entry')
+
+    e.stopPropagation()
+
+    if shiftKey and cmdKey
+      # select continuous from @lastFocusedEntry but leave others
+      @selectContinuousEntries(entryToSelect, false)
+      @showMultiSelectMenuIfNecessary()
+    else if shiftKey
+      # select continuous from @lastFocusedEntry and deselect rest
+      @selectContinuousEntries(entryToSelect)
+      @showMultiSelectMenuIfNecessary()
+    # only allow ctrl click for multi selection on non darwin systems
+    else if cmdKey
+      @deselect([entryToSelect])
+      @lastFocusedEntry = entryToSelect
+      @showMultiSelectMenuIfNecessary()
+    else
+      @selectEntry(entryToSelect)
+      @showFullMenu()
 
   # Public: Return an array of paths from all selected items
   #
@@ -929,16 +975,17 @@ class TreeView
   #         a new given entry. This is shift+click functionality
   #
   # Returns array of selected elements
-  selectContinuousEntries: (entry) ->
-    currentSelectedEntry = @selectedEntry()
+  selectContinuousEntries: (entry, deselectOthers = true) ->
+    currentSelectedEntry = @lastFocusedEntry ? @selectedEntry()
     parentContainer = entry.parentElement
-    if parentContainer.contains(currentSelectedEntry)
+    elements = []
+    if parentContainer is currentSelectedEntry.parentElement
       entries = Array.from(parentContainer.querySelectorAll('.entry'))
       entryIndex = entries.indexOf(entry)
       selectedIndex = entries.indexOf(currentSelectedEntry)
       elements = (entries[i] for i in [entryIndex..selectedIndex])
 
-      @deselect()
+      @deselect() if deselectOthers
       element.classList.add('selected') for element in elements
 
     elements
@@ -957,11 +1004,17 @@ class TreeView
     @list.classList.remove('multi-select')
     @list.classList.add('full-menu')
 
-  # Public: Toggle multi-select class on the main list element to display the the
+  # Public: Toggle multi-select class on the main list element to display the
   #         menu with only items that make sense for multi select functionality
   showMultiSelectMenu: ->
     @list.classList.remove('full-menu')
     @list.classList.add('multi-select')
+
+  showMultiSelectMenuIfNecessary: ->
+    if @getSelectedEntries().length > 1
+      @showMultiSelectMenu()
+    else
+      @showFullMenu()
 
   # Public: Check for multi-select class on the main list
   #
@@ -970,90 +1023,112 @@ class TreeView
     @list.classList.contains('multi-select')
 
   onDragEnter: (e) =>
-    if header = e.target.closest('.entry.directory > .header')
+    if entry = e.target.closest('.entry.directory')
       return if @rootDragAndDrop.isDragging(e)
 
       e.stopPropagation()
 
-      entry = header.parentNode
       @dragEventCounts.set(entry, 0) unless @dragEventCounts.get(entry)
-      entry.classList.add('selected') if @dragEventCounts.get(entry) is 0
+      unless @dragEventCounts.get(entry) isnt 0 or entry.classList.contains('selected')
+        entry.classList.add('drag-over', 'selected')
+
       @dragEventCounts.set(entry, @dragEventCounts.get(entry) + 1)
 
   onDragLeave: (e) =>
-    if header = e.target.closest('.entry.directory > .header')
+    if entry = e.target.closest('.entry.directory')
       return if @rootDragAndDrop.isDragging(e)
 
       e.stopPropagation()
 
-      entry = header.parentNode
       @dragEventCounts.set(entry, @dragEventCounts.get(entry) - 1)
-      entry.classList.remove('selected') if @dragEventCounts.get(entry) is 0
+      if @dragEventCounts.get(entry) is 0 and entry.classList.contains('drag-over')
+        entry.classList.remove('drag-over', 'selected')
 
   # Handle entry name object dragstart event
   onDragStart: (e) ->
+    @dragEventCounts = new WeakMap
+    @selectOnMouseUp = null
     if entry = e.target.closest('.entry')
       e.stopPropagation()
 
       if @rootDragAndDrop.canDragStart(e)
         return @rootDragAndDrop.onDragStart(e)
 
-      target = entry.querySelector(".name")
-      initialPath = target.dataset.path
-
-      fileNameElement = target.cloneNode(true)
-      for key, value of getStyleObject(target)
-        fileNameElement.style[key] = value
-      fileNameElement.style.position = 'absolute'
-      fileNameElement.style.top = 0
-      fileNameElement.style.left = 0
+      dragImage = document.createElement("ol")
+      dragImage.classList.add("entries", "list-tree")
+      dragImage.style.position = "absolute"
+      dragImage.style.top = 0
+      dragImage.style.left = 0
       # Ensure the cloned file name element is rendered on a separate GPU layer
       # to prevent overlapping elements located at (0px, 0px) from being used as
       # the drag image.
-      fileNameElement.style.willChange = 'transform'
+      dragImage.style.willChange = "transform"
 
-      document.body.appendChild(fileNameElement)
+      initialPaths = []
+      for target in @getSelectedEntries()
+        entryPath = target.querySelector(".name").dataset.path
+        parentSelected = target.parentNode.closest(".entry.selected")
+        unless parentSelected
+          initialPaths.push(entryPath)
+          newElement = target.cloneNode(true)
+          if newElement.classList.contains("directory")
+            newElement.querySelector(".entries").remove()
+          for key, value of getStyleObject(target)
+            newElement.style[key] = value
+          newElement.style.paddingLeft = "1em"
+          newElement.style.paddingRight = "1em"
+          dragImage.append(newElement)
+
+      document.body.appendChild(dragImage)
 
       e.dataTransfer.effectAllowed = "move"
-      e.dataTransfer.setDragImage(fileNameElement, 0, 0)
-      e.dataTransfer.setData("initialPath", initialPath)
+      e.dataTransfer.setDragImage(dragImage, 0, 0)
+      e.dataTransfer.setData("initialPaths", initialPaths)
 
       window.requestAnimationFrame ->
-        fileNameElement.remove()
+        dragImage.remove()
 
   # Handle entry dragover event; reset default dragover actions
   onDragOver: (e) ->
-    if entry = e.target.closest('.entry')
+    if entry = e.target.closest('.entry.directory')
       return if @rootDragAndDrop.isDragging(e)
 
       e.preventDefault()
       e.stopPropagation()
 
       if @dragEventCounts.get(entry) > 0 and not entry.classList.contains('selected')
-        entry.classList.add('selected')
+        entry.classList.add('drag-over', 'selected')
 
   # Handle entry drop event
   onDrop: (e) ->
-    if entry = e.target.closest('.entry')
+    @dragEventCounts = new WeakMap
+    if entry = e.target.closest('.entry.directory')
       return if @rootDragAndDrop.isDragging(e)
 
       e.preventDefault()
       e.stopPropagation()
 
-      entry.classList.remove('selected')
-
-      return unless entry.classList.contains('directory')
-
       newDirectoryPath = entry.querySelector('.name')?.dataset.path
       return false unless newDirectoryPath
 
-      initialPath = e.dataTransfer.getData("initialPath")
+      initialPaths = e.dataTransfer.getData('initialPaths')
 
-      if initialPath
+      if initialPaths
         # Drop event from Atom
-        @moveEntry(initialPath, newDirectoryPath)
+        initialPaths = initialPaths.split(',')
+        return if initialPaths.includes(newDirectoryPath)
+
+        entry.classList.remove('drag-over', 'selected')
+        parentSelected = entry.parentNode.closest('.entry.selected')
+        return if parentSelected
+
+        # iterate backwards so files in a dir are moved before the dir itself
+        for initialPath in initialPaths by -1
+          @entryForPath(initialPath)?.collapse?()
+          @moveEntry(initialPath, newDirectoryPath)
       else
         # Drop event from OS
+        entry.classList.remove('selected')
         for file in e.dataTransfer.files
           @moveEntry(file.path, newDirectoryPath)
     else if e.dataTransfer.files.length

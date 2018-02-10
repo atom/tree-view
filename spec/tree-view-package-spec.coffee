@@ -3250,7 +3250,7 @@ describe "TreeView", ->
           expect(treeView.element.querySelector('.directory.status-modified')).not.toExist()
 
   describe "selecting items", ->
-    [dirView, fileView1, fileView2, fileView3, treeView, rootDirPath, dirPath, filePath1, filePath2, filePath3] = []
+    [dirView, fileView1, fileView2, fileView3, fileView4, fileView5, treeView, rootDirPath, dirPath, filePath1, filePath2, filePath3, filePath4, filePath5] = []
 
     beforeEach ->
       rootDirPath = fs.absolute(temp.mkdirSync('tree-view'))
@@ -3259,17 +3259,21 @@ describe "TreeView", ->
       filePath1 = path.join(dirPath, "test-file1.txt")
       filePath2 = path.join(dirPath, "test-file2.txt")
       filePath3 = path.join(dirPath, "test-file3.txt")
+      filePath4 = path.join(dirPath, "test-file4.txt")
+      filePath5 = path.join(dirPath, "test-file5.txt")
 
       fs.makeTreeSync(dirPath)
       fs.writeFileSync(filePath1, "doesn't matter")
       fs.writeFileSync(filePath2, "doesn't matter")
       fs.writeFileSync(filePath3, "doesn't matter")
+      fs.writeFileSync(filePath4, "doesn't matter")
+      fs.writeFileSync(filePath5, "doesn't matter")
 
       atom.project.setPaths([rootDirPath])
 
       dirView = treeView.entryForPath(dirPath)
       dirView.expand()
-      [fileView1, fileView2, fileView3] = dirView.querySelectorAll('.file')
+      [fileView1, fileView2, fileView3, fileView4, fileView5] = dirView.querySelectorAll('.file')
 
     describe 'selecting multiple items', ->
       it 'switches the contextual menu to muli-select mode', ->
@@ -3279,11 +3283,21 @@ describe "TreeView", ->
         fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}))
         expect(treeView.list).toHaveClass('full-menu')
 
-    describe 'selecting multiple items', ->
-      it 'switches the contextual menu to muli-select mode', ->
-        fileView1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
-        fileView2.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, shiftKey: true}))
-        expect(treeView.list).toHaveClass('multi-select')
+      describe 'selecting one of the selected items', ->
+        it 'maintains multi-select for dragging', ->
+          fileView1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+          fileView2.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, shiftKey: true}))
+          fileView1.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}))
+          expect(treeView.list).not.toHaveClass('full-menu')
+          expect(treeView.list).toHaveClass('multi-select')
+
+        it 'switches to full-menu on mouseup', ->
+          fileView1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+          fileView2.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, shiftKey: true}))
+          fileView1.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}))
+          fileView1.dispatchEvent(new MouseEvent('mouseup', {bubbles: true}))
+          expect(treeView.list).toHaveClass('full-menu')
+          expect(treeView.list).not.toHaveClass('multi-select')
 
       describe 'using the shift key', ->
         it 'selects the items between the already selected item and the shift clicked item', ->
@@ -3298,8 +3312,29 @@ describe "TreeView", ->
           fileView1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
           fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, metaKey: true}))
           expect(fileView1).toHaveClass('selected')
-          expect(fileView3).toHaveClass('selected')
           expect(fileView2).not.toHaveClass('selected')
+          expect(fileView3).toHaveClass('selected')
+
+      describe 'using the metakey(cmd) key on already selected item', ->
+        it 'deselects just the cmd-clicked item', ->
+          fileView1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+          fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, metaKey: true}))
+          fileView1.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, metaKey: true}))
+          fileView1.dispatchEvent(new MouseEvent('mouseup', {bubbles: true, metaKey: true}))
+          expect(fileView1).not.toHaveClass('selected')
+          expect(fileView2).not.toHaveClass('selected')
+          expect(fileView3).toHaveClass('selected')
+
+      describe 'using the shift and metakey(cmd) keys', ->
+        it 'selects the items between the last cmd-clicked item and the clicked item', ->
+          fileView1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+          fileView3.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, metaKey: true}))
+          fileView5.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, metaKey: true, shiftKey: true}))
+          expect(fileView1).toHaveClass('selected')
+          expect(fileView2).not.toHaveClass('selected')
+          expect(fileView3).toHaveClass('selected')
+          expect(fileView4).toHaveClass('selected')
+          expect(fileView5).toHaveClass('selected')
 
       describe 'non-darwin platform', ->
         originalPlatform = process.platform
@@ -3642,8 +3677,35 @@ describe "TreeView", ->
         deltaFile = gammaDir.entries.children[1]
 
         [dragStartEvent, dragEnterEvent, dropEvent] =
-            eventHelpers.buildInternalDragEvents(deltaFile, alphaDir.querySelector('.header'))
+            eventHelpers.buildInternalDragEvents([deltaFile], alphaDir.querySelector('.header'), null, treeView)
         treeView.onDragStart(dragStartEvent)
+        expect(deltaFile).toHaveClass('selected')
+        treeView.onDragEnter(dragEnterEvent)
+        expect(alphaDir).toHaveClass('selected')
+
+        # Remains selected when dragging to a child of the heading entry
+        treeView.onDragEnter(dragEnterEvent)
+        treeView.onDragLeave(dragEnterEvent)
+        expect(alphaDir).toHaveClass('selected')
+
+        treeView.onDragLeave(dragEnterEvent)
+        expect(alphaDir).not.toHaveClass('selected')
+
+    describe "when dragging a FileView onto a FileView", ->
+      it "should add the selected class to the parent DirectoryView", ->
+        # Dragging delta.txt onto alphaDir
+        alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
+        alphaDir.expand()
+        betaFile = alphaDir.entries.children[1]
+
+        gammaDir = findDirectoryContainingText(treeView.roots[0], 'gamma')
+        gammaDir.expand()
+        deltaFile = gammaDir.entries.children[1]
+
+        [dragStartEvent, dragEnterEvent, dropEvent] =
+            eventHelpers.buildInternalDragEvents([deltaFile], betaFile, null, treeView)
+        treeView.onDragStart(dragStartEvent)
+        expect(deltaFile).toHaveClass('selected')
         treeView.onDragEnter(dragEnterEvent)
         expect(alphaDir).toHaveClass('selected')
 
@@ -3666,7 +3728,7 @@ describe "TreeView", ->
         deltaFile = gammaDir.entries.children[1]
 
         [dragStartEvent, dragEnterEvent, dropEvent] =
-            eventHelpers.buildInternalDragEvents(deltaFile, alphaDir.querySelector('.header'), alphaDir)
+            eventHelpers.buildInternalDragEvents([deltaFile], alphaDir.querySelector('.header'), alphaDir, treeView)
 
         treeView.onDragStart(dragStartEvent)
         treeView.onDrop(dropEvent)
@@ -3698,7 +3760,7 @@ describe "TreeView", ->
           deltaFile = gammaDir.entries.children[1]
 
           [dragStartEvent, dragEnterEvent, dropEvent] =
-              eventHelpers.buildInternalDragEvents(deltaFile, alphaDir.querySelector('.header'), alphaDir)
+              eventHelpers.buildInternalDragEvents([deltaFile], alphaDir.querySelector('.header'), alphaDir, treeView)
 
           treeView.onDragStart(dragStartEvent)
           treeView.onDrop(dropEvent)
@@ -3707,6 +3769,118 @@ describe "TreeView", ->
           editors = atom.workspace.getTextEditors()
           expect(editors[0].getPath()).toBe deltaFilePath.replace('gamma', 'alpha')
           expect(editors[1].getPath()).toBe deltaFilePath2
+
+    describe "when dropping a FileView onto a FileView", ->
+      it "should move the file to the parent directory", ->
+        # Dragging delta.txt onto alphaDir
+        alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
+        alphaDir.expand()
+        betaFile = alphaDir.entries.children[1]
+
+        gammaDir = findDirectoryContainingText(treeView.roots[0], 'gamma')
+        gammaDir.expand()
+        deltaFile = gammaDir.entries.children[1]
+
+        [dragStartEvent, dragEnterEvent, dropEvent] =
+            eventHelpers.buildInternalDragEvents([deltaFile], betaFile, alphaDir, treeView)
+
+        treeView.onDragStart(dragStartEvent)
+        treeView.onDrop(dropEvent)
+        expect(alphaDir.children.length).toBe 2
+
+        waitsFor "directory view contents to refresh", ->
+          findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > 2
+
+        runs ->
+          expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe 3
+
+      it "shouldn't update editors with similar file paths", ->
+        deltaFilePath2 = path.join(gammaDirPath, 'delta.txt2')
+        fs.writeFileSync(deltaFilePath2, 'copy')
+
+        waitForWorkspaceOpenEvent ->
+          atom.workspace.open(deltaFilePath)
+
+        waitForWorkspaceOpenEvent ->
+          atom.workspace.open(deltaFilePath2)
+
+        runs ->
+          # Dragging delta.txt onto alphaDir
+          alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
+          alphaDir.expand()
+          betaFile = alphaDir.entries.children[1]
+
+          gammaDir = findDirectoryContainingText(treeView.roots[0], 'gamma')
+          gammaDir.expand()
+          deltaFile = gammaDir.entries.children[1]
+
+          [dragStartEvent, dragEnterEvent, dropEvent] =
+              eventHelpers.buildInternalDragEvents([deltaFile], betaFile, alphaDir, treeView)
+
+          treeView.onDragStart(dragStartEvent)
+          treeView.onDrop(dropEvent)
+          expect(alphaDir.children.length).toBe 2
+
+          editors = atom.workspace.getTextEditors()
+          expect(editors[0].getPath()).toBe deltaFilePath.replace('gamma', 'alpha')
+          expect(editors[1].getPath()).toBe deltaFilePath2
+
+    describe "when dropping multiple FileViews onto a DirectoryView's header", ->
+      it "should move the files to the hovered directory", ->
+        # Dragging delta.txt onto alphaDir
+        alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
+        alphaDir.expand()
+
+        gammaDir = findDirectoryContainingText(treeView.roots[0], 'gamma')
+        gammaDir.expand()
+        gammaFiles = [].slice.call(gammaDir.entries.children, 1, 3)
+
+        [dragStartEvent, dragEnterEvent, dropEvent] =
+            eventHelpers.buildInternalDragEvents(gammaFiles, alphaDir.querySelector('.header'), alphaDir, treeView)
+
+        runs ->
+          treeView.onDragStart(dragStartEvent)
+          treeView.onDrop(dropEvent)
+          expect(alphaDir.entries.children.length).toBe 2
+
+        waitsFor "directory view contents to refresh", ->
+          findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > 2
+
+        runs ->
+          expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe 4
+
+    describe "when dropping a DirectoryView and FileViews onto a DirectoryView's header", ->
+      it "should move the files and directory to the hovered directory", ->
+        # Dragging alpha.txt and alphaDir into thetaDir
+        alphaFile = treeView.roots[0].entries.children[2]
+        alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
+        alphaDir.expand()
+
+        gammaDir = findDirectoryContainingText(treeView.roots[0], 'gamma')
+        gammaDir.expand()
+        thetaDir = findDirectoryContainingText(treeView.roots[0], 'theta')
+        thetaDir.expand()
+
+        dragged = [alphaFile, alphaDir]
+
+        [dragStartEvent, dragEnterEvent, dropEvent] =
+            eventHelpers.buildInternalDragEvents(dragged, thetaDir.querySelector('.header'), thetaDir, treeView)
+
+        runs ->
+          treeView.onDragStart(dragStartEvent)
+          treeView.onDrop(dropEvent)
+          expect(thetaDir.children.length).toBe 2
+
+        waitsFor "directory view contents to refresh", ->
+          findDirectoryContainingText(treeView.roots[0], 'theta').querySelectorAll('.entry').length > 2
+
+        runs ->
+          thetaDir.expand()
+          expect(thetaDir.querySelectorAll('.entry').length).toBe 3
+          # alpha dir still has all its entries
+          alphaDir = findDirectoryContainingText(thetaDir.entries, 'alpha')
+          alphaDir.expand()
+          expect(alphaDir.querySelectorAll('.entry').length).toBe 2
 
     describe "when dropping a DirectoryView onto a DirectoryView's header", ->
       beforeEach ->
@@ -3724,7 +3898,7 @@ describe "TreeView", ->
         thetaDir.expand()
 
         [dragStartEvent, dragEnterEvent, dropEvent] =
-          eventHelpers.buildInternalDragEvents(thetaDir, alphaDir.querySelector('.header'), alphaDir)
+          eventHelpers.buildInternalDragEvents([thetaDir], alphaDir.querySelector('.header'), alphaDir, treeView)
         treeView.onDragStart(dragStartEvent)
         treeView.onDrop(dropEvent)
         expect(alphaDir.children.length).toBe 2
@@ -3761,7 +3935,7 @@ describe "TreeView", ->
 
           runs ->
             [dragStartEvent, dragEnterEvent, dropEvent] =
-              eventHelpers.buildInternalDragEvents(thetaDir, alphaDir.querySelector('.header'), alphaDir)
+              eventHelpers.buildInternalDragEvents([thetaDir], alphaDir.querySelector('.header'), alphaDir, treeView)
             treeView.onDragStart(dragStartEvent)
             treeView.onDrop(dropEvent)
             expect(alphaDir.children.length).toBe 2
@@ -3769,6 +3943,24 @@ describe "TreeView", ->
             editors = atom.workspace.getTextEditors()
             expect(editors[0].getPath()).toBe thetaFilePath.replace('gamma', 'alpha')
             expect(editors[1].getPath()).toBe thetaFilePath2
+
+    describe "when dropping a DirectoryView and FileViews onto the same DirectoryView's header", ->
+      it "should not move the files and directory to the hovered directory", ->
+        # Dragging alpha.txt and alphaDir into alphaDir
+        alphaFile = treeView.roots[0].entries.children[2]
+        alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
+        alphaDir.expand()
+
+        dragged = [alphaFile, alphaDir]
+
+        [dragStartEvent, dragEnterEvent, dropEvent] =
+            eventHelpers.buildInternalDragEvents(dragged, alphaDir.querySelector('.header'), alphaDir, treeView)
+
+        spyOn(treeView, 'moveEntry')
+
+        treeView.onDragStart(dragStartEvent)
+        treeView.onDrop(dropEvent)
+        expect(treeView.moveEntry).not.toHaveBeenCalled()
 
     describe "when dragging a file from the OS onto a DirectoryView's header", ->
       it "should move the file to the hovered directory", ->
