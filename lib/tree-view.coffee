@@ -1134,11 +1134,13 @@ class TreeView
         return if initialPaths.includes(newDirectoryPath)
 
         entry.classList.remove('drag-over', 'selected')
-        parentSelected = entry.parentNode.closest('.entry.selected')
-        return if parentSelected
 
         # iterate backwards so files in a dir are moved before the dir itself
         for initialPath in initialPaths by -1
+          # Note: this is necessary on Windows to circumvent node-pathwatcher
+          # holding a lock on expanded folders and preventing them from
+          # being moved or deleted
+          # TODO: This can be removed when tree-view is switched to @atom/watcher
           @entryForPath(initialPath)?.collapse?()
           @moveEntry(initialPath, newDirectoryPath)
       else

@@ -3979,7 +3979,7 @@ describe "TreeView", ->
             expect(editors[0].getPath()).toBe thetaFilePath.replace('gamma', 'alpha')
             expect(editors[1].getPath()).toBe thetaFilePath2
 
-      it "does not move the directory if it would result in recursive copying", ->
+      it "shows a warning notification and does not move the directory if it would result in recursive copying", ->
         # Dragging alphaDir onto etaDir, which is a child of alphaDir's
         alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
         alphaDir.expand()
@@ -3994,6 +3994,8 @@ describe "TreeView", ->
         expect(etaDir.children.length).toBe 2
         etaDir.expand()
         expect(etaDir.querySelector('.entries').children.length).toBe 0
+
+        expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Cannot move a folder into itself'
 
       it "shows a warning notification and does not move the directory if it would result in recursive copying (symlink)", ->
         # Dragging alphaDir onto symalpha, which is a symlink to alphaDir
