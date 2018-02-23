@@ -64,7 +64,7 @@ describe "TreeView", ->
       expect(root1.directory.watchSubscription).toBeTruthy()
 
   afterEach ->
-    # temp.cleanup()
+    temp.cleanup()
     if treeViewOpenPromise = atom.packages.getActivePackage('tree-view')?.mainModule.treeViewOpenPromise
       waitsForPromise -> treeViewOpenPromise
 
@@ -3659,7 +3659,7 @@ describe "TreeView", ->
           entries: new Map())
 
   describe "Dragging and dropping files", ->
-    [alphaDirPath, betaFilePath, etaDirPath, gammaDirPath, deltaFilePath, epsilonFilePath, thetaFilePath] = []
+    [alphaDirPath, alphaFilePath, betaFilePath, etaDirPath, gammaDirPath, deltaFilePath, epsilonFilePath, thetaFilePath] = []
 
     beforeEach ->
       rootDirPath = fs.absolute(temp.mkdirSync('tree-view'))
@@ -3887,7 +3887,7 @@ describe "TreeView", ->
     describe "when dropping a DirectoryView and FileViews onto a DirectoryView's header", ->
       it "should move the files and directory to the hovered directory", ->
         # Dragging alpha.txt and alphaDir into thetaDir
-        alphaFile = treeView.roots[0].entries.children[2]
+        alphaFile = Array.from(treeView.roots[0].entries.children).find (element) -> element.getPath() is alphaFilePath
         alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
         alphaDir.expand()
 
@@ -3979,7 +3979,7 @@ describe "TreeView", ->
             expect(editors[0].getPath()).toBe thetaFilePath.replace('gamma', 'alpha')
             expect(editors[1].getPath()).toBe thetaFilePath2
 
-      it "shows a warning notification and does not move the directory if it would result in recursive copying", ->
+      it "does not move the directory if it would result in recursive copying", ->
         # Dragging alphaDir onto etaDir, which is a child of alphaDir's
         alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
         alphaDir.expand()
@@ -3994,8 +3994,6 @@ describe "TreeView", ->
         expect(etaDir.children.length).toBe 2
         etaDir.expand()
         expect(etaDir.querySelector('.entries').children.length).toBe 0
-
-        expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Cannot move a folder into itself'
 
       it "shows a warning notification and does not move the directory if it would result in recursive copying (symlink)", ->
         # Dragging alphaDir onto symalpha, which is a symlink to alphaDir
