@@ -28,7 +28,8 @@ describe "FileStats", ->
         treeView = atom.workspace.getLeftDock().getActivePaneItem()
 
     afterEach ->
-      temp.cleanup()
+      try
+        temp.cleanupSync()
 
     it "passes stats to File instances", ->
       stats = treeView.roots[0].directory.entries.get("file1.txt").stats

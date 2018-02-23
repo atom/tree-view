@@ -64,7 +64,8 @@ describe "TreeView", ->
       expect(root1.directory.watchSubscription).toBeTruthy()
 
   afterEach ->
-    temp.cleanup()
+    try
+      temp.cleanupSync()
     if treeViewOpenPromise = atom.packages.getActivePackage('tree-view')?.mainModule.treeViewOpenPromise
       waitsForPromise -> treeViewOpenPromise
 
