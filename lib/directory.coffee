@@ -107,7 +107,17 @@ class Directory
     else if @ignoredNames.matches(@path)
       newStatus = 'ignored-name'
     else
-      status = repo.getDirectoryStatus(@path)
+      status = 0
+      if @isRoot
+        # repo.getDirectoryStatus will always fail for the
+        # root because the path is relativized + concatenated with '/'
+        # making the matching string be '/'.  Then path.indexOf('/')
+        # is run and will never match beginning of string with a leading '/'
+        for statusPath, statusId of repo.statuses
+          status |= parseInt(statusId, 10)
+      else
+        status = repo.getDirectoryStatus(@path)
+
       if repo.isStatusModified(status)
         newStatus = 'modified'
       else if repo.isStatusNew(status)

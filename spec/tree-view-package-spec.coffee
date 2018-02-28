@@ -3195,24 +3195,40 @@ describe "TreeView", ->
 
     describe "when a file is modified", ->
       it "adds a custom style", ->
-        expect(treeView.element.querySelector('.file.status-modified')).toHaveText('b.txt')
+        expect(treeView.element.querySelector('.project-root .file.status-modified')).toHaveText('b.txt')
+
+    describe "when a file is modified", ->
+      it "adds a custom style to the project root", ->
+        expect(treeView.element.querySelector('.project-root')).toHaveClass('status-modified')
 
     describe "when a directory is modified", ->
       it "adds a custom style", ->
-        expect(treeView.element.querySelector('.directory.status-modified').header).toHaveText('dir')
+        expect(treeView.element.querySelector('.project-root .directory.status-modified').header).toHaveText('dir')
+
+    describe "when a directory is modified", ->
+      it "adds a custom style to the project root", ->
+        expect(treeView.element.querySelector('.project-root')).toHaveClass('status-modified')
 
     describe "when a file is new", ->
       it "adds a custom style", ->
         treeView.roots[0].entries.querySelectorAll('.directory')[2].expand()
-        expect(treeView.element.querySelector('.file.status-added')).toHaveText('new2')
+        expect(treeView.element.querySelector('.project-root .file.status-added')).toHaveText('new2')
+
+    describe "when a file is new", ->
+      it "adds a custom style to the project root", ->
+        expect(treeView.element.querySelector('.project-root')).toHaveClass('status-modified')
 
     describe "when a directory is new", ->
       it "adds a custom style", ->
-        expect(treeView.element.querySelector('.directory.status-added').header).toHaveText('dir2')
+        expect(treeView.element.querySelector('.project-root .directory.status-added').header).toHaveText('dir2')
+
+    describe "when a directory is new", ->
+      it "adds a custom style to the project root", ->
+        expect(treeView.element.querySelector('.project-root')).toHaveClass('status-modified')
 
     describe "when a file is ignored", ->
       it "adds a custom style", ->
-        expect(treeView.element.querySelector('.file.status-ignored')).toHaveText('ignored.txt')
+        expect(treeView.element.querySelector('.project-root .file.status-ignored')).toHaveText('ignored.txt')
 
     describe "when a file is selected in a directory", ->
       beforeEach ->
@@ -3253,16 +3269,18 @@ describe "TreeView", ->
 
       describe "when a file is modified", ->
         it "updates its and its parent directories' styles", ->
-          expect(treeView.element.querySelector('.file.status-modified')).toHaveText('b.txt')
-          expect(treeView.element.querySelector('.directory.status-modified').header).toHaveText('dir')
+          expect(treeView.element.querySelector('.project-root .file.status-modified')).toHaveText('b.txt')
+          expect(treeView.element.querySelector('.project-root .directory.status-modified').header).toHaveText('dir')
+          expect(treeView.element.querySelector('.project-root')).toHaveClass('status-modified')
 
       describe "when a file loses its modified status", ->
         it "updates its and its parent directories' styles", ->
           fs.writeFileSync(modifiedFile, originalFileContent)
           atom.project.getRepositories()[0].getPathStatus(modifiedFile)
 
-          expect(treeView.element.querySelector('.file.status-modified')).not.toExist()
-          expect(treeView.element.querySelector('.directory.status-modified')).not.toExist()
+          expect(treeView.element.querySelector('.project-root .file.status-modified')).not.toExist()
+          expect(treeView.element.querySelector('.project-root .directory.status-modified')).not.toExist()
+          expect(treeView.element.querySelector('.project-root.status-modified')).not.toExist()
 
   describe "selecting items", ->
     [dirView, fileView1, fileView2, fileView3, fileView4, fileView5, treeView, rootDirPath, dirPath, filePath1, filePath2, filePath3, filePath4, filePath5] = []
