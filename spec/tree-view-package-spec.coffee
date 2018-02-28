@@ -2955,7 +2955,7 @@ describe "TreeView", ->
         expect(Array.from(treeView.element.querySelectorAll('.file')).map((f) -> f.textContent)).toEqual(['.gitignore', 'tree-view.js', 'tree-view.txt'])
 
   describe "the hideIgnoredNames config option", ->
-    beforeEach ->
+    it "hides ignored files if the option is set, but otherwise shows them", ->
       atom.config.set('core.ignoredNames', ['.git', '*.js'])
       dotGitFixture = path.join(__dirname, 'fixtures', 'git', 'working-dir', 'git.git')
       projectPath = temp.mkdirSync('tree-view-project')
@@ -2966,7 +2966,6 @@ describe "TreeView", ->
       atom.project.setPaths([projectPath])
       atom.config.set "tree-view.hideIgnoredNames", false
 
-    it "hides ignored files if the option is set, but otherwise shows them", ->
       expect(Array.from(treeView.roots[0].querySelectorAll('.entry')).map((e) -> e.textContent)).toEqual(['.git', 'test.js', 'test.txt'])
 
       atom.config.set("tree-view.hideIgnoredNames", true)
@@ -2974,6 +2973,22 @@ describe "TreeView", ->
 
       atom.config.set("core.ignoredNames", [])
       expect(Array.from(treeView.roots[0].querySelectorAll('.entry')).map((e) -> e.textContent)).toEqual(['.git', 'test.js', 'test.txt'])
+
+    it "adds a custom style if if file/dir is ignored and visible", ->
+      atom.config.set('core.ignoredNames', ['dir2', '*.js'])
+      fixturePath = path.join(__dirname, 'fixtures', 'root-dir1')
+      atom.project.setPaths([fixturePath])
+      atom.config.set "tree-view.hideIgnoredNames", false
+
+      expect(Array.from(treeView.roots[0].querySelectorAll('.entry')).map((e) -> e.textContent)).toEqual(['dir1', 'dir2', 'nested', 'tree-view.js', 'tree-view.txt'])
+      expect(Array.from(treeView.roots[0].querySelectorAll('.status-ignored-name')).map((e) -> e.textContent)).toEqual(['dir2', 'tree-view.js'])
+
+      atom.config.set("tree-view.hideIgnoredNames", true)
+      expect(Array.from(treeView.roots[0].querySelectorAll('.entry')).map((e) -> e.textContent)).toEqual(['dir1', 'nested', 'tree-view.txt'])
+
+      atom.config.set("core.ignoredNames", [])
+      expect(Array.from(treeView.roots[0].querySelectorAll('.entry')).map((e) -> e.textContent)).toEqual(['dir1', 'dir2', 'nested', 'tree-view.js', 'tree-view.txt'])
+      expect(Array.from(treeView.roots[0].querySelectorAll('.status-ignored-name')).map((e) -> e.textContent)).toEqual([])
 
   describe "the squashedDirectoryName config option", ->
     beforeEach ->

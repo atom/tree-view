@@ -71,7 +71,7 @@ class DirectoryView
     getIconServices().updateDirectoryIcon(this)
 
   updateStatus: ->
-    @element.classList.remove('status-ignored', 'status-modified', 'status-added')
+    @element.classList.remove('status-ignored', 'status-ignored-name', 'status-modified', 'status-added')
     @element.classList.add("status-#{@directory.status}") if @directory.status?
 
   subscribeToDirectory: ->
