@@ -61,7 +61,12 @@ describe "TreeView", ->
       root2 = treeView.roots[1]
       sampleJs = files[0]
       sampleTxt = files[1]
-      expect(root1.directory.watchSubscription).toBeTruthy()
+
+      waitsFor ->
+        root1.directory.watchSubscription
+
+      runs ->
+        expect(root1.directory.watchSubscription).toBeTruthy()
 
   afterEach ->
     temp.cleanup()
