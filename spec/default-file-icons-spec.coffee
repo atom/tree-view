@@ -29,10 +29,6 @@ describe 'DefaultFileIcons', ->
     beforeEach ->
       tempDir = temp.mkdirSync('atom-tree-view')
 
-    afterEach ->
-      try
-        temp.cleanupSync()
-
     it 'recognizes symlinks', ->
       filePath = path.join(tempDir, 'foo.bar')
       linkPath = path.join(tempDir, 'link.bar')
