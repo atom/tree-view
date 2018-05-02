@@ -86,3 +86,9 @@
 '.tree-view-dialog atom-text-editor[mini]':
   'enter': 'core:confirm'
   'escape': 'core:cancel'
+
+'.platform-win32 atom-text-editor'
+  'F12': 'tree-view:move'
+
+'atom-text-editor':
+  'alt-shift-m': 'tree-view:move'
