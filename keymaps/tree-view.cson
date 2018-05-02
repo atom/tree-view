@@ -87,7 +87,7 @@
   'enter': 'core:confirm'
   'escape': 'core:cancel'
 
-'.platform-win32 atom-text-editor, .platform-linux atom-text-editor'
+'.platform-win32 atom-text-editor, .platform-linux atom-text-editor':
   'F12': 'tree-view:move'
 
 'atom-text-editor':
