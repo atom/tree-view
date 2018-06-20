@@ -843,8 +843,10 @@ class TreeView
     try
       @emitter.emit 'will-copy-entry', {initialPath, newPath}
       if initialPathIsDirectory
+        # use fs.copy to copy directories since read/write will fail for directories
         fs.copySync(initialPath, newPath)
       else
+        # read the old file and write a new one at target location
         fs.writeFileSync(newPath, fs.readFileSync(initialPath))
       @emitter.emit 'entry-copied', {initialPath, newPath}
 
