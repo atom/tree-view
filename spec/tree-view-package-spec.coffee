@@ -1911,7 +1911,7 @@ describe "TreeView", ->
           atom.notifications.clear()
           atom.commands.dispatch(treeView.element, "tree-view:paste")
 
-          expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Unable to paste paths'
+          expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Failed to copy entry'
           expect(atom.notifications.getNotifications()[0].getDetail()).toContain 'ENOENT: no such file or directory'
 
     describe "tree-view:add-file", ->

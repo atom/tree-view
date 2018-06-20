@@ -727,42 +727,14 @@ class TreeView
     copiedPaths = if window.localStorage['tree-view:copyPath'] then JSON.parse(window.localStorage['tree-view:copyPath']) else null
     initialPaths = copiedPaths or cutPaths
 
-    catchAndShowFileErrors = (operation) ->
-      try
-        operation()
-      catch error
-        atom.notifications.addWarning("Unable to paste paths: #{initialPaths}", detail: error.message)
-
     for initialPath in initialPaths ? []
-      initialPathIsDirectory = fs.isDirectorySync(initialPath)
       if selectedEntry and initialPath and fs.existsSync(initialPath)
         basePath = selectedEntry.getPath()
         basePath = path.dirname(basePath) if selectedEntry.classList.contains('file')
         newPath = path.join(basePath, path.basename(initialPath))
 
         if copiedPaths
-          # append a number to the file if an item with the same name exists
-          fileCounter = 0
-          originalNewPath = newPath
-          while fs.existsSync(newPath)
-            if initialPathIsDirectory
-              newPath = "#{originalNewPath}#{fileCounter}"
-            else
-              extension = getFullExtension(originalNewPath)
-              filePath = path.join(path.dirname(originalNewPath), path.basename(originalNewPath, extension))
-              newPath = "#{filePath}#{fileCounter}#{extension}"
-            fileCounter += 1
-
-          if fs.isDirectorySync(initialPath)
-            # use fs.copy to copy directories since read/write will fail for directories
-            catchAndShowFileErrors =>
-              fs.copySync(initialPath, newPath)
-              @emitter.emit 'entry-copied', {initialPath, newPath}
-          else
-            # read the old file and write a new one at target location
-            catchAndShowFileErrors =>
-              fs.writeFileSync(newPath, fs.readFileSync(initialPath))
-              @emitter.emit 'entry-copied', {initialPath, newPath}
+          @copyEntry(initialPath, newPath)
         else if cutPaths
           # Only move the target if the cut target doesn't exist and if the newPath
           # is not within the initial path
@@ -854,17 +826,11 @@ class TreeView
   pageDown: ->
     @element.scrollTop += @element.offsetHeight
 
-  copyEntry: (initialPath, newDirectoryPath) ->
-    if initialPath is newDirectoryPath
-      return
-
-    entryName = path.basename(initialPath)
-    newPath = path.join(newDirectoryPath, entryName)
-
-    # Duplicated from pasteEntries
-    initialPathIsDirectory = fs.isDirectorySync(initialPath)
+  copyEntry: (initialPath, newPath) ->
+    # append a number to the file if an item with the same name exists
     fileCounter = 0
     originalNewPath = newPath
+    initialPathIsDirectory = fs.isDirectorySync(initialPath)
     while fs.existsSync(newPath)
       if initialPathIsDirectory
         newPath = "#{originalNewPath}#{fileCounter}"
@@ -875,12 +841,10 @@ class TreeView
       fileCounter += 1
 
     try
-      console.log(initialPath, newPath)
       @emitter.emit 'will-copy-entry', {initialPath, newPath}
       if initialPathIsDirectory
         fs.copySync(initialPath, newPath)
       else
-        fs.makeTreeSync(newDirectoryPath) unless fs.existsSync(newDirectoryPath)
         fs.writeFileSync(newPath, fs.readFileSync(initialPath))
       @emitter.emit 'entry-copied', {initialPath, newPath}
 
@@ -890,7 +854,7 @@ class TreeView
 
     catch error
       @emitter.emit 'copy-entry-failed', {initialPath, newPath}
-      atom.notifications.addWarning("Failed to copy entry #{initialPath} to #{newDirectoryPath}", detail: error.message)
+      atom.notifications.addWarning("Failed to copy entry #{initialPath} to #{newPath}", detail: error.message)
 
   moveEntry: (initialPath, newDirectoryPath) ->
     if initialPath is newDirectoryPath
@@ -1148,9 +1112,10 @@ class TreeView
 
         # iterate backwards so files in a dir are moved before the dir itself
         for initialPath in initialPaths by -1
+          continue if initialPath is newDirectoryPath
           @entryForPath(initialPath)?.collapse?()
           if (process.platform is 'darwin' and e.metaKey) or e.ctrlKey
-            @copyEntry(initialPath, newDirectoryPath)
+            @copyEntry(initialPath, path.join(newDirectoryPath, path.basename(initialPath)))
           else
             @moveEntry(initialPath, newDirectoryPath)
       else
@@ -1158,7 +1123,8 @@ class TreeView
         entry.classList.remove('selected')
         if (process.platform is 'darwin' and e.metaKey) or e.ctrlKey
           for file in e.dataTransfer.files
-            @copyEntry(file.path, newDirectoryPath)
+            continue if file.path is newDirectoryPath
+            @copyEntry(file.path, path.join(newDirectoryPath, path.basename(file.path)))
         else
           for file in e.dataTransfer.files
             @moveEntry(file.path, newDirectoryPath)
