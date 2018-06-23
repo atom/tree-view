@@ -3750,7 +3750,7 @@ describe "TreeView", ->
         expect(alphaDir).not.toHaveClass('selected')
 
     describe "when dropping a FileView onto a DirectoryView's header", ->
-      it "should move the file to the hovered directory", ->
+      fit "should move the file to the hovered directory", ->
         # Dragging delta.txt onto alphaDir
         alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
         alphaDir.expand()
@@ -3758,6 +3758,9 @@ describe "TreeView", ->
         gammaDir = findDirectoryContainingText(treeView.roots[0], 'gamma')
         gammaDir.expand()
         deltaFile = gammaDir.entries.children[1]
+
+        alphaDirContents = findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length
+        gammaDirContents = findDirectoryContainingText(treeView.roots[0], 'gamma').querySelectorAll('.entry').length
 
         [dragStartEvent, dragEnterEvent, dropEvent] =
             eventHelpers.buildInternalDragEvents([deltaFile], alphaDir.querySelector('.header'), alphaDir, treeView)
@@ -3767,10 +3770,12 @@ describe "TreeView", ->
         expect(alphaDir.children.length).toBe 2
 
         waitsFor "directory view contents to refresh", ->
-          findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > 2
+          findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > alphaDirContents and
+          findDirectoryContainingText(treeView.roots[0], 'gamma').querySelectorAll('.entry').length < gammaDirContents
 
         runs ->
-          expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe 3
+          expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe alphaDirContents + 1
+          expect(findDirectoryContainingText(treeView.roots[0], 'gamma').querySelectorAll('.entry').length).toBe gammaDirContents - 1
 
       it "shouldn't update editors with similar file paths", ->
         deltaFilePath2 = path.join(gammaDirPath, 'delta.txt2')
@@ -3813,6 +3818,9 @@ describe "TreeView", ->
         gammaDir.expand()
         deltaFile = gammaDir.entries.children[1]
 
+        alphaDirContents = findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length
+        gammaDirContents = findDirectoryContainingText(treeView.roots[0], 'gamma').querySelectorAll('.entry').length
+
         [dragStartEvent, dragEnterEvent, dropEvent] =
             eventHelpers.buildInternalDragEvents([deltaFile], betaFile, alphaDir, treeView)
 
@@ -3821,10 +3829,12 @@ describe "TreeView", ->
         expect(alphaDir.children.length).toBe 2
 
         waitsFor "directory view contents to refresh", ->
-          findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > 2
+          findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > alphaDirContents and
+          findDirectoryContainingText(treeView.roots[0], 'gamma').querySelectorAll('.entry').length < gammaDirContents
 
         runs ->
-          expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe 3
+          expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe alphaDirContents + 1
+          expect(findDirectoryContainingText(treeView.roots[0], 'gamma').querySelectorAll('.entry').length).toBe gammaDirContents - 1
 
       it "shouldn't update editors with similar file paths", ->
         deltaFilePath2 = path.join(gammaDirPath, 'delta.txt2')
@@ -3859,13 +3869,16 @@ describe "TreeView", ->
 
     describe "when dropping multiple FileViews onto a DirectoryView's header", ->
       it "should move the files to the hovered directory", ->
-        # Dragging delta.txt onto alphaDir
+        # Dragging multiple files in gammaDir onto alphaDir
         alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
         alphaDir.expand()
 
         gammaDir = findDirectoryContainingText(treeView.roots[0], 'gamma')
         gammaDir.expand()
         gammaFiles = [].slice.call(gammaDir.entries.children, 1, 3)
+
+        alphaDirContents = findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length
+        gammaDirContents = findDirectoryContainingText(treeView.roots[0], 'gamma').querySelectorAll('.entry').length
 
         [dragStartEvent, dragEnterEvent, dropEvent] =
             eventHelpers.buildInternalDragEvents(gammaFiles, alphaDir.querySelector('.header'), alphaDir, treeView)
@@ -3876,10 +3889,12 @@ describe "TreeView", ->
           expect(alphaDir.entries.children.length).toBe 2
 
         waitsFor "directory view contents to refresh", ->
-          findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > 2
+          findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > alphaDirContents and
+          findDirectoryContainingText(treeView.roots[0], 'gamma').querySelectorAll('.entry').length < gammaDirContents
 
         runs ->
-          expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe 4
+          expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe alphaDirContents + 2
+          expect(findDirectoryContainingText(treeView.roots[0], 'gamma').querySelectorAll('.entry').length).toBe gammaDirContents - 2
 
     describe "when dropping a DirectoryView and FileViews onto a DirectoryView's header", ->
       it "should move the files and directory to the hovered directory", ->
@@ -3893,6 +3908,9 @@ describe "TreeView", ->
         thetaDir = findDirectoryContainingText(treeView.roots[0], 'theta')
         thetaDir.expand()
 
+        alphaDirContents = findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length
+        thetaDirContents = findDirectoryContainingText(treeView.roots[0], 'theta').querySelectorAll('.entry').length
+
         dragged = [alphaFile, alphaDir]
 
         [dragStartEvent, dragEnterEvent, dropEvent] =
@@ -3904,15 +3922,15 @@ describe "TreeView", ->
           expect(thetaDir.children.length).toBe 2
 
         waitsFor "directory view contents to refresh", ->
-          findDirectoryContainingText(treeView.roots[0], 'theta').querySelectorAll('.entry').length > 2
+          findDirectoryContainingText(treeView.roots[0], 'theta').querySelectorAll('.entry').length > thetaDirContents
 
         runs ->
           thetaDir.expand()
-          expect(thetaDir.querySelectorAll('.entry').length).toBe 3
+          expect(thetaDir.querySelectorAll('.entry').length).toBe thetaDirContents + 2
           # alpha dir still has all its entries
           alphaDir = findDirectoryContainingText(thetaDir.entries, 'alpha')
           alphaDir.expand()
-          expect(alphaDir.querySelectorAll('.entry').length).toBe 2
+          expect(alphaDir.querySelectorAll('.entry').length).toBe alphaDirContents
 
     describe "when dropping a DirectoryView onto a DirectoryView's header", ->
       beforeEach ->
@@ -3929,6 +3947,9 @@ describe "TreeView", ->
         thetaDir = gammaDir.entries.children[0]
         thetaDir.expand()
 
+        alphaDirContents = findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length
+        thetaDirContents = findDirectoryContainingText(treeView.roots[0], 'theta').querySelectorAll('.entry').length
+
         [dragStartEvent, dragEnterEvent, dropEvent] =
           eventHelpers.buildInternalDragEvents([thetaDir], alphaDir.querySelector('.header'), alphaDir, treeView)
         treeView.onDragStart(dragStartEvent)
@@ -3936,10 +3957,15 @@ describe "TreeView", ->
         expect(alphaDir.children.length).toBe 2
 
         waitsFor "directory view contents to refresh", ->
-          findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > 2
+          findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > alphaDirContents
 
         runs ->
-          expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe 3
+          expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe alphaDirContents + 1
+
+          thetaDir = findDirectoryContainingText(alphaDir.entries, 'theta')
+          thetaDir.expand()
+          expect(thetaDir.querySelectorAll('.entry').length).toBe thetaDirContents
+
           editor = atom.workspace.getActiveTextEditor()
           expect(editor.getPath()).toBe(thetaFilePath.replace('gamma', 'alpha'))
 
@@ -4000,6 +4026,8 @@ describe "TreeView", ->
         alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
         alphaDir.expand()
 
+        alphaDirContents = findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length
+
         dropEvent = eventHelpers.buildExternalDropEvent([deltaFilePath], alphaDir)
 
         runs ->
@@ -4007,10 +4035,10 @@ describe "TreeView", ->
           expect(alphaDir.children.length).toBe 2
 
         waitsFor "directory view contents to refresh", ->
-          findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > 2
+          findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > alphaDirContents
 
         runs ->
-          expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe 3
+          expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe alphaDirContents + 1
 
     describe "when dragging a directory from the OS onto a DirectoryView's header", ->
       it "should move the directory to the hovered directory", ->
@@ -4018,21 +4046,25 @@ describe "TreeView", ->
         alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
         alphaDir.expand()
 
+        alphaDirContents = findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length
+
         dropEvent = eventHelpers.buildExternalDropEvent([gammaDirPath], alphaDir)
         treeView.onDrop(dropEvent)
         expect(alphaDir.children.length).toBe 2
 
         waitsFor "directory view contents to refresh", ->
-          findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > 2
+          findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > alphaDirContents
 
         runs ->
-          expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe 3
+          expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe alphaDirContents + 1
 
     describe "when dragging a file and directory from the OS onto a DirectoryView's header", ->
       it "should move the file and directory to the hovered directory", ->
         # Dragging delta.txt and gammaDir from OS file explorer onto alphaDir
         alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
         alphaDir.expand()
+
+        alphaDirContents = findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length
 
         dropEvent = eventHelpers.buildExternalDropEvent([deltaFilePath, gammaDirPath], alphaDir)
 
@@ -4041,10 +4073,10 @@ describe "TreeView", ->
           expect(alphaDir.children.length).toBe 2
 
         waitsFor "directory view contents to refresh", ->
-          findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > 3
+          findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > alphaDirContents
 
         runs ->
-          expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe 4
+          expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe alphaDirContents + 2
 
     describe "when dragging a directory from the OS onto a blank section of the Tree View", ->
       it "should create a new project folder", ->
