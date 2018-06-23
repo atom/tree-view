@@ -3750,7 +3750,7 @@ describe "TreeView", ->
         expect(alphaDir).not.toHaveClass('selected')
 
     describe "when dropping a FileView onto a DirectoryView's header", ->
-      fit "should move the file to the hovered directory", ->
+      it "should move the file to the hovered directory", ->
         # Dragging delta.txt onto alphaDir
         alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
         alphaDir.expand()
