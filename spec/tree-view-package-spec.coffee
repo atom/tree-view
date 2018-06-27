@@ -3777,6 +3777,33 @@ describe "TreeView", ->
           expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe alphaDirContents + 1
           expect(findDirectoryContainingText(treeView.roots[0], 'gamma').querySelectorAll('.entry').length).toBe gammaDirContents - 1
 
+      describe 'when the ctrl/cmd modifier key is pressed', ->
+        it "should copy the file to the hovered directory", ->
+          # Dragging delta.txt onto alphaDir
+          alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
+          alphaDir.expand()
+
+          gammaDir = findDirectoryContainingText(treeView.roots[0], 'gamma')
+          gammaDir.expand()
+          deltaFile = gammaDir.entries.children[1]
+
+          alphaDirContents = findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length
+          gammaDirContents = findDirectoryContainingText(treeView.roots[0], 'gamma').querySelectorAll('.entry').length
+
+          [dragStartEvent, dragEnterEvent, dropEvent] =
+              eventHelpers.buildInternalDragEvents([deltaFile], alphaDir.querySelector('.header'), alphaDir, treeView, true)
+
+          treeView.onDragStart(dragStartEvent)
+          treeView.onDrop(dropEvent)
+          expect(alphaDir.children.length).toBe 2
+
+          waitsFor "directory view contents to refresh", ->
+            findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > alphaDirContents
+
+          runs ->
+            expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe alphaDirContents + 1
+            expect(findDirectoryContainingText(treeView.roots[0], 'gamma').querySelectorAll('.entry').length).toBe gammaDirContents
+
       it "shouldn't update editors with similar file paths", ->
         deltaFilePath2 = path.join(gammaDirPath, 'delta.txt2')
         fs.writeFileSync(deltaFilePath2, 'copy')
@@ -4039,6 +4066,28 @@ describe "TreeView", ->
 
         runs ->
           expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe alphaDirContents + 1
+          expect(fs.existsSync(deltaFilePath)).toBe false
+
+      describe "when the ctrl/cmd modifier key is pressed", ->
+        it "should copy the file to the hovered directory", ->
+          # Dragging delta.txt from OS file explorer onto alphaDir
+          alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
+          alphaDir.expand()
+
+          alphaDirContents = findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length
+
+          dropEvent = eventHelpers.buildExternalDropEvent([deltaFilePath], alphaDir, true)
+
+          runs ->
+            treeView.onDrop(dropEvent)
+            expect(alphaDir.children.length).toBe 2
+
+          waitsFor "directory view contents to refresh", ->
+            findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > alphaDirContents
+
+          runs ->
+            expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe alphaDirContents + 1
+            expect(fs.existsSync(deltaFilePath)).toBe true
 
     describe "when dragging a directory from the OS onto a DirectoryView's header", ->
       it "should move the directory to the hovered directory", ->

@@ -1,4 +1,4 @@
-module.exports.buildInternalDragEvents = (dragged, enterTarget, dropTarget, treeView) ->
+module.exports.buildInternalDragEvents = (dragged, enterTarget, dropTarget, treeView, copy = false) ->
   dataTransfer =
     data: {}
     setData: (key, value) -> @data[key] = "#{value}" # Drag events stringify data values
@@ -25,6 +25,9 @@ module.exports.buildInternalDragEvents = (dragged, enterTarget, dropTarget, tree
   Object.defineProperty(dropEvent, 'target', value: dropTarget)
   Object.defineProperty(dropEvent, 'currentTarget', value: dropTarget)
   Object.defineProperty(dropEvent, 'dataTransfer', value: dataTransfer)
+  if copy
+    key = if process.platform is 'darwin' then 'metaKey' else 'ctrlKey'
+    Object.defineProperty(dropEvent, key, value: true)
 
   dragEnterEvent = new DragEvent('dragenter')
   Object.defineProperty(dragEnterEvent, 'target', value: enterTarget)
@@ -33,7 +36,7 @@ module.exports.buildInternalDragEvents = (dragged, enterTarget, dropTarget, tree
 
   [dragStartEvent, dragEnterEvent, dropEvent]
 
-module.exports.buildExternalDropEvent = (filePaths, dropTarget) ->
+module.exports.buildExternalDropEvent = (filePaths, dropTarget, copy = false) ->
   dataTransfer =
     data: {}
     setData: (key, value) -> @data[key] = "#{value}" # Drag events stringify data values
@@ -51,6 +54,9 @@ module.exports.buildExternalDropEvent = (filePaths, dropTarget) ->
   Object.defineProperty(dropEvent, 'target', value: dropTarget)
   Object.defineProperty(dropEvent, 'currentTarget', value: dropTarget)
   Object.defineProperty(dropEvent, 'dataTransfer', value: dataTransfer)
+  if copy
+    key = if process.platform is 'darwin' then 'metaKey' else 'ctrlKey'
+    Object.defineProperty(dropEvent, key, value: true)
 
   for filePath in filePaths
     dropEvent.dataTransfer.files.push({path: filePath})
