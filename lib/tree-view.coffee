@@ -720,16 +720,18 @@ class TreeView
   #         paste destination.
   pasteEntries: ->
     selectedEntry = @selectedEntry()
+    return unless selectedEntry
+
     cutPaths = if window.localStorage['tree-view:cutPath'] then JSON.parse(window.localStorage['tree-view:cutPath']) else null
     copiedPaths = if window.localStorage['tree-view:copyPath'] then JSON.parse(window.localStorage['tree-view:copyPath']) else null
     initialPaths = copiedPaths or cutPaths
+    return unless initialPaths?.length
 
-    for initialPath in initialPaths ? []
-      if selectedEntry and initialPath and fs.existsSync(initialPath)
-        newDirectoryPath = selectedEntry.getPath()
-        newDirectoryPath = path.dirname(newDirectoryPath) if selectedEntry.classList.contains('file')
-        newPath = path.join(newDirectoryPath, path.basename(initialPath))
+    newDirectoryPath = selectedEntry.getPath()
+    newDirectoryPath = path.dirname(newDirectoryPath) if selectedEntry.classList.contains('file')
 
+    for initialPath in initialPaths
+      if fs.existsSync(initialPath)
         if copiedPaths
           @copyEntry(initialPath, newDirectoryPath)
         else if cutPaths
