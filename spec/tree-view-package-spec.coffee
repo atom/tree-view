@@ -3668,6 +3668,18 @@ describe "TreeView", ->
     [alphaDirPath, betaFilePath, etaDirPath, gammaDirPath, deltaFilePath, epsilonFilePath, thetaFilePath] = []
 
     beforeEach ->
+      # tree-view
+      # ├── alpha/
+      # │   ├── beta.txt
+      # │   └── eta/
+      # ├── alpha.txt
+      # ├── gamma/
+      # │   ├── delta.txt
+      # │   ├── epsilon.txt
+      # │   └── theta/
+      # │       └── theta.txt
+      # └── zeta.txt
+
       rootDirPath = fs.absolute(temp.mkdirSync('tree-view'))
 
       alphaFilePath = path.join(rootDirPath, "alpha.txt")
@@ -4030,7 +4042,7 @@ describe "TreeView", ->
             expect(editors[1].getPath()).toBe thetaFilePath2
 
     describe "when dropping a DirectoryView and FileViews onto the same DirectoryView's header", ->
-      it "should not move the files and directory to the hovered directory", ->
+      it "should not move the files and directory", ->
         # Dragging alpha.txt and alphaDir into alphaDir
         alphaFile = treeView.roots[0].entries.children[2]
         alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
@@ -4046,6 +4058,36 @@ describe "TreeView", ->
         treeView.onDragStart(dragStartEvent)
         treeView.onDrop(dropEvent)
         expect(treeView.moveEntry).not.toHaveBeenCalled()
+
+    describe "when dropping a DirectoryView and FileViews in the same parent DirectoryView", ->
+      describe "when the ctrl/cmd modifier key is pressed", ->
+        it "should copy the files and directory", ->
+          # Dragging beta.txt and etaDir into alphaDir
+          alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
+          alphaDir.expand()
+          betaFile = alphaDir.entries.children[0]
+          etaDir = alphaDir.entries.children[1]
+
+          dragged = [betaFile, etaDir]
+
+          alphaDirContents = alphaDir.querySelectorAll('.entry').length
+
+          [dragStartEvent, dragEnterEvent, dropEvent] =
+              eventHelpers.buildInternalDragEvents(dragged, alphaDir.querySelector('.header'), alphaDir, treeView, true)
+
+          spyOn(treeView, 'copyEntry').andCallThrough()
+
+          treeView.onDragStart(dragStartEvent)
+          treeView.onDrop(dropEvent)
+          expect(treeView.copyEntry).toHaveBeenCalled()
+
+          waitsFor "directory view contents to refresh", ->
+            findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > alphaDirContents
+
+          runs ->
+            expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe alphaDirContents + 2
+            expect(fs.existsSync(path.join(alphaDirPath, 'beta0.txt'))).toBe true
+            expect(fs.existsSync(path.join(alphaDirPath, 'eta0'))).toBe true
 
     describe "when dragging a file from the OS onto a DirectoryView's header", ->
       it "should move the file to the hovered directory", ->
