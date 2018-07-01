@@ -1,7 +1,7 @@
 _ = require 'underscore-plus'
 fs = require 'fs-plus'
 path = require 'path'
-temp = require('temp').track()
+temp = require('@atom/temp').track()
 os = require 'os'
 {remote, shell} = require 'electron'
 Directory = require '../lib/directory'
@@ -64,7 +64,6 @@ describe "TreeView", ->
       expect(root1.directory.watchSubscription).toBeTruthy()
 
   afterEach ->
-    temp.cleanup()
     if treeViewOpenPromise = atom.packages.getActivePackage('tree-view')?.mainModule.treeViewOpenPromise
       waitsForPromise -> treeViewOpenPromise
 
@@ -2981,7 +2980,7 @@ describe "TreeView", ->
         expect(Array.from(treeView.element.querySelectorAll('.file')).map((f) -> f.textContent)).toEqual(['.gitignore', 'tree-view.js', 'tree-view.txt'])
 
   describe "the hideIgnoredNames config option", ->
-    beforeEach ->
+    it "hides ignored files if the option is set, but otherwise shows them", ->
       atom.config.set('core.ignoredNames', ['.git', '*.js'])
       dotGitFixture = path.join(__dirname, 'fixtures', 'git', 'working-dir', 'git.git')
       projectPath = temp.mkdirSync('tree-view-project')
@@ -2992,7 +2991,6 @@ describe "TreeView", ->
       atom.project.setPaths([projectPath])
       atom.config.set "tree-view.hideIgnoredNames", false
 
-    it "hides ignored files if the option is set, but otherwise shows them", ->
       expect(Array.from(treeView.roots[0].querySelectorAll('.entry')).map((e) -> e.textContent)).toEqual(['.git', 'test.js', 'test.txt'])
 
       atom.config.set("tree-view.hideIgnoredNames", true)
@@ -3000,6 +2998,22 @@ describe "TreeView", ->
 
       atom.config.set("core.ignoredNames", [])
       expect(Array.from(treeView.roots[0].querySelectorAll('.entry')).map((e) -> e.textContent)).toEqual(['.git', 'test.js', 'test.txt'])
+
+    it "adds a custom style if if file/dir is ignored and visible", ->
+      atom.config.set('core.ignoredNames', ['dir2', '*.js'])
+      fixturePath = path.join(__dirname, 'fixtures', 'root-dir1')
+      atom.project.setPaths([fixturePath])
+      atom.config.set "tree-view.hideIgnoredNames", false
+
+      expect(Array.from(treeView.roots[0].querySelectorAll('.entry')).map((e) -> e.textContent)).toEqual(['dir1', 'dir2', 'nested', 'tree-view.js', 'tree-view.txt'])
+      expect(Array.from(treeView.roots[0].querySelectorAll('.status-ignored-name')).map((e) -> e.textContent)).toEqual(['dir2', 'tree-view.js'])
+
+      atom.config.set("tree-view.hideIgnoredNames", true)
+      expect(Array.from(treeView.roots[0].querySelectorAll('.entry')).map((e) -> e.textContent)).toEqual(['dir1', 'nested', 'tree-view.txt'])
+
+      atom.config.set("core.ignoredNames", [])
+      expect(Array.from(treeView.roots[0].querySelectorAll('.entry')).map((e) -> e.textContent)).toEqual(['dir1', 'dir2', 'nested', 'tree-view.js', 'tree-view.txt'])
+      expect(Array.from(treeView.roots[0].querySelectorAll('.status-ignored-name')).map((e) -> e.textContent)).toEqual([])
 
   describe "the squashedDirectoryName config option", ->
     beforeEach ->
@@ -3206,24 +3220,40 @@ describe "TreeView", ->
 
     describe "when a file is modified", ->
       it "adds a custom style", ->
-        expect(treeView.element.querySelector('.file.status-modified')).toHaveText('b.txt')
+        expect(treeView.element.querySelector('.project-root .file.status-modified')).toHaveText('b.txt')
+
+    describe "when a file is modified", ->
+      it "adds a custom style to the project root", ->
+        expect(treeView.element.querySelector('.project-root')).toHaveClass('status-modified')
 
     describe "when a directory is modified", ->
       it "adds a custom style", ->
-        expect(treeView.element.querySelector('.directory.status-modified').header).toHaveText('dir')
+        expect(treeView.element.querySelector('.project-root .directory.status-modified').header).toHaveText('dir')
+
+    describe "when a directory is modified", ->
+      it "adds a custom style to the project root", ->
+        expect(treeView.element.querySelector('.project-root')).toHaveClass('status-modified')
 
     describe "when a file is new", ->
       it "adds a custom style", ->
         treeView.roots[0].entries.querySelectorAll('.directory')[2].expand()
-        expect(treeView.element.querySelector('.file.status-added')).toHaveText('new2')
+        expect(treeView.element.querySelector('.project-root .file.status-added')).toHaveText('new2')
+
+    describe "when a file is new", ->
+      it "adds a custom style to the project root", ->
+        expect(treeView.element.querySelector('.project-root')).toHaveClass('status-modified')
 
     describe "when a directory is new", ->
       it "adds a custom style", ->
-        expect(treeView.element.querySelector('.directory.status-added').header).toHaveText('dir2')
+        expect(treeView.element.querySelector('.project-root .directory.status-added').header).toHaveText('dir2')
+
+    describe "when a directory is new", ->
+      it "adds a custom style to the project root", ->
+        expect(treeView.element.querySelector('.project-root')).toHaveClass('status-modified')
 
     describe "when a file is ignored", ->
       it "adds a custom style", ->
-        expect(treeView.element.querySelector('.file.status-ignored')).toHaveText('ignored.txt')
+        expect(treeView.element.querySelector('.project-root .file.status-ignored')).toHaveText('ignored.txt')
 
     describe "when a file is selected in a directory", ->
       beforeEach ->
@@ -3264,16 +3294,18 @@ describe "TreeView", ->
 
       describe "when a file is modified", ->
         it "updates its and its parent directories' styles", ->
-          expect(treeView.element.querySelector('.file.status-modified')).toHaveText('b.txt')
-          expect(treeView.element.querySelector('.directory.status-modified').header).toHaveText('dir')
+          expect(treeView.element.querySelector('.project-root .file.status-modified')).toHaveText('b.txt')
+          expect(treeView.element.querySelector('.project-root .directory.status-modified').header).toHaveText('dir')
+          expect(treeView.element.querySelector('.project-root')).toHaveClass('status-modified')
 
       describe "when a file loses its modified status", ->
         it "updates its and its parent directories' styles", ->
           fs.writeFileSync(modifiedFile, originalFileContent)
           atom.project.getRepositories()[0].getPathStatus(modifiedFile)
 
-          expect(treeView.element.querySelector('.file.status-modified')).not.toExist()
-          expect(treeView.element.querySelector('.directory.status-modified')).not.toExist()
+          expect(treeView.element.querySelector('.project-root .file.status-modified')).not.toExist()
+          expect(treeView.element.querySelector('.project-root .directory.status-modified')).not.toExist()
+          expect(treeView.element.querySelector('.project-root.status-modified')).not.toExist()
 
   describe "selecting items", ->
     [dirView, fileView1, fileView2, fileView3, fileView4, fileView5, treeView, rootDirPath, dirPath, filePath1, filePath2, filePath3, filePath4, filePath5] = []

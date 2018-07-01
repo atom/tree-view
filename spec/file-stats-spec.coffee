@@ -1,7 +1,7 @@
 _ = require 'underscore-plus'
 fs = require 'fs-plus'
 path = require 'path'
-temp = require('temp').track()
+temp = require('@atom/temp').track()
 
 describe "FileStats", ->
   describe "provision of filesystem stats", ->
@@ -26,9 +26,6 @@ describe "FileStats", ->
 
       runs ->
         treeView = atom.workspace.getLeftDock().getActivePaneItem()
-
-    afterEach ->
-      temp.cleanup()
 
     it "passes stats to File instances", ->
       stats = treeView.roots[0].directory.entries.get("file1.txt").stats
