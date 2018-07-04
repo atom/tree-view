@@ -1,5 +1,6 @@
 {TextEditor, CompositeDisposable, Disposable, Emitter, Range, Point} = require 'atom'
 path = require 'path'
+{getFullExtension} = require "./helpers"
 
 module.exports =
 class Dialog
@@ -35,7 +36,7 @@ class Dialog
     @miniEditor.setText(initialPath)
 
     if select
-      extension = path.extname(initialPath)
+      extension = getFullExtension(initialPath)
       baseName = path.basename(initialPath)
       selectionStart = initialPath.length - baseName.length
       if baseName is extension
@@ -50,13 +51,14 @@ class Dialog
     @miniEditor.scrollToCursorPosition()
 
   close: ->
-    panelToDestroy = @panel
+    panel = @panel
     @panel = null
-    panelToDestroy?.destroy()
+    panel?.destroy()
     @emitter.dispose()
     @disposables.dispose()
     @miniEditor.destroy()
-    atom.workspace.getActivePane().activate()
+    activePane = atom.workspace.getCenter().getActivePane()
+    activePane.activate() unless activePane.isDestroyed()
 
   cancel: ->
     @close()
