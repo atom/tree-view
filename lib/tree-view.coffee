@@ -538,15 +538,16 @@ class TreeView
       dialog.attach()
 
   showSelectedEntryInFileManager: ->
-    return unless entry = @selectedEntry()
+    return unless filePath = @selectedEntry()?.getPath()
 
-    shell.showItemInFolder(entry.getPath())
+    unless shell.showItemInFolder(filePath)
+      atom.notifications.addWarning("Unable to show #{filePath} in file manager")
 
   showCurrentFileInFileManager: ->
-    return unless editor = atom.workspace.getCenter().getActiveTextEditor()
-    return unless filePath = editor.getPath()
+    return unless filePath = atom.workspace.getCenter().getActiveTextEditor()?.getPath()
 
-    shell.showItemInFolder(filePath)
+    unless shell.showItemInFolder(filePath)
+      atom.notifications.addWarning("Unable to show #{filePath} in file manager")
 
   openSelectedEntryInNewWindow: ->
     if pathToOpen = @selectedEntry()?.getPath()
