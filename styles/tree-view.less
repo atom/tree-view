@@ -1,82 +1,53 @@
 @import "ui-variables";
 
-.tree-view-resizer {
-  position: relative;
-  height: 100%;
-  overflow: hidden;
-  cursor: default;
-  -webkit-user-select: none;
-  min-width: 100px;
-  width: 200px;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-
-  // use these classes to re-order
-  // using a value in-between is fine too, e.g. order: -3;
-  & > .order--start  { order: -10; }
-  & > .order--center { order:   0; }
-  & > .order--end    { order:  10; }
-
-  .tree-view-resize-handle {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    width: 10px;
-    cursor: col-resize;
-    z-index: 3;
-  }
-
-  &[data-show-on-right-side='true'] {
-    .tree-view-resize-handle {
-      left: -5px;
-    }
-  }
-
-  &[data-show-on-right-side='false'] {
-    .tree-view-resize-handle {
-      right: -5px;
-    }
-  }
-}
-
 .project-root-header {
   -webkit-user-drag: element;
 }
 
-.tree-view-scroller {
+.tree-view {
+  contain: size;
+  overflow: auto;
+  z-index: 2;
+  -webkit-user-select: none;
+
   display: flex;
   flex-direction: column;
-  flex: 1;
-  width: 100%;
-  overflow: auto;
-}
 
-.tree-view {
-  flex-grow: 1;
-  flex-shrink: 0;
-  /*
-   * Force a new stacking context to prevent a large, duplicate paint layer from
-   * being created for tree-view's scrolling contents that can make the cost of
-   * layer tree updates scale at 3x the size of the layer rather than the
-   * optimal 1x.
-   *
-   * On high resolution displays, Chromium handles layers for scrolling content
-   * differently and inadvertently creates a duplicate paint layer the size of
-   * .tree-view-scroller because descendants of the scroller overlap the
-   * auto-created layer.
-   */
-  isolation: isolate;
-  min-width: -webkit-min-content;
-  padding-left: @component-icon-padding;
-  padding-right: @component-padding;
-  position: relative;
+  .tree-view-root {
+    padding-left: @component-icon-padding;
+    padding-right: @component-padding;
+    background-color: inherit;
+
+    /*
+     * Force a new stacking context to prevent a large, duplicate paint layer from
+     * being created for tree-view's scrolling contents that can make the cost of
+     * layer tree updates scale at 3x the size of the layer rather than the
+     * optimal 1x.
+     *
+     * On high resolution displays, Chromium handles layers for scrolling content
+     * differently and inadvertently creates a duplicate paint layer the size of
+     * .tree-view-scroller because descendants of the scroller overlap the
+     * auto-created layer.
+     */
+    isolation: isolate;
+
+    // Expands tree-view root to take up full height.
+    // This makes sure that the context menu can still be openend in the empty
+    // area underneath the files.
+    flex-grow: 1;
+
+    // Expands tree-view root to take up as much width as needed by the content.
+    // This makes sure that the selected item's "bar/background" expands to full width.
+    position: relative;
+    min-width: min-content;
+  }
 
   .header {
     position: relative;
   }
 
-  .list-tree {
+  .tree-view-root .list-tree {
+    // Keeps selections expanded while dragging
     position: static;
   }
 
@@ -128,14 +99,6 @@
     // ensure that placeholder doesn't disappear above the top of the view
     &:first-child {
       margin-top: 1px;
-    }
-  }
-}
-
-.platform-win32 {
-  .tree-view-resizer {
-    .tree-view-resize-handle {
-      cursor: ew-resize;
     }
   }
 }

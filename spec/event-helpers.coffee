@@ -1,4 +1,4 @@
-module.exports.buildInternalDragEvents = (dragged, enterTarget, dropTarget) ->
+module.exports.buildInternalDragEvents = (dragged, enterTarget, dropTarget, treeView) ->
   dataTransfer =
     data: {}
     setData: (key, value) -> @data[key] = "#{value}" # Drag events stringify data values
@@ -12,9 +12,13 @@ module.exports.buildInternalDragEvents = (dragged, enterTarget, dropTarget) ->
       Object.keys(dataTransfer.data).map((key) -> {type: key})
   )
 
+  treeView.deselect()
+  for entry in dragged
+    treeView.selectMultipleEntries(entry)
+
   dragStartEvent = new DragEvent('dragstart')
-  Object.defineProperty(dragStartEvent, 'target', value: dragged)
-  Object.defineProperty(dragStartEvent, 'currentTarget', value: dragged)
+  Object.defineProperty(dragStartEvent, 'target', value: dragged[0])
+  Object.defineProperty(dragStartEvent, 'currentTarget', value: dragged[0])
   Object.defineProperty(dragStartEvent, 'dataTransfer', value: dataTransfer)
 
   dropEvent = new DragEvent('drop')
