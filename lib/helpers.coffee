@@ -20,10 +20,3 @@ module.exports =
     basename = path.basename(filePath)
     position = basename.indexOf('.')
     if position > 0 then basename[position..] else ''
-
-  updateEditorsForPath: (oldPath, newPath) ->
-    editors = atom.workspace.getTextEditors()
-    for editor in editors
-      filePath = editor.getPath()
-      if filePath?.startsWith(oldPath)
-        editor.getBuffer().setPath(filePath.replace(oldPath, newPath))
