@@ -3566,75 +3566,61 @@ describe "TreeView", ->
 
   describe "showSelectedEntryInFileManager()", ->
     beforeEach ->
-      atom.notifications.clear()
+      spyOn(shell, 'showItemInFolder').andReturn(false)
 
-    it "displays the standard error output when the process fails", ->
-      {BufferedProcess} = require 'atom'
-      spyOn(BufferedProcess.prototype, 'spawn').andCallFake ->
-        EventEmitter = require 'events'
-        fakeProcess = new EventEmitter()
-        fakeProcess.send = ->
-        fakeProcess.kill = ->
-        fakeProcess.stdout = new EventEmitter()
-        fakeProcess.stdout.setEncoding = ->
-        fakeProcess.stderr = new EventEmitter()
-        fakeProcess.stderr.setEncoding = ->
-        @process = fakeProcess
-        process.nextTick ->
-          fakeProcess.stderr.emit('data', 'bad process')
-          fakeProcess.stderr.emit('close')
-          fakeProcess.stdout.emit('close')
-          fakeProcess.emit('exit')
-
+    it "does nothing if no entry is selected", ->
+      treeView.deselect()
       treeView.showSelectedEntryInFileManager()
+      expect(shell.showItemInFolder).not.toHaveBeenCalled()
 
-      waitsFor ->
-        atom.notifications.getNotifications().length is 1
-
-      runs ->
-        expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Opening folder'
-        expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'failed'
-        expect(atom.notifications.getNotifications()[0].getDetail()).toContain 'bad process'
-
-    it "handle errors thrown when spawning the OS file manager", ->
-      spyOn(treeView, 'fileManagerCommandForPath').andReturn
-        command: path.normalize('/this/command/does/not/exist')
-        label: 'OS file manager'
-        args: ['foo']
-
+    it "shows the selected entry in the OS's file manager", ->
       treeView.showSelectedEntryInFileManager()
+      expect(shell.showItemInFolder).toHaveBeenCalled()
 
-      waitsFor ->
-        atom.notifications.getNotifications().length is 1
-
-      runs ->
-        expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Opening folder in OS file manager failed'
-        expect(atom.notifications.getNotifications()[0].getDetail()).toContain if process.platform is 'win32' then 'cannot find the path' else 'ENOENT'
+    it "displays a notification if showing the file fails", ->
+      treeView.showSelectedEntryInFileManager()
+      expect(atom.notifications.getNotifications().length).toBe(1)
+      expect(atom.notifications.getNotifications()[0].getMessage()).toContain('Unable to show')
 
   describe "showCurrentFileInFileManager()", ->
+    beforeEach ->
+      spyOn(shell, 'showItemInFolder').andReturn(false)
+
     it "does nothing when no file is opened", ->
       expect(atom.workspace.getCenter().getPaneItems().length).toBe(0)
-      expect(treeView.showCurrentFileInFileManager()).toBeUndefined()
+
+      treeView.showCurrentFileInFileManager()
+      expect(shell.showItemInFolder).not.toHaveBeenCalled()
 
     it "does nothing when only an untitled tab is opened", ->
       waitsForPromise ->
         atom.workspace.open()
+
       runs ->
         workspaceElement.focus()
-        expect(treeView.showCurrentFileInFileManager()).toBeUndefined()
+        treeView.showCurrentFileInFileManager()
+        expect(shell.showItemInFolder).not.toHaveBeenCalled()
 
-    it "shows file in file manager when some file is opened", ->
+    it "shows the current file in the OS's file manager", ->
       filePath = path.join(os.tmpdir(), 'non-project-file.txt')
       fs.writeFileSync(filePath, 'test')
       waitsForPromise ->
         atom.workspace.open(filePath)
 
       runs ->
-        {BufferedProcess} = require 'atom'
-        spyOn(BufferedProcess.prototype, 'spawn').andCallFake ->
-        fileManagerProcess = treeView.showCurrentFileInFileManager()
-        expect(fileManagerProcess instanceof BufferedProcess).toBeTruthy()
-        fileManagerProcess.kill()
+        treeView.showCurrentFileInFileManager()
+        expect(shell.showItemInFolder).toHaveBeenCalled()
+
+    it "shows a notification if showing the file fails", ->
+      filePath = path.join(os.tmpdir(), 'non-project-file.txt')
+      fs.writeFileSync(filePath, 'test')
+      waitsForPromise ->
+        atom.workspace.open(filePath)
+
+      runs ->
+        treeView.showCurrentFileInFileManager()
+        expect(atom.notifications.getNotifications().length).toBe(1)
+        expect(atom.notifications.getNotifications()[0].getMessage()).toContain('Unable to show')
 
   describe "when reloading a directory with deletions and additions", ->
     it "does not throw an error (regression)", ->
