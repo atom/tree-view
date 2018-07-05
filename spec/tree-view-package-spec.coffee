@@ -556,15 +556,25 @@ describe "TreeView", ->
       grandchild = child.querySelector('li')
       grandchild.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
 
-      expect(root1.directory.watchSubscription).toBeTruthy()
-      expect(child.directory.watchSubscription).toBeTruthy()
-      expect(grandchild.directory.watchSubscription).toBeTruthy()
+      waitsFor ->
+        root1.directory.watchSubscription
 
-      root1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+      waitsFor ->
+        child.directory.watchSubscription
 
-      expect(root1.directory.watchSubscription).toBeFalsy()
-      expect(child.directory.watchSubscription).toBeFalsy()
-      expect(grandchild.directory.watchSubscription).toBeFalsy()
+      waitsFor ->
+        grandchild.directory.watchSubscription
+
+      runs ->
+        expect(root1.directory.watchSubscription).toBeTruthy()
+        expect(child.directory.watchSubscription).toBeTruthy()
+        expect(grandchild.directory.watchSubscription).toBeTruthy()
+
+        root1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+
+        expect(root1.directory.watchSubscription).toBeFalsy()
+        expect(child.directory.watchSubscription).toBeFalsy()
+        expect(grandchild.directory.watchSubscription).toBeFalsy()
 
   describe "when mouse down fires on a file or directory", ->
     it "selects the entry", ->
