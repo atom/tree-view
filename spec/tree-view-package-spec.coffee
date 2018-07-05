@@ -1,7 +1,7 @@
 _ = require 'underscore-plus'
 fs = require 'fs-plus'
 path = require 'path'
-temp = require('temp').track()
+temp = require('@atom/temp').track()
 os = require 'os'
 {remote, shell} = require 'electron'
 Directory = require '../lib/directory'
@@ -69,7 +69,6 @@ describe "TreeView", ->
         expect(root1.directory.watchSubscription).toBeTruthy()
 
   afterEach ->
-    temp.cleanup()
     if treeViewOpenPromise = atom.packages.getActivePackage('tree-view')?.mainModule.treeViewOpenPromise
       waitsForPromise -> treeViewOpenPromise
 

@@ -1,6 +1,6 @@
 fs = require 'fs-plus'
 path = require 'path'
-temp = require('temp').track()
+temp = require('@atom/temp').track()
 
 fileIcons = require '../lib/default-file-icons'
 
@@ -28,9 +28,6 @@ describe 'DefaultFileIcons', ->
 
     beforeEach ->
       tempDir = temp.mkdirSync('atom-tree-view')
-
-    afterEach ->
-      temp.cleanupSync()
 
     it 'recognizes symlinks', ->
       filePath = path.join(tempDir, 'foo.bar')
