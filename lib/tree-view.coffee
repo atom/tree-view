@@ -12,6 +12,7 @@ CopyDialog = require './copy-dialog'
 IgnoredNames = null # Defer requiring until actually needed
 
 Directory = require './directory'
+RootDirectory = require './root-directory'
 DirectoryView = require './directory-view'
 RootDragAndDrop = require './root-drag-and-drop'
 
@@ -328,7 +329,7 @@ class TreeView
       for key in ["atime", "birthtime", "ctime", "mtime"]
         stats[key] = stats[key].getTime()
 
-      directory = new Directory({
+      directory = new RootDirectory({
         name: path.basename(projectPath)
         fullPath: projectPath
         symlink: false
