@@ -702,7 +702,7 @@ class TreeView
     window.localStorage.removeItem('tree-view:cutPath')
     window.localStorage['tree-view:copyPath'] = JSON.stringify(selectedPaths)
 
-  # Public: Copy the path of the selected entry element.
+  # Public: Cut the path of the selected entry element.
   #         Save the path in localStorage, so that cutting from 2 different
   #         instances of atom works as intended
   #
@@ -740,6 +740,15 @@ class TreeView
         basePath = path.dirname(basePath) if selectedEntry.classList.contains('file')
         newPath = path.join(basePath, path.basename(initialPath))
 
+        # Do not allow copying test/a/ into test/a/b/
+        # Note: A trailing path.sep is added to prevent false positives, such as test/a -> test/ab
+        realBasePath = fs.realpathSync(basePath) + path.sep
+        realInitialPath = fs.realpathSync(initialPath) + path.sep
+        if initialPathIsDirectory and realBasePath.startsWith(realInitialPath)
+          unless fs.isSymbolicLinkSync(initialPath)
+            atom.notifications.addWarning('Cannot paste a folder into itself')
+            continue
+
         if copiedPaths
           # append a number to the file if an item with the same name exists
           fileCounter = 0
@@ -753,7 +762,7 @@ class TreeView
               newPath = "#{filePath}#{fileCounter}#{extension}"
             fileCounter += 1
 
-          if fs.isDirectorySync(initialPath)
+          if initialPathIsDirectory
             # use fs.copy to copy directories since read/write will fail for directories
             catchAndShowFileErrors =>
               fs.copySync(initialPath, newPath)
@@ -764,9 +773,8 @@ class TreeView
               fs.writeFileSync(newPath, fs.readFileSync(initialPath))
               @emitter.emit 'entry-copied', {initialPath, newPath}
         else if cutPaths
-          # Only move the target if the cut target doesn't exist and if the newPath
-          # is not within the initial path
-          unless fs.existsSync(newPath) or newPath.startsWith(initialPath)
+          # Only move the target if the cut target doesn't exist
+          unless fs.existsSync(newPath)
             try
               @emitter.emit 'will-move-entry', {initialPath, newPath}
               fs.moveSync(initialPath, newPath)
@@ -857,6 +865,13 @@ class TreeView
   moveEntry: (initialPath, newDirectoryPath) ->
     if initialPath is newDirectoryPath
       return
+
+    realNewDirectoryPath = fs.realpathSync(newDirectoryPath) + path.sep
+    realInitialPath = fs.realpathSync(initialPath) + path.sep
+    if fs.isDirectorySync(initialPath) and realNewDirectoryPath.startsWith(realInitialPath)
+      unless fs.isSymbolicLinkSync(initialPath)
+        atom.notifications.addWarning('Cannot move a folder into itself')
+        return
 
     entryName = path.basename(initialPath)
     newPath = path.join(newDirectoryPath, entryName)
@@ -1105,11 +1120,13 @@ class TreeView
         return if initialPaths.includes(newDirectoryPath)
 
         entry.classList.remove('drag-over', 'selected')
-        parentSelected = entry.parentNode.closest('.entry.selected')
-        return if parentSelected
 
         # iterate backwards so files in a dir are moved before the dir itself
         for initialPath in initialPaths by -1
+          # Note: this is necessary on Windows to circumvent node-pathwatcher
+          # holding a lock on expanded folders and preventing them from
+          # being moved or deleted
+          # TODO: This can be removed when tree-view is switched to @atom/watcher
           @entryForPath(initialPath)?.collapse?()
           @moveEntry(initialPath, newDirectoryPath)
       else
