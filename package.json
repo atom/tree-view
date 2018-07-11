@@ -95,10 +95,10 @@
       "default": false,
       "description": "When opening a file, always focus an already-existing view of the file even if it's in a another pane."
     },
-    "alwaysRecursiveCollapse": {
+    "alwaysCollapseRecursively": {
       "type": "boolean",
       "default": false,
-      "description": "When collapsing a folder, always collapse the children as well"
+      "description": "When collapsing a folder, always collapse all descendants as well"
     }
   }
 }
