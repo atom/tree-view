@@ -769,6 +769,39 @@ describe "TreeView", ->
           expect(child).not.toHaveClass 'expanded'
         expect(treeView.roots[0]).toHaveClass 'expanded'
 
+
+  describe "the alwaysCollapseRecursively config option", ->
+    it "defaults to unset", ->
+      expect(atom.config.get("tree-view.alwaysCollapseRecursively")).toBeFalsy()
+
+    describe "when an expanded directory is clicked", ->
+      parent    = null
+      children  = null
+
+      beforeEach ->
+        atom.config.set("tree-view.alwaysCollapseRecursively", true)
+        parent = root1.querySelectorAll('.entries > .directory')[2]
+        parent.expand()
+        children = parent.querySelectorAll('.expanded.directory')
+        for child in children
+          child.expand()
+
+      it "recursively collapses the directory", ->
+        parent.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+        parent.expand()
+        expect(parent).toHaveClass 'expanded'
+        for child in children
+          child.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+          child.expand()
+          expect(child).toHaveClass 'expanded'
+
+        parent.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+
+        expect(parent).not.toHaveClass 'expanded'
+        for child in children
+          expect(child).not.toHaveClass 'expanded'
+        expect(treeView.roots[0]).toHaveClass 'expanded'
+
   describe "when the active item changes on the active pane", ->
     describe "when the item has a path", ->
       it "selects the entry with that path in the tree view if it is visible", ->
