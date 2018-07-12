@@ -1541,67 +1541,66 @@ describe "TreeView", ->
         LocalStorage.clear()
         atom.notifications.clear()
 
-      for operation in ['copy', 'cut']
-        describe "when attempting to #{operation} and paste a directory into itself", ->
-          it "shows a warning notification and does not paste", ->
-            # /dir-1/ -> /dir-1/
-            LocalStorage["tree-view:#{operation}Path"] = JSON.stringify([dirPath])
-            newPath = path.join(dirPath, path.basename(dirPath))
-            dirView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
-            expect(-> atom.commands.dispatch(treeView.element, "tree-view:paste")).not.toThrow()
-            expect(fs.existsSync(newPath)).toBe false
-            expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Cannot paste a folder into itself'
+      describe "when attempting to paste a directory into itself", ->
+        it "shows a warning notification and does not paste", ->
+          # /dir-1/ -> /dir-1/
+          LocalStorage["tree-view:copyPath"] = JSON.stringify([dirPath])
+          newPath = path.join(dirPath, path.basename(dirPath))
+          dirView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+          expect(-> atom.commands.dispatch(treeView.element, "tree-view:paste")).not.toThrow()
+          expect(fs.existsSync(newPath)).toBe false
+          expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Cannot copy a folder into itself'
 
-        describe "when attempting to #{operation} and paste a directory into a nested child directory", ->
-          it "shows a warning notification and does not paste", ->
-            nestedPath = path.join(dirPath, 'nested')
-            fs.makeTreeSync(nestedPath)
+      describe "when attempting to paste a directory into a nested child directory", ->
+        it "shows a warning notification and does not paste", ->
+          nestedPath = path.join(dirPath, 'nested')
+          fs.makeTreeSync(nestedPath)
 
-            # /dir-1/ -> /dir-1/nested/
-            LocalStorage["tree-view:#{operation}Path"] = JSON.stringify([dirPath])
-            newPath = path.join(nestedPath, path.basename(dirPath))
-            dirView.reload()
-            nestedView = dirView.querySelector('.directory')
-            nestedView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
-            expect(-> atom.commands.dispatch(treeView.element, "tree-view:paste")).not.toThrow()
-            expect(fs.existsSync(newPath)).toBe false
-            expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Cannot paste a folder into itself'
+          # /dir-1/ -> /dir-1/nested/
+          LocalStorage["tree-view:copyPath"] = JSON.stringify([dirPath])
+          newPath = path.join(nestedPath, path.basename(dirPath))
+          dirView.reload()
+          nestedView = dirView.querySelector('.directory')
+          nestedView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+          expect(-> atom.commands.dispatch(treeView.element, "tree-view:paste")).not.toThrow()
+          expect(fs.existsSync(newPath)).toBe false
+          expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Cannot copy a folder into itself'
 
-        describe "when attempting to #{operation} and paste a directory into a sibling directory that starts with the same letter", ->
-          it "allows the paste to occur", ->
-            # /dir-1/ -> /dir-2/
-            LocalStorage["tree-view:#{operation}Path"] = JSON.stringify([dirPath])
-            newPath = path.join(dirPath2, path.basename(dirPath))
-            dirView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
-            expect(-> atom.commands.dispatch(treeView.element, "tree-view:paste")).not.toThrow()
-            expect(fs.existsSync(newPath)).toBe true
-            expect(atom.notifications.getNotifications()[0]).toBeUndefined()
+      describe "when attempting to paste a directory into a sibling directory that starts with the same letter", ->
+        it "allows the paste to occur", ->
+          # /dir-1/ -> /dir-2/
+          LocalStorage["tree-view:copyPath"] = JSON.stringify([dirPath])
+          newPath = path.join(dirPath2, path.basename(dirPath))
+          dirView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+          expect(-> atom.commands.dispatch(treeView.element, "tree-view:paste")).not.toThrow()
+          expect(fs.existsSync(newPath)).toBe true
+          expect(atom.notifications.getNotifications()[0]).toBeUndefined()
 
-        describe "when attempting to #{operation} and paste a directory into a symlink of itself", ->
-          it "shows a warning notification and does not paste", ->
-            fs.symlinkSync(dirPath, path.join(rootDirPath, 'symdir'), 'junction')
+      describe "when attempting to paste a directory into a symlink of itself", ->
+        it "shows a warning notification and does not paste", ->
+          fs.symlinkSync(dirPath, path.join(rootDirPath, 'symdir'), 'junction')
 
-            # /dir-1/ -> symlink of /dir-1/
-            LocalStorage["tree-view:#{operation}Path"] = JSON.stringify([dirPath])
-            newPath = path.join(dirPath, path.basename(dirPath))
-            symlinkView = root1.querySelector('.directory')
-            symlinkView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
-            expect(-> atom.commands.dispatch(treeView.element, "tree-view:paste")).not.toThrow()
-            expect(fs.existsSync(newPath)).toBe false
-            expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Cannot paste a folder into itself'
+          # /dir-1/ -> symlink of /dir-1/
+          LocalStorage["tree-view:copyPath"] = JSON.stringify([dirPath])
+          newPath = path.join(dirPath, path.basename(dirPath))
+          symlinkView = root1.querySelector('.directory')
+          symlinkView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+          expect(-> atom.commands.dispatch(treeView.element, "tree-view:paste")).not.toThrow()
+          expect(fs.existsSync(newPath)).toBe false
+          expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Cannot copy a folder into itself'
 
-        describe "when attempting to #{operation} and paste a symlink into its target directory", ->
-          it "allows the paste to occur", ->
-            symlinkedPath = path.join(rootDirPath, 'symdir')
-            fs.symlinkSync(dirPath, symlinkedPath, 'junction')
+      describe "when attempting to paste a symlink into its target directory", ->
+        it "allows the paste to occur", ->
+          symlinkedPath = path.join(rootDirPath, 'symdir')
+          fs.symlinkSync(dirPath, symlinkedPath, 'junction')
 
-            # symlink of /dir-1/ -> /dir-1/
-            LocalStorage["tree-view:#{operation}Path"] = JSON.stringify([symlinkedPath])
-            newPath = path.join(dirPath, path.basename(symlinkedPath))
-            dirView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
-            expect(-> atom.commands.dispatch(treeView.element, "tree-view:paste")).not.toThrow()
-            expect(fs.existsSync(newPath)).toBe true
-            expect(atom.notifications.getNotifications()[0]).toBeUndefined()
+          # symlink of /dir-1/ -> /dir-1/
+          LocalStorage["tree-view:copyPath"] = JSON.stringify([symlinkedPath])
+          newPath = path.join(dirPath, path.basename(symlinkedPath))
+          dirView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+          expect(-> atom.commands.dispatch(treeView.element, "tree-view:paste")).not.toThrow()
+          expect(fs.existsSync(newPath)).toBe true
+          expect(atom.notifications.getNotifications()[0]).toBeUndefined()
 
       describe "when pasting entries which don't exist anymore", ->
         it "skips the entry which doesn't exist", ->
