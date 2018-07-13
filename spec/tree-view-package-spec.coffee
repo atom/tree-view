@@ -4483,24 +4483,24 @@ describe "TreeView", ->
         expect(atom.project.getPaths()).toEqual [alphaDirPath, thetaDirPath]
         expect(document.querySelector('.placeholder')).not.toExist()
 
-  describe "When a file is opened", ->
-    describe "if the file entry does not exists in tree view", ->
-      it "deselects existing file entry", ->
-        newfilepath = path.join(os.tmpdir(), 'new-file.txt')
-        fs.writeFileSync(newfilepath, 'test')
+  describe "when a file is opened", ->
+    describe "if the file is not in a currently opened project", ->
+      it "deselects all entries", ->
+        nonProjectPath = path.join(os.tmpdir(), 'new-file.txt')
+        fs.writeFileSync(nonProjectPath, 'test')
 
-        waitsForFileToOpen ->
-          sampleJs.click()
+        waitForWorkspaceOpenEvent ->
+          sampleJs.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
 
         runs ->
           expect(sampleJs).toHaveClass 'selected'
-          expect(treeView.find('.selected').length).toBe 1
+          expect(treeView.getSelectedEntries().length).toBe 1
 
         waitsForPromise ->
-          atom.workspace.open(newfilepath)
+          atom.workspace.open(nonProjectPath)
 
         runs ->
-          expect(treeView.find('.selected').length).toBe 0
+          expect(treeView.getSelectedEntries().length).toBe 0
 
   describe "when there is a __proto__ entry present", ->
     it "does not break anything", ->
