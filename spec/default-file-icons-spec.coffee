@@ -1,16 +1,10 @@
 fs = require 'fs-plus'
 path = require 'path'
-process = require 'process'
-temp = require('temp').track()
+temp = require('@atom/temp').track()
 
-DefaultFileIcons = require '../lib/default-file-icons'
+fileIcons = require '../lib/default-file-icons'
 
 describe 'DefaultFileIcons', ->
-  [fileIcons] = []
-
-  beforeEach ->
-    fileIcons = new DefaultFileIcons
-
   it 'defaults to text', ->
     expect(fileIcons.iconClassForPath('foo.bar')).toEqual('icon-file-text')
 
@@ -35,19 +29,11 @@ describe 'DefaultFileIcons', ->
     beforeEach ->
       tempDir = temp.mkdirSync('atom-tree-view')
 
-    afterEach ->
-      temp.cleanupSync()
-
     it 'recognizes symlinks', ->
       filePath = path.join(tempDir, 'foo.bar')
       linkPath = path.join(tempDir, 'link.bar')
       fs.writeFileSync(filePath, '')
-      try
-        fs.symlinkSync(filePath, linkPath)
-      catch err
-        # Symlinks are Administrator only on Windows
-        return if err.code is 'EPERM' and process.platform is 'win32'
-        throw err
+      fs.symlinkSync(filePath, linkPath, 'junction')
 
       expect(fileIcons.iconClassForPath(linkPath)).toEqual('icon-file-symlink-file')
 
@@ -55,11 +41,6 @@ describe 'DefaultFileIcons', ->
       filePath = path.join(tempDir, 'foo.zip')
       linkPath = path.join(tempDir, 'link.zip')
       fs.writeFileSync(filePath, '')
-      try
-        fs.symlinkSync(filePath, linkPath)
-      catch err
-        # Symlinks are Administrator only on Windows
-        return if err.code is 'EPERM' and process.platform is 'win32'
-        throw err
+      fs.symlinkSync(filePath, linkPath, 'junction')
 
       expect(fileIcons.iconClassForPath(linkPath)).toEqual('icon-file-symlink-file')

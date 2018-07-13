@@ -5,7 +5,7 @@ Dialog = require './dialog'
 
 module.exports =
 class CopyDialog extends Dialog
-  constructor: (@initialPath) ->
+  constructor: (@initialPath, {@onCopy}) ->
     super
       prompt: 'Enter the new path for the duplicate.'
       initialPath: atom.project.relativize(@initialPath)
@@ -32,8 +32,10 @@ class CopyDialog extends Dialog
     try
       if fs.isDirectorySync(@initialPath)
         fs.copySync(@initialPath, newPath)
+        @onCopy?({initialPath: @initialPath, newPath: newPath})
       else
-        fs.copy @initialPath, newPath, ->
+        fs.copy @initialPath, newPath, =>
+          @onCopy?({initialPath: @initialPath, newPath: newPath})
           atom.workspace.open newPath,
             activatePane: true
             initialLine: activeEditor?.getLastCursor().getBufferRow()

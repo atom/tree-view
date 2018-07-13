@@ -2,6 +2,8 @@ version: "{build}"
 
 platform: x64
 
+image: Visual Studio 2015
+
 branches:
     only:
       - master
@@ -18,7 +20,7 @@ environment:
   - ATOM_CHANNEL: beta
 
 install:
-  - ps: Install-Product node 4
+  - ps: Install-Product node 6
 
 build_script:
   - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/atom/ci/master/build-package.ps1'))

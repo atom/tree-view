@@ -1,26 +1,35 @@
-{$} = require 'atom-space-pen-views'
-
-module.exports.buildInternalDragEvents = (dragged, enterTarget, dropTarget) ->
+module.exports.buildInternalDragEvents = (dragged, enterTarget, dropTarget, treeView) ->
   dataTransfer =
     data: {}
     setData: (key, value) -> @data[key] = "#{value}" # Drag events stringify data values
     getData: (key) -> @data[key]
     setDragImage: (@image) -> return
 
-  dragStartEvent = $.Event()
-  dragStartEvent.target = dragged
-  dragStartEvent.currentTarget = dragged
-  dragStartEvent.originalEvent = {dataTransfer}
+  Object.defineProperty(
+    dataTransfer,
+    'items',
+    get: ->
+      Object.keys(dataTransfer.data).map((key) -> {type: key})
+  )
 
-  dropEvent = $.Event()
-  dropEvent.target = dropTarget
-  dropEvent.currentTarget = dropTarget
-  dropEvent.originalEvent = {dataTransfer}
+  treeView.deselect()
+  for entry in dragged
+    treeView.selectMultipleEntries(entry)
 
-  dragEnterEvent = $.Event()
-  dragEnterEvent.target = enterTarget
-  dragEnterEvent.currentTarget = enterTarget
-  dragEnterEvent.originalEvent = {dataTransfer}
+  dragStartEvent = new DragEvent('dragstart')
+  Object.defineProperty(dragStartEvent, 'target', value: dragged[0])
+  Object.defineProperty(dragStartEvent, 'currentTarget', value: dragged[0])
+  Object.defineProperty(dragStartEvent, 'dataTransfer', value: dataTransfer)
+
+  dropEvent = new DragEvent('drop')
+  Object.defineProperty(dropEvent, 'target', value: dropTarget)
+  Object.defineProperty(dropEvent, 'currentTarget', value: dropTarget)
+  Object.defineProperty(dropEvent, 'dataTransfer', value: dataTransfer)
+
+  dragEnterEvent = new DragEvent('dragenter')
+  Object.defineProperty(dragEnterEvent, 'target', value: enterTarget)
+  Object.defineProperty(dragEnterEvent, 'currentTarget', value: enterTarget)
+  Object.defineProperty(dragEnterEvent, 'dataTransfer', value: dataTransfer)
 
   [dragStartEvent, dragEnterEvent, dropEvent]
 
@@ -31,38 +40,46 @@ module.exports.buildExternalDropEvent = (filePaths, dropTarget) ->
     getData: (key) -> @data[key]
     files: []
 
-  dropEvent = $.Event()
-  dropEvent.target = dropTarget
-  dropEvent.currentTarget = dropTarget
-  dropEvent.originalEvent = {dataTransfer}
+  Object.defineProperty(
+    dataTransfer,
+    'items',
+    get: ->
+      Object.keys(dataTransfer.data).map((key) -> {type: key})
+  )
+
+  dropEvent = new DragEvent('drop')
+  Object.defineProperty(dropEvent, 'target', value: dropTarget)
+  Object.defineProperty(dropEvent, 'currentTarget', value: dropTarget)
+  Object.defineProperty(dropEvent, 'dataTransfer', value: dataTransfer)
 
   for filePath in filePaths
-    dropEvent.originalEvent.dataTransfer.files.push({path: filePath})
+    dropEvent.dataTransfer.files.push({path: filePath})
 
   dropEvent
 
 buildElementPositionalDragEvents = (el, dataTransfer, currentTargetSelector) ->
   if not el?
     return {}
-  $el = $(el)
 
-  $currentTarget = if currentTargetSelector then $el.closest(currentTargetSelector) else $el
-  currentTarget = $currentTarget[0]
+  currentTarget = if currentTargetSelector then el.closest(currentTargetSelector) else el
 
-  topEvent = $.Event()
-  topEvent.target = el
-  topEvent.currentTarget = currentTarget
-  topEvent.originalEvent = {dataTransfer, pageY: $el.offset().top}
+  topEvent = new DragEvent('dragstart')
+  Object.defineProperty(topEvent, 'target', value: el)
+  Object.defineProperty(topEvent, 'currentTarget', value: currentTarget)
+  Object.defineProperty(topEvent, 'dataTransfer', value: dataTransfer)
+  Object.defineProperty(topEvent, 'pageY', value: el.getBoundingClientRect().top)
 
-  middleEvent = $.Event()
-  middleEvent.target = el
-  middleEvent.currentTarget = currentTarget
-  middleEvent.originalEvent = {dataTransfer, pageY: $el.offset().top + $el.height() * 0.5}
+  middleEvent = new DragEvent('dragover')
+  Object.defineProperty(middleEvent, 'target', value: el)
+  Object.defineProperty(middleEvent, 'currentTarget', value: currentTarget)
+  Object.defineProperty(middleEvent, 'dataTransfer', value: dataTransfer)
+  Object.defineProperty(middleEvent, 'pageY', value: el.getBoundingClientRect().top + el.offsetHeight * 0.5)
 
-  bottomEvent = $.Event()
-  bottomEvent.target = el
-  bottomEvent.currentTarget = currentTarget
-  bottomEvent.originalEvent = {dataTransfer, pageY: $el.offset().bottom}
+  bottomEvent = new DragEvent('dragend')
+  Object.defineProperty(bottomEvent, 'target', value: el)
+  Object.defineProperty(bottomEvent, 'currentTarget', value: currentTarget)
+  Object.defineProperty(bottomEvent, 'dataTransfer', value: dataTransfer)
+  Object.defineProperty(bottomEvent, 'pageY', value: el.getBoundingClientRect().bottom)
 
   {top: topEvent, middle: middleEvent, bottom: bottomEvent}
 
@@ -74,14 +91,21 @@ module.exports.buildPositionalDragEvents = (dragged, target, currentTargetSelect
     getData: (key) -> @data[key]
     setDragImage: (@image) -> return
 
-  dragStartEvent = $.Event()
-  dragStartEvent.target = dragged
-  dragStartEvent.currentTarget = dragged
-  dragStartEvent.originalEvent = {dataTransfer}
+  Object.defineProperty(
+    dataTransfer,
+    'items',
+    get: ->
+      Object.keys(dataTransfer.data).map((key) -> {type: key})
+  )
 
-  dragEndEvent = $.Event()
-  dragEndEvent.target = dragged
-  dragEndEvent.currentTarget = dragged
-  dragEndEvent.originalEvent = {dataTransfer}
+  dragStartEvent = new DragEvent('dragstart')
+  Object.defineProperty(dragStartEvent, 'target', value: dragged)
+  Object.defineProperty(dragStartEvent, 'currentTarget', value: dragged)
+  Object.defineProperty(dragStartEvent, 'dataTransfer', value: dataTransfer)
+
+  dragEndEvent = new DragEvent('dragend')
+  Object.defineProperty(dragEndEvent, 'target', value: dragged)
+  Object.defineProperty(dragEndEvent, 'currentTarget', value: dragged)
+  Object.defineProperty(dragEndEvent, 'dataTransfer', value: dataTransfer)
 
   [dragStartEvent, buildElementPositionalDragEvents(target, dataTransfer, currentTargetSelector), dragEndEvent]
