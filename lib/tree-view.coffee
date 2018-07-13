@@ -350,6 +350,8 @@ class TreeView
     activeFilePath = @getActivePath()
     if @entryForPath(activeFilePath)
       @selectEntryForPath(activeFilePath)
+    else
+      @deselect()
 
   revealActiveFile: (options = {}) ->
     return Promise.resolve() unless atom.project.getPaths().length
