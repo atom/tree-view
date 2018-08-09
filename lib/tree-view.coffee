@@ -454,8 +454,7 @@ class TreeView
     # not the directory itself
     if previousEntry.matches('.directory.expanded')
       entries = previousEntry.querySelectorAll('.entry')
-      if entries.length > 0
-        return entries[entries.length - 1]
+      return entries[entries.length - 1] if entries.length > 0
 
     return previousEntry
 
