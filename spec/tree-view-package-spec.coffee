@@ -920,6 +920,13 @@ describe "TreeView", ->
             entries = subDir.querySelectorAll('.entry')
             expect(entries[entries.length - 1]).toHaveClass 'selected'
 
+        describe "when the expanded directory has no children", ->
+          it "selects the expanded directory itself", ->
+            lastDir.querySelector('.entry').remove() # pretend it's empty
+
+            atom.commands.dispatch(treeView.element, 'core:move-up')
+            expect(lastDir).toHaveClass 'selected'
+
       describe "when there is an entry before the currently selected entry", ->
         it "selects the previous entry", ->
           entries = root1.querySelectorAll('.entry')
