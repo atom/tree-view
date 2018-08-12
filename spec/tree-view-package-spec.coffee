@@ -4486,7 +4486,7 @@ describe "TreeView", ->
   describe "when a file is opened", ->
     describe "if the file is not in a currently opened project", ->
       it "deselects all entries", ->
-        nonProjectPath = path.join(os.tmpdir(), 'new-file.txt')
+        nonProjectPath = path.join(temp.mkdirSync(), 'new-file.txt')
         fs.writeFileSync(nonProjectPath, 'test')
 
         waitForWorkspaceOpenEvent ->
