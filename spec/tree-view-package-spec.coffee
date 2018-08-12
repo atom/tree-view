@@ -4500,7 +4500,7 @@ describe "TreeView", ->
         expect(atom.project.getPaths()).toEqual [alphaDirPath, thetaDirPath]
         expect(document.querySelector('.placeholder')).not.toExist()
 
-  fdescribe "when the active file path does not exist in the project", ->
+  describe "when the active file path does not exist in the project", ->
     it "deselects all entries", ->
       nonProjectPath = path.join(temp.mkdirSync(), 'new-file.txt')
       fs.writeFileSync(nonProjectPath, 'test')
