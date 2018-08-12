@@ -351,6 +351,7 @@ class TreeView
     if @entryForPath(activeFilePath)
       @selectEntryForPath(activeFilePath)
     else
+      # If the active file is not part of the project, deselect all entries
       @deselect()
 
   revealActiveFile: (options = {}) ->
