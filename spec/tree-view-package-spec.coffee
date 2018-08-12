@@ -4500,6 +4500,30 @@ describe "TreeView", ->
         expect(atom.project.getPaths()).toEqual [alphaDirPath, thetaDirPath]
         expect(document.querySelector('.placeholder')).not.toExist()
 
+  describe "when the active file path does not exist in the project", ->
+    it "deselects all entries", ->
+      nonProjectPath = path.join(temp.mkdirSync(), 'new-file.txt')
+      fs.writeFileSync(nonProjectPath, 'test')
+
+      waitForWorkspaceOpenEvent ->
+        sampleJs.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+
+      runs ->
+        expect(sampleJs).toHaveClass 'selected'
+        expect(treeView.getSelectedEntries().length).toBe 1
+
+      waitsForPromise ->
+        atom.workspace.open(nonProjectPath)
+
+      runs ->
+        expect(treeView.getSelectedEntries().length).toBe 0
+
+      waitsForPromise ->
+        atom.workspace.open(sampleJs.getPath())
+
+      runs ->
+        expect(sampleJs).toHaveClass 'selected'
+
   describe "when there is a __proto__ entry present", ->
     it "does not break anything", ->
       # No assertions needed - multiple exceptions will be thrown if this test fails

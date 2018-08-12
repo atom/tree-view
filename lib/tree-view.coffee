@@ -347,8 +347,12 @@ class TreeView
   getActivePath: -> atom.workspace.getCenter().getActivePaneItem()?.getPath?()
 
   selectActiveFile: ->
-    if activeFilePath = @getActivePath()
+    activeFilePath = @getActivePath()
+    if @entryForPath(activeFilePath)
       @selectEntryForPath(activeFilePath)
+    else
+      # If the active file is not part of the project, deselect all entries
+      @deselect()
 
   revealActiveFile: (options = {}) ->
     return Promise.resolve() unless atom.project.getPaths().length
