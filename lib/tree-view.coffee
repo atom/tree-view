@@ -426,8 +426,6 @@ class TreeView
     if selectedEntry?
       if previousEntry = @previousEntry(selectedEntry)
         @selectEntry(previousEntry)
-        if previousEntry.classList.contains('directory')
-          @selectEntry(_.last(previousEntry.entries.children))
       else
         @selectEntry(selectedEntry.parentElement.closest('.directory'))
     else
@@ -449,12 +447,20 @@ class TreeView
     return null
 
   previousEntry: (entry) ->
-    currentEntry = entry
-    while currentEntry?
-      currentEntry = currentEntry.previousSibling
-      if currentEntry?.matches('.entry')
-        return currentEntry
-    return null
+    previousEntry = entry.previousSibling
+    while previousEntry? and not previousEntry.matches('.entry')
+      previousEntry = previousEntry.previousSibling
+
+    return null unless previousEntry?
+
+    # If the previous entry is an expanded directory,
+    # we need to select the last entry in that directory,
+    # not the directory itself
+    if previousEntry.matches('.directory.expanded')
+      entries = previousEntry.querySelectorAll('.entry')
+      return entries[entries.length - 1] if entries.length > 0
+
+    return previousEntry
 
   expandDirectory: (isRecursive=false) ->
     selectedEntry = @selectedEntry()
