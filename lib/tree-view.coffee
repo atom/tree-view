@@ -59,9 +59,11 @@ class TreeView
       @disposables.add atom.styles.onDidUpdateStyleElement(onStylesheetsChanged)
 
     @updateRoots(state.directoryExpansionStates)
-    @selectEntry(@roots[0])
 
-    @selectEntryForPath(state.selectedPath) if state.selectedPath
+    if state.selectedPaths?.length > 0
+      @selectMultipleEntries(@entryForPath(selectedPath)) for selectedPath in state.selectedPaths
+    else
+      @selectEntry(@roots[0])
 
     if state.scrollTop? or state.scrollLeft?
       observer = new IntersectionObserver(=>
@@ -130,7 +132,7 @@ class TreeView
       @[root.directory.path] = root.directory.serializeExpansionState() for root in roots
       this)(@roots)
     deserializer: 'TreeView'
-    selectedPath: @selectedEntry()?.getPath()
+    selectedPaths: Array.from(@getSelectedEntries())?.map((entry) -> entry.getPath())
     scrollLeft: @element.scrollLeft
     scrollTop: @element.scrollTop
     width: parseInt(@element.style.width or 0)
@@ -314,6 +316,7 @@ class TreeView
 
   updateRoots: (expansionStates={}) ->
     oldExpansionStates = {}
+    selectedPaths = @selectedPaths()
     for root in @roots
       oldExpansionStates[root.directory.path] = root.directory.serializeExpansionState()
       root.directory.destroy()
@@ -343,6 +346,9 @@ class TreeView
       root = new DirectoryView(directory).element
       @list.appendChild(root)
       root
+
+    # The DOM has been recreated; reselect everything
+    @selectMultipleEntries(@entryForPath(selectedPath)) for selectedPath in selectedPaths
 
   getActivePath: -> atom.workspace.getCenter().getActivePaneItem()?.getPath?()
 
