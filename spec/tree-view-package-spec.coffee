@@ -2254,11 +2254,13 @@ describe "TreeView", ->
               expect(callback).not.toHaveBeenCalled()
 
     describe "tree-view:move", ->
+      beforeEach ->
+        jasmine.attachToDOM(workspaceElement)
+
       describe "when a file is selected", ->
         [moveDialog, callback] = []
 
         beforeEach ->
-          jasmine.attachToDOM(workspaceElement)
           callback = jasmine.createSpy("onEntryMoved")
           treeView.onEntryMoved(callback)
 
@@ -2419,8 +2421,6 @@ describe "TreeView", ->
         moveDialog = null
 
         beforeEach ->
-          jasmine.attachToDOM(workspaceElement)
-
           waitForWorkspaceOpenEvent ->
             atom.workspace.open(filePath)
 
@@ -3610,6 +3610,7 @@ describe "TreeView", ->
   describe "showSelectedEntryInFileManager()", ->
     beforeEach ->
       atom.notifications.clear()
+      jasmine.attachToDOM(workspaceElement)
 
     it "displays the standard error output when the process fails", ->
       {BufferedProcess} = require 'atom'
@@ -3653,31 +3654,6 @@ describe "TreeView", ->
       runs ->
         expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Opening folder in OS file manager failed'
         expect(atom.notifications.getNotifications()[0].getDetail()).toContain if process.platform is 'win32' then 'cannot find the path' else 'ENOENT'
-
-  describe "showCurrentFileInFileManager()", ->
-    it "does nothing when no file is opened", ->
-      expect(atom.workspace.getCenter().getPaneItems().length).toBe(0)
-      expect(treeView.showCurrentFileInFileManager()).toBeUndefined()
-
-    it "does nothing when only an untitled tab is opened", ->
-      waitsForPromise ->
-        atom.workspace.open()
-      runs ->
-        workspaceElement.focus()
-        expect(treeView.showCurrentFileInFileManager()).toBeUndefined()
-
-    it "shows file in file manager when some file is opened", ->
-      filePath = path.join(os.tmpdir(), 'non-project-file.txt')
-      fs.writeFileSync(filePath, 'test')
-      waitsForPromise ->
-        atom.workspace.open(filePath)
-
-      runs ->
-        {BufferedProcess} = require 'atom'
-        spyOn(BufferedProcess.prototype, 'spawn').andCallFake ->
-        fileManagerProcess = treeView.showCurrentFileInFileManager()
-        expect(fileManagerProcess instanceof BufferedProcess).toBeTruthy()
-        fileManagerProcess.kill()
 
   describe "when reloading a directory with deletions and additions", ->
     it "does not throw an error (regression)", ->

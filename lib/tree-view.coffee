@@ -529,13 +529,14 @@ class TreeView
     if pane and selectedEntry.classList.contains('file')
       atom.workspace.openURIInPane selectedEntry.getPath(), pane
 
-  moveSelectedEntry: ->
+  moveSelectedEntry: (event) ->
     if @hasFocus()
       entry = @selectedEntry()
       return if not entry? or entry in @roots
       oldPath = entry.getPath()
     else
-      oldPath = @getActivePath()
+      oldPath = event.target.closest('.tab').querySelector('.title').getAttribute('data-path')
+      oldPath ?= @getActivePath()
 
     if oldPath
       dialog = new MoveDialog oldPath,
@@ -605,18 +606,19 @@ class TreeView
       handleError(error?.message)
     showProcess
 
-  showSelectedEntryInFileManager: ->
-    return unless entry = @selectedEntry()
+  showSelectedEntryInFileManager: (event) ->
+    if @hasFocus()
+      entry = @selectedEntry()
+      return unless entry?
+      entryPath = entry.getPath()
+    else
+      entryPath = event.target.closest('.tab').querySelector('.title').getAttribute('data-path')
+      entryPath ?= @getActivePath()
+      return unless entryPath?
 
-    isFile = entry.classList.contains('file')
-    {command, args, label} = @fileManagerCommandForPath(entry.getPath(), isFile)
+    isFile = fs.isFileSync(entryPath)
+    {command, args, label} = @fileManagerCommandForPath(entryPath, isFile)
     @openInFileManager(command, args, label, isFile)
-
-  showCurrentFileInFileManager: ->
-    return unless editor = atom.workspace.getCenter().getActiveTextEditor()
-    return unless editor.getPath()
-    {command, args, label} = @fileManagerCommandForPath(editor.getPath(), true)
-    @openInFileManager(command, args, label, true)
 
   openSelectedEntryInNewWindow: ->
     if pathToOpen = @selectedEntry()?.getPath()
