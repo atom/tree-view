@@ -132,7 +132,7 @@ class TreeView
       @[root.directory.path] = root.directory.serializeExpansionState() for root in roots
       this)(@roots)
     deserializer: 'TreeView'
-    selectedPaths: Array.from(@getSelectedEntries())?.map((entry) -> entry.getPath())
+    selectedPaths: Array.from(@getSelectedEntries(), (entry) -> entry.getPath())
     scrollLeft: @element.scrollLeft
     scrollTop: @element.scrollTop
     width: parseInt(@element.style.width or 0)
@@ -315,8 +315,9 @@ class TreeView
       atom.workspace.open(uri, options)
 
   updateRoots: (expansionStates={}) ->
-    oldExpansionStates = {}
     selectedPaths = @selectedPaths()
+
+    oldExpansionStates = {}
     for root in @roots
       oldExpansionStates[root.directory.path] = root.directory.serializeExpansionState()
       root.directory.destroy()
