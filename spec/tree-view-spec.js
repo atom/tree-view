@@ -2,18 +2,22 @@ const TreeView = require('../lib/tree-view')
 
 describe('TreeView', () => {
   describe('serialization', () => {
-    it('restores the expanded directories and selected file', () => {
+    it('restores the expanded directories and selected files', () => {
       const treeView = new TreeView({})
       treeView.roots[0].expand()
       treeView.roots[0].entries.firstChild.expand()
       treeView.selectEntry(treeView.roots[0].entries.firstChild.entries.firstChild)
+      treeView.selectMultipleEntries(treeView.roots[0].entries.lastChild)
 
       const treeView2 = new TreeView(treeView.serialize())
 
       expect(treeView2.roots[0].isExpanded).toBe(true)
       expect(treeView2.roots[0].entries.children[0].isExpanded).toBe(true)
       expect(treeView2.roots[0].entries.children[1].isExpanded).toBeUndefined()
-      expect(Array.from(treeView2.getSelectedEntries())).toEqual([treeView2.roots[0].entries.firstChild.entries.firstChild])
+      expect(Array.from(treeView2.getSelectedEntries())).toEqual([
+        treeView2.roots[0].entries.firstChild.entries.firstChild,
+        treeView2.roots[0].entries.lastChild
+      ])
     })
 
     it('restores the scroll position', () => {
