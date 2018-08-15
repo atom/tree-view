@@ -81,4 +81,26 @@ describe('TreeView', () => {
       expect(treeView.multiSelectEnabled()).toBe(true)
     })
   })
+
+  describe('file selection', () => {
+    it('keeps files selected after roots have been updated', () => {
+      const treeView = new TreeView({})
+      treeView.roots[0].expand()
+      treeView.roots[0].entries.firstChild.expand()
+      treeView.selectEntry(treeView.roots[0].entries.firstChild.entries.firstChild)
+      treeView.selectMultipleEntries(treeView.roots[0].entries.lastChild)
+
+      expect(Array.from(treeView.getSelectedEntries())).toEqual([
+        treeView.roots[0].entries.firstChild.entries.firstChild,
+        treeView.roots[0].entries.lastChild
+      ])
+
+      treeView.updateRoots()
+
+      expect(Array.from(treeView.getSelectedEntries())).toEqual([
+        treeView.roots[0].entries.firstChild.entries.firstChild,
+        treeView.roots[0].entries.lastChild
+      ])
+    })
+  })
 })
