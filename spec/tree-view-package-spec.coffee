@@ -2994,19 +2994,36 @@ describe "TreeView", ->
         atom.config.set('tree-view.hideIgnoredNames', true)
         expect(Array.from(treeView.element.querySelectorAll('.file')).map((f) -> f.textContent)).toEqual([])
 
-    describe "when the project's path is a subfolder of the repository's working directory", ->
+    describe "when the project's path is an ignored subfolder of the repository's working directory", ->
       beforeEach ->
         fixturePath = path.join(__dirname, 'fixtures', 'root-dir1')
         projectPath = temp.mkdirSync('tree-view-project')
         fs.copySync(fixturePath, projectPath)
         ignoreFile = path.join(projectPath, '.gitignore')
-        fs.writeFileSync(ignoreFile, 'tree-view.js')
+        fs.writeFileSync(ignoreFile, 'dir1\nfile1')
 
-        atom.project.setPaths([projectPath])
+        ignoredDirPath = path.join(projectPath, 'dir1')
+        atom.project.setPaths([ignoredDirPath])
         atom.config.set("tree-view.hideVcsIgnoredFiles", true)
 
-      it "does not hide git ignored files", ->
-        expect(Array.from(treeView.element.querySelectorAll('.file')).map((f) -> f.textContent)).toEqual(['.gitignore', 'tree-view.js', 'tree-view.txt'])
+      it "shows git ignored files", ->
+        expect(Array.from(treeView.element.querySelectorAll('.file')).map((f) -> f.textContent)).toEqual(['file1'])
+
+    describe "when the project's path is a non-ignored subfolder of the repository's working directory", ->
+      beforeEach ->
+        fixturePath = path.join(__dirname, 'fixtures', 'root-dir1')
+        projectPath = temp.mkdirSync('tree-view-project')
+        fs.copySync(fixturePath, projectPath)
+        ignoreFile = path.join(projectPath, '.gitignore')
+        fs.writeFileSync(ignoreFile, 'file1')
+
+        subdirPath = path.join(projectPath, 'dir1')
+
+        atom.project.setPaths([subdirPath])
+        atom.config.set("tree-view.hideVcsIgnoredFiles", true)
+
+      it "hides git ignored files", ->
+        expect(Array.from(treeView.element.querySelectorAll('.file')).map((f) -> f.textContent)).toEqual([])
 
   describe "the hideIgnoredNames config option", ->
     it "hides ignored files if the option is set, but otherwise shows them", ->
