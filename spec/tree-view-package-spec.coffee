@@ -2939,6 +2939,18 @@ describe "TreeView", ->
         atom.config.set("tree-view.hideVcsIgnoredFiles", false)
         expect(Array.from(treeView.element.querySelectorAll('.file')).map((f) -> f.textContent)).toEqual(['.gitignore', 'ignored.txt'])
 
+      it "works in conjunction with the hideIgnoredNames config option", ->
+        # https://github.com/atom/tree-view/issues/489
+
+        atom.config.set('tree-view.hideVcsIgnoredFiles', true)
+        atom.config.set('tree-view.hideIgnoredNames', false)
+        atom.config.set('core.ignoredNames', ['.gitignore'])
+
+        expect(Array.from(treeView.element.querySelectorAll('.file')).map((f) -> f.textContent)).toEqual(['.gitignore'])
+
+        atom.config.set('tree-view.hideIgnoredNames', true)
+        expect(Array.from(treeView.element.querySelectorAll('.file')).map((f) -> f.textContent)).toEqual([])
+
     describe "when the project's path is a subfolder of the repository's working directory", ->
       beforeEach ->
         fixturePath = path.join(__dirname, 'fixtures', 'root-dir1')
