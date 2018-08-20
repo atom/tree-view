@@ -3022,27 +3022,14 @@ describe "TreeView", ->
 
       expect(Array.from(treeView.roots[0].querySelectorAll('.entry')).map((e) -> e.textContent)).toEqual(['.git', 'test.js', 'test.txt'])
 
+      # Add a unique class to the names even when showing them
+      expect(Array.from(treeView.roots[0].querySelectorAll('.status-ignored-name')).map((e) -> e.textContent)).toEqual(['test.js'])
+
       atom.config.set("tree-view.hideIgnoredNames", true)
       expect(Array.from(treeView.roots[0].querySelectorAll('.entry')).map((e) -> e.textContent)).toEqual(['test.txt'])
 
       atom.config.set("core.ignoredNames", [])
       expect(Array.from(treeView.roots[0].querySelectorAll('.entry')).map((e) -> e.textContent)).toEqual(['.git', 'test.js', 'test.txt'])
-
-    it "adds a custom style if if file/dir is ignored and visible", ->
-      atom.config.set('core.ignoredNames', ['dir2', '*.js'])
-      fixturePath = path.join(__dirname, 'fixtures', 'root-dir1')
-      atom.project.setPaths([fixturePath])
-      atom.config.set "tree-view.hideIgnoredNames", false
-
-      expect(Array.from(treeView.roots[0].querySelectorAll('.entry')).map((e) -> e.textContent)).toEqual(['dir1', 'dir2', 'nested', 'tree-view.js', 'tree-view.txt'])
-      expect(Array.from(treeView.roots[0].querySelectorAll('.status-ignored-name')).map((e) -> e.textContent)).toEqual(['dir2', 'tree-view.js'])
-
-      atom.config.set("tree-view.hideIgnoredNames", true)
-      expect(Array.from(treeView.roots[0].querySelectorAll('.entry')).map((e) -> e.textContent)).toEqual(['dir1', 'nested', 'tree-view.txt'])
-
-      atom.config.set("core.ignoredNames", [])
-      expect(Array.from(treeView.roots[0].querySelectorAll('.entry')).map((e) -> e.textContent)).toEqual(['dir1', 'dir2', 'nested', 'tree-view.js', 'tree-view.txt'])
-      expect(Array.from(treeView.roots[0].querySelectorAll('.status-ignored-name')).map((e) -> e.textContent)).toEqual([])
 
   describe "the squashedDirectoryName config option", ->
     beforeEach ->
