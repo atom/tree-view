@@ -547,76 +547,17 @@ class TreeView
           @emitter.emit 'move-entry-failed', {initialPath, newPath}
       dialog.attach()
 
-  # Get the outline of a system call to the current platform's file manager.
-  #
-  # pathToOpen  - Path to a file or directory.
-  # isFile      - True if the path is a file, false otherwise.
-  #
-  # Returns an object containing a command, a human-readable label, and the
-  # arguments.
-  fileManagerCommandForPath: (pathToOpen, isFile) ->
-    switch process.platform
-      when 'darwin'
-        command: 'open'
-        label: 'Finder'
-        args: ['-R', pathToOpen]
-      when 'win32'
-        args = ["/select,\"#{pathToOpen}\""]
-
-        if process.env.SystemRoot
-          command = path.join(process.env.SystemRoot, 'explorer.exe')
-        else
-          command = 'explorer.exe'
-
-        command: command
-        label: 'Explorer'
-        args: args
-      else
-        # Strip the filename from the path to make sure we pass a directory
-        # path. If we pass xdg-open a file path, it will open that file in the
-        # most suitable application instead, which is not what we want.
-        pathToOpen =  path.dirname(pathToOpen) if isFile
-
-        command: 'xdg-open'
-        label: 'File Manager'
-        args: [pathToOpen]
-
-  openInFileManager: (command, args, label, isFile) ->
-    handleError = (errorMessage) ->
-      atom.notifications.addError "Opening #{if isFile then 'file' else 'folder'} in #{label} failed",
-        detail: errorMessage
-        dismissable: true
-
-    errorLines = []
-    stderr = (lines) -> errorLines.push(lines)
-    exit = (code) ->
-      failed = code isnt 0
-      errorMessage = errorLines.join('\n')
-
-      # Windows 8 seems to return a 1 with no error output even on success
-      if process.platform is 'win32' and code is 1 and not errorMessage
-        failed = false
-
-      handleError(errorMessage) if failed
-
-    showProcess = new BufferedProcess({command, args, stderr, exit})
-    showProcess.onWillThrowError ({error, handle}) ->
-      handle()
-      handleError(error?.message)
-    showProcess
-
   showSelectedEntryInFileManager: ->
-    return unless entry = @selectedEntry()
+    return unless filePath = @selectedEntry()?.getPath()
 
-    isFile = entry.classList.contains('file')
-    {command, args, label} = @fileManagerCommandForPath(entry.getPath(), isFile)
-    @openInFileManager(command, args, label, isFile)
+    unless shell.showItemInFolder(filePath)
+      atom.notifications.addWarning("Unable to show #{filePath} in file manager")
 
   showCurrentFileInFileManager: ->
-    return unless editor = atom.workspace.getCenter().getActiveTextEditor()
-    return unless editor.getPath()
-    {command, args, label} = @fileManagerCommandForPath(editor.getPath(), true)
-    @openInFileManager(command, args, label, true)
+    return unless filePath = atom.workspace.getCenter().getActiveTextEditor()?.getPath()
+
+    unless shell.showItemInFolder(filePath)
+      atom.notifications.addWarning("Unable to show #{filePath} in file manager")
 
   openSelectedEntryInNewWindow: ->
     if pathToOpen = @selectedEntry()?.getPath()
