@@ -482,12 +482,14 @@ class TreeView
       directory.expand(isRecursive)
 
   collapseDirectory: (isRecursive=false, allDirectories=false) ->
+    if allDirectories
+      root.collapse(true) for root in @roots
+      return
+
     selectedEntry = @selectedEntry()
     return unless selectedEntry?
 
-    if allDirectories
-      root.collapse(true) for root in @roots
-    else if directory = selectedEntry.closest('.expanded.directory')
+    if directory = selectedEntry.closest('.expanded.directory')
       directory.collapse(isRecursive)
       @selectEntry(directory)
 

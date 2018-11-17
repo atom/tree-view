@@ -1233,8 +1233,20 @@ describe "TreeView", ->
             expect(child).not.toHaveClass 'expanded'
           expect(root).not.toHaveClass 'expanded'
 
-      it "collapses all the project directories recursively", ->
+      it "collapses all the project directories recursively when an entry is selected", ->
         expandAll()
+
+        expect(treeView.element.querySelectorAll('.selected').length).toBeGreaterThan 0
+
+        atom.commands.dispatch(treeView.element, 'tree-view:collapse-all')
+        checkAllCollapsed()
+
+      it "collapses all the project directories when nothing is selected", ->
+        expandAll()
+
+        treeView.deselect()
+        expect(treeView.element.querySelectorAll('.selected').length).toBe 0
+
         atom.commands.dispatch(treeView.element, 'tree-view:collapse-all')
         checkAllCollapsed()
 
