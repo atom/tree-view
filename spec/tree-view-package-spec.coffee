@@ -306,6 +306,8 @@ describe "TreeView", ->
 
   describe "when the tree-view is destroyed", ->
     it "can correctly re-create the tree-view", ->
+      treeView.useSyncFS = true
+
       treeView = atom.workspace.getLeftDock().getActivePaneItem()
       treeViewHTML = treeView.element.outerHTML
       treeView.roots[0].collapse()
