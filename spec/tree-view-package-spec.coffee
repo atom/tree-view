@@ -306,9 +306,8 @@ describe "TreeView", ->
 
   describe "when the tree-view is destroyed", ->
     it "can correctly re-create the tree-view", ->
-      treeView.useSyncFS = true
-
       treeView = atom.workspace.getLeftDock().getActivePaneItem()
+      treeView.useSyncFS = true
       treeViewHTML = treeView.element.outerHTML
       treeView.roots[0].collapse()
       treeView.destroy()
@@ -318,6 +317,7 @@ describe "TreeView", ->
 
       runs ->
         treeView2 = atom.workspace.getLeftDock().getActivePaneItem()
+        treeView2.useSyncFS = true
         treeView2.roots[0].expand()
         expect(treeView2.element.outerHTML).toBe(treeViewHTML)
 
