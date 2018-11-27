@@ -307,7 +307,7 @@ describe "TreeView", ->
   describe "when the tree-view is destroyed", ->
     it "can correctly re-create the tree-view", ->
       treeView = atom.workspace.getLeftDock().getActivePaneItem()
-      treeViewHTML = treeView.element.outerHTML
+      entryCountBeforeRecreatingView = treeView.element.getElementsByClassName('entry').length
       treeView.roots[0].collapse()
       treeView.destroy()
 
@@ -317,7 +317,8 @@ describe "TreeView", ->
       runs ->
         treeView2 = atom.workspace.getLeftDock().getActivePaneItem()
         treeView2.roots[0].expand()
-        expect(treeView2.element.outerHTML).toBe(treeViewHTML)
+        entryCountAfterRecreatingView = treeView2.element.getElementsByClassName('entry').length
+        expect(entryCountAfterRecreatingView).toBe(entryCountBeforeRecreatingView)
 
   describe "when tree-view:reveal-active-file is triggered", ->
     beforeEach ->
