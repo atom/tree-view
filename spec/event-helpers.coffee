@@ -54,7 +54,7 @@ module.exports.buildExternalDropEvent = (filePaths, dropTarget) ->
     dataTransfer,
     'items',
     get: ->
-      Object.keys(dataTransfer.data).map((key) -> {type: key})
+      Object.keys(dataTransfer.data).map((key) -> {type: key, kind: 'file'})
   )
 
   dropEvent = new DragEvent('drop')
@@ -64,6 +64,7 @@ module.exports.buildExternalDropEvent = (filePaths, dropTarget) ->
 
   for filePath in filePaths
     dropEvent.dataTransfer.files.push({path: filePath})
+    dropEvent.dataTransfer.setData(filePath, 'bla') # Not technically correct, but gets the job done
 
   dropEvent
 
