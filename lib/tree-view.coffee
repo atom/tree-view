@@ -1069,6 +1069,7 @@ class TreeView
     @dragEventCounts = new WeakMap
     if entry = e.target.closest('.entry.directory')
       return if @rootDragAndDrop.isDragging(e)
+      return unless @isAtomTreeViewEvent(e)
 
       e.preventDefault()
       e.stopPropagation()
