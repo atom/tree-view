@@ -4538,6 +4538,7 @@ describe "TreeView", ->
         dragStartEvent.dataTransfer.clearData('atom-tree-view-root-event')
         dragOverEvents.top.dataTransfer.clearData('atom-tree-view-root-event')
         dragEndEvent.dataTransfer.clearData('atom-tree-view-root-event')
+
         treeView.rootDragAndDrop.onDragOver(dragOverEvents.top)
         expect(alphaDir.previousSibling).not.toHaveClass('placeholder')
 
