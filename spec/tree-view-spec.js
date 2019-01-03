@@ -2,18 +2,22 @@ const TreeView = require('../lib/tree-view')
 
 describe('TreeView', () => {
   describe('serialization', () => {
-    it('restores the expanded directories and selected file', () => {
+    it('restores the expanded directories and selected files', () => {
       const treeView = new TreeView({})
       treeView.roots[0].expand()
       treeView.roots[0].entries.firstChild.expand()
       treeView.selectEntry(treeView.roots[0].entries.firstChild.entries.firstChild)
+      treeView.selectMultipleEntries(treeView.roots[0].entries.lastChild)
 
       const treeView2 = new TreeView(treeView.serialize())
 
       expect(treeView2.roots[0].isExpanded).toBe(true)
       expect(treeView2.roots[0].entries.children[0].isExpanded).toBe(true)
       expect(treeView2.roots[0].entries.children[1].isExpanded).toBeUndefined()
-      expect(Array.from(treeView2.getSelectedEntries())).toEqual([treeView2.roots[0].entries.firstChild.entries.firstChild])
+      expect(Array.from(treeView2.getSelectedEntries())).toEqual([
+        treeView2.roots[0].entries.firstChild.entries.firstChild,
+        treeView2.roots[0].entries.lastChild
+      ])
     })
 
     it('restores the scroll position', () => {
@@ -50,31 +54,53 @@ describe('TreeView', () => {
       const entries = treeView.roots[0].entries
 
       treeView.onMouseDown({
-        stopPropagation() {},
+        stopPropagation () {},
         target: entries.children[0],
-        button: 0,
+        button: 0
       })
 
       treeView.onMouseDown({
-        stopPropagation() {},
+        stopPropagation () {},
         target: entries.children[1],
         button: 0,
-        metaKey: true,
+        metaKey: true
       })
 
-      let child = entries.children[0];
+      let child = entries.children[0]
       while (child.children.length > 0) {
-        child = child.firstChild;
+        child = child.firstChild
       }
 
       treeView.onMouseDown({
-        stopPropagation() {},
+        stopPropagation () {},
         target: child,
-        button: 2,
+        button: 2
       })
 
-      expect(treeView.getSelectedEntries().length).toBe(2);
-      expect(treeView.multiSelectEnabled()).toBe(true);
+      expect(treeView.getSelectedEntries().length).toBe(2)
+      expect(treeView.multiSelectEnabled()).toBe(true)
     })
-  });
+  })
+
+  describe('file selection', () => {
+    it('keeps files selected after roots have been updated', () => {
+      const treeView = new TreeView({})
+      treeView.roots[0].expand()
+      treeView.roots[0].entries.firstChild.expand()
+      treeView.selectEntry(treeView.roots[0].entries.firstChild.entries.firstChild)
+      treeView.selectMultipleEntries(treeView.roots[0].entries.lastChild)
+
+      expect(Array.from(treeView.getSelectedEntries())).toEqual([
+        treeView.roots[0].entries.firstChild.entries.firstChild,
+        treeView.roots[0].entries.lastChild
+      ])
+
+      treeView.updateRoots()
+
+      expect(Array.from(treeView.getSelectedEntries())).toEqual([
+        treeView.roots[0].entries.firstChild.entries.firstChild,
+        treeView.roots[0].entries.lastChild
+      ])
+    })
+  })
 })

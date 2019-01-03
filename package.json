@@ -1,6 +1,6 @@
 {
   "name": "tree-view",
-  "version": "0.220.0",
+  "version": "0.224.5",
   "main": "./lib/main",
   "description": "Explore and open files in the current project.",
   "repository": "https://github.com/atom/tree-view",
@@ -10,15 +10,15 @@
   },
   "private": true,
   "dependencies": {
-    "event-kit": "^1.0.0",
     "fs-plus": "^3.0.0",
     "minimatch": "~0.3.0",
     "pathwatcher": "^8.0.0",
-    "temp": "~0.8.1",
+    "@atom/temp": "~0.8.4",
     "underscore-plus": "^1.0.0"
   },
   "devDependencies": {
-    "coffeelint": "^1.9.7"
+    "coffeelint": "^1.9.7",
+    "standard": "^11.0.1"
   },
   "deserializers": {
     "TreeView": "getTreeViewInstance"
@@ -27,6 +27,11 @@
     "atom.file-icons": {
       "versions": {
         "1.0.0": "consumeFileIcons"
+      }
+    },
+    "file-icons.element-icons": {
+      "versions": {
+        "1.0.0": "consumeElementIcons"
       }
     }
   },
@@ -37,6 +42,20 @@
         "1.0.0": "provideTreeView"
       }
     }
+  },
+  "standard": {
+    "env": [
+      "browser",
+      "node",
+      "atomtest",
+      "jasmine"
+    ],
+    "globals": [
+      "atom"
+    ],
+    "ignore": [
+      "/spec/fixtures/"
+    ]
   },
   "configSchema": {
     "squashDirectoryNames": {

@@ -9,7 +9,7 @@ fs = require 'fs-plus'
 AddDialog = require './add-dialog'
 MoveDialog = require './move-dialog'
 CopyDialog = require './copy-dialog'
-Minimatch = null  # Defer requiring until actually needed
+IgnoredNames = null # Defer requiring until actually needed
 
 Directory = require './directory'
 DirectoryView = require './directory-view'
@@ -38,6 +38,8 @@ class TreeView
     @emitter = new Emitter
     @roots = []
     @selectedPath = null
+    @selectOnMouseUp = null
+    @lastFocusedEntry = null
     @ignoredPatterns = []
     @useSyncFS = false
     @currentlyOpening = new Map
@@ -57,9 +59,11 @@ class TreeView
       @disposables.add atom.styles.onDidUpdateStyleElement(onStylesheetsChanged)
 
     @updateRoots(state.directoryExpansionStates)
-    @selectEntry(@roots[0])
 
-    @selectEntryForPath(state.selectedPath) if state.selectedPath
+    if state.selectedPaths?.length > 0
+      @selectMultipleEntries(@entryForPath(selectedPath)) for selectedPath in state.selectedPaths
+    else
+      @selectEntry(@roots[0])
 
     if state.scrollTop? or state.scrollLeft?
       observer = new IntersectionObserver(=>
@@ -103,12 +107,14 @@ class TreeView
       if fs.isDirectorySync(pathToDelete)
         pathToDelete += path.sep # Avoid destroying lib2's editors when lib was deleted
         for editor in editors
-          if editor.getPath().startsWith(pathToDelete) and not editor.isModified()
-            @editorsToDestroy.push(editor.getPath())
+          filePath = editor.getPath()
+          if filePath?.startsWith(pathToDelete) and not editor.isModified()
+            @editorsToDestroy.push(filePath)
       else
         for editor in editors
-          if editor.getPath() is pathToDelete and not editor.isModified()
-            @editorsToDestroy.push(pathToDelete)
+          filePath = editor.getPath()
+          if filePath is pathToDelete and not editor.isModified()
+            @editorsToDestroy.push(filePath)
 
     @disposables.add @onEntryDeleted ({pathToDelete}) =>
       for editor in atom.workspace.getTextEditors()
@@ -126,7 +132,7 @@ class TreeView
       @[root.directory.path] = root.directory.serializeExpansionState() for root in roots
       this)(@roots)
     deserializer: 'TreeView'
-    selectedPath: @selectedEntry()?.getPath()
+    selectedPaths: Array.from(@getSelectedEntries(), (entry) -> entry.getPath())
     scrollLeft: @element.scrollLeft
     scrollTop: @element.scrollTop
     width: parseInt(@element.style.width or 0)
@@ -194,6 +200,7 @@ class TreeView
 
       @entryClicked(e) unless e.shiftKey or e.metaKey or e.ctrlKey
     @element.addEventListener 'mousedown', (e) => @onMouseDown(e)
+    @element.addEventListener 'mouseup', (e) => @onMouseUp(e)
     @element.addEventListener 'dragstart', (e) => @onDragStart(e)
     @element.addEventListener 'dragenter', (e) => @onDragEnter(e)
     @element.addEventListener 'dragleave', (e) => @onDragLeave(e)
@@ -236,7 +243,7 @@ class TreeView
 
     @disposables.add atom.workspace.getCenter().onDidChangeActivePaneItem =>
       @selectActiveFile()
-      @revealActiveFile(false) if atom.config.get('tree-view.autoReveal')
+      @revealActiveFile({show: false, focus: false}) if atom.config.get('tree-view.autoReveal')
     @disposables.add atom.project.onDidChangePaths =>
       @updateRoots()
     @disposables.add atom.config.onDidChange 'tree-view.hideVcsIgnoredFiles', =>
@@ -307,28 +314,16 @@ class TreeView
     else
       atom.workspace.open(uri, options)
 
-  loadIgnoredPatterns: ->
-    @ignoredPatterns.length = 0
-    return unless atom.config.get('tree-view.hideIgnoredNames')
-
-    Minimatch ?= require('minimatch').Minimatch
-
-    ignoredNames = atom.config.get('core.ignoredNames') ? []
-    ignoredNames = [ignoredNames] if typeof ignoredNames is 'string'
-    for ignoredName in ignoredNames when ignoredName
-      try
-        @ignoredPatterns.push(new Minimatch(ignoredName, matchBase: true, dot: true))
-      catch error
-        atom.notifications.addWarning("Error parsing ignore pattern (#{ignoredName})", detail: error.message)
-
   updateRoots: (expansionStates={}) ->
+    selectedPaths = @selectedPaths()
+
     oldExpansionStates = {}
     for root in @roots
       oldExpansionStates[root.directory.path] = root.directory.serializeExpansionState()
       root.directory.destroy()
       root.remove()
 
-    @loadIgnoredPatterns()
+    IgnoredNames ?= require('./ignored-names')
 
     @roots = for projectPath in atom.project.getPaths()
       stats = fs.lstatSyncNoException(projectPath)
@@ -345,7 +340,7 @@ class TreeView
         expansionState: expansionStates[projectPath] ?
                         oldExpansionStates[projectPath] ?
                         {isExpanded: true}
-        @ignoredPatterns
+        ignoredNames: new IgnoredNames()
         @useSyncFS
         stats
       })
@@ -353,16 +348,27 @@ class TreeView
       @list.appendChild(root)
       root
 
+    # The DOM has been recreated; reselect everything
+    @selectMultipleEntries(@entryForPath(selectedPath)) for selectedPath in selectedPaths
+
   getActivePath: -> atom.workspace.getCenter().getActivePaneItem()?.getPath?()
 
   selectActiveFile: ->
-    if activeFilePath = @getActivePath()
+    activeFilePath = @getActivePath()
+    if @entryForPath(activeFilePath)
       @selectEntryForPath(activeFilePath)
+    else
+      # If the active file is not part of the project, deselect all entries
+      @deselect()
 
-  revealActiveFile: (focus) ->
+  revealActiveFile: (options = {}) ->
     return Promise.resolve() unless atom.project.getPaths().length
 
-    @show(focus ? atom.config.get('tree-view.focusOnReveal')).then =>
+    {show, focus} = options
+
+    focus ?= atom.config.get('tree-view.focusOnReveal')
+    promise = if show or focus then @show(focus) else Promise.resolve()
+    promise.then =>
       return unless activeFilePath = @getActivePath()
 
       [rootPath, relativePath] = atom.project.relativizePath(activeFilePath)
@@ -427,8 +433,6 @@ class TreeView
     if selectedEntry?
       if previousEntry = @previousEntry(selectedEntry)
         @selectEntry(previousEntry)
-        if previousEntry.classList.contains('directory')
-          @selectEntry(_.last(previousEntry.entries.children))
       else
         @selectEntry(selectedEntry.parentElement.closest('.directory'))
     else
@@ -450,12 +454,20 @@ class TreeView
     return null
 
   previousEntry: (entry) ->
-    currentEntry = entry
-    while currentEntry?
-      currentEntry = currentEntry.previousSibling
-      if currentEntry?.matches('.entry')
-        return currentEntry
-    return null
+    previousEntry = entry.previousSibling
+    while previousEntry? and not previousEntry.matches('.entry')
+      previousEntry = previousEntry.previousSibling
+
+    return null unless previousEntry?
+
+    # If the previous entry is an expanded directory,
+    # we need to select the last entry in that directory,
+    # not the directory itself
+    if previousEntry.matches('.directory.expanded')
+      entries = previousEntry.querySelectorAll('.entry')
+      return entries[entries.length - 1] if entries.length > 0
+
+    return previousEntry
 
   expandDirectory: (isRecursive=false) ->
     selectedEntry = @selectedEntry()
@@ -469,12 +481,14 @@ class TreeView
       directory.expand(isRecursive)
 
   collapseDirectory: (isRecursive=false, allDirectories=false) ->
+    if allDirectories
+      root.collapse(true) for root in @roots
+      return
+
     selectedEntry = @selectedEntry()
     return unless selectedEntry?
 
-    if allDirectories
-      root.collapse(true) for root in @roots
-    else if directory = selectedEntry.closest('.expanded.directory')
+    if directory = selectedEntry.closest('.expanded.directory')
       directory.collapse(isRecursive)
       @selectEntry(directory)
 
@@ -542,76 +556,17 @@ class TreeView
           @emitter.emit 'move-entry-failed', {initialPath, newPath}
       dialog.attach()
 
-  # Get the outline of a system call to the current platform's file manager.
-  #
-  # pathToOpen  - Path to a file or directory.
-  # isFile      - True if the path is a file, false otherwise.
-  #
-  # Returns an object containing a command, a human-readable label, and the
-  # arguments.
-  fileManagerCommandForPath: (pathToOpen, isFile) ->
-    switch process.platform
-      when 'darwin'
-        command: 'open'
-        label: 'Finder'
-        args: ['-R', pathToOpen]
-      when 'win32'
-        args = ["/select,\"#{pathToOpen}\""]
-
-        if process.env.SystemRoot
-          command = path.join(process.env.SystemRoot, 'explorer.exe')
-        else
-          command = 'explorer.exe'
-
-        command: command
-        label: 'Explorer'
-        args: args
-      else
-        # Strip the filename from the path to make sure we pass a directory
-        # path. If we pass xdg-open a file path, it will open that file in the
-        # most suitable application instead, which is not what we want.
-        pathToOpen =  path.dirname(pathToOpen) if isFile
-
-        command: 'xdg-open'
-        label: 'File Manager'
-        args: [pathToOpen]
-
-  openInFileManager: (command, args, label, isFile) ->
-    handleError = (errorMessage) ->
-      atom.notifications.addError "Opening #{if isFile then 'file' else 'folder'} in #{label} failed",
-        detail: errorMessage
-        dismissable: true
-
-    errorLines = []
-    stderr = (lines) -> errorLines.push(lines)
-    exit = (code) ->
-      failed = code isnt 0
-      errorMessage = errorLines.join('\n')
-
-      # Windows 8 seems to return a 1 with no error output even on success
-      if process.platform is 'win32' and code is 1 and not errorMessage
-        failed = false
-
-      handleError(errorMessage) if failed
-
-    showProcess = new BufferedProcess({command, args, stderr, exit})
-    showProcess.onWillThrowError ({error, handle}) ->
-      handle()
-      handleError(error?.message)
-    showProcess
-
   showSelectedEntryInFileManager: ->
-    return unless entry = @selectedEntry()
+    return unless filePath = @selectedEntry()?.getPath()
 
-    isFile = entry.classList.contains('file')
-    {command, args, label} = @fileManagerCommandForPath(entry.getPath(), isFile)
-    @openInFileManager(command, args, label, isFile)
+    unless shell.showItemInFolder(filePath)
+      atom.notifications.addWarning("Unable to show #{filePath} in file manager")
 
   showCurrentFileInFileManager: ->
-    return unless editor = atom.workspace.getCenter().getActiveTextEditor()
-    return unless editor.getPath()
-    {command, args, label} = @fileManagerCommandForPath(editor.getPath(), true)
-    @openInFileManager(command, args, label, true)
+    return unless filePath = atom.workspace.getCenter().getActiveTextEditor()?.getPath()
+
+    unless shell.showItemInFolder(filePath)
+      atom.notifications.addWarning("Unable to show #{filePath} in file manager")
 
   openSelectedEntryInNewWindow: ->
     if pathToOpen = @selectedEntry()?.getPath()
@@ -678,7 +633,8 @@ class TreeView
               dismissable: true
 
           # Focus the first parent folder
-          @selectEntry(selectedEntries[0].closest('.directory:not(.selected)'))
+          if firstSelectedEntry = selectedEntries[0]
+            @selectEntry(firstSelectedEntry.closest('.directory:not(.selected)'))
           @updateRoots() if atom.config.get('tree-view.squashDirectoryNames')
         "Cancel": null
 
@@ -706,7 +662,7 @@ class TreeView
     window.localStorage.removeItem('tree-view:cutPath')
     window.localStorage['tree-view:copyPath'] = JSON.stringify(selectedPaths)
 
-  # Public: Copy the path of the selected entry element.
+  # Public: Cut the path of the selected entry element.
   #         Save the path in localStorage, so that cutting from 2 different
   #         instances of atom works as intended
   #
@@ -744,6 +700,15 @@ class TreeView
         basePath = path.dirname(basePath) if selectedEntry.classList.contains('file')
         newPath = path.join(basePath, path.basename(initialPath))
 
+        # Do not allow copying test/a/ into test/a/b/
+        # Note: A trailing path.sep is added to prevent false positives, such as test/a -> test/ab
+        realBasePath = fs.realpathSync(basePath) + path.sep
+        realInitialPath = fs.realpathSync(initialPath) + path.sep
+        if initialPathIsDirectory and realBasePath.startsWith(realInitialPath)
+          unless fs.isSymbolicLinkSync(initialPath)
+            atom.notifications.addWarning('Cannot paste a folder into itself')
+            continue
+
         if copiedPaths
           # append a number to the file if an item with the same name exists
           fileCounter = 0
@@ -757,7 +722,7 @@ class TreeView
               newPath = "#{filePath}#{fileCounter}#{extension}"
             fileCounter += 1
 
-          if fs.isDirectorySync(initialPath)
+          if initialPathIsDirectory
             # use fs.copy to copy directories since read/write will fail for directories
             catchAndShowFileErrors =>
               fs.copySync(initialPath, newPath)
@@ -768,9 +733,8 @@ class TreeView
               fs.writeFileSync(newPath, fs.readFileSync(initialPath))
               @emitter.emit 'entry-copied', {initialPath, newPath}
         else if cutPaths
-          # Only move the target if the cut target doesn't exist and if the newPath
-          # is not within the initial path
-          unless fs.existsSync(newPath) or newPath.startsWith(initialPath)
+          # Only move the target if the cut target doesn't exist
+          unless fs.existsSync(newPath)
             try
               @emitter.emit 'will-move-entry', {initialPath, newPath}
               fs.moveSync(initialPath, newPath)
@@ -812,6 +776,7 @@ class TreeView
     return unless entry?
 
     @selectedPath = entry.getPath()
+    @lastFocusedEntry = entry
 
     selectedEntries = @getSelectedEntries()
     if selectedEntries.length > 1 or selectedEntries[0] isnt entry
@@ -860,6 +825,13 @@ class TreeView
   moveEntry: (initialPath, newDirectoryPath) ->
     if initialPath is newDirectoryPath
       return
+
+    realNewDirectoryPath = fs.realpathSync(newDirectoryPath) + path.sep
+    realInitialPath = fs.realpathSync(initialPath) + path.sep
+    if fs.isDirectorySync(initialPath) and realNewDirectoryPath.startsWith(realInitialPath)
+      unless fs.isSymbolicLinkSync(initialPath)
+        atom.notifications.addWarning('Cannot move a folder into itself')
+        return
 
     entryName = path.basename(initialPath)
     newPath = path.join(newDirectoryPath, entryName)
@@ -927,28 +899,70 @@ class TreeView
     @element.style.display = ''
 
   onMouseDown: (e) ->
-    if entryToSelect = e.target.closest('.entry')
-      e.stopPropagation()
+    return unless entryToSelect = e.target.closest('.entry')
 
-      # return early if we're opening a contextual menu (right click) during multi-select mode
-      if @multiSelectEnabled() and
-         entryToSelect.classList.contains('selected') and
-         # mouse right click or ctrl click as right click on darwin platforms
-         (e.button is 2 or e.ctrlKey and process.platform is 'darwin')
+    e.stopPropagation()
+
+    # TODO: meta+click and ctrl+click should not do the same thing on Windows.
+    #       Right now removing metaKey if platform is not darwin breaks tests
+    #       that set the metaKey to true when simulating a cmd+click on macos
+    #       and ctrl+click on windows and linux.
+    cmdKey = e.metaKey or (e.ctrlKey and process.platform isnt 'darwin')
+
+    # return early if clicking on a selected entry
+    if entryToSelect.classList.contains('selected')
+      # mouse right click or ctrl click as right click on darwin platforms
+      if e.button is 2 or (e.ctrlKey and process.platform is 'darwin')
+        return
+      else
+        # allow click on mouseup if not dragging
+        {shiftKey} = e
+        @selectOnMouseUp = {shiftKey, cmdKey}
         return
 
-      if e.shiftKey
-        @selectContinuousEntries(entryToSelect)
-        @showMultiSelectMenu()
-      # only allow ctrl click for multi selection on non darwin systems
-      else if e.metaKey or (e.ctrlKey and process.platform isnt 'darwin')
-        @selectMultipleEntries(entryToSelect)
+    if e.shiftKey and cmdKey
+      # select continuous from @lastFocusedEntry but leave others
+      @selectContinuousEntries(entryToSelect, false)
+      @showMultiSelectMenuIfNecessary()
+    else if e.shiftKey
+      # select continuous from @lastFocusedEntry and deselect rest
+      @selectContinuousEntries(entryToSelect)
+      @showMultiSelectMenuIfNecessary()
+    # only allow ctrl click for multi selection on non darwin systems
+    else if cmdKey
+      @selectMultipleEntries(entryToSelect)
+      @lastFocusedEntry = entryToSelect
+      @showMultiSelectMenuIfNecessary()
+    else
+      @selectEntry(entryToSelect)
+      @showFullMenu()
 
-        # only show the multi select menu if more then one file/directory is selected
-        @showMultiSelectMenu() if @selectedPaths().length > 1
-      else
-        @selectEntry(entryToSelect)
-        @showFullMenu()
+  onMouseUp: (e) ->
+    return unless @selectOnMouseUp?
+
+    {shiftKey, cmdKey} = @selectOnMouseUp
+    @selectOnMouseUp = null
+
+    return unless entryToSelect = e.target.closest('.entry')
+
+    e.stopPropagation()
+
+    if shiftKey and cmdKey
+      # select continuous from @lastFocusedEntry but leave others
+      @selectContinuousEntries(entryToSelect, false)
+      @showMultiSelectMenuIfNecessary()
+    else if shiftKey
+      # select continuous from @lastFocusedEntry and deselect rest
+      @selectContinuousEntries(entryToSelect)
+      @showMultiSelectMenuIfNecessary()
+    # only allow ctrl click for multi selection on non darwin systems
+    else if cmdKey
+      @deselect([entryToSelect])
+      @lastFocusedEntry = entryToSelect
+      @showMultiSelectMenuIfNecessary()
+    else
+      @selectEntry(entryToSelect)
+      @showFullMenu()
 
   # Public: Return an array of paths from all selected items
   #
@@ -962,16 +976,17 @@ class TreeView
   #         a new given entry. This is shift+click functionality
   #
   # Returns array of selected elements
-  selectContinuousEntries: (entry) ->
-    currentSelectedEntry = @selectedEntry()
+  selectContinuousEntries: (entry, deselectOthers = true) ->
+    currentSelectedEntry = @lastFocusedEntry ? @selectedEntry()
     parentContainer = entry.parentElement
-    if parentContainer.contains(currentSelectedEntry)
+    elements = []
+    if parentContainer is currentSelectedEntry.parentElement
       entries = Array.from(parentContainer.querySelectorAll('.entry'))
       entryIndex = entries.indexOf(entry)
       selectedIndex = entries.indexOf(currentSelectedEntry)
       elements = (entries[i] for i in [entryIndex..selectedIndex])
 
-      @deselect()
+      @deselect() if deselectOthers
       element.classList.add('selected') for element in elements
 
     elements
@@ -990,11 +1005,17 @@ class TreeView
     @list.classList.remove('multi-select')
     @list.classList.add('full-menu')
 
-  # Public: Toggle multi-select class on the main list element to display the the
+  # Public: Toggle multi-select class on the main list element to display the
   #         menu with only items that make sense for multi select functionality
   showMultiSelectMenu: ->
     @list.classList.remove('full-menu')
     @list.classList.add('multi-select')
+
+  showMultiSelectMenuIfNecessary: ->
+    if @getSelectedEntries().length > 1
+      @showMultiSelectMenu()
+    else
+      @showFullMenu()
 
   # Public: Check for multi-select class on the main list
   #
@@ -1003,92 +1024,119 @@ class TreeView
     @list.classList.contains('multi-select')
 
   onDragEnter: (e) =>
-    if header = e.target.closest('.entry.directory > .header')
+    if entry = e.target.closest('.entry.directory')
       return if @rootDragAndDrop.isDragging(e)
 
       e.stopPropagation()
 
-      entry = header.parentNode
       @dragEventCounts.set(entry, 0) unless @dragEventCounts.get(entry)
-      entry.classList.add('selected') if @dragEventCounts.get(entry) is 0
+      unless @dragEventCounts.get(entry) isnt 0 or entry.classList.contains('selected')
+        entry.classList.add('drag-over', 'selected')
+
       @dragEventCounts.set(entry, @dragEventCounts.get(entry) + 1)
 
   onDragLeave: (e) =>
-    if header = e.target.closest('.entry.directory > .header')
+    if entry = e.target.closest('.entry.directory')
       return if @rootDragAndDrop.isDragging(e)
 
       e.stopPropagation()
 
-      entry = header.parentNode
       @dragEventCounts.set(entry, @dragEventCounts.get(entry) - 1)
-      entry.classList.remove('selected') if @dragEventCounts.get(entry) is 0
+      if @dragEventCounts.get(entry) is 0 and entry.classList.contains('drag-over')
+        entry.classList.remove('drag-over', 'selected')
 
   # Handle entry name object dragstart event
   onDragStart: (e) ->
+    @dragEventCounts = new WeakMap
+    @selectOnMouseUp = null
     if entry = e.target.closest('.entry')
       e.stopPropagation()
 
       if @rootDragAndDrop.canDragStart(e)
         return @rootDragAndDrop.onDragStart(e)
 
-      target = entry.querySelector(".name")
-      initialPath = target.dataset.path
-
-      fileNameElement = target.cloneNode(true)
-      for key, value of getStyleObject(target)
-        fileNameElement.style[key] = value
-      fileNameElement.style.position = 'absolute'
-      fileNameElement.style.top = 0
-      fileNameElement.style.left = 0
+      dragImage = document.createElement("ol")
+      dragImage.classList.add("entries", "list-tree")
+      dragImage.style.position = "absolute"
+      dragImage.style.top = 0
+      dragImage.style.left = 0
       # Ensure the cloned file name element is rendered on a separate GPU layer
       # to prevent overlapping elements located at (0px, 0px) from being used as
       # the drag image.
-      fileNameElement.style.willChange = 'transform'
+      dragImage.style.willChange = "transform"
 
-      document.body.appendChild(fileNameElement)
+      initialPaths = []
+      for target in @getSelectedEntries()
+        entryPath = target.querySelector(".name").dataset.path
+        parentSelected = target.parentNode.closest(".entry.selected")
+        unless parentSelected
+          initialPaths.push(entryPath)
+          newElement = target.cloneNode(true)
+          if newElement.classList.contains("directory")
+            newElement.querySelector(".entries").remove()
+          for key, value of getStyleObject(target)
+            newElement.style[key] = value
+          newElement.style.paddingLeft = "1em"
+          newElement.style.paddingRight = "1em"
+          dragImage.append(newElement)
+
+      document.body.appendChild(dragImage)
 
       e.dataTransfer.effectAllowed = "move"
-      e.dataTransfer.setDragImage(fileNameElement, 0, 0)
-      e.dataTransfer.setData("initialPath", initialPath)
+      e.dataTransfer.setDragImage(dragImage, 0, 0)
+      e.dataTransfer.setData("initialPaths", initialPaths)
 
       window.requestAnimationFrame ->
-        fileNameElement.remove()
+        dragImage.remove()
 
   # Handle entry dragover event; reset default dragover actions
   onDragOver: (e) ->
-    if entry = e.target.closest('.entry')
+    if entry = e.target.closest('.entry.directory')
       return if @rootDragAndDrop.isDragging(e)
 
       e.preventDefault()
       e.stopPropagation()
 
       if @dragEventCounts.get(entry) > 0 and not entry.classList.contains('selected')
-        entry.classList.add('selected')
+        entry.classList.add('drag-over', 'selected')
 
   # Handle entry drop event
   onDrop: (e) ->
-    if entry = e.target.closest('.entry')
+    @dragEventCounts = new WeakMap
+    if entry = e.target.closest('.entry.directory')
       return if @rootDragAndDrop.isDragging(e)
 
       e.preventDefault()
       e.stopPropagation()
 
-      entry.classList.remove('selected')
-
-      return unless entry.classList.contains('directory')
-
       newDirectoryPath = entry.querySelector('.name')?.dataset.path
       return false unless newDirectoryPath
 
-      initialPath = e.dataTransfer.getData("initialPath")
+      initialPaths = e.dataTransfer.getData('initialPaths')
 
-      if initialPath
+      if initialPaths
         # Drop event from Atom
-        @moveEntry(initialPath, newDirectoryPath)
+        initialPaths = initialPaths.split(',')
+        return if initialPaths.includes(newDirectoryPath)
+
+        entry.classList.remove('drag-over', 'selected')
+
+        # iterate backwards so files in a dir are moved before the dir itself
+        for initialPath in initialPaths by -1
+          # Note: this is necessary on Windows to circumvent node-pathwatcher
+          # holding a lock on expanded folders and preventing them from
+          # being moved or deleted
+          # TODO: This can be removed when tree-view is switched to @atom/watcher
+          @entryForPath(initialPath)?.collapse?()
+          @moveEntry(initialPath, newDirectoryPath)
       else
         # Drop event from OS
+        entry.classList.remove('selected')
         for file in e.dataTransfer.files
           break unless @moveEntry(file.path, newDirectoryPath)
+    else if e.dataTransfer.files.length
+      # Drop event from OS that isn't targeting a folder: add a new project folder
+      atom.project.addPath(entry.path) for entry in e.dataTransfer.files
 
   isVisible: ->
     @element.offsetWidth isnt 0 or @element.offsetHeight isnt 0
