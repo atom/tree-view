@@ -4216,7 +4216,7 @@ describe "TreeView", ->
           deltaFile = findFileContainingText(treeView.roots[0], 'delta.txt')
 
           [dragStartEvent, dragEnterEvent, dropEvent] =
-            eventHelpers.buildInternalDragEvents(deltaFile, alphaDir.querySelector('.header'), alphaDir)
+            eventHelpers.buildInternalDragEvents([deltaFile], alphaDir.querySelector('.header'), alphaDir, treeView)
 
         it "prompts to replace the file", ->
           spyOn(atom, 'confirm')
@@ -4310,7 +4310,7 @@ describe "TreeView", ->
       describe "when dragging directories", ->
         [oldAFilePath, oldBFilePath, oldCFilePath, oldNestedDirPath, oldNestedFilePath,
          onlyOldDirPath, onlyOldFilePath, newAlphaDirPath, newAFilePath, newBFilePath,
-        newCFilePath, newNestedDirPath, newNestedFilePath, onlyNewDirPath, onlyNewFilePath] = []
+         newCFilePath, newNestedDirPath, newNestedFilePath, onlyNewDirPath, onlyNewFilePath] = []
         [dragStartEvent, dragEnterEvent, dropEvent] = []
 
         beforeEach ->
@@ -4359,7 +4359,7 @@ describe "TreeView", ->
           newAlphaDir = findDirectoryContainingText(gammaDir, 'alpha')
 
           [dragStartEvent, dragEnterEvent, dropEvent] =
-            eventHelpers.buildInternalDragEvents(newAlphaDir, treeView.roots[0].querySelector('.header'), treeView.roots[0])
+            eventHelpers.buildInternalDragEvents([newAlphaDir], treeView.roots[0].querySelector('.header'), treeView.roots[0], treeView)
 
         it "recursively walks the directory structure and prompts to replace each conflicting file", ->
           spyOn(atom, 'confirm').andReturn 1
