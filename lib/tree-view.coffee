@@ -598,45 +598,48 @@ class TreeView
 
     for root in @roots
       if root.getPath() in selectedPaths
-        atom.confirm
-          message: "The root directory '#{root.directory.name}' can't be removed."
+        atom.confirm({
+          message: "The root directory '#{root.directory.name}' can't be removed.",
           buttons: ['OK']
+        }, -> # noop
+        )
         return
 
-    atom.confirm
-      message: "Are you sure you want to delete the selected #{if selectedPaths.length > 1 then 'items' else 'item'}?"
-      detailedMessage: "You are deleting:\n#{selectedPaths.join('\n')}"
-      buttons:
-        "Move to Trash": =>
-          failedDeletions = []
-          for selectedPath in selectedPaths
-            # Don't delete entries which no longer exist. This can happen, for example, when:
-            # * The entry is deleted outside of Atom before "Move to Trash" is selected
-            # * A folder and one of its children are both selected for deletion,
-            #   but the parent folder is deleted first
-            continue unless fs.existsSync(selectedPath)
+    atom.confirm({
+      message: "Are you sure you want to delete the selected #{if selectedPaths.length > 1 then 'items' else 'item'}?",
+      detailedMessage: "You are deleting:\n#{selectedPaths.join('\n')}",
+      buttons: ['Move to Trash', 'Cancel']
+    }, (response) ->
+      if response is 0 # Move to Trash
+        failedDeletions = []
+        for selectedPath in selectedPaths
+          # Don't delete entries which no longer exist. This can happen, for example, when:
+          # * The entry is deleted outside of Atom before "Move to Trash" is selected
+          # * A folder and one of its children are both selected for deletion,
+          #   but the parent folder is deleted first
+          continue unless fs.existsSync(selectedPath)
 
-            @emitter.emit 'will-delete-entry', {pathToDelete: selectedPath}
-            if shell.moveItemToTrash(selectedPath)
-              @emitter.emit 'entry-deleted', {pathToDelete: selectedPath}
-            else
-              @emitter.emit 'delete-entry-failed', {pathToDelete: selectedPath}
-              failedDeletions.push selectedPath
+          @emitter.emit 'will-delete-entry', {pathToDelete: selectedPath}
+          if shell.moveItemToTrash(selectedPath)
+            @emitter.emit 'entry-deleted', {pathToDelete: selectedPath}
+          else
+            @emitter.emit 'delete-entry-failed', {pathToDelete: selectedPath}
+            failedDeletions.push selectedPath
 
-            if repo = repoForPath(selectedPath)
-              repo.getPathStatus(selectedPath)
+          if repo = repoForPath(selectedPath)
+            repo.getPathStatus(selectedPath)
 
-          if failedDeletions.length > 0
-            atom.notifications.addError @formatTrashFailureMessage(failedDeletions),
-              description: @formatTrashEnabledMessage()
-              detail: "#{failedDeletions.join('\n')}"
-              dismissable: true
+        if failedDeletions.length > 0
+          atom.notifications.addError @formatTrashFailureMessage(failedDeletions),
+            description: @formatTrashEnabledMessage()
+            detail: "#{failedDeletions.join('\n')}"
+            dismissable: true
 
-          # Focus the first parent folder
-          if firstSelectedEntry = selectedEntries[0]
-            @selectEntry(firstSelectedEntry.closest('.directory:not(.selected)'))
-          @updateRoots() if atom.config.get('tree-view.squashDirectoryNames')
-        "Cancel": null
+        # Focus the first parent folder
+        if firstSelectedEntry = selectedEntries[0]
+          @selectEntry(firstSelectedEntry.closest('.directory:not(.selected)'))
+        @updateRoots() if atom.config.get('tree-view.squashDirectoryNames')
+    )
 
   formatTrashFailureMessage: (failedDeletions) ->
     fileText = if failedDeletions.length > 1 then 'files' else 'file'
