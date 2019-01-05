@@ -609,7 +609,7 @@ class TreeView
       message: "Are you sure you want to delete the selected #{if selectedPaths.length > 1 then 'items' else 'item'}?",
       detailedMessage: "You are deleting:\n#{selectedPaths.join('\n')}",
       buttons: ['Move to Trash', 'Cancel']
-    }, (response) ->
+    }, (response) =>
       if response is 0 # Move to Trash
         failedDeletions = []
         for selectedPath in selectedPaths
