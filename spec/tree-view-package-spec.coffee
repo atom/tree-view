@@ -2024,17 +2024,17 @@ describe "TreeView", ->
                 expect(treeView.element.querySelector('.selected').textContent).toBe path.basename(newPath)
                 expect(callback).toHaveBeenCalledWith({path: newPath})
 
-            it "adds file in any project path", ->
+            it "adds the new file in any project path", ->
               newPath = path.join(dirPath3, "new-test-file.txt")
 
-              waitForWorkspaceOpenEvent ->
-                fileView4.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+              treeView.selectEntry(fileView4)
+
+              atom.commands.dispatch(treeView.element, "tree-view:add-file")
+              [addPanel] = atom.workspace.getModalPanels()
+              addDialog = addPanel.getItem()
+              addDialog.miniEditor.insertText(path.basename(newPath))
 
               waitForWorkspaceOpenEvent ->
-                atom.commands.dispatch(treeView.element, "tree-view:add-file")
-                [addPanel] = atom.workspace.getModalPanels()
-                addDialog = addPanel.getItem()
-                addDialog.miniEditor.insertText(path.basename(newPath))
                 atom.commands.dispatch addDialog.element, 'core:confirm'
 
               runs ->
