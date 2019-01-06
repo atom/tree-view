@@ -2872,13 +2872,13 @@ describe "TreeView", ->
           callback = jasmine.createSpy('onEntryDeleted')
           treeView.onEntryDeleted(callback)
 
-          waitForWorkspaceOpenEvent ->
+          waitsForPromise ->
             atom.workspace.open(filePath2)
 
           runs ->
             openFilePaths = atom.workspace.getTextEditors().map((editor) -> editor.getPath())
             expect(openFilePaths).toEqual([filePath2])
-            fileView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+            treeView.selectEntry(fileView2)
             treeView.focus()
 
             spyOn(atom, 'confirm').andCallFake (options, callback) -> callback(0)
