@@ -2651,8 +2651,9 @@ describe "TreeView", ->
 
       it "won't remove the root directory", ->
         spyOn(atom, 'confirm')
+
+        treeView.selectEntry(root1)
         treeView.focus()
-        root1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
         atom.commands.dispatch(treeView.element, 'tree-view:remove')
 
         args = atom.confirm.mostRecentCall.args[0]
@@ -2661,13 +2662,12 @@ describe "TreeView", ->
       it "shows the native alert dialog", ->
         spyOn(atom, 'confirm')
 
-        waitForWorkspaceOpenEvent ->
-          fileView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+        treeView.selectEntry(fileView)
+        treeView.focus()
+        atom.commands.dispatch(treeView.element, 'tree-view:remove')
 
-        runs ->
-          atom.commands.dispatch(treeView.element, 'tree-view:remove')
-          args = atom.confirm.mostRecentCall.args[0]
-          expect(args.buttons).toEqual ['Move to Trash', 'Cancel']
+        args = atom.confirm.mostRecentCall.args[0]
+        expect(args.buttons).toEqual ['Move to Trash', 'Cancel']
 
       it "can delete an active path that isn't in the project", ->
         spyOn(atom, 'confirm').andCallFake (options, callback) -> callback(0)
@@ -2695,7 +2695,7 @@ describe "TreeView", ->
         callback = jasmine.createSpy('onDeleteEntryFailed')
         treeView.onDeleteEntryFailed(callback)
 
-        fileView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+        treeView.selectEntry(fileView)
         treeView.focus()
 
         spyOn(shell, 'moveItemToTrash').andReturn(false)
@@ -2740,7 +2740,7 @@ describe "TreeView", ->
           runs ->
             openFilePaths = atom.workspace.getTextEditors().map((editor) -> editor.getPath())
             expect(openFilePaths).toEqual([filePath2, filePath3])
-            dirView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+            treeView.selectEntry(dirView2)
             treeView.focus()
 
             spyOn(atom, 'confirm').andCallFake (options, callback) -> callback(0)
@@ -2769,7 +2769,7 @@ describe "TreeView", ->
             expect(openFilePaths).toEqual([filePath2, filePath3])
 
             atom.workspace.getActiveTextEditor().setText('MODIFIED')
-            dirView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+            treeView.selectEntry(dirView2)
             treeView.focus()
 
             spyOn(atom, 'confirm').andCallFake (options, callback) -> callback(0)
@@ -2804,7 +2804,7 @@ describe "TreeView", ->
           runs ->
             openFilePaths = atom.workspace.getTextEditors().map((editor) -> editor.getPath())
             expect(openFilePaths).toEqual([filePath2, filePath3, filePath20])
-            dirView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+            treeView.selectEntry(dirView2)
             treeView.focus()
 
             spyOn(atom, 'confirm').andCallFake (options, callback) -> callback(0)
@@ -2836,7 +2836,7 @@ describe "TreeView", ->
           runs ->
             openFilePaths = atom.workspace.getTextEditors().map((editor) -> editor.getPath())
             expect(openFilePaths).toEqual([filePath2, filePath3, undefined])
-            dirView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+            treeView.selectEntry(dirView2)
             treeView.focus()
 
             spyOn(atom, 'confirm').andCallFake (options, callback) -> callback(0)
@@ -2854,7 +2854,7 @@ describe "TreeView", ->
           callback = jasmine.createSpy('onEntryDeleted')
           treeView.onEntryDeleted(callback)
 
-          dirView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+          treeView.selectEntry(dirView2)
           treeView.focus()
 
           spyOn(atom, 'confirm').andCallFake (options, callback) -> callback(0)
@@ -2904,7 +2904,7 @@ describe "TreeView", ->
             expect(openFilePaths).toEqual([filePath2])
 
             atom.workspace.getActiveTextEditor().setText('MODIFIED')
-            fileView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+            treeView.selectEntry(fileView2)
             treeView.focus()
 
             spyOn(atom, 'confirm').andCallFake (options, callback) -> callback(0)
@@ -2949,9 +2949,6 @@ describe "TreeView", ->
           callback = jasmine.createSpy('onEntryDeleted')
           treeView.onEntryDeleted(callback)
 
-          # Don't click so that we don't open an editor
-          # If an editor is opened, this test doesn't work as the editor will be removed,
-          # prompting selectActiveFile to unselect everything
           treeView.selectEntry(fileView2)
           treeView.focus()
 
@@ -2973,8 +2970,8 @@ describe "TreeView", ->
 
           spyOn(fs, 'existsSync').andCallThrough()
 
-          fileView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
-          dirView.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, metaKey: true}))
+          treeView.selectEntry(fileView)
+          treeView.selectMultipleEntries(dirView)
           treeView.focus()
 
           spyOn(atom, 'confirm').andCallFake (options, callback) -> callback(0)
@@ -2993,8 +2990,8 @@ describe "TreeView", ->
           callback = jasmine.createSpy('onEntryDeleted')
           treeView.onEntryDeleted(callback)
 
-          dirView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
-          fileView2.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, metaKey: true}))
+          treeView.selectEntry(dirView)
+          treeView.selectMultipleEntries(fileView2)
           treeView.focus()
 
           spyOn(atom, 'confirm').andCallFake (options, callback) -> callback(0)
@@ -3015,7 +3012,7 @@ describe "TreeView", ->
 
           spyOn(fs, 'existsSync').andCallThrough()
 
-          fileView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+          treeView.selectEntry(fileView)
           treeView.focus()
 
           spyOn(atom, 'confirm').andCallFake (options, callback) ->
