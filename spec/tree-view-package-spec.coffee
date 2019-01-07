@@ -102,7 +102,8 @@ describe "TreeView", ->
       beforeEach ->
         atom.project.setPaths([])
         waitsForPromise ->
-          Promise.resolve(atom.packages.deactivatePackage("tree-view")) # Wrapped for both async and non-async versions of Atom
+          atom.packages.deactivatePackage("tree-view")
+
         runs ->
           expect(atom.workspace.getLeftDock().getActivePaneItem()).toBeUndefined()
 
@@ -159,7 +160,7 @@ describe "TreeView", ->
       it "does not show the dock on activation", ->
 
         waitsForPromise ->
-          Promise.resolve(atom.packages.deactivatePackage("tree-view")) # Wrapped for both async and non-async versions of Atom
+          atom.packages.deactivatePackage("tree-view")
 
         runs ->
           atom.packages.packageStates = {}
@@ -196,7 +197,7 @@ describe "TreeView", ->
         atom.project.setPaths([dotGit])
 
         waitsForPromise ->
-          Promise.resolve(atom.packages.deactivatePackage("tree-view")) # Wrapped for both async and non-async versions of Atom
+          atom.packages.deactivatePackage("tree-view")
 
         runs ->
           atom.packages.packageStates = {}
