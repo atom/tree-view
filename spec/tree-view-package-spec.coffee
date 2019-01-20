@@ -4448,6 +4448,60 @@ describe "TreeView", ->
           expect(activePaneItem.getPath()).toBe atom.project.getDirectories()[0].resolve('tree-view.txt')
           expect(atom.views.getView(atom.workspace.getCenter().getPanes()[1])).toHaveFocus()
 
+  describe "the closeOnKeyboardFileOpen config option", ->
+    it "defaults to false", ->
+      expect(atom.config.get("tree-view.closeOnKeyboardFileOpen")).toBeFalsy()
+
+    describe "when tree view is open", ->
+      beforeEach ->
+        jasmine.attachToDOM(workspaceElement)
+
+      describe "tree-view:open-selected-entry (closeOnKeyboardFileOpen off)", ->
+        beforeEach ->
+          atom.config.set "tree-view.closeOnKeyboardFileOpen", false
+
+        describe "when opening file using the keyboard", ->
+          beforeEach ->
+            selectEntry 'tree-view.txt'
+            waitForWorkspaceOpenEvent ->
+              atom.commands.dispatch treeView.element, "tree-view:open-selected-entry"
+
+          it "doesn't hide the tree view", ->
+            expect(atom.workspace.getLeftDock().isVisible()).toBe(true)
+
+      describe "tree-view:open-selected-entry (closeOnKeyboardFileOpen on)", ->
+        beforeEach ->
+          atom.config.set "tree-view.closeOnKeyboardFileOpen", true
+
+        describe "when opening file using the keyboard", ->
+          beforeEach ->
+            selectEntry 'tree-view.txt'
+            waitForWorkspaceOpenEvent ->
+              atom.commands.dispatch treeView.element, "tree-view:open-selected-entry"
+
+          it "hides the tree view", ->
+            expect(atom.workspace.getLeftDock().isVisible()).toBe(false)
+
+        describe "when opening file with single click", ->
+          beforeEach ->
+            waitForWorkspaceOpenEvent ->
+              sampleJs.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+
+          it "doesn't hide the tree view", ->
+            expect(atom.workspace.getLeftDock().isVisible()).toBe(true)
+
+        describe "when opening file with double-click", ->
+          beforeEach ->
+            waitForWorkspaceOpenEvent ->
+              sampleJs.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+              sampleJs.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 2}))
+
+            waitsFor "next tick to avoid race condition", (done) ->
+              setImmediate(done)
+
+          it "doesn't hide the tree view", ->
+            expect(atom.workspace.getLeftDock().isVisible()).toBe(true)
+
   describe "Dragging and dropping root folders", ->
     [alphaDirPath, gammaDirPath, thetaDirPath, etaDirPath] = []
     beforeEach ->
