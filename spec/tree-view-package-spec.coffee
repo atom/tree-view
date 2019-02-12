@@ -624,7 +624,7 @@ describe "TreeView", ->
           treeView.focus()
 
           waitForWorkspaceOpenEvent ->
-            r = sampleJs.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+            sampleJs.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
 
           runs ->
             activePaneItem = atom.workspace.getCenter().getActivePaneItem()
@@ -781,16 +781,14 @@ describe "TreeView", ->
           atom.workspace.open(atom.project.getDirectories()[0].resolve('tree-view.txt'))
 
         runs ->
-          expect(sampleTxt).toHaveClass 'selected'
-          expect(treeView.element.querySelectorAll('.selected').length).toBe 1
+          expect(Array.from(treeView.getSelectedEntries())).toEqual([sampleTxt])
 
       it "selects the path's parent dir if its entry is not visible", ->
         waitsForPromise ->
           atom.workspace.open(path.join('dir1', 'sub-dir1', 'sub-file1'))
 
         runs ->
-          dirView = root1.querySelector('.directory')
-          expect(dirView).toHaveClass 'selected'
+          expect(Array.from(treeView.getSelectedEntries())).toEqual([root1.querySelector('.directory')])
 
       describe "when the tree-view.autoReveal config setting is true", ->
         beforeEach ->
