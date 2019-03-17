@@ -1845,7 +1845,7 @@ describe "TreeView", ->
             expect(callback).toHaveBeenCalledWith({initialPath: filePath, newPath})
 
           describe 'when the target destination file exists', ->
-            it 'does not move the cut file', ->
+            it 'emits a warning and does not move the cut file', ->
               callback = jasmine.createSpy("onEntryMoved")
               treeView.onEntryMoved(callback)
 
@@ -1857,6 +1857,9 @@ describe "TreeView", ->
 
               expect(fs.existsSync(filePath)).toBeTruthy()
               expect(callback).not.toHaveBeenCalled()
+
+              expect(atom.notifications.getNotifications().length).toBe(1)
+              expect(atom.notifications.getNotifications()[0].getMessage()).toContain('Unable to paste')
 
           describe 'when the file is currently open', ->
             beforeEach ->
