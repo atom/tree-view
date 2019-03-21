@@ -4600,12 +4600,10 @@ describe "TreeView", ->
       nonProjectPath = path.join(temp.mkdirSync(), 'new-file.txt')
       fs.writeFileSync(nonProjectPath, 'test')
 
-      waitForWorkspaceOpenEvent ->
-        sampleJs.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+      treeView.selectEntry(sampleJs)
 
-      runs ->
-        expect(sampleJs).toHaveClass 'selected'
-        expect(treeView.getSelectedEntries().length).toBe 1
+      expect(sampleJs).toHaveClass 'selected'
+      expect(treeView.getSelectedEntries().length).toBe 1
 
       waitsForPromise ->
         atom.workspace.open(nonProjectPath)
