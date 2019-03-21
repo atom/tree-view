@@ -736,15 +736,13 @@ class TreeView
               fs.writeFileSync(newPath, fs.readFileSync(initialPath))
               @emitter.emit 'entry-copied', {initialPath, newPath}
         else if cutPaths
-          # Only move the target if the cut target doesn't exist
-          unless fs.existsSync(newPath)
-            try
-              @emitter.emit 'will-move-entry', {initialPath, newPath}
-              fs.moveSync(initialPath, newPath)
-              @emitter.emit 'entry-moved', {initialPath, newPath}
-            catch error
-              @emitter.emit 'move-entry-failed', {initialPath, newPath}
-              atom.notifications.addWarning("Unable to paste paths: #{initialPaths}", detail: error.message)
+          try
+            @emitter.emit 'will-move-entry', {initialPath, newPath}
+            fs.moveSync(initialPath, newPath)
+            @emitter.emit 'entry-moved', {initialPath, newPath}
+          catch error
+            @emitter.emit 'move-entry-failed', {initialPath, newPath}
+            atom.notifications.addWarning("Unable to paste paths: #{initialPaths}", detail: error.message)
 
   add: (isCreatingFile) ->
     selectedEntry = @selectedEntry() ? @roots[0]

@@ -38,7 +38,7 @@
 
     {'label': 'Copy Full Path', 'command': 'tree-view:copy-full-path'}
     {'label': 'Copy Project Path', 'command': 'tree-view:copy-project-path'}
-    {'label': 'Open In New Window', 'command': 'tree-view:open-in-new-window'}
+    {'label': 'Open in New Window', 'command': 'tree-view:open-in-new-window'}
     {'label': 'Show in File Manager', 'command': 'tree-view:show-in-file-manager'}
   ]
 
@@ -70,7 +70,7 @@
 
     {'label': 'Copy Full Path', 'command': 'tree-view:copy-full-path'}
     {'label': 'Copy Project Path', 'command': 'tree-view:copy-project-path'}
-    {'label': 'Open In New Window', 'command': 'tree-view:open-in-new-window'}
+    {'label': 'Open in New Window', 'command': 'tree-view:open-in-new-window'}
   ]
 
   '.tree-view .multi-select': [
@@ -87,9 +87,9 @@
   'atom-pane[data-active-item-path] .tab.active': [
     {'label': 'Rename', 'command': 'tree-view:rename'}
     {'label': 'Reveal in Tree View', 'command': 'tree-view:reveal-active-file'}
-    {'label': 'Show In File Manager', 'command': 'tree-view:show-current-file-in-file-manager'}
+    {'label': 'Show in File Manager', 'command': 'tree-view:show-current-file-in-file-manager'}
   ]
 
   'atom-text-editor:not([mini])': [
-    {'label': 'Show In File Manager', 'command': 'tree-view:show-current-file-in-file-manager'}
+    {'label': 'Show in File Manager', 'command': 'tree-view:show-current-file-in-file-manager'}
   ]
