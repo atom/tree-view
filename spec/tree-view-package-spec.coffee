@@ -307,7 +307,7 @@ describe "TreeView", ->
   describe "when the tree-view is destroyed", ->
     it "can correctly re-create the tree-view", ->
       treeView = atom.workspace.getLeftDock().getActivePaneItem()
-      treeViewHTML = treeView.element.outerHTML
+      entryCountBeforeRecreatingView = treeView.element.getElementsByClassName('entry').length
       treeView.roots[0].collapse()
       treeView.destroy()
 
@@ -317,7 +317,8 @@ describe "TreeView", ->
       runs ->
         treeView2 = atom.workspace.getLeftDock().getActivePaneItem()
         treeView2.roots[0].expand()
-        expect(treeView2.element.outerHTML).toBe(treeViewHTML)
+        entryCountAfterRecreatingView = treeView2.element.getElementsByClassName('entry').length
+        expect(entryCountAfterRecreatingView).toBe(entryCountBeforeRecreatingView)
 
   describe "when tree-view:reveal-active-file is triggered", ->
     beforeEach ->
@@ -897,7 +898,8 @@ describe "TreeView", ->
 
     describe "core:move-up", ->
       describe "when there is an expanded directory before the currently selected entry", ->
-        it "selects the last entry in the expanded directory", ->
+        [directories, lastDir, fileAfterDir] = []
+        beforeEach ->
           directories = root1.querySelectorAll('.directory')
           lastDir = directories[directories.length - 1]
           fileAfterDir = lastDir.nextSibling
@@ -905,10 +907,26 @@ describe "TreeView", ->
           waitForWorkspaceOpenEvent ->
             fileAfterDir.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
 
-          runs ->
+        it "selects the last entry in the expanded directory", ->
+          atom.commands.dispatch(treeView.element, 'core:move-up')
+          entries = lastDir.querySelectorAll('.entry')
+          expect(entries[entries.length - 1]).toHaveClass 'selected'
+
+        describe "when the last child of the expanded directory is another expanded directory", ->
+          it "selects the last entry in the expanded directory", ->
+            subDir = lastDir.querySelectorAll('.directory')[0]
+            subDir.expand()
+
             atom.commands.dispatch(treeView.element, 'core:move-up')
-            entries = lastDir.querySelectorAll('.entry')
+            entries = subDir.querySelectorAll('.entry')
             expect(entries[entries.length - 1]).toHaveClass 'selected'
+
+        describe "when the expanded directory has no children", ->
+          it "selects the expanded directory itself", ->
+            lastDir.querySelector('.entry').remove() # pretend it's empty
+
+            atom.commands.dispatch(treeView.element, 'core:move-up')
+            expect(lastDir).toHaveClass 'selected'
 
       describe "when there is an entry before the currently selected entry", ->
         it "selects the previous entry", ->
@@ -1201,8 +1219,20 @@ describe "TreeView", ->
             expect(child).not.toHaveClass 'expanded'
           expect(root).not.toHaveClass 'expanded'
 
-      it "collapses all the project directories recursively", ->
+      it "collapses all the project directories recursively when an entry is selected", ->
         expandAll()
+
+        expect(treeView.element.querySelectorAll('.selected').length).toBeGreaterThan 0
+
+        atom.commands.dispatch(treeView.element, 'tree-view:collapse-all')
+        checkAllCollapsed()
+
+      it "collapses all the project directories when nothing is selected", ->
+        expandAll()
+
+        treeView.deselect()
+        expect(treeView.element.querySelectorAll('.selected').length).toBe 0
+
         atom.commands.dispatch(treeView.element, 'tree-view:collapse-all')
         checkAllCollapsed()
 
@@ -1814,7 +1844,7 @@ describe "TreeView", ->
             expect(callback).toHaveBeenCalledWith({initialPath: filePath, newPath})
 
           describe 'when the target destination file exists', ->
-            it 'does not move the cut file', ->
+            it 'emits a warning and does not move the cut file', ->
               callback = jasmine.createSpy("onEntryMoved")
               treeView.onEntryMoved(callback)
 
@@ -1826,6 +1856,9 @@ describe "TreeView", ->
 
               expect(fs.existsSync(filePath)).toBeTruthy()
               expect(callback).not.toHaveBeenCalled()
+
+              expect(atom.notifications.getNotifications().length).toBe(1)
+              expect(atom.notifications.getNotifications()[0].getMessage()).toContain('Unable to paste')
 
           describe 'when the file is currently open', ->
             beforeEach ->
@@ -2636,10 +2669,12 @@ describe "TreeView", ->
         runs ->
           atom.commands.dispatch(treeView.element, 'tree-view:remove')
           args = atom.confirm.mostRecentCall.args[0]
-          expect(Object.keys(args.buttons)).toEqual ['Move to Trash', 'Cancel']
+          expect(args.buttons).toEqual ['Move to Trash', 'Cancel']
 
       it "can delete an active path that isn't in the project", ->
-        spyOn(atom, 'confirm')
+        spyOn(atom, 'confirm').andCallFake (options, callback) -> callback(0)
+        callback = jasmine.createSpy('onEntryDeleted')
+        treeView.onEntryDeleted(callback)
 
         filePath = path.join(os.tmpdir(), 'non-project-file.txt')
         fs.writeFileSync(filePath, 'test')
@@ -2649,41 +2684,55 @@ describe "TreeView", ->
 
         runs ->
           atom.commands.dispatch(treeView.element, 'tree-view:remove')
-          args = atom.confirm.mostRecentCall.args[0]
-          args.buttons['Move to Trash']()
 
+        waitsFor 'onEntryDeleted to be called', ->
+          callback.callCount is 1
+
+        runs ->
           expect(fs.existsSync(filePath)).toBe(false)
 
       it "shows a notification on failure", ->
         atom.notifications.clear()
 
+        callback = jasmine.createSpy('onDeleteEntryFailed')
+        treeView.onDeleteEntryFailed(callback)
+
         fileView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
         treeView.focus()
 
         spyOn(shell, 'moveItemToTrash').andReturn(false)
-        spyOn(atom, 'confirm').andCallFake (dialog) -> dialog.buttons["Move to Trash"]()
+        spyOn(atom, 'confirm').andCallFake (options, callback) -> callback(0)
 
         atom.commands.dispatch(treeView.element, 'tree-view:remove')
 
-        notificationsNumber = atom.notifications.getNotifications().length
-        expect(notificationsNumber).toBe 1
-        if notificationsNumber is 1
-          notification = atom.notifications.getNotifications()[0]
-          expect(notification.getMessage()).toContain 'The following file couldn\'t be moved to the trash'
-          expect(notification.getDetail()).toContain 'test-file.txt'
+        waitsFor 'onDeleteEntryFailed to be called', ->
+          callback.callCount is 1
+
+        runs ->
+          notificationsNumber = atom.notifications.getNotifications().length
+          expect(notificationsNumber).toBe 1
+          if notificationsNumber is 1
+            notification = atom.notifications.getNotifications()[0]
+            expect(notification.getMessage()).toContain 'The following file couldn\'t be moved to the trash'
+            expect(notification.getDetail()).toContain 'test-file.txt'
 
       it "does nothing when no file is selected", ->
         atom.notifications.clear()
+
+        spyOn(atom, 'confirm')
 
         treeView.focus()
         treeView.deselect()
         atom.commands.dispatch(treeView.element, 'tree-view:remove')
 
-        expect(atom.confirm.mostRecentCall).not.toExist
+        expect(atom.confirm.mostRecentCall).not.toExist()
         expect(atom.notifications.getNotifications().length).toBe 0
 
       describe "when a directory is removed", ->
         it "closes editors with filepaths belonging to the removed folder", ->
+          callback = jasmine.createSpy('onEntryDeleted')
+          treeView.onEntryDeleted(callback)
+
           waitForWorkspaceOpenEvent ->
             atom.workspace.open(filePath2)
 
@@ -2696,13 +2745,21 @@ describe "TreeView", ->
             dirView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
             treeView.focus()
 
-            spyOn(atom, 'confirm').andCallFake (dialog) -> dialog.buttons["Move to Trash"]()
+            spyOn(atom, 'confirm').andCallFake (options, callback) -> callback(0)
 
             atom.commands.dispatch(treeView.element, 'tree-view:remove')
+
+          waitsFor 'directory to be deleted', ->
+            callback.mostRecentCall.args[0].pathToDelete is dirPath2
+
+          runs ->
             openFilePaths = atom.workspace.getTextEditors().map((editor) -> editor.getPath())
             expect(openFilePaths).toEqual([])
 
         it "does not close modified editors with filepaths belonging to the removed folder", ->
+          callback = jasmine.createSpy('onEntryDeleted')
+          treeView.onEntryDeleted(callback)
+
           waitForWorkspaceOpenEvent ->
             atom.workspace.open(filePath2)
 
@@ -2717,13 +2774,21 @@ describe "TreeView", ->
             dirView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
             treeView.focus()
 
-            spyOn(atom, 'confirm').andCallFake (dialog) -> dialog.buttons["Move to Trash"]()
+            spyOn(atom, 'confirm').andCallFake (options, callback) -> callback(0)
 
             atom.commands.dispatch(treeView.element, 'tree-view:remove')
+
+          waitsFor 'directory to be deleted', ->
+            callback.mostRecentCall.args[0].pathToDelete is dirPath2
+
+          runs ->
             openFilePaths = atom.workspace.getTextEditors().map((editor) -> editor.getPath())
             expect(openFilePaths).toEqual([filePath3])
 
         it "does not close editors with filepaths belonging to a folder that starts with the removed folder", ->
+          callback = jasmine.createSpy('onEntryDeleted')
+          treeView.onEntryDeleted(callback)
+
           dirPath20 = path.join(rootDirPath, 'test-dir20')
           filePath20 = path.join(dirPath20, 'test-file20.txt')
           fs.makeTreeSync(dirPath20)
@@ -2744,13 +2809,21 @@ describe "TreeView", ->
             dirView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
             treeView.focus()
 
-            spyOn(atom, 'confirm').andCallFake (dialog) -> dialog.buttons["Move to Trash"]()
+            spyOn(atom, 'confirm').andCallFake (options, callback) -> callback(0)
 
             atom.commands.dispatch(treeView.element, 'tree-view:remove')
+
+          waitsFor 'directory to be deleted', ->
+            callback.mostRecentCall.args[0].pathToDelete is dirPath2
+
+          runs ->
             openFilePaths = atom.workspace.getTextEditors().map((editor) -> editor.getPath())
             expect(openFilePaths).toEqual([filePath20])
 
         it "does not error when Untitled editors are also open (regresssion)", ->
+          callback = jasmine.createSpy('onEntryDeleted')
+          treeView.onEntryDeleted(callback)
+
           waitForWorkspaceOpenEvent ->
             atom.workspace.open(filePath2)
 
@@ -2768,39 +2841,63 @@ describe "TreeView", ->
             dirView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
             treeView.focus()
 
-            spyOn(atom, 'confirm').andCallFake (dialog) -> dialog.buttons["Move to Trash"]()
+            spyOn(atom, 'confirm').andCallFake (options, callback) -> callback(0)
 
             atom.commands.dispatch(treeView.element, 'tree-view:remove')
+
+          waitsFor 'directory to be deleted', ->
+            callback.mostRecentCall.args[0].pathToDelete is dirPath2
+
+          runs ->
             openFilePaths = atom.workspace.getTextEditors().map((editor) -> editor.getPath())
             expect(openFilePaths).toEqual([undefined])
 
         it "focuses the directory's parent folder", ->
+          callback = jasmine.createSpy('onEntryDeleted')
+          treeView.onEntryDeleted(callback)
+
           dirView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
           treeView.focus()
 
-          spyOn(atom, 'confirm').andCallFake (dialog) -> dialog.buttons["Move to Trash"]()
+          spyOn(atom, 'confirm').andCallFake (options, callback) -> callback(0)
 
           atom.commands.dispatch(treeView.element, 'tree-view:remove')
-          expect(root1).toHaveClass('selected')
+
+          waitsFor 'directory to be deleted', ->
+            callback.mostRecentCall.args[0].pathToDelete is dirPath2
+
+          runs ->
+            expect(root1).toHaveClass('selected')
 
       describe "when a file is removed", ->
         it "closes editors with filepaths belonging to the removed file", ->
-          waitForWorkspaceOpenEvent ->
+          callback = jasmine.createSpy('onEntryDeleted')
+          treeView.onEntryDeleted(callback)
+
+          waitsForPromise ->
             atom.workspace.open(filePath2)
 
           runs ->
             openFilePaths = atom.workspace.getTextEditors().map((editor) -> editor.getPath())
             expect(openFilePaths).toEqual([filePath2])
-            fileView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+            treeView.selectEntry(fileView2)
             treeView.focus()
 
-            spyOn(atom, 'confirm').andCallFake (dialog) -> dialog.buttons["Move to Trash"]()
+            spyOn(atom, 'confirm').andCallFake (options, callback) -> callback(0)
 
             atom.commands.dispatch(treeView.element, 'tree-view:remove')
+
+          waitsFor 'onEntryDeleted to be called', ->
+            callback.callCount is 1
+
+          runs ->
             openFilePaths = atom.workspace.getTextEditors().map((editor) -> editor.getPath())
             expect(openFilePaths).toEqual([])
 
         it "does not close editors that have been modified", ->
+          callback = jasmine.createSpy('onEntryDeleted')
+          treeView.onEntryDeleted(callback)
+
           waitForWorkspaceOpenEvent ->
             atom.workspace.open(filePath2)
 
@@ -2812,39 +2909,62 @@ describe "TreeView", ->
             fileView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
             treeView.focus()
 
-            spyOn(atom, 'confirm').andCallFake (dialog) -> dialog.buttons["Move to Trash"]()
+            spyOn(atom, 'confirm').andCallFake (options, callback) -> callback(0)
 
             atom.commands.dispatch(treeView.element, 'tree-view:remove')
+
+          waitsFor 'onEntryDeleted to be called', ->
+            callback.callCount is 1
+
+          runs ->
             openFilePaths = atom.workspace.getTextEditors().map((editor) -> editor.getPath())
             expect(openFilePaths).toEqual([filePath2])
 
         it "does not close editors with filepaths that begin with the removed file", ->
+          callback = jasmine.createSpy('onEntryDeleted')
+          treeView.onEntryDeleted(callback)
+
           filePath2Copy = path.join(dirPath2, 'test-file2.txt0')
           fs.writeFileSync(filePath2Copy, "doesn't matter 2 copy")
 
-          waitForWorkspaceOpenEvent ->
+          waitsForPromise ->
             atom.workspace.open(filePath2Copy)
 
           runs ->
             openFilePaths = atom.workspace.getTextEditors().map((editor) -> editor.getPath())
             expect(openFilePaths).toEqual([filePath2Copy])
-            fileView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+            treeView.selectEntry(fileView2)
             treeView.focus()
 
-            spyOn(atom, 'confirm').andCallFake (dialog) -> dialog.buttons["Move to Trash"]()
+            spyOn(atom, 'confirm').andCallFake (options, callback) -> callback(0)
 
             atom.commands.dispatch(treeView.element, 'tree-view:remove')
+
+          waitsFor 'onEntryDeleted to be called', ->
+            callback.callCount is 1
+
+          runs ->
             openFilePaths = atom.workspace.getTextEditors().map((editor) -> editor.getPath())
             expect(openFilePaths).toEqual([filePath2Copy])
 
         it "focuses the file's parent folder", ->
-          fileView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+          callback = jasmine.createSpy('onEntryDeleted')
+          treeView.onEntryDeleted(callback)
+
+          # Don't click so that we don't open an editor
+          # If an editor is opened, this test doesn't work as the editor will be removed,
+          # prompting selectActiveFile to unselect everything
+          treeView.selectEntry(fileView2)
           treeView.focus()
 
-          runs ->
-            spyOn(atom, 'confirm').andCallFake (dialog) -> dialog.buttons["Move to Trash"]()
+          spyOn(atom, 'confirm').andCallFake (options, callback) -> callback(0)
 
-            atom.commands.dispatch(treeView.element, 'tree-view:remove')
+          atom.commands.dispatch(treeView.element, 'tree-view:remove')
+
+          waitsFor 'onEntryDeleted to be called', ->
+            callback.callCount is 1
+
+          runs ->
             expect(dirView2).toHaveClass('selected')
 
       describe "when multiple files and folders are deleted", ->
@@ -2853,26 +2973,41 @@ describe "TreeView", ->
           # and dir1 is deleted first, do not error when attempting to delete dir1/file1
           atom.notifications.clear()
 
+          spyOn(fs, 'existsSync').andCallThrough()
+
           fileView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
           dirView.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, metaKey: true}))
           treeView.focus()
 
-          spyOn(atom, 'confirm').andCallFake (dialog) -> dialog.buttons["Move to Trash"]()
+          spyOn(atom, 'confirm').andCallFake (options, callback) -> callback(0)
 
           atom.commands.dispatch(treeView.element, 'tree-view:remove')
-          expect(atom.notifications.getNotifications().length).toBe 0
+
+          waitsFor 'dir1/file1 to attempt to be deleted', ->
+            fs.existsSync.mostRecentCall.args[0] is filePath
+
+          runs ->
+            expect(atom.notifications.getNotifications().length).toBe 0
 
         it "focuses the first selected entry's parent folder", ->
           jasmine.attachToDOM(workspaceElement)
+
+          callback = jasmine.createSpy('onEntryDeleted')
+          treeView.onEntryDeleted(callback)
 
           dirView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
           fileView2.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, metaKey: true}))
           treeView.focus()
 
-          spyOn(atom, 'confirm').andCallFake (dialog) -> dialog.buttons["Move to Trash"]()
+          spyOn(atom, 'confirm').andCallFake (options, callback) -> callback(0)
 
           atom.commands.dispatch(treeView.element, 'tree-view:remove')
-          expect(root1).toHaveClass('selected')
+
+          waitsFor 'all selected entries to be deleted', ->
+            callback.callCount is 2
+
+          runs ->
+            expect(root1).toHaveClass('selected')
 
       describe "when the entry is deleted before 'Move to Trash' is selected", ->
         it "does not error", ->
@@ -2880,16 +3015,23 @@ describe "TreeView", ->
           # outside of Atom by the time the deletion is confirmed, do not error
           atom.notifications.clear()
 
+          spyOn(fs, 'existsSync').andCallThrough()
+
           fileView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
           treeView.focus()
 
-          spyOn(atom, 'confirm').andCallFake (dialog) ->
+          spyOn(atom, 'confirm').andCallFake (options, callback) ->
             # Remove the directory before confirming the deletion
             fs.unlinkSync(filePath)
-            dialog.buttons["Move to Trash"]()
+            callback(0)
 
           atom.commands.dispatch(treeView.element, 'tree-view:remove')
-          expect(atom.notifications.getNotifications().length).toBe 0
+
+          waitsFor 'the entry to attempt to be deleted', ->
+            fs.existsSync.callCount is 1
+
+          runs ->
+            expect(atom.notifications.getNotifications().length).toBe 0
 
   describe "file system events", ->
     temporaryFilePath = null
@@ -2964,6 +3106,18 @@ describe "TreeView", ->
         atom.config.set("tree-view.hideVcsIgnoredFiles", false)
         expect(Array.from(treeView.element.querySelectorAll('.file')).map((f) -> f.textContent)).toEqual(['.gitignore', 'ignored.txt'])
 
+      it "works in conjunction with the hideIgnoredNames config option", ->
+        # https://github.com/atom/tree-view/issues/489
+
+        atom.config.set('tree-view.hideVcsIgnoredFiles', true)
+        atom.config.set('tree-view.hideIgnoredNames', false)
+        atom.config.set('core.ignoredNames', ['.gitignore'])
+
+        expect(Array.from(treeView.element.querySelectorAll('.file')).map((f) -> f.textContent)).toEqual(['.gitignore'])
+
+        atom.config.set('tree-view.hideIgnoredNames', true)
+        expect(Array.from(treeView.element.querySelectorAll('.file')).map((f) -> f.textContent)).toEqual([])
+
     describe "when the project's path is a subfolder of the repository's working directory", ->
       beforeEach ->
         fixturePath = path.join(__dirname, 'fixtures', 'root-dir1')
@@ -2992,27 +3146,14 @@ describe "TreeView", ->
 
       expect(Array.from(treeView.roots[0].querySelectorAll('.entry')).map((e) -> e.textContent)).toEqual(['.git', 'test.js', 'test.txt'])
 
+      # Add a unique class to the names even when showing them
+      expect(Array.from(treeView.roots[0].querySelectorAll('.status-ignored-name')).map((e) -> e.textContent)).toEqual(['test.js'])
+
       atom.config.set("tree-view.hideIgnoredNames", true)
       expect(Array.from(treeView.roots[0].querySelectorAll('.entry')).map((e) -> e.textContent)).toEqual(['test.txt'])
 
       atom.config.set("core.ignoredNames", [])
       expect(Array.from(treeView.roots[0].querySelectorAll('.entry')).map((e) -> e.textContent)).toEqual(['.git', 'test.js', 'test.txt'])
-
-    it "adds a custom style if if file/dir is ignored and visible", ->
-      atom.config.set('core.ignoredNames', ['dir2', '*.js'])
-      fixturePath = path.join(__dirname, 'fixtures', 'root-dir1')
-      atom.project.setPaths([fixturePath])
-      atom.config.set "tree-view.hideIgnoredNames", false
-
-      expect(Array.from(treeView.roots[0].querySelectorAll('.entry')).map((e) -> e.textContent)).toEqual(['dir1', 'dir2', 'nested', 'tree-view.js', 'tree-view.txt'])
-      expect(Array.from(treeView.roots[0].querySelectorAll('.status-ignored-name')).map((e) -> e.textContent)).toEqual(['dir2', 'tree-view.js'])
-
-      atom.config.set("tree-view.hideIgnoredNames", true)
-      expect(Array.from(treeView.roots[0].querySelectorAll('.entry')).map((e) -> e.textContent)).toEqual(['dir1', 'nested', 'tree-view.txt'])
-
-      atom.config.set("core.ignoredNames", [])
-      expect(Array.from(treeView.roots[0].querySelectorAll('.entry')).map((e) -> e.textContent)).toEqual(['dir1', 'dir2', 'nested', 'tree-view.js', 'tree-view.txt'])
-      expect(Array.from(treeView.roots[0].querySelectorAll('.status-ignored-name')).map((e) -> e.textContent)).toEqual([])
 
   describe "the squashedDirectoryName config option", ->
     beforeEach ->
@@ -3122,15 +3263,22 @@ describe "TreeView", ->
       describe "when a squashed directory is deleted", ->
         it "un-squashes the directories", ->
           jasmine.attachToDOM(workspaceElement)
+
+          callback = jasmine.createSpy('onEntryDeleted')
+          treeView.onEntryDeleted(callback)
+
           piDir = findDirectoryContainingText(treeView.roots[0], "omicron#{path.sep}pi")
           treeView.focus()
           treeView.selectEntry(piDir)
-          spyOn(atom, 'confirm').andCallFake (dialog) ->
-            dialog.buttons["Move to Trash"]()
+          spyOn(atom, 'confirm').andCallFake (options, callback) -> callback(0)
           atom.commands.dispatch(treeView.element, 'tree-view:remove')
 
-          omicronDir = findDirectoryContainingText(treeView.roots[0], "omicron")
-          expect(omicronDir.header.textContent).toEqual("omicron")
+          waitsFor 'onEntryDeleted to be called', ->
+            callback.callCount is 1
+
+          runs ->
+            omicronDir = findDirectoryContainingText(treeView.roots[0], "omicron")
+            expect(omicronDir.header.textContent).toEqual("omicron")
 
       describe "when a file is created within a directory with another squashed directory", ->
         it "un-squashes the directories", ->
@@ -3273,11 +3421,14 @@ describe "TreeView", ->
           dirView = findDirectoryContainingText(treeView.roots[0], 'dir2')
           expect(dirView).not.toBeNull()
           spyOn(dirView.directory, 'updateStatus')
-          spyOn(atom, 'confirm').andCallFake (dialog) ->
-            dialog.buttons["Move to Trash"]()
+          spyOn(atom, 'confirm').andCallFake (options, callback) -> callback(0)
           atom.commands.dispatch(treeView.element, 'tree-view:remove')
-          expect(dirView.directory.updateStatus).toHaveBeenCalled()
-          expect(callback).toHaveBeenCalledWith({pathToDelete})
+
+          waitsFor 'onEntryDeleted to be called', ->
+            callback.mostRecentCall.args[0].pathToDelete is pathToDelete
+
+          runs ->
+            expect(dirView.directory.updateStatus).toHaveBeenCalled()
 
     describe "on #darwin, when the project is a symbolic link to the repository root", ->
       beforeEach ->
@@ -3591,75 +3742,61 @@ describe "TreeView", ->
 
   describe "showSelectedEntryInFileManager()", ->
     beforeEach ->
-      atom.notifications.clear()
+      spyOn(shell, 'showItemInFolder').andReturn(false)
 
-    it "displays the standard error output when the process fails", ->
-      {BufferedProcess} = require 'atom'
-      spyOn(BufferedProcess.prototype, 'spawn').andCallFake ->
-        EventEmitter = require 'events'
-        fakeProcess = new EventEmitter()
-        fakeProcess.send = ->
-        fakeProcess.kill = ->
-        fakeProcess.stdout = new EventEmitter()
-        fakeProcess.stdout.setEncoding = ->
-        fakeProcess.stderr = new EventEmitter()
-        fakeProcess.stderr.setEncoding = ->
-        @process = fakeProcess
-        process.nextTick ->
-          fakeProcess.stderr.emit('data', 'bad process')
-          fakeProcess.stderr.emit('close')
-          fakeProcess.stdout.emit('close')
-          fakeProcess.emit('exit')
-
+    it "does nothing if no entry is selected", ->
+      treeView.deselect()
       treeView.showSelectedEntryInFileManager()
+      expect(shell.showItemInFolder).not.toHaveBeenCalled()
 
-      waitsFor ->
-        atom.notifications.getNotifications().length is 1
-
-      runs ->
-        expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Opening folder'
-        expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'failed'
-        expect(atom.notifications.getNotifications()[0].getDetail()).toContain 'bad process'
-
-    it "handle errors thrown when spawning the OS file manager", ->
-      spyOn(treeView, 'fileManagerCommandForPath').andReturn
-        command: path.normalize('/this/command/does/not/exist')
-        label: 'OS file manager'
-        args: ['foo']
-
+    it "shows the selected entry in the OS's file manager", ->
       treeView.showSelectedEntryInFileManager()
+      expect(shell.showItemInFolder).toHaveBeenCalled()
 
-      waitsFor ->
-        atom.notifications.getNotifications().length is 1
-
-      runs ->
-        expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Opening folder in OS file manager failed'
-        expect(atom.notifications.getNotifications()[0].getDetail()).toContain if process.platform is 'win32' then 'cannot find the path' else 'ENOENT'
+    it "displays a notification if showing the file fails", ->
+      treeView.showSelectedEntryInFileManager()
+      expect(atom.notifications.getNotifications().length).toBe(1)
+      expect(atom.notifications.getNotifications()[0].getMessage()).toContain('Unable to show')
 
   describe "showCurrentFileInFileManager()", ->
+    beforeEach ->
+      spyOn(shell, 'showItemInFolder').andReturn(false)
+
     it "does nothing when no file is opened", ->
       expect(atom.workspace.getCenter().getPaneItems().length).toBe(0)
-      expect(treeView.showCurrentFileInFileManager()).toBeUndefined()
+
+      treeView.showCurrentFileInFileManager()
+      expect(shell.showItemInFolder).not.toHaveBeenCalled()
 
     it "does nothing when only an untitled tab is opened", ->
       waitsForPromise ->
         atom.workspace.open()
+
       runs ->
         workspaceElement.focus()
-        expect(treeView.showCurrentFileInFileManager()).toBeUndefined()
+        treeView.showCurrentFileInFileManager()
+        expect(shell.showItemInFolder).not.toHaveBeenCalled()
 
-    it "shows file in file manager when some file is opened", ->
+    it "shows the current file in the OS's file manager", ->
       filePath = path.join(os.tmpdir(), 'non-project-file.txt')
       fs.writeFileSync(filePath, 'test')
       waitsForPromise ->
         atom.workspace.open(filePath)
 
       runs ->
-        {BufferedProcess} = require 'atom'
-        spyOn(BufferedProcess.prototype, 'spawn').andCallFake ->
-        fileManagerProcess = treeView.showCurrentFileInFileManager()
-        expect(fileManagerProcess instanceof BufferedProcess).toBeTruthy()
-        fileManagerProcess.kill()
+        treeView.showCurrentFileInFileManager()
+        expect(shell.showItemInFolder).toHaveBeenCalled()
+
+    it "shows a notification if showing the file fails", ->
+      filePath = path.join(os.tmpdir(), 'non-project-file.txt')
+      fs.writeFileSync(filePath, 'test')
+      waitsForPromise ->
+        atom.workspace.open(filePath)
+
+      runs ->
+        treeView.showCurrentFileInFileManager()
+        expect(atom.notifications.getNotifications().length).toBe(1)
+        expect(atom.notifications.getNotifications()[0].getMessage()).toContain('Unable to show')
 
   describe "when reloading a directory with deletions and additions", ->
     it "does not throw an error (regression)", ->
@@ -4604,6 +4741,30 @@ describe "TreeView", ->
 
         expect(atom.project.getPaths()).toEqual [alphaDirPath, thetaDirPath]
         expect(document.querySelector('.placeholder')).not.toExist()
+
+  describe "when the active file path does not exist in the project", ->
+    it "deselects all entries", ->
+      nonProjectPath = path.join(temp.mkdirSync(), 'new-file.txt')
+      fs.writeFileSync(nonProjectPath, 'test')
+
+      waitForWorkspaceOpenEvent ->
+        sampleJs.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+
+      runs ->
+        expect(sampleJs).toHaveClass 'selected'
+        expect(treeView.getSelectedEntries().length).toBe 1
+
+      waitsForPromise ->
+        atom.workspace.open(nonProjectPath)
+
+      runs ->
+        expect(treeView.getSelectedEntries().length).toBe 0
+
+      waitsForPromise ->
+        atom.workspace.open(sampleJs.getPath())
+
+      runs ->
+        expect(sampleJs).toHaveClass 'selected'
 
   describe "when there is a __proto__ entry present", ->
     it "does not break anything", ->

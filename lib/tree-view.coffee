@@ -59,9 +59,11 @@ class TreeView
       @disposables.add atom.styles.onDidUpdateStyleElement(onStylesheetsChanged)
 
     @updateRoots(state.directoryExpansionStates)
-    @selectEntry(@roots[0])
 
-    @selectEntryForPath(state.selectedPath) if state.selectedPath
+    if state.selectedPaths?.length > 0
+      @selectMultipleEntries(@entryForPath(selectedPath)) for selectedPath in state.selectedPaths
+    else
+      @selectEntry(@roots[0])
 
     if state.scrollTop? or state.scrollLeft?
       observer = new IntersectionObserver(=>
@@ -130,7 +132,7 @@ class TreeView
       @[root.directory.path] = root.directory.serializeExpansionState() for root in roots
       this)(@roots)
     deserializer: 'TreeView'
-    selectedPath: @selectedEntry()?.getPath()
+    selectedPaths: Array.from(@getSelectedEntries(), (entry) -> entry.getPath())
     scrollLeft: @element.scrollLeft
     scrollTop: @element.scrollTop
     width: parseInt(@element.style.width or 0)
@@ -313,6 +315,8 @@ class TreeView
       atom.workspace.open(uri, options)
 
   updateRoots: (expansionStates={}) ->
+    selectedPaths = @selectedPaths()
+
     oldExpansionStates = {}
     for root in @roots
       oldExpansionStates[root.directory.path] = root.directory.serializeExpansionState()
@@ -344,11 +348,18 @@ class TreeView
       @list.appendChild(root)
       root
 
+    # The DOM has been recreated; reselect everything
+    @selectMultipleEntries(@entryForPath(selectedPath)) for selectedPath in selectedPaths
+
   getActivePath: -> atom.workspace.getCenter().getActivePaneItem()?.getPath?()
 
   selectActiveFile: ->
-    if activeFilePath = @getActivePath()
+    activeFilePath = @getActivePath()
+    if @entryForPath(activeFilePath)
       @selectEntryForPath(activeFilePath)
+    else
+      # If the active file is not part of the project, deselect all entries
+      @deselect()
 
   revealActiveFile: (options = {}) ->
     return Promise.resolve() unless atom.project.getPaths().length
@@ -422,8 +433,6 @@ class TreeView
     if selectedEntry?
       if previousEntry = @previousEntry(selectedEntry)
         @selectEntry(previousEntry)
-        if previousEntry.classList.contains('directory')
-          @selectEntry(_.last(previousEntry.entries.children))
       else
         @selectEntry(selectedEntry.parentElement.closest('.directory'))
     else
@@ -445,12 +454,20 @@ class TreeView
     return null
 
   previousEntry: (entry) ->
-    currentEntry = entry
-    while currentEntry?
-      currentEntry = currentEntry.previousSibling
-      if currentEntry?.matches('.entry')
-        return currentEntry
-    return null
+    previousEntry = entry.previousSibling
+    while previousEntry? and not previousEntry.matches('.entry')
+      previousEntry = previousEntry.previousSibling
+
+    return null unless previousEntry?
+
+    # If the previous entry is an expanded directory,
+    # we need to select the last entry in that directory,
+    # not the directory itself
+    if previousEntry.matches('.directory.expanded')
+      entries = previousEntry.querySelectorAll('.entry')
+      return entries[entries.length - 1] if entries.length > 0
+
+    return previousEntry
 
   expandDirectory: (isRecursive=false) ->
     selectedEntry = @selectedEntry()
@@ -464,12 +481,14 @@ class TreeView
       directory.expand(isRecursive)
 
   collapseDirectory: (isRecursive=false, allDirectories=false) ->
+    if allDirectories
+      root.collapse(true) for root in @roots
+      return
+
     selectedEntry = @selectedEntry()
     return unless selectedEntry?
 
-    if allDirectories
-      root.collapse(true) for root in @roots
-    else if directory = selectedEntry.closest('.expanded.directory')
+    if directory = selectedEntry.closest('.expanded.directory')
       directory.collapse(isRecursive)
       @selectEntry(directory)
 
@@ -537,76 +556,17 @@ class TreeView
           @emitter.emit 'move-entry-failed', {initialPath, newPath}
       dialog.attach()
 
-  # Get the outline of a system call to the current platform's file manager.
-  #
-  # pathToOpen  - Path to a file or directory.
-  # isFile      - True if the path is a file, false otherwise.
-  #
-  # Returns an object containing a command, a human-readable label, and the
-  # arguments.
-  fileManagerCommandForPath: (pathToOpen, isFile) ->
-    switch process.platform
-      when 'darwin'
-        command: 'open'
-        label: 'Finder'
-        args: ['-R', pathToOpen]
-      when 'win32'
-        args = ["/select,\"#{pathToOpen}\""]
-
-        if process.env.SystemRoot
-          command = path.join(process.env.SystemRoot, 'explorer.exe')
-        else
-          command = 'explorer.exe'
-
-        command: command
-        label: 'Explorer'
-        args: args
-      else
-        # Strip the filename from the path to make sure we pass a directory
-        # path. If we pass xdg-open a file path, it will open that file in the
-        # most suitable application instead, which is not what we want.
-        pathToOpen =  path.dirname(pathToOpen) if isFile
-
-        command: 'xdg-open'
-        label: 'File Manager'
-        args: [pathToOpen]
-
-  openInFileManager: (command, args, label, isFile) ->
-    handleError = (errorMessage) ->
-      atom.notifications.addError "Opening #{if isFile then 'file' else 'folder'} in #{label} failed",
-        detail: errorMessage
-        dismissable: true
-
-    errorLines = []
-    stderr = (lines) -> errorLines.push(lines)
-    exit = (code) ->
-      failed = code isnt 0
-      errorMessage = errorLines.join('\n')
-
-      # Windows 8 seems to return a 1 with no error output even on success
-      if process.platform is 'win32' and code is 1 and not errorMessage
-        failed = false
-
-      handleError(errorMessage) if failed
-
-    showProcess = new BufferedProcess({command, args, stderr, exit})
-    showProcess.onWillThrowError ({error, handle}) ->
-      handle()
-      handleError(error?.message)
-    showProcess
-
   showSelectedEntryInFileManager: ->
-    return unless entry = @selectedEntry()
+    return unless filePath = @selectedEntry()?.getPath()
 
-    isFile = entry.classList.contains('file')
-    {command, args, label} = @fileManagerCommandForPath(entry.getPath(), isFile)
-    @openInFileManager(command, args, label, isFile)
+    unless shell.showItemInFolder(filePath)
+      atom.notifications.addWarning("Unable to show #{filePath} in file manager")
 
   showCurrentFileInFileManager: ->
-    return unless editor = atom.workspace.getCenter().getActiveTextEditor()
-    return unless editor.getPath()
-    {command, args, label} = @fileManagerCommandForPath(editor.getPath(), true)
-    @openInFileManager(command, args, label, true)
+    return unless filePath = atom.workspace.getCenter().getActiveTextEditor()?.getPath()
+
+    unless shell.showItemInFolder(filePath)
+      atom.notifications.addWarning("Unable to show #{filePath} in file manager")
 
   openSelectedEntryInNewWindow: ->
     if pathToOpen = @selectedEntry()?.getPath()
@@ -638,45 +598,48 @@ class TreeView
 
     for root in @roots
       if root.getPath() in selectedPaths
-        atom.confirm
-          message: "The root directory '#{root.directory.name}' can't be removed."
+        atom.confirm({
+          message: "The root directory '#{root.directory.name}' can't be removed.",
           buttons: ['OK']
+        }, -> # noop
+        )
         return
 
-    atom.confirm
-      message: "Are you sure you want to delete the selected #{if selectedPaths.length > 1 then 'items' else 'item'}?"
-      detailedMessage: "You are deleting:\n#{selectedPaths.join('\n')}"
-      buttons:
-        "Move to Trash": =>
-          failedDeletions = []
-          for selectedPath in selectedPaths
-            # Don't delete entries which no longer exist. This can happen, for example, when:
-            # * The entry is deleted outside of Atom before "Move to Trash" is selected
-            # * A folder and one of its children are both selected for deletion,
-            #   but the parent folder is deleted first
-            continue unless fs.existsSync(selectedPath)
+    atom.confirm({
+      message: "Are you sure you want to delete the selected #{if selectedPaths.length > 1 then 'items' else 'item'}?",
+      detailedMessage: "You are deleting:\n#{selectedPaths.join('\n')}",
+      buttons: ['Move to Trash', 'Cancel']
+    }, (response) =>
+      if response is 0 # Move to Trash
+        failedDeletions = []
+        for selectedPath in selectedPaths
+          # Don't delete entries which no longer exist. This can happen, for example, when:
+          # * The entry is deleted outside of Atom before "Move to Trash" is selected
+          # * A folder and one of its children are both selected for deletion,
+          #   but the parent folder is deleted first
+          continue unless fs.existsSync(selectedPath)
 
-            @emitter.emit 'will-delete-entry', {pathToDelete: selectedPath}
-            if shell.moveItemToTrash(selectedPath)
-              @emitter.emit 'entry-deleted', {pathToDelete: selectedPath}
-            else
-              @emitter.emit 'delete-entry-failed', {pathToDelete: selectedPath}
-              failedDeletions.push selectedPath
+          @emitter.emit 'will-delete-entry', {pathToDelete: selectedPath}
+          if shell.moveItemToTrash(selectedPath)
+            @emitter.emit 'entry-deleted', {pathToDelete: selectedPath}
+          else
+            @emitter.emit 'delete-entry-failed', {pathToDelete: selectedPath}
+            failedDeletions.push selectedPath
 
-            if repo = repoForPath(selectedPath)
-              repo.getPathStatus(selectedPath)
+          if repo = repoForPath(selectedPath)
+            repo.getPathStatus(selectedPath)
 
-          if failedDeletions.length > 0
-            atom.notifications.addError @formatTrashFailureMessage(failedDeletions),
-              description: @formatTrashEnabledMessage()
-              detail: "#{failedDeletions.join('\n')}"
-              dismissable: true
+        if failedDeletions.length > 0
+          atom.notifications.addError @formatTrashFailureMessage(failedDeletions),
+            description: @formatTrashEnabledMessage()
+            detail: "#{failedDeletions.join('\n')}"
+            dismissable: true
 
-          # Focus the first parent folder
-          if firstSelectedEntry = selectedEntries[0]
-            @selectEntry(firstSelectedEntry.closest('.directory:not(.selected)'))
-          @updateRoots() if atom.config.get('tree-view.squashDirectoryNames')
-        "Cancel": null
+        # Focus the first parent folder
+        if firstSelectedEntry = selectedEntries[0]
+          @selectEntry(firstSelectedEntry.closest('.directory:not(.selected)'))
+        @updateRoots() if atom.config.get('tree-view.squashDirectoryNames')
+    )
 
   formatTrashFailureMessage: (failedDeletions) ->
     fileText = if failedDeletions.length > 1 then 'files' else 'file'
