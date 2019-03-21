@@ -3925,10 +3925,10 @@ describe "TreeView", ->
         deltaFilePath2 = path.join(gammaDirPath, 'delta.txt2')
         fs.writeFileSync(deltaFilePath2, 'copy')
 
-        waitForWorkspaceOpenEvent ->
+        waitsForPromise ->
           atom.workspace.open(deltaFilePath)
 
-        waitForWorkspaceOpenEvent ->
+        waitsForPromise ->
           atom.workspace.open(deltaFilePath2)
 
         runs ->
@@ -3979,10 +3979,10 @@ describe "TreeView", ->
         deltaFilePath2 = path.join(gammaDirPath, 'delta.txt2')
         fs.writeFileSync(deltaFilePath2, 'copy')
 
-        waitForWorkspaceOpenEvent ->
+        waitsForPromise ->
           atom.workspace.open(deltaFilePath)
 
-        waitForWorkspaceOpenEvent ->
+        waitsForPromise ->
           atom.workspace.open(deltaFilePath2)
 
         runs ->
@@ -4098,7 +4098,7 @@ describe "TreeView", ->
         thetaFilePath2 = path.join(thetaDir2Path, 'theta.txt2')
         fs.writeFileSync(thetaFilePath2, 'copy')
 
-        waitForWorkspaceOpenEvent ->
+        waitsForPromise ->
           atom.workspace.open(thetaFilePath2)
 
         runs ->
@@ -4111,7 +4111,7 @@ describe "TreeView", ->
           thetaDir = gammaDir.entries.children[0]
           thetaDir.expand()
 
-          waitForWorkspaceOpenEvent ->
+          waitsForPromise ->
             atom.workspace.open(thetaFilePath)
 
           runs ->
@@ -4221,9 +4221,8 @@ describe "TreeView", ->
 
         dropEvent = eventHelpers.buildExternalDropEvent([deltaFilePath], alphaDir)
 
-        runs ->
-          treeView.onDrop(dropEvent)
-          expect(alphaDir.children.length).toBe 2
+        treeView.onDrop(dropEvent)
+        expect(alphaDir.children.length).toBe 2
 
         waitsFor "directory view contents to refresh", ->
           findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > 2
@@ -4255,9 +4254,8 @@ describe "TreeView", ->
 
         dropEvent = eventHelpers.buildExternalDropEvent([deltaFilePath, gammaDirPath], alphaDir)
 
-        runs ->
-          treeView.onDrop(dropEvent)
-          expect(alphaDir.children.length).toBe 2
+        treeView.onDrop(dropEvent)
+        expect(alphaDir.children.length).toBe 2
 
         waitsFor "directory view contents to refresh", ->
           findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > 3
