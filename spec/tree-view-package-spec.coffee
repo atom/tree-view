@@ -3199,7 +3199,6 @@ describe "TreeView", ->
         zetaDir = path.join(rootDir, "zeta")
         fs.makeTreeSync(zetaDir)
         atom.project.setPaths([rootDir])
-        jasmine.attachToDOM(workspaceElement)
 
         rootDirPath = treeView.roots[0].getPath()
         expect(rootDirPath).toBe(rootDir)
@@ -3260,7 +3259,6 @@ describe "TreeView", ->
 
       describe "when a file is created within a directory with another squashed directory", ->
         it "un-squashes the directories", ->
-          jasmine.attachToDOM(workspaceElement)
           piDir = findDirectoryContainingText(treeView.roots[0], "omicron#{path.sep}pi")
           expect(piDir).not.toBeNull()
           # omicron is a squashed dir, so searching for omicron would give us omicron/pi instead
@@ -3279,7 +3277,6 @@ describe "TreeView", ->
 
       describe "when a directory is created within a directory with another squashed directory", ->
         it "un-squashes the directories", ->
-          jasmine.attachToDOM(workspaceElement)
           piDir = findDirectoryContainingText(treeView.roots[0], "omicron#{path.sep}pi")
           expect(piDir).not.toBeNull()
           # omicron is a squashed dir, so searching for omicron would give us omicron/pi instead
