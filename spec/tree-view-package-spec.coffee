@@ -1858,7 +1858,7 @@ describe "TreeView", ->
               expect(callback).not.toHaveBeenCalled()
 
               expect(atom.notifications.getNotifications().length).toBe(1)
-              expect(atom.notifications.getNotifications()[0].getMessage()).toContain('Unable to paste')
+              expect(atom.notifications.getNotifications()[0].getMessage()).toContain('Failed to move')
 
           describe 'when the file is currently open', ->
             beforeEach ->
