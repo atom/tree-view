@@ -1,7 +1,7 @@
 _ = require 'underscore-plus'
 fs = require 'fs-plus'
 path = require 'path'
-temp = require('@atom/temp').track()
+temp = require('temp').track()
 
 describe "FileStats", ->
   describe "provision of filesystem stats", ->

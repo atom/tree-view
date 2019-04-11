@@ -1,6 +1,6 @@
 fs = require 'fs-plus'
 path = require 'path'
-temp = require('@atom/temp').track()
+temp = require('temp').track()
 
 fileIcons = require '../lib/default-file-icons'
 
