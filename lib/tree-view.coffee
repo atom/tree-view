@@ -560,13 +560,22 @@ class TreeView
     return unless filePath = @selectedEntry()?.getPath()
 
     unless shell.showItemInFolder(filePath)
-      atom.notifications.addWarning("Unable to show #{filePath} in file manager")
+      atom.notifications.addWarning("Unable to show #{filePath} in #{@getFileManagerName().toLowerCase()}")
 
   showCurrentFileInFileManager: ->
     return unless filePath = atom.workspace.getCenter().getActiveTextEditor()?.getPath()
 
     unless shell.showItemInFolder(filePath)
-      atom.notifications.addWarning("Unable to show #{filePath} in file manager")
+      atom.notifications.addWarning("Unable to show #{filePath} in #{@getFileManagerName().toLowerCase()}")
+
+  getFileManagerName: ->
+    switch process.platform
+      when 'darwin'
+        return 'Finder'
+      when 'win32'
+        return 'Explorer'
+      else
+        return 'File Manager'
 
   openSelectedEntryInNewWindow: ->
     if pathToOpen = @selectedEntry()?.getPath()
