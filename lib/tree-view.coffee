@@ -560,13 +560,13 @@ class TreeView
     return unless filePath = @selectedEntry()?.getPath()
 
     unless shell.showItemInFolder(filePath)
-      atom.notifications.addWarning("Unable to show #{filePath} in #{@getFileManagerName().toLowerCase()}")
+      atom.notifications.addWarning("Unable to show #{filePath} in #{@getFileManagerName()}")
 
   showCurrentFileInFileManager: ->
     return unless filePath = atom.workspace.getCenter().getActiveTextEditor()?.getPath()
 
     unless shell.showItemInFolder(filePath)
-      atom.notifications.addWarning("Unable to show #{filePath} in #{@getFileManagerName().toLowerCase()}")
+      atom.notifications.addWarning("Unable to show #{filePath} in #{@getFileManagerName()}")
 
   getFileManagerName: ->
     switch process.platform
