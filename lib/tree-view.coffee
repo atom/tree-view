@@ -1139,7 +1139,7 @@ class TreeView
           # being moved or deleted
           # TODO: This can be removed when tree-view is switched to @atom/watcher
           @entryForPath(initialPath)?.collapse?()
-          @moveEntry(initialPath, newDirectoryPath)
+          break unless @moveEntry(initialPath, newDirectoryPath)
       else
         # Drop event from OS
         entry.classList.remove('selected')
