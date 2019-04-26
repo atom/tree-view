@@ -208,8 +208,8 @@ class TreeView
     @element.addEventListener 'drop', (e) => @onDrop(e)
 
     atom.commands.add @element,
-     'core:move-up': @moveUp.bind(this)
-     'core:move-down': @moveDown.bind(this)
+     'core:move-up': (e) => @moveUp(e)
+     'core:move-down': (e) => @moveDown(e)
      'core:page-up': => @pageUp()
      'core:page-down': => @pageDown()
      'core:move-to-top': => @scrollToTop()
@@ -857,8 +857,49 @@ class TreeView
         repo.getPathStatus(newPath)
 
     catch error
+      if error.code is 'EEXIST'
+        return @moveConflictingEntry(initialPath, newPath, newDirectoryPath)
+      else
+        @emitter.emit 'move-entry-failed', {initialPath, newPath}
+        atom.notifications.addWarning("Failed to move entry #{initialPath} to #{newDirectoryPath}", detail: error.message)
+
+    return true
+
+  moveConflictingEntry: (initialPath, newPath, newDirectoryPath) =>
+    try
+      unless fs.isDirectorySync(initialPath)
+        # Files, symlinks, anything but a directory
+        chosen = atom.confirm
+          message: "'#{path.relative(newDirectoryPath, newPath)}' already exists"
+          detailedMessage: 'Do you want to replace it?'
+          buttons: ['Replace file', 'Skip', 'Cancel']
+
+        switch chosen
+          when 0 # Replace
+            fs.renameSync(initialPath, newPath)
+            @emitter.emit 'entry-moved', {initialPath, newPath}
+
+            if repo = repoForPath(newPath)
+              repo.getPathStatus(initialPath)
+              repo.getPathStatus(newPath)
+            break
+          when 2 # Cancel
+            return false
+      else
+        entries = fs.readdirSync(initialPath)
+        for entry in entries
+          if fs.existsSync(path.join(newPath, entry))
+            return false unless @moveConflictingEntry(path.join(initialPath, entry), path.join(newPath, entry), newDirectoryPath)
+          else
+            @moveEntry(path.join(initialPath, entry), newPath)
+
+        # "Move" the containing folder by deleting it, since we've already moved everything in it
+        fs.rmdirSync(initialPath) unless fs.readdirSync(initialPath).length
+    catch error
       @emitter.emit 'move-entry-failed', {initialPath, newPath}
-      atom.notifications.addWarning("Failed to move entry #{initialPath} to #{newDirectoryPath}", detail: error.message)
+      atom.notifications.addWarning("Failed to move entry #{initialPath} to #{newPath}", detail: error.message)
+
+    return true
 
   onStylesheetsChanged: =>
     # If visible, force a redraw so the scrollbars are styled correctly based on
@@ -1103,7 +1144,7 @@ class TreeView
         # Drop event from OS
         entry.classList.remove('selected')
         for file in e.dataTransfer.files
-          @moveEntry(file.path, newDirectoryPath)
+          break unless @moveEntry(file.path, newDirectoryPath)
     else if e.dataTransfer.files.length
       # Drop event from OS that isn't targeting a folder: add a new project folder
       atom.project.addPath(entry.path) for entry in e.dataTransfer.files
