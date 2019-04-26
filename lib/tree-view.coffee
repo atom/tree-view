@@ -857,7 +857,7 @@ class TreeView
 
   moveConflictingEntry: (initialPath, newPath, newDirectoryPath) =>
     try
-      if fs.isFileSync(initialPath)
+      unless fs.isDirectorySync(initialPath)
         chosen = atom.confirm
           message: "'#{path.relative(newDirectoryPath, newPath)}' already exists"
           detailedMessage: 'Do you want to replace it?'
