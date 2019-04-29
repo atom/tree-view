@@ -208,8 +208,8 @@ class TreeView
     @element.addEventListener 'drop', (e) => @onDrop(e)
 
     atom.commands.add @element,
-     'core:move-up': @moveUp.bind(this)
-     'core:move-down': @moveDown.bind(this)
+     'core:move-up': (e) => @moveUp(e)
+     'core:move-down': (e) => @moveDown(e)
      'core:page-up': => @pageUp()
      'core:page-down': => @pageDown()
      'core:move-to-top': => @scrollToTop()
@@ -560,13 +560,22 @@ class TreeView
     return unless filePath = @selectedEntry()?.getPath()
 
     unless shell.showItemInFolder(filePath)
-      atom.notifications.addWarning("Unable to show #{filePath} in file manager")
+      atom.notifications.addWarning("Unable to show #{filePath} in #{@getFileManagerName()}")
 
   showCurrentFileInFileManager: ->
     return unless filePath = atom.workspace.getCenter().getActiveTextEditor()?.getPath()
 
     unless shell.showItemInFolder(filePath)
-      atom.notifications.addWarning("Unable to show #{filePath} in file manager")
+      atom.notifications.addWarning("Unable to show #{filePath} in #{@getFileManagerName()}")
+
+  getFileManagerName: ->
+    switch process.platform
+      when 'darwin'
+        return 'Finder'
+      when 'win32'
+        return 'Explorer'
+      else
+        return 'File Manager'
 
   openSelectedEntryInNewWindow: ->
     if pathToOpen = @selectedEntry()?.getPath()
@@ -598,45 +607,48 @@ class TreeView
 
     for root in @roots
       if root.getPath() in selectedPaths
-        atom.confirm
-          message: "The root directory '#{root.directory.name}' can't be removed."
+        atom.confirm({
+          message: "The root directory '#{root.directory.name}' can't be removed.",
           buttons: ['OK']
+        }, -> # noop
+        )
         return
 
-    atom.confirm
-      message: "Are you sure you want to delete the selected #{if selectedPaths.length > 1 then 'items' else 'item'}?"
-      detailedMessage: "You are deleting:\n#{selectedPaths.join('\n')}"
-      buttons:
-        "Move to Trash": =>
-          failedDeletions = []
-          for selectedPath in selectedPaths
-            # Don't delete entries which no longer exist. This can happen, for example, when:
-            # * The entry is deleted outside of Atom before "Move to Trash" is selected
-            # * A folder and one of its children are both selected for deletion,
-            #   but the parent folder is deleted first
-            continue unless fs.existsSync(selectedPath)
+    atom.confirm({
+      message: "Are you sure you want to delete the selected #{if selectedPaths.length > 1 then 'items' else 'item'}?",
+      detailedMessage: "You are deleting:\n#{selectedPaths.join('\n')}",
+      buttons: ['Move to Trash', 'Cancel']
+    }, (response) =>
+      if response is 0 # Move to Trash
+        failedDeletions = []
+        for selectedPath in selectedPaths
+          # Don't delete entries which no longer exist. This can happen, for example, when:
+          # * The entry is deleted outside of Atom before "Move to Trash" is selected
+          # * A folder and one of its children are both selected for deletion,
+          #   but the parent folder is deleted first
+          continue unless fs.existsSync(selectedPath)
 
-            @emitter.emit 'will-delete-entry', {pathToDelete: selectedPath}
-            if shell.moveItemToTrash(selectedPath)
-              @emitter.emit 'entry-deleted', {pathToDelete: selectedPath}
-            else
-              @emitter.emit 'delete-entry-failed', {pathToDelete: selectedPath}
-              failedDeletions.push selectedPath
+          @emitter.emit 'will-delete-entry', {pathToDelete: selectedPath}
+          if shell.moveItemToTrash(selectedPath)
+            @emitter.emit 'entry-deleted', {pathToDelete: selectedPath}
+          else
+            @emitter.emit 'delete-entry-failed', {pathToDelete: selectedPath}
+            failedDeletions.push selectedPath
 
-            if repo = repoForPath(selectedPath)
-              repo.getPathStatus(selectedPath)
+          if repo = repoForPath(selectedPath)
+            repo.getPathStatus(selectedPath)
 
-          if failedDeletions.length > 0
-            atom.notifications.addError @formatTrashFailureMessage(failedDeletions),
-              description: @formatTrashEnabledMessage()
-              detail: "#{failedDeletions.join('\n')}"
-              dismissable: true
+        if failedDeletions.length > 0
+          atom.notifications.addError @formatTrashFailureMessage(failedDeletions),
+            description: @formatTrashEnabledMessage()
+            detail: "#{failedDeletions.join('\n')}"
+            dismissable: true
 
-          # Focus the first parent folder
-          if firstSelectedEntry = selectedEntries[0]
-            @selectEntry(firstSelectedEntry.closest('.directory:not(.selected)'))
-          @updateRoots() if atom.config.get('tree-view.squashDirectoryNames')
-        "Cancel": null
+        # Focus the first parent folder
+        if firstSelectedEntry = selectedEntries[0]
+          @selectEntry(firstSelectedEntry.closest('.directory:not(.selected)'))
+        @updateRoots() if atom.config.get('tree-view.squashDirectoryNames')
+    )
 
   formatTrashFailureMessage: (failedDeletions) ->
     fileText = if failedDeletions.length > 1 then 'files' else 'file'
@@ -733,15 +745,13 @@ class TreeView
               fs.writeFileSync(newPath, fs.readFileSync(initialPath))
               @emitter.emit 'entry-copied', {initialPath, newPath}
         else if cutPaths
-          # Only move the target if the cut target doesn't exist
-          unless fs.existsSync(newPath)
-            try
-              @emitter.emit 'will-move-entry', {initialPath, newPath}
-              fs.moveSync(initialPath, newPath)
-              @emitter.emit 'entry-moved', {initialPath, newPath}
-            catch error
-              @emitter.emit 'move-entry-failed', {initialPath, newPath}
-              atom.notifications.addWarning("Unable to paste paths: #{initialPaths}", detail: error.message)
+          try
+            @emitter.emit 'will-move-entry', {initialPath, newPath}
+            fs.moveSync(initialPath, newPath)
+            @emitter.emit 'entry-moved', {initialPath, newPath}
+          catch error
+            @emitter.emit 'move-entry-failed', {initialPath, newPath}
+            atom.notifications.addWarning("Unable to paste paths: #{initialPaths}", detail: error.message)
 
   add: (isCreatingFile) ->
     selectedEntry = @selectedEntry() ? @roots[0]
@@ -847,8 +857,49 @@ class TreeView
         repo.getPathStatus(newPath)
 
     catch error
+      if error.code is 'EEXIST'
+        return @moveConflictingEntry(initialPath, newPath, newDirectoryPath)
+      else
+        @emitter.emit 'move-entry-failed', {initialPath, newPath}
+        atom.notifications.addWarning("Failed to move entry #{initialPath} to #{newDirectoryPath}", detail: error.message)
+
+    return true
+
+  moveConflictingEntry: (initialPath, newPath, newDirectoryPath) =>
+    try
+      unless fs.isDirectorySync(initialPath)
+        # Files, symlinks, anything but a directory
+        chosen = atom.confirm
+          message: "'#{path.relative(newDirectoryPath, newPath)}' already exists"
+          detailedMessage: 'Do you want to replace it?'
+          buttons: ['Replace file', 'Skip', 'Cancel']
+
+        switch chosen
+          when 0 # Replace
+            fs.renameSync(initialPath, newPath)
+            @emitter.emit 'entry-moved', {initialPath, newPath}
+
+            if repo = repoForPath(newPath)
+              repo.getPathStatus(initialPath)
+              repo.getPathStatus(newPath)
+            break
+          when 2 # Cancel
+            return false
+      else
+        entries = fs.readdirSync(initialPath)
+        for entry in entries
+          if fs.existsSync(path.join(newPath, entry))
+            return false unless @moveConflictingEntry(path.join(initialPath, entry), path.join(newPath, entry), newDirectoryPath)
+          else
+            @moveEntry(path.join(initialPath, entry), newPath)
+
+        # "Move" the containing folder by deleting it, since we've already moved everything in it
+        fs.rmdirSync(initialPath) unless fs.readdirSync(initialPath).length
+    catch error
       @emitter.emit 'move-entry-failed', {initialPath, newPath}
-      atom.notifications.addWarning("Failed to move entry #{initialPath} to #{newDirectoryPath}", detail: error.message)
+      atom.notifications.addWarning("Failed to move entry #{initialPath} to #{newPath}", detail: error.message)
+
+    return true
 
   onStylesheetsChanged: =>
     # If visible, force a redraw so the scrollbars are styled correctly based on
@@ -1093,12 +1144,12 @@ class TreeView
           # being moved or deleted
           # TODO: This can be removed when tree-view is switched to @atom/watcher
           @entryForPath(initialPath)?.collapse?()
-          @moveEntry(initialPath, newDirectoryPath)
+          break unless @moveEntry(initialPath, newDirectoryPath)
       else
         # Drop event from OS
         entry.classList.remove('selected')
         for file in e.dataTransfer.files
-          @moveEntry(file.path, newDirectoryPath)
+          break unless @moveEntry(file.path, newDirectoryPath)
     else if e.dataTransfer.files.length
       # Drop event from OS that isn't targeting a folder: add a new project folder
       atom.project.addPath(entry.path) for entry in e.dataTransfer.files

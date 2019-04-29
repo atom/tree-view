@@ -38,8 +38,7 @@
 
     {'label': 'Copy Full Path', 'command': 'tree-view:copy-full-path'}
     {'label': 'Copy Project Path', 'command': 'tree-view:copy-project-path'}
-    {'label': 'Open In New Window', 'command': 'tree-view:open-in-new-window'}
-    {'label': 'Show in File Manager', 'command': 'tree-view:show-in-file-manager'}
+    {'label': 'Open in New Window', 'command': 'tree-view:open-in-new-window'}
   ]
 
   '.tree-view .full-menu [is="tree-view-file"]': [
@@ -70,7 +69,19 @@
 
     {'label': 'Copy Full Path', 'command': 'tree-view:copy-full-path'}
     {'label': 'Copy Project Path', 'command': 'tree-view:copy-project-path'}
-    {'label': 'Open In New Window', 'command': 'tree-view:open-in-new-window'}
+    {'label': 'Open in New Window', 'command': 'tree-view:open-in-new-window'}
+  ]
+
+  '.platform-darwin .tree-view .full-menu': [
+    {'label': 'Reveal in Finder', 'command': 'tree-view:show-in-file-manager'}
+  ]
+
+  '.platform-win32 .tree-view .full-menu': [
+    {'label': 'Show in Explorer', 'command': 'tree-view:show-in-file-manager'}
+  ]
+
+  '.platform-linux .tree-view .full-menu': [
+    {'label': 'Show in File Manager', 'command': 'tree-view:show-in-file-manager'}
   ]
 
   '.tree-view .multi-select': [
@@ -87,9 +98,28 @@
   'atom-pane[data-active-item-path] .tab.active': [
     {'label': 'Rename', 'command': 'tree-view:rename'}
     {'label': 'Reveal in Tree View', 'command': 'tree-view:reveal-active-file'}
-    {'label': 'Show In File Manager', 'command': 'tree-view:show-current-file-in-file-manager'}
   ]
 
-  'atom-text-editor:not([mini])': [
-    {'label': 'Show In File Manager', 'command': 'tree-view:show-current-file-in-file-manager'}
+  '.platform-darwin atom-pane[data-active-item-path] .tab.active': [
+    {'label': 'Reveal In Finder', 'command': 'tree-view:show-current-file-in-file-manager'}
+  ]
+
+  '.platform-win32 atom-pane[data-active-item-path] .tab.active': [
+    {'label': 'Show In Explorer', 'command': 'tree-view:show-current-file-in-file-manager'}
+  ]
+
+  '.platform-linux atom-pane[data-active-item-path] .tab.active': [
+    {'label': 'Show in File Manager', 'command': 'tree-view:show-current-file-in-file-manager'}
+  ]
+
+  '.platform-darwin atom-text-editor:not([mini])': [
+    {'label': 'Reveal In Finder', 'command': 'tree-view:show-current-file-in-file-manager'}
+  ]
+
+  '.platform-win32 atom-text-editor:not([mini])': [
+    {'label': 'Show In Explorer', 'command': 'tree-view:show-current-file-in-file-manager'}
+  ]
+
+  '.platform-linux atom-text-editor:not([mini])': [
+    {'label': 'Show in File Manager', 'command': 'tree-view:show-current-file-in-file-manager'}
   ]
