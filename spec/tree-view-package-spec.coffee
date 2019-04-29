@@ -4245,9 +4245,8 @@ describe "TreeView", ->
 
         dropEvent = eventHelpers.buildExternalDropEvent([deltaFilePath], alphaDir)
 
-        runs ->
-          treeView.onDrop(dropEvent)
-          expect(alphaDir.children.length).toBe 2
+        treeView.onDrop(dropEvent)
+        expect(alphaDir.children.length).toBe 2
 
         waitsFor "directory view contents to refresh", ->
           findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > 2
@@ -4279,9 +4278,8 @@ describe "TreeView", ->
 
         dropEvent = eventHelpers.buildExternalDropEvent([deltaFilePath, gammaDirPath], alphaDir)
 
-        runs ->
-          treeView.onDrop(dropEvent)
-          expect(alphaDir.children.length).toBe 2
+        treeView.onDrop(dropEvent)
+        expect(alphaDir.children.length).toBe 2
 
         waitsFor "directory view contents to refresh", ->
           findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > 3
@@ -4555,6 +4553,35 @@ describe "TreeView", ->
           expect(fs.existsSync(onlyNewDirPath)).toBe false
           expect(fs.existsSync(newAlphaDirPath)).toBe false
 
+    describe "when the event does not originate from the Tree View", ->
+      it "does nothing", ->
+        alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
+        alphaDir.expand()
+
+        gammaDir = findDirectoryContainingText(treeView.roots[0], 'gamma')
+        gammaDir.expand()
+        deltaFile = gammaDir.entries.children[1]
+
+        [dragStartEvent, dragEnterEvent, dropEvent] =
+            eventHelpers.buildInternalDragEvents([deltaFile], alphaDir.querySelector('.header'), alphaDir, treeView)
+        treeView.onDragStart(dragStartEvent)
+        dragEnterEvent.dataTransfer.clearData('atom-tree-view-event')
+        dropEvent.dataTransfer.clearData('atom-tree-view-event')
+
+        treeView.onDragEnter(dragEnterEvent)
+        expect(alphaDir).not.toHaveClass('selected')
+
+        treeView.onDragEnter(dragEnterEvent)
+        treeView.onDragLeave(dragEnterEvent)
+        expect(alphaDir).not.toHaveClass('selected')
+
+        treeView.onDragLeave(dragEnterEvent)
+        expect(alphaDir).not.toHaveClass('selected')
+
+        spyOn(treeView, 'moveEntry')
+        treeView.onDrop(dropEvent)
+        expect(treeView.moveEntry).not.toHaveBeenCalled()
+
   describe "the alwaysOpenExisting config option", ->
     it "defaults to unset", ->
       expect(atom.config.get("tree-view.alwaysOpenExisting")).toBeFalsy()
@@ -4826,7 +4853,7 @@ describe "TreeView", ->
         [_, dragDropEvents] = eventHelpers.buildPositionalDragEvents(null, alphaDir.querySelector('.project-root-header'), '.tree-view')
 
         dropEvent = dragDropEvents.bottom
-        dropEvent.dataTransfer.setData('atom-tree-view-event', true)
+        dropEvent.dataTransfer.setData('atom-tree-view-root-event', true)
         dropEvent.dataTransfer.setData('from-window-id', treeView.rootDragAndDrop.getWindowId() + 1)
         dropEvent.dataTransfer.setData('from-root-path', etaDirPath)
 
@@ -4853,6 +4880,29 @@ describe "TreeView", ->
         treeView.rootDragAndDrop.onDropOnOtherWindow({}, Array.from(gammaDir.parentElement.children).indexOf(gammaDir))
 
         expect(atom.project.getPaths()).toEqual [alphaDirPath, thetaDirPath]
+        expect(document.querySelector('.placeholder')).not.toExist()
+
+    describe "when the event does not originate from the Tree View", ->
+      it "does nothing", ->
+        alphaDir = treeView.roots[0]
+        gammaDir = treeView.roots[1]
+        [dragStartEvent, dragOverEvents, dragEndEvent] =
+          eventHelpers.buildPositionalDragEvents(gammaDir.querySelector('.project-root-header'), alphaDir, '.tree-view')
+
+        treeView.rootDragAndDrop.onDragStart(dragStartEvent)
+        dragStartEvent.dataTransfer.clearData('atom-tree-view-root-event')
+        dragOverEvents.top.dataTransfer.clearData('atom-tree-view-root-event')
+        dragEndEvent.dataTransfer.clearData('atom-tree-view-root-event')
+
+        treeView.rootDragAndDrop.onDragOver(dragOverEvents.top)
+        expect(alphaDir.previousSibling).not.toHaveClass('placeholder')
+
+        treeView.rootDragAndDrop.onDrop(dragOverEvents.top)
+        projectPaths = atom.project.getPaths()
+        expect(projectPaths[0]).toEqual(alphaDirPath)
+        expect(projectPaths[1]).toEqual(gammaDirPath)
+
+        treeView.rootDragAndDrop.onDragEnd(dragEndEvent)
         expect(document.querySelector('.placeholder')).not.toExist()
 
   describe "when the active file path does not exist in the project", ->

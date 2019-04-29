@@ -27,7 +27,7 @@ class RootDragAndDropHandler
     return unless @treeView.list.contains(e.target)
 
     @prevDropTargetIndex = null
-    e.dataTransfer.setData 'atom-tree-view-event', 'true'
+    e.dataTransfer.setData 'atom-tree-view-root-event', 'true'
     projectRoot = e.target.closest('.project-root')
     directory = projectRoot.directory
 
@@ -54,26 +54,27 @@ class RootDragAndDropHandler
 
   onDragEnter: (e) ->
     return unless @treeView.list.contains(e.target)
+    return unless @isAtomTreeViewEvent(e)
 
     e.stopPropagation()
 
   onDragLeave: (e) =>
     return unless @treeView.list.contains(e.target)
+    return unless @isAtomTreeViewEvent(e)
 
     e.stopPropagation()
     @removePlaceholder() if e.target is e.currentTarget
 
   onDragEnd: (e) =>
     return unless e.target.matches('.project-root-header')
+    return unless @isAtomTreeViewEvent(e)
 
     e.stopPropagation()
     @clearDropTarget()
 
   onDragOver: (e) =>
     return unless @treeView.list.contains(e.target)
-
-    unless @isAtomTreeViewEvent(e)
-      return
+    return unless @isAtomTreeViewEvent(e)
 
     e.preventDefault()
     e.stopPropagation()
@@ -115,13 +116,12 @@ class RootDragAndDropHandler
 
   onDrop: (e) =>
     return unless @treeView.list.contains(e.target)
+    return unless @isAtomTreeViewEvent(e)
 
     e.preventDefault()
     e.stopPropagation()
 
     {dataTransfer} = e
-
-    return unless @isAtomTreeViewEvent(e)
 
     fromWindowId = parseInt(dataTransfer.getData('from-window-id'))
     fromRootPath  = dataTransfer.getData('from-root-path')
@@ -179,7 +179,7 @@ class RootDragAndDropHandler
 
   isAtomTreeViewEvent: (e) ->
     for item in e.dataTransfer.items
-      if item.type is 'atom-tree-view-event'
+      if item.type is 'atom-tree-view-root-event'
         return true
 
     return false

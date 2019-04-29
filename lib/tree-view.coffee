@@ -1037,6 +1037,7 @@ class TreeView
   onDragEnter: (e) =>
     if entry = e.target.closest('.entry.directory')
       return if @rootDragAndDrop.isDragging(e)
+      return unless @isAtomTreeViewEvent(e)
 
       e.stopPropagation()
 
@@ -1049,6 +1050,7 @@ class TreeView
   onDragLeave: (e) =>
     if entry = e.target.closest('.entry.directory')
       return if @rootDragAndDrop.isDragging(e)
+      return unless @isAtomTreeViewEvent(e)
 
       e.stopPropagation()
 
@@ -1096,6 +1098,7 @@ class TreeView
       e.dataTransfer.effectAllowed = "move"
       e.dataTransfer.setDragImage(dragImage, 0, 0)
       e.dataTransfer.setData("initialPaths", initialPaths)
+      e.dataTransfer.setData("atom-tree-view-event", "true")
 
       window.requestAnimationFrame ->
         dragImage.remove()
@@ -1104,6 +1107,7 @@ class TreeView
   onDragOver: (e) ->
     if entry = e.target.closest('.entry.directory')
       return if @rootDragAndDrop.isDragging(e)
+      return unless @isAtomTreeViewEvent(e)
 
       e.preventDefault()
       e.stopPropagation()
@@ -1116,6 +1120,7 @@ class TreeView
     @dragEventCounts = new WeakMap
     if entry = e.target.closest('.entry.directory')
       return if @rootDragAndDrop.isDragging(e)
+      return unless @isAtomTreeViewEvent(e)
 
       e.preventDefault()
       e.stopPropagation()
@@ -1148,6 +1153,13 @@ class TreeView
     else if e.dataTransfer.files.length
       # Drop event from OS that isn't targeting a folder: add a new project folder
       atom.project.addPath(entry.path) for entry in e.dataTransfer.files
+
+  isAtomTreeViewEvent: (e) ->
+    for item in e.dataTransfer.items
+      if item.type is 'atom-tree-view-event' or item.kind is 'file'
+        return true
+
+    return false
 
   isVisible: ->
     @element.offsetWidth isnt 0 or @element.offsetHeight isnt 0
