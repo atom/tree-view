@@ -326,10 +326,9 @@ class TreeView
 
     projectPaths = atom.project.getPaths()
     if projectPaths.length > 0
-      unless @element.getElementsByClassName('tree-view-root')[0]
-        @element.appendChild(@list)
+      @element.appendChild(@list) unless @element.querySelector('tree-view-root')
 
-      addProjectsViewElement = document.getElementById('add-projects-view')
+      addProjectsViewElement = @element.querySelector('#add-projects-view')
       @element.removeChild(addProjectsViewElement) if addProjectsViewElement
 
       selectedPaths = @selectedPaths()
@@ -362,11 +361,8 @@ class TreeView
       # The DOM has been recreated; reselect everything
       @selectMultipleEntries(@entryForPath(selectedPath)) for selectedPath in selectedPaths
     else
-      if @element.getElementsByClassName('tree-view-root')[0]
-        @element.removeChild(@list)
-
-      unless document.getElementById('add-projects-view')
-        @element.appendChild(new AddProjectsView().element)
+      @element.removeChild(@list) if @element.querySelector('.tree-view-root')
+      @element.appendChild(new AddProjectsView().element) unless @element.querySelector('#add-projects-view')
 
   getActivePath: -> atom.workspace.getCenter().getActivePaneItem()?.getPath?()
 
