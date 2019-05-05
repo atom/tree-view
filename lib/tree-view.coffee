@@ -316,6 +316,8 @@ class TreeView
       atom.workspace.open(uri, options)
 
   updateRoots: (expansionStates={}) ->
+    selectedPaths = @selectedPaths()
+
     oldExpansionStates = {}
     for root in @roots
       oldExpansionStates[root.directory.path] = root.directory.serializeExpansionState()
@@ -330,8 +332,6 @@ class TreeView
 
       addProjectsViewElement = @element.querySelector('#add-projects-view')
       @element.removeChild(addProjectsViewElement) if addProjectsViewElement
-
-      selectedPaths = @selectedPaths()
 
       IgnoredNames ?= require('./ignored-names')
 
