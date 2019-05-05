@@ -322,6 +322,7 @@ class TreeView
       root.directory.destroy()
       root.remove()
 
+    @roots = []
 
     projectPaths = atom.project.getPaths()
     if projectPaths.length > 0
