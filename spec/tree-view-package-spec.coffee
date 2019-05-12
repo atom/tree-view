@@ -1,7 +1,7 @@
 _ = require 'underscore-plus'
 fs = require 'fs-plus'
 path = require 'path'
-temp = require('@atom/temp').track()
+temp = require('temp').track()
 os = require 'os'
 {remote, shell} = require 'electron'
 Directory = require '../lib/directory'
@@ -3827,7 +3827,8 @@ describe "TreeView", ->
           entries: new Map())
 
   describe "Dragging and dropping files", ->
-    [alphaDirPath, alphaFilePath, betaFilePath, etaDirPath, gammaDirPath, deltaFilePath, epsilonFilePath, thetaFilePath] = []
+    [rootDirPath, alphaDirPath, alphaFilePath, zetaFilePath, betaFilePath, etaDirPath, gammaDirPath,
+     deltaFilePath, epsilonFilePath, thetaDirPath, thetaFilePath] = []
 
     beforeEach ->
       # tree-view
@@ -4340,9 +4341,8 @@ describe "TreeView", ->
 
         dropEvent = eventHelpers.buildExternalDropEvent([deltaFilePath], alphaDir)
 
-        runs ->
-          treeView.onDrop(dropEvent)
-          expect(alphaDir.children.length).toBe 2
+        treeView.onDrop(dropEvent)
+        expect(alphaDir.children.length).toBe 2
 
         waitsFor "directory view contents to refresh", ->
           findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > alphaDirContents
@@ -4400,9 +4400,8 @@ describe "TreeView", ->
 
         dropEvent = eventHelpers.buildExternalDropEvent([deltaFilePath, gammaDirPath], alphaDir)
 
-        runs ->
-          treeView.onDrop(dropEvent)
-          expect(alphaDir.children.length).toBe 2
+        treeView.onDrop(dropEvent)
+        expect(alphaDir.children.length).toBe 2
 
         waitsFor "directory view contents to refresh", ->
           findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > alphaDirContents
@@ -4441,6 +4440,269 @@ describe "TreeView", ->
           expect(names.includes('gamma')).toBe(true)
           expect(names.includes('alpha')).toBe(true)
           expect(names.includes('eta')).toBe(true)
+
+    describe "when dragging entries that already exist", ->
+      deltaAlphaFilePath = null
+
+      describe "when dragging a single file", ->
+        [dragStartEvent, dragEnterEvent, dropEvent] = []
+
+        beforeEach ->
+          alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
+          alphaDir.expand()
+          deltaAlphaFilePath = path.join(alphaDirPath, 'delta.txt')
+          fs.writeFileSync(deltaAlphaFilePath, 'old')
+
+          gammaDir = findDirectoryContainingText(treeView.roots[0], 'gamma')
+          gammaDir.expand()
+          deltaFile = findFileContainingText(treeView.roots[0], 'delta.txt')
+
+          [dragStartEvent, dragEnterEvent, dropEvent] =
+            eventHelpers.buildInternalDragEvents([deltaFile], alphaDir.querySelector('.header'), alphaDir, treeView)
+
+        it "prompts to replace the file", ->
+          spyOn(atom, 'confirm')
+          treeView.onDragStart(dragStartEvent)
+          treeView.onDrop(dropEvent)
+          expect(atom.confirm).toHaveBeenCalled()
+
+        describe "when selecting the replace option", ->
+          it "replaces the existing file", ->
+            spyOn(atom, 'confirm').andReturn 0
+            treeView.onDragStart(dragStartEvent)
+            treeView.onDrop(dropEvent)
+            expect(fs.readFileSync(deltaAlphaFilePath, 'utf8')).toBe "doesn't matter"
+
+        describe "when selecting the skip option", ->
+          it "does not replace the existing file", ->
+            spyOn(atom, 'confirm').andReturn 1
+            treeView.onDragStart(dragStartEvent)
+            treeView.onDrop(dropEvent)
+            expect(fs.readFileSync(deltaAlphaFilePath, 'utf8')).toBe 'old'
+
+        describe "when cancelling the dialog", ->
+          it "does not replace the existing file", ->
+            spyOn(atom, 'confirm').andReturn 2
+            treeView.onDragStart(dragStartEvent)
+            treeView.onDrop(dropEvent)
+            expect(fs.readFileSync(deltaAlphaFilePath, 'utf8')).toBe 'old'
+
+      describe "when dragging multiple files", ->
+        [aAlphaFilePath, bAlphaFilePath, cAlphaFilePath,
+         aGammaFilePath, bGammaFilePath, cGammaFilePath] = []
+        dropEvent = null
+
+        beforeEach ->
+          alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
+          alphaDir.expand()
+          aAlphaFilePath = path.join(alphaDirPath, 'a.txt')
+          fs.writeFileSync(aAlphaFilePath, 'old')
+          bAlphaFilePath = path.join(alphaDirPath, 'b.txt')
+          fs.writeFileSync(bAlphaFilePath, 'old')
+          cAlphaFilePath = path.join(alphaDirPath, 'c.txt')
+          fs.writeFileSync(cAlphaFilePath, 'old')
+
+          aGammaFilePath = path.join(gammaDirPath, 'a.txt')
+          fs.writeFileSync(aGammaFilePath, 'new')
+          bGammaFilePath = path.join(gammaDirPath, 'b.txt')
+          fs.writeFileSync(bGammaFilePath, 'new')
+          cGammaFilePath = path.join(gammaDirPath, 'c.txt')
+          fs.writeFileSync(cGammaFilePath, 'new')
+
+          dropEvent = eventHelpers.buildExternalDropEvent([aGammaFilePath, bGammaFilePath, cGammaFilePath], alphaDir)
+
+        it "prompts for each file as long as cancel is not chosen", ->
+          calls = 0
+          getButton = ->
+            calls++
+            switch calls
+              when 1
+                return 0
+              when 2
+                return 1
+              when 3
+                return 0
+
+          spyOn(atom, 'confirm').andCallFake -> getButton()
+          treeView.onDrop(dropEvent)
+          expect(atom.confirm.calls.length).toBe 3
+
+          expect(fs.readFileSync(aAlphaFilePath, 'utf8')).toBe 'new'
+          expect(fs.readFileSync(bAlphaFilePath, 'utf8')).toBe 'old'
+          expect(fs.readFileSync(cAlphaFilePath, 'utf8')).toBe 'new'
+
+        it "immediately cancels any pending file moves when cancel is chosen", ->
+          calls = 0
+          getButton = ->
+            calls++
+            switch calls
+              when 1
+                return 0
+              when 2
+                return 2
+
+          spyOn(atom, 'confirm').andCallFake -> getButton()
+          treeView.onDrop(dropEvent)
+          expect(atom.confirm.calls.length).toBe 2
+
+          expect(fs.readFileSync(aAlphaFilePath, 'utf8')).toBe 'new'
+          expect(fs.readFileSync(bAlphaFilePath, 'utf8')).toBe 'old'
+          expect(fs.readFileSync(cAlphaFilePath, 'utf8')).toBe 'old'
+
+      describe "when dragging directories", ->
+        [oldAFilePath, oldBFilePath, oldCFilePath, oldNestedDirPath, oldNestedFilePath,
+         onlyOldDirPath, onlyOldFilePath, newAlphaDirPath, newAFilePath, newBFilePath,
+         newCFilePath, newNestedDirPath, newNestedFilePath, onlyNewDirPath, onlyNewFilePath] = []
+        [dragStartEvent, dragEnterEvent, dropEvent] = []
+
+        beforeEach ->
+          alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
+          alphaDir.expand()
+          oldAFilePath = path.join(alphaDirPath, 'a.txt')
+          fs.writeFileSync(oldAFilePath, 'old')
+          oldBFilePath = path.join(alphaDirPath, 'b.txt')
+          fs.writeFileSync(oldBFilePath, 'old')
+          oldCFilePath = path.join(alphaDirPath, 'c.txt')
+          fs.writeFileSync(oldCFilePath, 'old')
+
+          oldNestedDirPath = path.join(alphaDirPath, 'nested')
+          fs.mkdirSync(oldNestedDirPath)
+          oldNestedFilePath = path.join(oldNestedDirPath, 'nested.txt')
+          fs.writeFileSync(oldNestedFilePath, 'old')
+
+          onlyOldDirPath = path.join(alphaDirPath, 'old')
+          fs.mkdirSync(onlyOldDirPath)
+          onlyOldFilePath = path.join(onlyOldDirPath, 'no-conflict.txt')
+          fs.writeFileSync(onlyOldFilePath, 'neither')
+
+          gammaDir = findDirectoryContainingText(treeView.roots[0], 'gamma')
+          gammaDir.expand()
+
+          newAlphaDirPath = path.join(gammaDirPath, 'alpha')
+          fs.mkdirSync(newAlphaDirPath)
+          newAFilePath = path.join(newAlphaDirPath, 'a.txt')
+          fs.writeFileSync(newAFilePath, 'new')
+          newBFilePath = path.join(newAlphaDirPath, 'b.txt')
+          fs.writeFileSync(newBFilePath, 'new')
+          newCFilePath = path.join(newAlphaDirPath, 'c.txt')
+          fs.writeFileSync(newCFilePath, 'new')
+
+          newNestedDirPath = path.join(newAlphaDirPath, 'nested')
+          fs.mkdirSync(newNestedDirPath)
+          newNestedFilePath = path.join(newNestedDirPath, 'nested.txt')
+          fs.writeFileSync(newNestedFilePath, 'new')
+
+          onlyNewDirPath = path.join(newAlphaDirPath, 'new')
+          fs.mkdirSync(onlyNewDirPath)
+          onlyNewFilePath = path.join(onlyNewDirPath, 'no-conflict.txt')
+          fs.writeFileSync(onlyNewFilePath, 'neither')
+
+          gammaDir.reload()
+          newAlphaDir = findDirectoryContainingText(gammaDir, 'alpha')
+
+          [dragStartEvent, dragEnterEvent, dropEvent] =
+            eventHelpers.buildInternalDragEvents([newAlphaDir], treeView.roots[0].querySelector('.header'), treeView.roots[0], treeView)
+
+        it "recursively walks the directory structure and prompts to replace each conflicting file", ->
+          spyOn(atom, 'confirm').andReturn 1
+          treeView.onDragStart(dragStartEvent)
+          treeView.onDrop(dropEvent)
+          expect(atom.confirm.calls.length).toBe 4
+          expect(atom.confirm.calls[0].args[0].message).toContain 'a.txt'
+          expect(atom.confirm.calls[1].args[0].message).toContain 'b.txt'
+          expect(atom.confirm.calls[2].args[0].message).toContain 'c.txt'
+          expect(atom.confirm.calls[3].args[0].message).toContain 'nested.txt'
+
+        it "removes the containing folder only if it is empty after all entries have finished moving", ->
+          calls = 0
+          getButton = ->
+            calls++
+            switch calls
+              when 1
+                return 1
+              when 2
+                return 1
+              when 3
+                return 1
+              when 4
+                return 0
+
+          spyOn(atom, 'confirm').andCallFake -> getButton()
+          treeView.onDragStart(dragStartEvent)
+          treeView.onDrop(dropEvent)
+          expect(fs.existsSync(newAlphaDirPath)).toBe true
+          expect(fs.existsSync(newNestedDirPath)).toBe false
+
+        it "immediately cancels any pending file moves when cancel is chosen", ->
+          calls = 0
+          getButton = ->
+            calls++
+            switch calls
+              when 1
+                return 0
+              when 2
+                return 2
+
+          spyOn(atom, 'confirm').andCallFake -> getButton()
+          spyOn(fs, 'renameSync').andCallThrough()
+          treeView.onDragStart(dragStartEvent)
+          treeView.onDrop(dropEvent)
+          expect(atom.confirm.calls.length).toBe 2
+          expect(fs.renameSync.calls.length).toBe 1
+          expect(fs.existsSync(newAFilePath)).toBe false
+          expect(fs.readFileSync(oldAFilePath, 'utf8')).toBe 'new'
+          expect(fs.existsSync(newBFilePath)).toBe true
+          expect(fs.existsSync(onlyNewDirPath)).toBe true # true since this comes after b.txt
+          expect(fs.existsSync(newNestedFilePath)).toBe true
+
+        it "moves everything as expected", ->
+          spyOn(atom, 'confirm').andReturn 0
+          spyOn(fs, 'renameSync').andCallThrough()
+          treeView.onDragStart(dragStartEvent)
+          treeView.onDrop(dropEvent)
+          expect(fs.renameSync.calls.length).toBe 4 # new/ is handled internally by fs-plus
+          expect(fs.existsSync(newAFilePath)).toBe false
+          expect(fs.readFileSync(oldAFilePath, 'utf8')).toBe 'new'
+          expect(fs.existsSync(newBFilePath)).toBe false
+          expect(fs.readFileSync(oldBFilePath, 'utf8')).toBe 'new'
+          expect(fs.readFileSync(oldCFilePath, 'utf8')).toBe 'new'
+          expect(fs.existsSync(newNestedFilePath)).toBe false
+          expect(fs.readFileSync(oldNestedFilePath, 'utf8')).toBe 'new'
+          expect(fs.existsSync(onlyOldDirPath)).toBe true
+          expect(fs.readFileSync(onlyOldFilePath, 'utf8')).toBe 'neither'
+          expect(fs.existsSync(path.join(alphaDirPath, 'new'))).toBe true
+          expect(fs.readFileSync(path.join(alphaDirPath, 'new', 'no-conflict.txt'), 'utf8')).toBe 'neither'
+          expect(fs.existsSync(onlyNewDirPath)).toBe false
+          expect(fs.existsSync(newAlphaDirPath)).toBe false
+
+    describe "when the event does not originate from the Tree View", ->
+      it "does nothing", ->
+        alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
+        alphaDir.expand()
+
+        gammaDir = findDirectoryContainingText(treeView.roots[0], 'gamma')
+        gammaDir.expand()
+        deltaFile = gammaDir.entries.children[1]
+
+        [dragStartEvent, dragEnterEvent, dropEvent] =
+            eventHelpers.buildInternalDragEvents([deltaFile], alphaDir.querySelector('.header'), alphaDir, treeView)
+        treeView.onDragStart(dragStartEvent)
+        dragEnterEvent.dataTransfer.clearData('atom-tree-view-event')
+        dropEvent.dataTransfer.clearData('atom-tree-view-event')
+
+        treeView.onDragEnter(dragEnterEvent)
+        expect(alphaDir).not.toHaveClass('selected')
+
+        treeView.onDragEnter(dragEnterEvent)
+        treeView.onDragLeave(dragEnterEvent)
+        expect(alphaDir).not.toHaveClass('selected')
+
+        treeView.onDragLeave(dragEnterEvent)
+        expect(alphaDir).not.toHaveClass('selected')
+
+        spyOn(treeView, 'moveEntry')
+        treeView.onDrop(dropEvent)
+        expect(treeView.moveEntry).not.toHaveBeenCalled()
 
   describe "the alwaysOpenExisting config option", ->
     it "defaults to unset", ->
@@ -4713,7 +4975,7 @@ describe "TreeView", ->
         [_, dragDropEvents] = eventHelpers.buildPositionalDragEvents(null, alphaDir.querySelector('.project-root-header'), '.tree-view')
 
         dropEvent = dragDropEvents.bottom
-        dropEvent.dataTransfer.setData('atom-tree-view-event', true)
+        dropEvent.dataTransfer.setData('atom-tree-view-root-event', true)
         dropEvent.dataTransfer.setData('from-window-id', treeView.rootDragAndDrop.getWindowId() + 1)
         dropEvent.dataTransfer.setData('from-root-path', etaDirPath)
 
@@ -4740,6 +5002,29 @@ describe "TreeView", ->
         treeView.rootDragAndDrop.onDropOnOtherWindow({}, Array.from(gammaDir.parentElement.children).indexOf(gammaDir))
 
         expect(atom.project.getPaths()).toEqual [alphaDirPath, thetaDirPath]
+        expect(document.querySelector('.placeholder')).not.toExist()
+
+    describe "when the event does not originate from the Tree View", ->
+      it "does nothing", ->
+        alphaDir = treeView.roots[0]
+        gammaDir = treeView.roots[1]
+        [dragStartEvent, dragOverEvents, dragEndEvent] =
+          eventHelpers.buildPositionalDragEvents(gammaDir.querySelector('.project-root-header'), alphaDir, '.tree-view')
+
+        treeView.rootDragAndDrop.onDragStart(dragStartEvent)
+        dragStartEvent.dataTransfer.clearData('atom-tree-view-root-event')
+        dragOverEvents.top.dataTransfer.clearData('atom-tree-view-root-event')
+        dragEndEvent.dataTransfer.clearData('atom-tree-view-root-event')
+
+        treeView.rootDragAndDrop.onDragOver(dragOverEvents.top)
+        expect(alphaDir.previousSibling).not.toHaveClass('placeholder')
+
+        treeView.rootDragAndDrop.onDrop(dragOverEvents.top)
+        projectPaths = atom.project.getPaths()
+        expect(projectPaths[0]).toEqual(alphaDirPath)
+        expect(projectPaths[1]).toEqual(gammaDirPath)
+
+        treeView.rootDragAndDrop.onDragEnd(dragEndEvent)
         expect(document.querySelector('.placeholder')).not.toExist()
 
   describe "when the active file path does not exist in the project", ->

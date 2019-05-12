@@ -208,8 +208,8 @@ class TreeView
     @element.addEventListener 'drop', (e) => @onDrop(e)
 
     atom.commands.add @element,
-     'core:move-up': @moveUp.bind(this)
-     'core:move-down': @moveDown.bind(this)
+     'core:move-up': (e) => @moveUp(e)
+     'core:move-down': (e) => @moveDown(e)
      'core:page-up': => @pageUp()
      'core:page-down': => @pageDown()
      'core:move-to-top': => @scrollToTop()
@@ -560,13 +560,22 @@ class TreeView
     return unless filePath = @selectedEntry()?.getPath()
 
     unless shell.showItemInFolder(filePath)
-      atom.notifications.addWarning("Unable to show #{filePath} in file manager")
+      atom.notifications.addWarning("Unable to show #{filePath} in #{@getFileManagerName()}")
 
   showCurrentFileInFileManager: ->
     return unless filePath = atom.workspace.getCenter().getActiveTextEditor()?.getPath()
 
     unless shell.showItemInFolder(filePath)
-      atom.notifications.addWarning("Unable to show #{filePath} in file manager")
+      atom.notifications.addWarning("Unable to show #{filePath} in #{@getFileManagerName()}")
+
+  getFileManagerName: ->
+    switch process.platform
+      when 'darwin'
+        return 'Finder'
+      when 'win32'
+        return 'Explorer'
+      else
+        return 'File Manager'
 
   openSelectedEntryInNewWindow: ->
     if pathToOpen = @selectedEntry()?.getPath()
@@ -849,8 +858,49 @@ class TreeView
         repo.getPathStatus(newPath)
 
     catch error
+      if error.code is 'EEXIST'
+        return @moveConflictingEntry(initialPath, newPath, newDirectoryPath)
+      else
+        @emitter.emit 'move-entry-failed', {initialPath, newPath}
+        atom.notifications.addWarning("Failed to move entry #{initialPath} to #{newDirectoryPath}", detail: error.message)
+
+    return true
+
+  moveConflictingEntry: (initialPath, newPath, newDirectoryPath) =>
+    try
+      unless fs.isDirectorySync(initialPath)
+        # Files, symlinks, anything but a directory
+        chosen = atom.confirm
+          message: "'#{path.relative(newDirectoryPath, newPath)}' already exists"
+          detailedMessage: 'Do you want to replace it?'
+          buttons: ['Replace file', 'Skip', 'Cancel']
+
+        switch chosen
+          when 0 # Replace
+            fs.renameSync(initialPath, newPath)
+            @emitter.emit 'entry-moved', {initialPath, newPath}
+
+            if repo = repoForPath(newPath)
+              repo.getPathStatus(initialPath)
+              repo.getPathStatus(newPath)
+            break
+          when 2 # Cancel
+            return false
+      else
+        entries = fs.readdirSync(initialPath)
+        for entry in entries
+          if fs.existsSync(path.join(newPath, entry))
+            return false unless @moveConflictingEntry(path.join(initialPath, entry), path.join(newPath, entry), newDirectoryPath)
+          else
+            @moveEntry(path.join(initialPath, entry), newPath)
+
+        # "Move" the containing folder by deleting it, since we've already moved everything in it
+        fs.rmdirSync(initialPath) unless fs.readdirSync(initialPath).length
+    catch error
       @emitter.emit 'move-entry-failed', {initialPath, newPath}
-      atom.notifications.addWarning("Failed to move entry #{initialPath} to #{newDirectoryPath}", detail: error.message)
+      atom.notifications.addWarning("Failed to move entry #{initialPath} to #{newPath}", detail: error.message)
+
+    return true
 
   onStylesheetsChanged: =>
     # If visible, force a redraw so the scrollbars are styled correctly based on
@@ -988,6 +1038,7 @@ class TreeView
   onDragEnter: (e) =>
     if entry = e.target.closest('.entry.directory')
       return if @rootDragAndDrop.isDragging(e)
+      return unless @isAtomTreeViewEvent(e)
 
       e.stopPropagation()
 
@@ -1000,6 +1051,7 @@ class TreeView
   onDragLeave: (e) =>
     if entry = e.target.closest('.entry.directory')
       return if @rootDragAndDrop.isDragging(e)
+      return unless @isAtomTreeViewEvent(e)
 
       e.stopPropagation()
 
@@ -1047,6 +1099,7 @@ class TreeView
       e.dataTransfer.effectAllowed = "move"
       e.dataTransfer.setDragImage(dragImage, 0, 0)
       e.dataTransfer.setData("initialPaths", initialPaths)
+      e.dataTransfer.setData("atom-tree-view-event", "true")
 
       window.requestAnimationFrame ->
         dragImage.remove()
@@ -1055,6 +1108,7 @@ class TreeView
   onDragOver: (e) ->
     if entry = e.target.closest('.entry.directory')
       return if @rootDragAndDrop.isDragging(e)
+      return unless @isAtomTreeViewEvent(e)
 
       e.preventDefault()
       e.stopPropagation()
@@ -1067,6 +1121,7 @@ class TreeView
     @dragEventCounts = new WeakMap
     if entry = e.target.closest('.entry.directory')
       return if @rootDragAndDrop.isDragging(e)
+      return unless @isAtomTreeViewEvent(e)
 
       e.preventDefault()
       e.stopPropagation()
@@ -1093,7 +1148,7 @@ class TreeView
           if (process.platform is 'darwin' and e.metaKey) or e.ctrlKey
             @copyEntry(initialPath, newDirectoryPath)
           else
-            @moveEntry(initialPath, newDirectoryPath)
+            break unless @moveEntry(initialPath, newDirectoryPath)
       else
         # Drop event from OS
         entry.classList.remove('selected')
@@ -1101,10 +1156,17 @@ class TreeView
           if (process.platform is 'darwin' and e.metaKey) or e.ctrlKey
             @copyEntry(file.path, newDirectoryPath)
           else
-            @moveEntry(file.path, newDirectoryPath)
+            break unless @moveEntry(file.path, newDirectoryPath)
     else if e.dataTransfer.files.length
       # Drop event from OS that isn't targeting a folder: add a new project folder
       atom.project.addPath(entry.path) for entry in e.dataTransfer.files
+
+  isAtomTreeViewEvent: (e) ->
+    for item in e.dataTransfer.items
+      if item.type is 'atom-tree-view-event' or item.kind is 'file'
+        return true
+
+    return false
 
   isVisible: ->
     @element.offsetWidth isnt 0 or @element.offsetHeight isnt 0

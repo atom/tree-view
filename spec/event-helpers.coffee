@@ -3,6 +3,11 @@ module.exports.buildInternalDragEvents = (dragged, enterTarget, dropTarget, tree
     data: {}
     setData: (key, value) -> @data[key] = "#{value}" # Drag events stringify data values
     getData: (key) -> @data[key]
+    clearData: (key) ->
+      if key
+        delete @data[key]
+      else
+        @data = {}
     setDragImage: (@image) -> return
 
   Object.defineProperty(
@@ -41,13 +46,18 @@ module.exports.buildExternalDropEvent = (filePaths, dropTarget, copy = false) ->
     data: {}
     setData: (key, value) -> @data[key] = "#{value}" # Drag events stringify data values
     getData: (key) -> @data[key]
+    clearData: (key) ->
+      if key
+        delete @data[key]
+      else
+        @data = {}
     files: []
 
   Object.defineProperty(
     dataTransfer,
     'items',
     get: ->
-      Object.keys(dataTransfer.data).map((key) -> {type: key})
+      Object.keys(dataTransfer.data).map((key) -> {type: key, kind: 'file'})
   )
 
   dropEvent = new DragEvent('drop')
@@ -60,6 +70,7 @@ module.exports.buildExternalDropEvent = (filePaths, dropTarget, copy = false) ->
 
   for filePath in filePaths
     dropEvent.dataTransfer.files.push({path: filePath})
+    dropEvent.dataTransfer.setData(filePath, 'bla') # Not technically correct, but gets the job done
 
   dropEvent
 
@@ -69,7 +80,7 @@ buildElementPositionalDragEvents = (el, dataTransfer, currentTargetSelector) ->
 
   currentTarget = if currentTargetSelector then el.closest(currentTargetSelector) else el
 
-  topEvent = new DragEvent('dragstart')
+  topEvent = new DragEvent('dragover')
   Object.defineProperty(topEvent, 'target', value: el)
   Object.defineProperty(topEvent, 'currentTarget', value: currentTarget)
   Object.defineProperty(topEvent, 'dataTransfer', value: dataTransfer)
@@ -81,7 +92,7 @@ buildElementPositionalDragEvents = (el, dataTransfer, currentTargetSelector) ->
   Object.defineProperty(middleEvent, 'dataTransfer', value: dataTransfer)
   Object.defineProperty(middleEvent, 'pageY', value: el.getBoundingClientRect().top + el.offsetHeight * 0.5)
 
-  bottomEvent = new DragEvent('dragend')
+  bottomEvent = new DragEvent('dragover')
   Object.defineProperty(bottomEvent, 'target', value: el)
   Object.defineProperty(bottomEvent, 'currentTarget', value: currentTarget)
   Object.defineProperty(bottomEvent, 'dataTransfer', value: dataTransfer)
@@ -95,6 +106,11 @@ module.exports.buildPositionalDragEvents = (dragged, target, currentTargetSelect
     data: {}
     setData: (key, value) -> @data[key] = "#{value}" # Drag events stringify data values
     getData: (key) -> @data[key]
+    clearData: (key) ->
+      if key
+        delete @data[key]
+      else
+        @data = {}
     setDragImage: (@image) -> return
 
   Object.defineProperty(
