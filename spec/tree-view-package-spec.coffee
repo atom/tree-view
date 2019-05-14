@@ -1571,67 +1571,66 @@ describe "TreeView", ->
         LocalStorage.clear()
         atom.notifications.clear()
 
-      for operation in ['copy', 'cut']
-        describe "when attempting to #{operation} and paste a directory into itself", ->
-          it "shows a warning notification and does not paste", ->
-            # /dir-1/ -> /dir-1/
-            LocalStorage["tree-view:#{operation}Path"] = JSON.stringify([dirPath])
-            newPath = path.join(dirPath, path.basename(dirPath))
-            dirView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
-            expect(-> atom.commands.dispatch(treeView.element, "tree-view:paste")).not.toThrow()
-            expect(fs.existsSync(newPath)).toBe false
-            expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Cannot paste a folder into itself'
+      describe "when attempting to paste a directory into itself", ->
+        it "shows a warning notification and does not paste", ->
+          # /dir-1/ -> /dir-1/
+          LocalStorage["tree-view:copyPath"] = JSON.stringify([dirPath])
+          newPath = path.join(dirPath, path.basename(dirPath))
+          dirView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+          expect(-> atom.commands.dispatch(treeView.element, "tree-view:paste")).not.toThrow()
+          expect(fs.existsSync(newPath)).toBe false
+          expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Cannot copy a folder into itself'
 
-        describe "when attempting to #{operation} and paste a directory into a nested child directory", ->
-          it "shows a warning notification and does not paste", ->
-            nestedPath = path.join(dirPath, 'nested')
-            fs.makeTreeSync(nestedPath)
+      describe "when attempting to paste a directory into a nested child directory", ->
+        it "shows a warning notification and does not paste", ->
+          nestedPath = path.join(dirPath, 'nested')
+          fs.makeTreeSync(nestedPath)
 
-            # /dir-1/ -> /dir-1/nested/
-            LocalStorage["tree-view:#{operation}Path"] = JSON.stringify([dirPath])
-            newPath = path.join(nestedPath, path.basename(dirPath))
-            dirView.reload()
-            nestedView = dirView.querySelector('.directory')
-            nestedView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
-            expect(-> atom.commands.dispatch(treeView.element, "tree-view:paste")).not.toThrow()
-            expect(fs.existsSync(newPath)).toBe false
-            expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Cannot paste a folder into itself'
+          # /dir-1/ -> /dir-1/nested/
+          LocalStorage["tree-view:copyPath"] = JSON.stringify([dirPath])
+          newPath = path.join(nestedPath, path.basename(dirPath))
+          dirView.reload()
+          nestedView = dirView.querySelector('.directory')
+          nestedView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+          expect(-> atom.commands.dispatch(treeView.element, "tree-view:paste")).not.toThrow()
+          expect(fs.existsSync(newPath)).toBe false
+          expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Cannot copy a folder into itself'
 
-        describe "when attempting to #{operation} and paste a directory into a sibling directory that starts with the same letter", ->
-          it "allows the paste to occur", ->
-            # /dir-1/ -> /dir-2/
-            LocalStorage["tree-view:#{operation}Path"] = JSON.stringify([dirPath])
-            newPath = path.join(dirPath2, path.basename(dirPath))
-            dirView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
-            expect(-> atom.commands.dispatch(treeView.element, "tree-view:paste")).not.toThrow()
-            expect(fs.existsSync(newPath)).toBe true
-            expect(atom.notifications.getNotifications()[0]).toBeUndefined()
+      describe "when attempting to paste a directory into a sibling directory that starts with the same letter", ->
+        it "allows the paste to occur", ->
+          # /dir-1/ -> /dir-2/
+          LocalStorage["tree-view:copyPath"] = JSON.stringify([dirPath])
+          newPath = path.join(dirPath2, path.basename(dirPath))
+          dirView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+          expect(-> atom.commands.dispatch(treeView.element, "tree-view:paste")).not.toThrow()
+          expect(fs.existsSync(newPath)).toBe true
+          expect(atom.notifications.getNotifications()[0]).toBeUndefined()
 
-        describe "when attempting to #{operation} and paste a directory into a symlink of itself", ->
-          it "shows a warning notification and does not paste", ->
-            fs.symlinkSync(dirPath, path.join(rootDirPath, 'symdir'), 'junction')
+      describe "when attempting to paste a directory into a symlink of itself", ->
+        it "shows a warning notification and does not paste", ->
+          fs.symlinkSync(dirPath, path.join(rootDirPath, 'symdir'), 'junction')
 
-            # /dir-1/ -> symlink of /dir-1/
-            LocalStorage["tree-view:#{operation}Path"] = JSON.stringify([dirPath])
-            newPath = path.join(dirPath, path.basename(dirPath))
-            symlinkView = root1.querySelector('.directory')
-            symlinkView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
-            expect(-> atom.commands.dispatch(treeView.element, "tree-view:paste")).not.toThrow()
-            expect(fs.existsSync(newPath)).toBe false
-            expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Cannot paste a folder into itself'
+          # /dir-1/ -> symlink of /dir-1/
+          LocalStorage["tree-view:copyPath"] = JSON.stringify([dirPath])
+          newPath = path.join(dirPath, path.basename(dirPath))
+          symlinkView = root1.querySelector('.directory')
+          symlinkView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+          expect(-> atom.commands.dispatch(treeView.element, "tree-view:paste")).not.toThrow()
+          expect(fs.existsSync(newPath)).toBe false
+          expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Cannot copy a folder into itself'
 
-        describe "when attempting to #{operation} and paste a symlink into its target directory", ->
-          it "allows the paste to occur", ->
-            symlinkedPath = path.join(rootDirPath, 'symdir')
-            fs.symlinkSync(dirPath, symlinkedPath, 'junction')
+      describe "when attempting to paste a symlink into its target directory", ->
+        it "allows the paste to occur", ->
+          symlinkedPath = path.join(rootDirPath, 'symdir')
+          fs.symlinkSync(dirPath, symlinkedPath, 'junction')
 
-            # symlink of /dir-1/ -> /dir-1/
-            LocalStorage["tree-view:#{operation}Path"] = JSON.stringify([symlinkedPath])
-            newPath = path.join(dirPath, path.basename(symlinkedPath))
-            dirView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
-            expect(-> atom.commands.dispatch(treeView.element, "tree-view:paste")).not.toThrow()
-            expect(fs.existsSync(newPath)).toBe true
-            expect(atom.notifications.getNotifications()[0]).toBeUndefined()
+          # symlink of /dir-1/ -> /dir-1/
+          LocalStorage["tree-view:copyPath"] = JSON.stringify([symlinkedPath])
+          newPath = path.join(dirPath, path.basename(symlinkedPath))
+          dirView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+          expect(-> atom.commands.dispatch(treeView.element, "tree-view:paste")).not.toThrow()
+          expect(fs.existsSync(newPath)).toBe true
+          expect(atom.notifications.getNotifications()[0]).toBeUndefined()
 
       describe "when pasting entries which don't exist anymore", ->
         it "skips the entry which doesn't exist", ->
@@ -1845,7 +1844,9 @@ describe "TreeView", ->
             expect(callback).toHaveBeenCalledWith({initialPath: filePath, newPath})
 
           describe 'when the target destination file exists', ->
-            it 'emits a warning and does not move the cut file', ->
+            it "prompts to replace the file", ->
+              spyOn(atom, 'confirm')
+
               callback = jasmine.createSpy("onEntryMoved")
               treeView.onEntryMoved(callback)
 
@@ -1855,11 +1856,55 @@ describe "TreeView", ->
               fileView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
               atom.commands.dispatch(treeView.element, "tree-view:paste")
 
-              expect(fs.existsSync(filePath)).toBeTruthy()
-              expect(callback).not.toHaveBeenCalled()
+              expect(atom.confirm).toHaveBeenCalled()
 
-              expect(atom.notifications.getNotifications().length).toBe(1)
-              expect(atom.notifications.getNotifications()[0].getMessage()).toContain('Unable to paste')
+            describe "when selecting the replace option", ->
+              it "replaces the existing file", ->
+                spyOn(atom, 'confirm').andReturn 0
+
+                callback = jasmine.createSpy("onEntryMoved")
+                treeView.onEntryMoved(callback)
+
+                filePath3 = path.join(dirPath2, "test-file.txt")
+                fs.writeFileSync(filePath3, "doesn't matter")
+
+                fileView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+                atom.commands.dispatch(treeView.element, "tree-view:paste")
+
+                expect(fs.existsSync(filePath)).toBe(false)
+                expect(callback).toHaveBeenCalledWith({initialPath: filePath, newPath: filePath3})
+
+            describe "when selecting the skip option", ->
+              it "does not replace the existing file", ->
+                spyOn(atom, 'confirm').andReturn 1
+
+                callback = jasmine.createSpy("onEntryMoved")
+                treeView.onEntryMoved(callback)
+
+                filePath3 = path.join(dirPath2, "test-file.txt")
+                fs.writeFileSync(filePath3, "doesn't matter")
+
+                fileView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+                atom.commands.dispatch(treeView.element, "tree-view:paste")
+
+                expect(fs.existsSync(filePath)).toBe(true)
+                expect(callback).not.toHaveBeenCalled()
+
+            describe "when cancelling the dialog", ->
+              it "does not replace the existing file", ->
+                spyOn(atom, 'confirm').andReturn 2
+
+                callback = jasmine.createSpy("onEntryMoved")
+                treeView.onEntryMoved(callback)
+
+                filePath3 = path.join(dirPath2, "test-file.txt")
+                fs.writeFileSync(filePath3, "doesn't matter")
+
+                fileView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+                atom.commands.dispatch(treeView.element, "tree-view:paste")
+
+                expect(fs.existsSync(filePath)).toBe(true)
+                expect(callback).not.toHaveBeenCalled()
 
           describe 'when the file is currently open', ->
             beforeEach ->
@@ -1931,20 +1976,62 @@ describe "TreeView", ->
             expect(callback).toHaveBeenCalledWith({initialPath: filePath2, newPath: newPath2})
             expect(callback).toHaveBeenCalledWith({initialPath: filePath3, newPath: newPath3})
 
-          describe 'when the target destination file exists', ->
-            it 'does not move the cut file', ->
-              LocalStorage['tree-view:cutPath'] = JSON.stringify([filePath2, filePath3])
+          describe "when the target destination file exists", ->
+            filePath5 = null
 
-              filePath4 = path.join(dirPath, "test-file2.txt")
-              filePath5 = path.join(dirPath, "test-file3.txt")
-              fs.writeFileSync(filePath4, "doesn't matter")
-              fs.writeFileSync(filePath5, "doesn't matter")
+            beforeEach ->
+              filePath5 = path.join(dirPath2, "test-file.txt") # So that dirPath2 has an exact copy of files in dirPath
+              filePath6 = path.join(dirPath, "test-file2.txt")
+              filePath7 = path.join(dirPath, "test-file3.txt")
+              fs.writeFileSync(filePath5, "doesn't matter 5")
+              fs.writeFileSync(filePath6, "doesn't matter 6")
+              fs.writeFileSync(filePath7, "doesn't matter 7")
+
+              LocalStorage['tree-view:cutPath'] = JSON.stringify([filePath5, filePath2, filePath3])
+
+            it "prompts for each file as long as cancel is not chosen", ->
+              calls = 0
+              getButton = ->
+                calls++
+                switch calls
+                  when 1
+                    return 0
+                  when 2
+                    return 1
+                  when 3
+                    return 0
+
+              spyOn(atom, 'confirm').andCallFake -> getButton()
 
               fileView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
               atom.commands.dispatch(treeView.element, "tree-view:paste")
 
-              expect(fs.existsSync(filePath2)).toBeTruthy()
-              expect(fs.existsSync(filePath3)).toBeTruthy()
+              expect(atom.confirm.calls.length).toBe(3)
+
+              expect(fs.existsSync(filePath5)).toBe(false)
+              expect(fs.existsSync(filePath2)).toBe(true)
+              expect(fs.existsSync(filePath3)).toBe(false)
+
+            it "immediately cancels any pending file moves when cancel is chosen", ->
+              calls = 0
+              getButton = ->
+                calls++
+                switch calls
+                  when 1
+                    return 0
+                  when 2
+                    return 2
+
+              spyOn(atom, 'confirm').andCallFake -> getButton()
+
+              fileView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+              atom.commands.dispatch(treeView.element, "tree-view:paste")
+
+              expect(atom.confirm.calls.length).toBe(2)
+
+              expect(fs.existsSync(filePath5)).toBe(false)
+              expect(fs.existsSync(filePath2)).toBe(true)
+              expect(fs.existsSync(filePath3)).toBe(true)
 
         describe "when a directory is selected", ->
           it "creates a copy of the original file in the selected directory and removes the original", ->
@@ -1970,7 +2057,7 @@ describe "TreeView", ->
           atom.notifications.clear()
           atom.commands.dispatch(treeView.element, "tree-view:paste")
 
-          expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Unable to paste paths'
+          expect(atom.notifications.getNotifications()[0].getMessage()).toContain 'Failed to copy entry'
           expect(atom.notifications.getNotifications()[0].getDetail()).toContain 'ENOENT: no such file or directory'
 
     describe "tree-view:add-file", ->
@@ -3832,6 +3919,18 @@ describe "TreeView", ->
      deltaFilePath, epsilonFilePath, thetaDirPath, thetaFilePath] = []
 
     beforeEach ->
+      # tree-view
+      # ├── alpha/
+      # │   ├── beta.txt
+      # │   └── eta/
+      # ├── alpha.txt
+      # ├── gamma/
+      # │   ├── delta.txt
+      # │   ├── epsilon.txt
+      # │   └── theta/
+      # │       └── theta.txt
+      # └── zeta.txt
+
       rootDirPath = fs.absolute(temp.mkdirSync('tree-view'))
 
       alphaFilePath = path.join(rootDirPath, "alpha.txt")
@@ -3932,6 +4031,9 @@ describe "TreeView", ->
         gammaDir.expand()
         deltaFile = gammaDir.entries.children[1]
 
+        alphaDirContents = findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length
+        gammaDirContents = findDirectoryContainingText(treeView.roots[0], 'gamma').querySelectorAll('.entry').length
+
         [dragStartEvent, dragEnterEvent, dropEvent] =
             eventHelpers.buildInternalDragEvents([deltaFile], alphaDir.querySelector('.header'), alphaDir, treeView)
 
@@ -3940,10 +4042,39 @@ describe "TreeView", ->
         expect(alphaDir.children.length).toBe 2
 
         waitsFor "directory view contents to refresh", ->
-          findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > 2
+          findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > alphaDirContents and
+          findDirectoryContainingText(treeView.roots[0], 'gamma').querySelectorAll('.entry').length < gammaDirContents
 
         runs ->
-          expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe 3
+          expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe alphaDirContents + 1
+          expect(findDirectoryContainingText(treeView.roots[0], 'gamma').querySelectorAll('.entry').length).toBe gammaDirContents - 1
+
+      describe 'when the ctrl/cmd modifier key is pressed', ->
+        it "should copy the file to the hovered directory", ->
+          # Dragging delta.txt onto alphaDir
+          alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
+          alphaDir.expand()
+
+          gammaDir = findDirectoryContainingText(treeView.roots[0], 'gamma')
+          gammaDir.expand()
+          deltaFile = gammaDir.entries.children[1]
+
+          alphaDirContents = findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length
+          gammaDirContents = findDirectoryContainingText(treeView.roots[0], 'gamma').querySelectorAll('.entry').length
+
+          [dragStartEvent, dragEnterEvent, dropEvent] =
+              eventHelpers.buildInternalDragEvents([deltaFile], alphaDir.querySelector('.header'), alphaDir, treeView, true)
+
+          treeView.onDragStart(dragStartEvent)
+          treeView.onDrop(dropEvent)
+          expect(alphaDir.children.length).toBe 2
+
+          waitsFor "directory view contents to refresh", ->
+            findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > alphaDirContents
+
+          runs ->
+            expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe alphaDirContents + 1
+            expect(findDirectoryContainingText(treeView.roots[0], 'gamma').querySelectorAll('.entry').length).toBe gammaDirContents
 
       it "shouldn't update editors with similar file paths", ->
         deltaFilePath2 = path.join(gammaDirPath, 'delta.txt2')
@@ -3986,6 +4117,9 @@ describe "TreeView", ->
         gammaDir.expand()
         deltaFile = gammaDir.entries.children[1]
 
+        alphaDirContents = findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length
+        gammaDirContents = findDirectoryContainingText(treeView.roots[0], 'gamma').querySelectorAll('.entry').length
+
         [dragStartEvent, dragEnterEvent, dropEvent] =
             eventHelpers.buildInternalDragEvents([deltaFile], betaFile, alphaDir, treeView)
 
@@ -3994,10 +4128,12 @@ describe "TreeView", ->
         expect(alphaDir.children.length).toBe 2
 
         waitsFor "directory view contents to refresh", ->
-          findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > 2
+          findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > alphaDirContents and
+          findDirectoryContainingText(treeView.roots[0], 'gamma').querySelectorAll('.entry').length < gammaDirContents
 
         runs ->
-          expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe 3
+          expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe alphaDirContents + 1
+          expect(findDirectoryContainingText(treeView.roots[0], 'gamma').querySelectorAll('.entry').length).toBe gammaDirContents - 1
 
       it "shouldn't update editors with similar file paths", ->
         deltaFilePath2 = path.join(gammaDirPath, 'delta.txt2')
@@ -4032,13 +4168,16 @@ describe "TreeView", ->
 
     describe "when dropping multiple FileViews onto a DirectoryView's header", ->
       it "should move the files to the hovered directory", ->
-        # Dragging delta.txt onto alphaDir
+        # Dragging multiple files in gammaDir onto alphaDir
         alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
         alphaDir.expand()
 
         gammaDir = findDirectoryContainingText(treeView.roots[0], 'gamma')
         gammaDir.expand()
         gammaFiles = [].slice.call(gammaDir.entries.children, 1, 3)
+
+        alphaDirContents = findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length
+        gammaDirContents = findDirectoryContainingText(treeView.roots[0], 'gamma').querySelectorAll('.entry').length
 
         [dragStartEvent, dragEnterEvent, dropEvent] =
             eventHelpers.buildInternalDragEvents(gammaFiles, alphaDir.querySelector('.header'), alphaDir, treeView)
@@ -4049,10 +4188,12 @@ describe "TreeView", ->
           expect(alphaDir.entries.children.length).toBe 2
 
         waitsFor "directory view contents to refresh", ->
-          findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > 2
+          findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > alphaDirContents and
+          findDirectoryContainingText(treeView.roots[0], 'gamma').querySelectorAll('.entry').length < gammaDirContents
 
         runs ->
-          expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe 4
+          expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe alphaDirContents + 2
+          expect(findDirectoryContainingText(treeView.roots[0], 'gamma').querySelectorAll('.entry').length).toBe gammaDirContents - 2
 
     describe "when dropping a DirectoryView and FileViews onto a DirectoryView's header", ->
       it "should move the files and directory to the hovered directory", ->
@@ -4066,6 +4207,9 @@ describe "TreeView", ->
         thetaDir = findDirectoryContainingText(treeView.roots[0], 'theta')
         thetaDir.expand()
 
+        alphaDirContents = findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length
+        thetaDirContents = findDirectoryContainingText(treeView.roots[0], 'theta').querySelectorAll('.entry').length
+
         dragged = [alphaFile, alphaDir]
 
         [dragStartEvent, dragEnterEvent, dropEvent] =
@@ -4077,15 +4221,15 @@ describe "TreeView", ->
           expect(thetaDir.children.length).toBe 2
 
         waitsFor "directory view contents to refresh", ->
-          findDirectoryContainingText(treeView.roots[0], 'theta').querySelectorAll('.entry').length > 2
+          findDirectoryContainingText(treeView.roots[0], 'theta').querySelectorAll('.entry').length > thetaDirContents
 
         runs ->
           thetaDir.expand()
-          expect(thetaDir.querySelectorAll('.entry').length).toBe 3
+          expect(thetaDir.querySelectorAll('.entry').length).toBe thetaDirContents + 2
           # alpha dir still has all its entries
           alphaDir = findDirectoryContainingText(thetaDir.entries, 'alpha')
           alphaDir.expand()
-          expect(alphaDir.querySelectorAll('.entry').length).toBe 2
+          expect(alphaDir.querySelectorAll('.entry').length).toBe alphaDirContents
 
     describe "when dropping a DirectoryView onto a DirectoryView's header", ->
       beforeEach ->
@@ -4102,6 +4246,9 @@ describe "TreeView", ->
         thetaDir = gammaDir.entries.children[0]
         thetaDir.expand()
 
+        alphaDirContents = findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length
+        thetaDirContents = findDirectoryContainingText(treeView.roots[0], 'theta').querySelectorAll('.entry').length
+
         [dragStartEvent, dragEnterEvent, dropEvent] =
           eventHelpers.buildInternalDragEvents([thetaDir], alphaDir.querySelector('.header'), alphaDir, treeView)
         treeView.onDragStart(dragStartEvent)
@@ -4109,10 +4256,15 @@ describe "TreeView", ->
         expect(alphaDir.children.length).toBe 2
 
         waitsFor "directory view contents to refresh", ->
-          findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > 2
+          findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > alphaDirContents
 
         runs ->
-          expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe 3
+          expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe alphaDirContents + 1
+
+          thetaDir = findDirectoryContainingText(alphaDir.entries, 'theta')
+          thetaDir.expand()
+          expect(thetaDir.querySelectorAll('.entry').length).toBe thetaDirContents
+
           editor = atom.workspace.getActiveTextEditor()
           expect(editor.getPath()).toBe(thetaFilePath.replace('gamma', 'alpha'))
 
@@ -4220,7 +4372,7 @@ describe "TreeView", ->
         expect(atom.notifications.getNotifications()[0]).toBeUndefined()
 
     describe "when dropping a DirectoryView and FileViews onto the same DirectoryView's header", ->
-      it "should not move the files and directory to the hovered directory", ->
+      it "should not move the files and directory", ->
         # Dragging alpha.txt and alphaDir into alphaDir
         alphaFile = treeView.roots[0].entries.children[2]
         alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
@@ -4237,11 +4389,43 @@ describe "TreeView", ->
         treeView.onDrop(dropEvent)
         expect(treeView.moveEntry).not.toHaveBeenCalled()
 
+    describe "when dropping a DirectoryView and FileViews in the same parent DirectoryView", ->
+      describe "when the ctrl/cmd modifier key is pressed", ->
+        it "should copy the files and directory", ->
+          # Dragging beta.txt and etaDir into alphaDir
+          alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
+          alphaDir.expand()
+          betaFile = alphaDir.entries.children[0]
+          etaDir = alphaDir.entries.children[1]
+
+          dragged = [betaFile, etaDir]
+
+          alphaDirContents = alphaDir.querySelectorAll('.entry').length
+
+          [dragStartEvent, dragEnterEvent, dropEvent] =
+              eventHelpers.buildInternalDragEvents(dragged, alphaDir.querySelector('.header'), alphaDir, treeView, true)
+
+          spyOn(treeView, 'copyEntry').andCallThrough()
+
+          treeView.onDragStart(dragStartEvent)
+          treeView.onDrop(dropEvent)
+          expect(treeView.copyEntry).toHaveBeenCalled()
+
+          waitsFor "directory view contents to refresh", ->
+            findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > alphaDirContents
+
+          runs ->
+            expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe alphaDirContents + 2
+            expect(fs.existsSync(path.join(alphaDirPath, 'beta0.txt'))).toBe true
+            expect(fs.existsSync(path.join(alphaDirPath, 'eta0'))).toBe true
+
     describe "when dragging a file from the OS onto a DirectoryView's header", ->
       it "should move the file to the hovered directory", ->
         # Dragging delta.txt from OS file explorer onto alphaDir
         alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
         alphaDir.expand()
+
+        alphaDirContents = findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length
 
         dropEvent = eventHelpers.buildExternalDropEvent([deltaFilePath], alphaDir)
 
@@ -4249,10 +4433,32 @@ describe "TreeView", ->
         expect(alphaDir.children.length).toBe 2
 
         waitsFor "directory view contents to refresh", ->
-          findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > 2
+          findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > alphaDirContents
 
         runs ->
-          expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe 3
+          expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe alphaDirContents + 1
+          expect(fs.existsSync(deltaFilePath)).toBe false
+
+      describe "when the ctrl/cmd modifier key is pressed", ->
+        it "should copy the file to the hovered directory", ->
+          # Dragging delta.txt from OS file explorer onto alphaDir
+          alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
+          alphaDir.expand()
+
+          alphaDirContents = findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length
+
+          dropEvent = eventHelpers.buildExternalDropEvent([deltaFilePath], alphaDir, true)
+
+          runs ->
+            treeView.onDrop(dropEvent)
+            expect(alphaDir.children.length).toBe 2
+
+          waitsFor "directory view contents to refresh", ->
+            findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > alphaDirContents
+
+          runs ->
+            expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe alphaDirContents + 1
+            expect(fs.existsSync(deltaFilePath)).toBe true
 
     describe "when dragging a directory from the OS onto a DirectoryView's header", ->
       it "should move the directory to the hovered directory", ->
@@ -4260,15 +4466,17 @@ describe "TreeView", ->
         alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
         alphaDir.expand()
 
+        alphaDirContents = findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length
+
         dropEvent = eventHelpers.buildExternalDropEvent([gammaDirPath], alphaDir)
         treeView.onDrop(dropEvent)
         expect(alphaDir.children.length).toBe 2
 
         waitsFor "directory view contents to refresh", ->
-          findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > 2
+          findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > alphaDirContents
 
         runs ->
-          expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe 3
+          expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe alphaDirContents + 1
 
     describe "when dragging a file and directory from the OS onto a DirectoryView's header", ->
       it "should move the file and directory to the hovered directory", ->
@@ -4276,16 +4484,18 @@ describe "TreeView", ->
         alphaDir = findDirectoryContainingText(treeView.roots[0], 'alpha')
         alphaDir.expand()
 
+        alphaDirContents = findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length
+
         dropEvent = eventHelpers.buildExternalDropEvent([deltaFilePath, gammaDirPath], alphaDir)
 
         treeView.onDrop(dropEvent)
         expect(alphaDir.children.length).toBe 2
 
         waitsFor "directory view contents to refresh", ->
-          findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > 3
+          findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length > alphaDirContents
 
         runs ->
-          expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe 4
+          expect(findDirectoryContainingText(treeView.roots[0], 'alpha').querySelectorAll('.entry').length).toBe alphaDirContents + 2
 
     describe "when dragging a directory from the OS onto a blank section of the Tree View", ->
       it "should create a new project folder", ->
