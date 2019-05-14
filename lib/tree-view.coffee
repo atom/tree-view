@@ -707,7 +707,7 @@ class TreeView
         if copiedPaths
           @copyEntry(initialPath, newDirectoryPath)
         else if cutPaths
-          @moveEntry(initialPath, newDirectoryPath)
+          break unless @moveEntry(initialPath, newDirectoryPath)
 
   add: (isCreatingFile) ->
     selectedEntry = @selectedEntry() ? @roots[0]

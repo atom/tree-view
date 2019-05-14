@@ -1844,7 +1844,9 @@ describe "TreeView", ->
             expect(callback).toHaveBeenCalledWith({initialPath: filePath, newPath})
 
           describe 'when the target destination file exists', ->
-            it 'emits a warning and does not move the cut file', ->
+            it "prompts to replace the file", ->
+              spyOn(atom, 'confirm')
+
               callback = jasmine.createSpy("onEntryMoved")
               treeView.onEntryMoved(callback)
 
@@ -1854,11 +1856,55 @@ describe "TreeView", ->
               fileView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
               atom.commands.dispatch(treeView.element, "tree-view:paste")
 
-              expect(fs.existsSync(filePath)).toBeTruthy()
-              expect(callback).not.toHaveBeenCalled()
+              expect(atom.confirm).toHaveBeenCalled()
 
-              expect(atom.notifications.getNotifications().length).toBe(1)
-              expect(atom.notifications.getNotifications()[0].getMessage()).toContain('Failed to move')
+            describe "when selecting the replace option", ->
+              it "replaces the existing file", ->
+                spyOn(atom, 'confirm').andReturn 0
+
+                callback = jasmine.createSpy("onEntryMoved")
+                treeView.onEntryMoved(callback)
+
+                filePath3 = path.join(dirPath2, "test-file.txt")
+                fs.writeFileSync(filePath3, "doesn't matter")
+
+                fileView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+                atom.commands.dispatch(treeView.element, "tree-view:paste")
+
+                expect(fs.existsSync(filePath)).toBe(false)
+                expect(callback).toHaveBeenCalledWith({initialPath: filePath, newPath: filePath3})
+
+            describe "when selecting the skip option", ->
+              it "does not replace the existing file", ->
+                spyOn(atom, 'confirm').andReturn 1
+
+                callback = jasmine.createSpy("onEntryMoved")
+                treeView.onEntryMoved(callback)
+
+                filePath3 = path.join(dirPath2, "test-file.txt")
+                fs.writeFileSync(filePath3, "doesn't matter")
+
+                fileView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+                atom.commands.dispatch(treeView.element, "tree-view:paste")
+
+                expect(fs.existsSync(filePath)).toBe(true)
+                expect(callback).not.toHaveBeenCalled()
+
+            describe "when cancelling the dialog", ->
+              it "does not replace the existing file", ->
+                spyOn(atom, 'confirm').andReturn 2
+
+                callback = jasmine.createSpy("onEntryMoved")
+                treeView.onEntryMoved(callback)
+
+                filePath3 = path.join(dirPath2, "test-file.txt")
+                fs.writeFileSync(filePath3, "doesn't matter")
+
+                fileView2.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+                atom.commands.dispatch(treeView.element, "tree-view:paste")
+
+                expect(fs.existsSync(filePath)).toBe(true)
+                expect(callback).not.toHaveBeenCalled()
 
           describe 'when the file is currently open', ->
             beforeEach ->
@@ -1930,20 +1976,62 @@ describe "TreeView", ->
             expect(callback).toHaveBeenCalledWith({initialPath: filePath2, newPath: newPath2})
             expect(callback).toHaveBeenCalledWith({initialPath: filePath3, newPath: newPath3})
 
-          describe 'when the target destination file exists', ->
-            it 'does not move the cut file', ->
-              LocalStorage['tree-view:cutPath'] = JSON.stringify([filePath2, filePath3])
+          describe "when the target destination file exists", ->
+            filePath5 = null
 
-              filePath4 = path.join(dirPath, "test-file2.txt")
-              filePath5 = path.join(dirPath, "test-file3.txt")
-              fs.writeFileSync(filePath4, "doesn't matter")
-              fs.writeFileSync(filePath5, "doesn't matter")
+            beforeEach ->
+              filePath5 = path.join(dirPath2, "test-file.txt") # So that dirPath2 has an exact copy of files in dirPath
+              filePath6 = path.join(dirPath, "test-file2.txt")
+              filePath7 = path.join(dirPath, "test-file3.txt")
+              fs.writeFileSync(filePath5, "doesn't matter 5")
+              fs.writeFileSync(filePath6, "doesn't matter 6")
+              fs.writeFileSync(filePath7, "doesn't matter 7")
+
+              LocalStorage['tree-view:cutPath'] = JSON.stringify([filePath5, filePath2, filePath3])
+
+            it "prompts for each file as long as cancel is not chosen", ->
+              calls = 0
+              getButton = ->
+                calls++
+                switch calls
+                  when 1
+                    return 0
+                  when 2
+                    return 1
+                  when 3
+                    return 0
+
+              spyOn(atom, 'confirm').andCallFake -> getButton()
 
               fileView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
               atom.commands.dispatch(treeView.element, "tree-view:paste")
 
-              expect(fs.existsSync(filePath2)).toBeTruthy()
-              expect(fs.existsSync(filePath3)).toBeTruthy()
+              expect(atom.confirm.calls.length).toBe(3)
+
+              expect(fs.existsSync(filePath5)).toBe(false)
+              expect(fs.existsSync(filePath2)).toBe(true)
+              expect(fs.existsSync(filePath3)).toBe(false)
+
+            it "immediately cancels any pending file moves when cancel is chosen", ->
+              calls = 0
+              getButton = ->
+                calls++
+                switch calls
+                  when 1
+                    return 0
+                  when 2
+                    return 2
+
+              spyOn(atom, 'confirm').andCallFake -> getButton()
+
+              fileView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+              atom.commands.dispatch(treeView.element, "tree-view:paste")
+
+              expect(atom.confirm.calls.length).toBe(2)
+
+              expect(fs.existsSync(filePath5)).toBe(false)
+              expect(fs.existsSync(filePath2)).toBe(true)
+              expect(fs.existsSync(filePath3)).toBe(true)
 
         describe "when a directory is selected", ->
           it "creates a copy of the original file in the selected directory and removes the original", ->
