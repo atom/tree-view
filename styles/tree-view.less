@@ -13,6 +13,37 @@
   display: flex;
   flex-direction: column;
 
+  #add-projects-view {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    font-size: 1.25em;
+    padding: 30px;
+    cursor: default;
+
+    > * {
+      margin: 10px 0;
+    }
+
+    .description {
+      margin: 10px 0;
+    }
+
+    .icon::before {
+      color: #c1c1c1;
+    }
+  }
+
+  .icon-large::before {
+    margin-right: 0;
+    margin-bottom: 50px;
+    width: auto;
+    height: auto;
+    font-size: 8em;
+  }
+
   .tree-view-root {
     padding-left: @component-icon-padding;
     padding-right: @component-padding;

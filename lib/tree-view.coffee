@@ -11,6 +11,8 @@ MoveDialog = require './move-dialog'
 CopyDialog = require './copy-dialog'
 IgnoredNames = null # Defer requiring until actually needed
 
+AddProjectsView = require './add-projects-view'
+
 Directory = require './directory'
 DirectoryView = require './directory-view'
 RootDragAndDrop = require './root-drag-and-drop'
@@ -32,7 +34,6 @@ class TreeView
 
     @list = document.createElement('ol')
     @list.classList.add('tree-view-root', 'full-menu', 'list-tree', 'has-collapsable-children', 'focusable-panel')
-    @element.appendChild(@list)
 
     @disposables = new CompositeDisposable
     @emitter = new Emitter
@@ -323,33 +324,45 @@ class TreeView
       root.directory.destroy()
       root.remove()
 
-    IgnoredNames ?= require('./ignored-names')
+    @roots = []
 
-    @roots = for projectPath in atom.project.getPaths()
-      stats = fs.lstatSyncNoException(projectPath)
-      continue unless stats
-      stats = _.pick stats, _.keys(stats)...
-      for key in ["atime", "birthtime", "ctime", "mtime"]
-        stats[key] = stats[key].getTime()
+    projectPaths = atom.project.getPaths()
+    if projectPaths.length > 0
+      @element.appendChild(@list) unless @element.querySelector('tree-view-root')
 
-      directory = new Directory({
-        name: path.basename(projectPath)
-        fullPath: projectPath
-        symlink: false
-        isRoot: true
-        expansionState: expansionStates[projectPath] ?
-                        oldExpansionStates[projectPath] ?
-                        {isExpanded: true}
-        ignoredNames: new IgnoredNames()
-        @useSyncFS
-        stats
-      })
-      root = new DirectoryView(directory).element
-      @list.appendChild(root)
-      root
+      addProjectsViewElement = @element.querySelector('#add-projects-view')
+      @element.removeChild(addProjectsViewElement) if addProjectsViewElement
 
-    # The DOM has been recreated; reselect everything
-    @selectMultipleEntries(@entryForPath(selectedPath)) for selectedPath in selectedPaths
+      IgnoredNames ?= require('./ignored-names')
+
+      @roots = for projectPath in projectPaths
+        stats = fs.lstatSyncNoException(projectPath)
+        continue unless stats
+        stats = _.pick stats, _.keys(stats)...
+        for key in ["atime", "birthtime", "ctime", "mtime"]
+          stats[key] = stats[key].getTime()
+
+        directory = new Directory({
+          name: path.basename(projectPath)
+          fullPath: projectPath
+          symlink: false
+          isRoot: true
+          expansionState: expansionStates[projectPath] ?
+                          oldExpansionStates[projectPath] ?
+                          {isExpanded: true}
+          ignoredNames: new IgnoredNames()
+          @useSyncFS
+          stats
+        })
+        root = new DirectoryView(directory).element
+        @list.appendChild(root)
+        root
+
+      # The DOM has been recreated; reselect everything
+      @selectMultipleEntries(@entryForPath(selectedPath)) for selectedPath in selectedPaths
+    else
+      @element.removeChild(@list) if @element.querySelector('.tree-view-root')
+      @element.appendChild(new AddProjectsView().element) unless @element.querySelector('#add-projects-view')
 
   getActivePath: -> atom.workspace.getCenter().getActivePaneItem()?.getPath?()
 

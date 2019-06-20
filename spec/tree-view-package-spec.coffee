@@ -98,25 +98,68 @@ describe "TreeView", ->
     it "makes the root folder non-draggable", ->
       expect(treeView.roots[0].hasAttribute('draggable')).toBe(false)
 
-    describe "when the project has no path", ->
+    describe "when the project has no paths", ->
       beforeEach ->
         atom.project.setPaths([])
-        waitsForPromise ->
-          Promise.resolve(atom.packages.deactivatePackage("tree-view")) # Wrapped for both async and non-async versions of Atom
-        runs ->
-          expect(atom.workspace.getLeftDock().getActivePaneItem()).toBeUndefined()
 
-        waitsForPromise -> atom.packages.activatePackage("tree-view")
+      it "displays a view to add projects", ->
+        expect(treeView.element.querySelector('#add-projects-view')).toExist()
+        expect(treeView.element.querySelector('.tree-view-root')).not.toExist()
 
-        runs ->
-          treeView = atom.packages.getActivePackage("tree-view").mainModule.getTreeViewInstance()
+      describe "when clicking on 'Add projects'", ->
+        addProjectsButton = null
 
-      it "does not attach to the workspace or create a root node when initialized", ->
-        expect(treeView.element.parentElement).toBeFalsy()
-        expect(treeView.roots).toHaveLength(0)
+        beforeEach ->
+          addProjectsButton = treeView.element.querySelector('#add-projects-view .btn-primary')
 
-      it "does not attach to the workspace or create a root node when attach() is called", ->
-        expect(atom.workspace.getLeftDock().getActivePaneItem()).toBeUndefined()
+        it "opens up a folder picker", ->
+          spyOn(atom, 'pickFolder')
+
+          addProjectsButton.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+
+          expect(atom.pickFolder).toHaveBeenCalled()
+
+        it "sets the project paths with whatever folders are chosen", ->
+          done = false
+
+          spyOn(atom.project, 'setPaths')
+          spyOn(atom, 'pickFolder').andCallFake (callback) ->
+            callback([path1, path2])
+            expect(atom.project.setPaths).toHaveBeenCalledWith([path1, path2])
+            done = true
+
+          addProjectsButton.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+
+          waitsFor -> done
+
+        it "does not attempt to set any project paths if the folder picker was cancelled", ->
+          done = false
+
+          spyOn(atom.project, 'setPaths')
+          spyOn(atom, 'pickFolder').andCallFake (callback) ->
+            callback(null)
+            expect(atom.project.setPaths).not.toHaveBeenCalled()
+            done = true
+
+          addProjectsButton.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+
+          waitsFor -> done
+
+      describe "when clicking on 'Reopen Projects'", ->
+        reopenProjectsButton = null
+
+        beforeEach ->
+          reopenProjectsButton = treeView.element.querySelectorAll('#add-projects-view .btn')[1]
+
+        it "opens a modal to choose an old project", ->
+          done = false
+
+          atom.commands.onDidDispatch (event) ->
+            done = true if event.type is 'application:reopen-project'
+
+          reopenProjectsButton.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+
+          waitsFor -> done
 
       it "does not throw an exception when files are opened", ->
         filePath = path.join(os.tmpdir(), 'non-project-file.txt')
@@ -136,77 +179,19 @@ describe "TreeView", ->
           treeView.revealActiveFile()
 
         runs ->
-          expect(treeView.element.parentElement).toBeFalsy()
           expect(treeView.roots).toHaveLength(0)
 
-      describe "when the project is assigned a path because a new buffer is saved", ->
-        it "creates a root directory view and attaches to the workspace", ->
+      describe "when the project is assigned a path", ->
+        it "creates a root directory view", ->
           projectPath = temp.mkdirSync('atom-project')
 
-          waitsForPromise ->
-            atom.workspace.open()
+          atom.project.setPaths([projectPath])
 
-          waitsFor (done) ->
-            atom.workspace.getCenter().getActivePaneItem().saveAs(path.join(projectPath, 'test.txt'))
-            atom.workspace.onDidOpen(done)
+          expect(treeView.roots).toHaveLength(1)
+          expect(fs.absolute(treeView.roots[0].getPath())).toBe fs.absolute(projectPath)
 
-          runs ->
-            treeView = atom.workspace.getLeftDock().getActivePaneItem()
-            expect(treeView.roots).toHaveLength(1)
-            expect(fs.absolute(treeView.roots[0].getPath())).toBe fs.absolute(projectPath)
-
-    describe "when the root view is opened to a file path", ->
-      it "does not show the dock on activation", ->
-
-        waitsForPromise ->
-          Promise.resolve(atom.packages.deactivatePackage("tree-view")) # Wrapped for both async and non-async versions of Atom
-
-        runs ->
-          atom.packages.packageStates = {}
-          atom.workspace.getLeftDock().hide()
-          expect(atom.workspace.getLeftDock().isVisible()).toBe(false)
-
-        waitsForPromise ->
-          atom.workspace.open('tree-view.js')
-
-        runs ->
-          expect(atom.workspace.getLeftDock().isVisible()).toBe(false)
-
-        waitForPackageActivation()
-
-        runs ->
-          expect(atom.workspace.getLeftDock().isVisible()).toBe(false)
-          atom.project.addPath(path.join(__dirname, 'fixtures'))
-
-        waitsFor -> atom.workspace.getLeftDock().isVisible()
-
-    describe "when the root view is opened to a directory", ->
-      it "attaches to the workspace", ->
-        waitsForPromise -> atom.packages.activatePackage('tree-view')
-
-        runs ->
-          treeView = atom.packages.getActivePackage("tree-view").mainModule.getTreeViewInstance()
-          expect(treeView.element.parentElement).toBeTruthy()
-          expect(treeView.roots).toHaveLength(2)
-
-    describe "when the project is a .git folder", ->
-      it "does not create the tree view", ->
-        dotGit = path.join(temp.mkdirSync('repo'), '.git')
-        fs.makeTreeSync(dotGit)
-        atom.project.setPaths([dotGit])
-
-        waitsForPromise ->
-          Promise.resolve(atom.packages.deactivatePackage("tree-view")) # Wrapped for both async and non-async versions of Atom
-
-        runs ->
-          atom.packages.packageStates = {}
-
-        waitsForPromise ->
-          atom.packages.activatePackage('tree-view')
-
-        runs ->
-          {treeView} = atom.packages.getActivePackage("tree-view").mainModule
-          expect(treeView).toBeFalsy()
+          expect(treeView.element.querySelector('.tree-view-root')).toExist()
+          expect(treeView.element.querySelector('#add-projects-view')).not.toExist()
 
   describe "on package deactivation", ->
     it "destroys the Tree View", ->
