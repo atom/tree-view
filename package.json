@@ -80,15 +80,31 @@
       "default": true,
       "description": "When listing directory items, list subdirectories before listing files."
     },
-    "autoReveal": {
-      "type": "boolean",
-      "default": false,
-      "description": "Reveal tree view entries when they become the active pane item."
+    "autoTrackActivePane": {
+      "type": "object",
+      "title": "Auto Select Active Pane",
+      "description": "The Active Pane is typically the focused editor buffer", 
+      "properties": {
+        "enabled": {
+          "order": 1,
+          "title": "Enabled",
+          "type": "boolean",
+          "default": true,
+          "description": "Change the selected tree node to reflect the active pane item as it changes."
+        },
+        "autoReveal": {
+          "order": 2,
+          "title": "Auto Reveal",
+          "type": "boolean",
+          "default": false,
+          "description": "If the new tree selection is not visible, expand and scroll as needed to reveal it into view."
+        }
+      }
     },
     "focusOnReveal": {
       "type": "boolean",
       "default": true,
-      "description": "Focus the tree view when revealing entries."
+      "description": "Make the `Reveal Active File` command focus the tree view after it selects and reveals the active pane item"
     },
     "alwaysOpenExisting": {
       "type": "boolean",

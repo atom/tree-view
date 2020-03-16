@@ -776,10 +776,10 @@ describe "TreeView", ->
           dirView = root1.querySelector('.directory')
           expect(dirView).toHaveClass 'selected'
 
-      describe "when the tree-view.autoReveal config setting is true", ->
+      describe "when the tree-view.autoTrackActivePane.autoReveal config setting is true", ->
         beforeEach ->
           jasmine.attachToDOM(atom.workspace.getElement())
-          atom.config.set "tree-view.autoReveal", true
+          atom.config.set "tree-view.autoTrackActivePane.autoReveal", true
 
         it "selects the active item's entry in the tree view, expanding parent directories if needed", ->
           waitsForPromise ->
@@ -790,6 +790,27 @@ describe "TreeView", ->
 
           runs ->
             expect(atom.workspace.getActiveTextEditor().getElement()).toHaveFocus()
+
+      describe "when the tree-view.autoTrackActivePane.enabled config setting is false", ->
+        beforeEach ->
+          jasmine.attachToDOM(atom.workspace.getElement())
+          atom.config.set "tree-view.autoTrackActivePane.enabled", false
+
+        it "does not change the selection", ->
+          currentSelection = treeView.getSelectedEntries()[0].textContent
+          console.log "currentSelection="+currentSelection
+          done = false
+          disposable = atom.workspace.getCenter().onDidChangeActivePaneItem =>
+            disposable.dispose()
+            done = true
+
+          waitsForPromise ->
+            atom.workspace.open(path.join('dir1', 'sub-dir1', 'sub-file1'))
+
+          waitsFor -> done
+
+          runs ->
+            expect(treeView.getSelectedEntries()[0].textContent).toBe(currentSelection)
 
   describe "when a different editor becomes active", ->
     beforeEach ->
