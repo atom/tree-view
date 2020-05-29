@@ -6,11 +6,15 @@ import Dialog from './dialog'
 import {repoForPath} from "./helpers"
 
 export default class CopyDialog extends Dialog
+  constructor: (initialPath, {onCopy}) ->
     super
       prompt: 'Enter the new path for the duplicate.'
-      initialPath: atom.project.relativize(@initialPath)
+      initialPath: atom.project.relativize(initialPath)
       select: true
       iconClass: 'icon-arrow-right'
+
+    @initialPath = initialPath
+    @onCopy = onCopy
 
   onConfirm: (newPath) ->
     newPath = newPath.replace(/\s+$/, '') # Remove trailing whitespace
