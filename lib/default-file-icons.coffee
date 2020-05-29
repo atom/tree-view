@@ -1,5 +1,7 @@
-fs = require 'fs-plus'
-path = require 'path'
+'use babel'
+
+import path from 'path'
+import fs from 'fs-plus'
 
 class DefaultFileIcons
   iconClassForPath: (filePath) ->
@@ -20,4 +22,4 @@ class DefaultFileIcons
     else
       'icon-file-text'
 
-module.exports = new DefaultFileIcons
+export default new DefaultFileIcons
