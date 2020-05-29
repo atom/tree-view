@@ -1,10 +1,10 @@
-path = require 'path'
-fs = require 'fs-plus'
-Dialog = require './dialog'
-{repoForPath} = require './helpers'
+'use babel'
+import path from 'path'
+import fs from 'fs-plus'
+import Dialog from './dialog'
+import {repoForPath} from './helpers'
 
-module.exports =
-class AddDialog extends Dialog
+export default class AddDialog extends Dialog
   constructor: (initialPath, isCreatingFile) ->
     @isCreatingFile = isCreatingFile
 
