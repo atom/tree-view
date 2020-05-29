@@ -1,7 +1,7 @@
 {
   "name": "tree-view",
   "version": "0.228.0",
-  "main": "./lib/main",
+  "main": "./dist/main",
   "description": "Explore and open files in the current project.",
   "repository": "https://github.com/atom/tree-view",
   "license": "MIT",
@@ -9,6 +9,14 @@
     "atom": "*"
   },
   "private": true,
+  "scripts": {
+    "clean": "shx rm -rf dist",
+    "debug": "npm run clean && shx cp -r lib dist",
+    "dev": "npm run clean && env NODE_ENV=development rollup -c -w",
+    "build": "npm run clean && env NODE_ENV=production rollup -c",
+    "ppublish": "bash ./ppublish.sh",
+    "prepare": "npm run build"
+  },
   "dependencies": {
     "fs-plus": "^3.0.0",
     "minimatch": "~0.3.0",
