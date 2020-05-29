@@ -1,21 +1,23 @@
-path = require 'path'
-{shell} = require 'electron'
+'use babel'
 
-_ = require 'underscore-plus'
-{BufferedProcess, CompositeDisposable, Emitter} = require 'atom'
-{repoForPath, getStyleObject, getFullExtension} = require "./helpers"
-fs = require 'fs-plus'
+import path from 'path'
+import {shell} from 'electron'
 
-AddDialog = require './add-dialog'
-MoveDialog = require './move-dialog'
-CopyDialog = require './copy-dialog'
+import _ from 'underscore-plus'
+import {BufferedProcess, CompositeDisposable, Emitter} from 'atom'
+import {repoForPath, getStyleObject, getFullExtension} from "./helpers"
+import fs from 'fs-plus'
+
+import AddDialog from './add-dialog'
+import MoveDialog from './move-dialog'
+import CopyDialog from './copy-dialog'
 IgnoredNames = null # Defer requiring until actually needed
 
-AddProjectsView = require './add-projects-view'
+import AddProjectsView from './add-projects-view'
 
-Directory = require './directory'
-DirectoryView = require './directory-view'
-RootDragAndDrop = require './root-drag-and-drop'
+import Directory from './directory'
+import DirectoryView from './directory-view'
+import RootDragAndDrop from './root-drag-and-drop'
 
 TREE_VIEW_URI = 'atom://tree-view'
 
@@ -24,8 +26,7 @@ toggleConfig = (keyPath) ->
 
 nextId = 1
 
-module.exports =
-class TreeView
+export default class TreeView
   constructor: (state) ->
     @id = nextId++
     @element = document.createElement('div')
