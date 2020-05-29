@@ -6,15 +6,21 @@ import Dialog from './dialog'
 import {repoForPath} from "./helpers"
 
 export default class MoveDialog extends Dialog
+  constructor: (initialPath, {willMove, onMove, onMoveFailed}) ->
+    if fs.isDirectorySync(initialPath)
       prompt = 'Enter the new path for the directory.'
     else
       prompt = 'Enter the new path for the file.'
 
     super
       prompt: prompt
-      initialPath: atom.project.relativize(@initialPath)
+      initialPath: atom.project.relativize(initialPath)
       select: true
       iconClass: 'icon-arrow-right'
+
+    @willMove = willMove
+    @onMove = onMove
+    @onMoveFailed = onMoveFailed
 
   onConfirm: (newPath) ->
     newPath = newPath.replace(/\s+$/, '') # Remove trailing whitespace
