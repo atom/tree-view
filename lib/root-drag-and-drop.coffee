@@ -35,7 +35,11 @@ export default class RootDragAndDropHandler
     e.dataTransfer.setData 'project-root-index', Array.from(projectRoot.parentElement.children).indexOf(projectRoot)
 
     rootIndex = -1
-    (rootIndex = index; break) for root, index in @treeView.roots when root.directory is directory
+    for index in [0...@treeView.roots.length] by 1
+      root = this.treeView.roots[index]
+      if (root.directory is directory)
+        rootIndex = index
+        break
 
     e.dataTransfer.setData 'from-root-index', rootIndex
     e.dataTransfer.setData 'from-root-path', directory.path
