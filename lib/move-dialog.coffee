@@ -1,12 +1,11 @@
-path = require 'path'
-fs = require 'fs-plus'
-Dialog = require './dialog'
-{repoForPath} = require "./helpers"
+'use babel'
 
-module.exports =
-class MoveDialog extends Dialog
-  constructor: (@initialPath, {@willMove, @onMove, @onMoveFailed}) ->
-    if fs.isDirectorySync(@initialPath)
+import path from 'path'
+import fs from 'fs-plus'
+import Dialog from './dialog'
+import {repoForPath} from "./helpers"
+
+export default class MoveDialog extends Dialog
       prompt = 'Enter the new path for the directory.'
     else
       prompt = 'Enter the new path for the file.'
