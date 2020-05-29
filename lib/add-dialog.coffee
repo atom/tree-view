@@ -6,7 +6,6 @@ import {repoForPath} from './helpers'
 
 export default class AddDialog extends Dialog
   constructor: (initialPath, isCreatingFile) ->
-    @isCreatingFile = isCreatingFile
 
     if fs.isFileSync(initialPath)
       directoryPath = path.dirname(initialPath)
@@ -14,7 +13,7 @@ export default class AddDialog extends Dialog
       directoryPath = initialPath
 
     relativeDirectoryPath = directoryPath
-    [@rootProjectPath, relativeDirectoryPath] = atom.project.relativizePath(directoryPath)
+    [rootProjectPath, relativeDirectoryPath] = atom.project.relativizePath(directoryPath)
     relativeDirectoryPath += path.sep if relativeDirectoryPath.length > 0
 
     super
@@ -22,6 +21,10 @@ export default class AddDialog extends Dialog
       initialPath: relativeDirectoryPath
       select: false
       iconClass: if isCreatingFile then 'icon-file-add' else 'icon-file-directory-create'
+
+    @isCreatingFile = isCreatingFile
+    @rootProjectPath = rootProjectPath
+
 
   onDidCreateFile: (callback) ->
     @emitter.on('did-create-file', callback)
