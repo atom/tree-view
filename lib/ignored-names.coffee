@@ -1,7 +1,8 @@
+'use babel'
+
 Minimatch = null  # Defer requiring until actually needed
 
-module.exports =
-class IgnoredNames
+export default class IgnoredNames
   constructor: ->
     @ignoredPatterns = []
 
