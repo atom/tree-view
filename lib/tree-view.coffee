@@ -12,6 +12,7 @@ import AddDialog from './add-dialog'
 import MoveDialog from './move-dialog'
 import CopyDialog from './copy-dialog'
 IgnoredNames = null # Defer requiring until actually needed
+import {ignoredNamesImporter} from './ignored-names-importer.js'
 
 import AddProjectsView from './add-projects-view'
 
@@ -334,7 +335,7 @@ export default class TreeView
       addProjectsViewElement = @element.querySelector('#add-projects-view')
       @element.removeChild(addProjectsViewElement) if addProjectsViewElement
 
-      IgnoredNames ?= require('./ignored-names')
+      IgnoredNames ?= await ignoredNamesImporter()
 
       @roots = for projectPath in projectPaths
         stats = fs.lstatSyncNoException(projectPath)

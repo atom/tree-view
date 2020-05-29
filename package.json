@@ -70,7 +70,8 @@
       "atom"
     ],
     "ignore": [
-      "/spec/fixtures/"
+      "/spec/fixtures/",
+      "lib/ignored-names-importer.js"
     ]
   },
   "configSchema": {
