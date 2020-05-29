@@ -1,11 +1,11 @@
-path = require 'path'
-fs = require 'fs-plus'
-Dialog = require './dialog'
-{repoForPath} = require "./helpers"
+'use babel'
 
-module.exports =
-class CopyDialog extends Dialog
-  constructor: (@initialPath, {@onCopy}) ->
+import path from 'path'
+import fs from 'fs-plus'
+import Dialog from './dialog'
+import {repoForPath} from "./helpers"
+
+export default class CopyDialog extends Dialog
     super
       prompt: 'Enter the new path for the duplicate.'
       initialPath: atom.project.relativize(@initialPath)
