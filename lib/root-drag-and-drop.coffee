@@ -1,5 +1,3 @@
-'use babel'
-
 import url from 'url'
 
 import {ipcRenderer, remote} from 'electron'

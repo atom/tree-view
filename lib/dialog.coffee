@@ -1,5 +1,3 @@
-'use babel'
-
 import {TextEditor, CompositeDisposable, Disposable, Emitter, Range, Point} from'atom'
 import path from 'path'
 import {getFullExtension} from "./helpers"

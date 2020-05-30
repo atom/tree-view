@@ -1,7 +1,4 @@
-'use babel'
-
 import path from "path"
-
 
 export repoForPath = (goalPath) ->
   for projectPath, i in atom.project.getPaths()

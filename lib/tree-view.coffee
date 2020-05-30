@@ -1,5 +1,3 @@
-'use babel'
-
 import path from 'path'
 import {shell} from 'electron'
 
