@@ -1,9 +1,8 @@
-{TextEditor, CompositeDisposable, Disposable, Emitter, Range, Point} = require 'atom'
-path = require 'path'
-{getFullExtension} = require "./helpers"
+import {TextEditor, CompositeDisposable, Disposable, Emitter, Range, Point} from'atom'
+import path from 'path'
+import {getFullExtension} from "./helpers"
 
-module.exports =
-class Dialog
+export default class Dialog
   constructor: ({initialPath, select, iconClass, prompt} = {}) ->
     @emitter = new Emitter()
     @disposables = new CompositeDisposable()

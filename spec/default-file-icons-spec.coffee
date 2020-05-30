@@ -2,7 +2,7 @@ fs = require 'fs-plus'
 path = require 'path'
 temp = require('temp').track()
 
-fileIcons = require '../lib/default-file-icons'
+fileIcons = require '../dist/main.js' # '../lib/default-file-icons'
 
 describe 'DefaultFileIcons', ->
   it 'defaults to text', ->

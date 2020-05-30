@@ -1,4 +1,4 @@
-const TreeView = require('../lib/tree-view')
+const TreeView = require('../dist/main.js') // require('../lib/tree-view')
 
 describe('TreeView', () => {
   describe('serialization', () => {

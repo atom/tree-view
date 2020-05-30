@@ -2,7 +2,7 @@ const {it, fit, ffit, beforeEach, afterEach} = require('./async-spec-helpers') /
 
 const path = require('path')
 
-const helpers = require('../lib/helpers')
+const helpers = require('../dist/main.js') // '../lib/helpers'
 
 describe('Helpers', () => {
   describe('repoForPath', () => {

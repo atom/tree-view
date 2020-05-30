@@ -1,12 +1,11 @@
-url = require 'url'
+import url from 'url'
 
-{ipcRenderer, remote} = require 'electron'
+import {ipcRenderer, remote} from 'electron'
 
 # TODO: Support dragging external folders and using the drag-and-drop indicators for them
 # Currently they're handled in TreeView's drag listeners
 
-module.exports =
-class RootDragAndDropHandler
+export default class RootDragAndDropHandler
   constructor: (@treeView) ->
     ipcRenderer.on('tree-view:project-folder-dropped', @onDropOnOtherWindow)
     @handleEvents()
@@ -34,7 +33,11 @@ class RootDragAndDropHandler
     e.dataTransfer.setData 'project-root-index', Array.from(projectRoot.parentElement.children).indexOf(projectRoot)
 
     rootIndex = -1
-    (rootIndex = index; break) for root, index in @treeView.roots when root.directory is directory
+    for index in [0...@treeView.roots.length] by 1
+      root = this.treeView.roots[index]
+      if (root.directory is directory)
+        rootIndex = index
+        break
 
     e.dataTransfer.setData 'from-root-index', rootIndex
     e.dataTransfer.setData 'from-root-path', directory.path

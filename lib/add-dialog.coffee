@@ -1,12 +1,10 @@
-path = require 'path'
-fs = require 'fs-plus'
-Dialog = require './dialog'
-{repoForPath} = require './helpers'
+import path from 'path'
+import fs from 'fs-plus'
+import Dialog from './dialog'
+import {repoForPath} from './helpers'
 
-module.exports =
-class AddDialog extends Dialog
+export default class AddDialog extends Dialog
   constructor: (initialPath, isCreatingFile) ->
-    @isCreatingFile = isCreatingFile
 
     if fs.isFileSync(initialPath)
       directoryPath = path.dirname(initialPath)
@@ -14,7 +12,7 @@ class AddDialog extends Dialog
       directoryPath = initialPath
 
     relativeDirectoryPath = directoryPath
-    [@rootProjectPath, relativeDirectoryPath] = atom.project.relativizePath(directoryPath)
+    [rootProjectPath, relativeDirectoryPath] = atom.project.relativizePath(directoryPath)
     relativeDirectoryPath += path.sep if relativeDirectoryPath.length > 0
 
     super
@@ -22,6 +20,10 @@ class AddDialog extends Dialog
       initialPath: relativeDirectoryPath
       select: false
       iconClass: if isCreatingFile then 'icon-file-add' else 'icon-file-directory-create'
+
+    @isCreatingFile = isCreatingFile
+    @rootProjectPath = rootProjectPath
+
 
   onDidCreateFile: (callback) ->
     @emitter.on('did-create-file', callback)

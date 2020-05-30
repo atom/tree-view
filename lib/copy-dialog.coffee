@@ -1,16 +1,18 @@
-path = require 'path'
-fs = require 'fs-plus'
-Dialog = require './dialog'
-{repoForPath} = require "./helpers"
+import path from 'path'
+import fs from 'fs-plus'
+import Dialog from './dialog'
+import {repoForPath} from "./helpers"
 
-module.exports =
-class CopyDialog extends Dialog
-  constructor: (@initialPath, {@onCopy}) ->
+export default class CopyDialog extends Dialog
+  constructor: (initialPath, {onCopy}) ->
     super
       prompt: 'Enter the new path for the duplicate.'
-      initialPath: atom.project.relativize(@initialPath)
+      initialPath: atom.project.relativize(initialPath)
       select: true
       iconClass: 'icon-arrow-right'
+
+    @initialPath = initialPath
+    @onCopy = onCopy
 
   onConfirm: (newPath) ->
     newPath = newPath.replace(/\s+$/, '') # Remove trailing whitespace
