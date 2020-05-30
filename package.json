@@ -10,6 +10,7 @@
   },
   "private": true,
   "scripts": {
+    "test": "atom --test spec",
     "clean": "shx rm -rf dist",
     "debug": "npm run clean && shx cp -r lib dist && coffee -c -M -o dist lib && env BABEL_ENV=development babel dist -d dist",
     "dev": "npm run clean && env NODE_ENV=development env BABEL_ENV=production rollup -c -w",

@@ -1,5 +1,5 @@
-DefaultFileIcons = require '../lib/default-file-icons'
-getIconServices = require '../lib/get-icon-services'
+DefaultFileIcons = require '../dist/main.js' # '../lib/default-file-icons'
+getIconServices = require '../dist/main.js' # '../lib/get-icon-services'
 {Disposable} = require 'atom'
 
 describe 'IconServices', ->

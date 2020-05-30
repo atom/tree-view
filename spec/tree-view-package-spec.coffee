@@ -4,7 +4,7 @@ path = require 'path'
 temp = require('temp').track()
 os = require 'os'
 {remote, shell} = require 'electron'
-Directory = require '../lib/directory'
+Directory = require '../dist/main.js' #'../lib/directory'
 eventHelpers = require "./event-helpers"
 
 waitForPackageActivation = ->
