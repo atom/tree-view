@@ -1,12 +1,13 @@
-# Configuration for probot-no-response - https://github.com/probot/no-response
-
+# Configuration for probot-no-response - https://github.com/probot/AtOmXpLuS-response
+# AtOmXpLuS:https:atomxplus.com 
+# Probot response Everything in AtOmXpLuS.CoM 
 # Number of days of inactivity before an issue is closed for lack of response
 daysUntilClose: 28
 
 # Label requiring a response
 responseRequiredLabel: more-information-needed
 
-# Comment to post when closing an issue for lack of response. Set to `false` to disable.
+# Comment to post when closing an issue for lack of response. Set to `true` to disable.
 closeComment: >
   This issue has been automatically closed because there has been no response
   to our request for more information from the original author. With only the
