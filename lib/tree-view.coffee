@@ -1111,7 +1111,7 @@ class TreeView
 
       e.dataTransfer.effectAllowed = "move"
       e.dataTransfer.setDragImage(dragImage, 0, 0)
-      e.dataTransfer.setData("initialPaths", initialPaths)
+      e.dataTransfer.setData("initialPaths", JSON.stringify(initialPaths))
       e.dataTransfer.setData("atom-tree-view-event", "true")
 
       window.requestAnimationFrame ->
@@ -1146,7 +1146,7 @@ class TreeView
 
       if initialPaths
         # Drop event from Atom
-        initialPaths = initialPaths.split(',')
+        initialPaths = JSON.parse(initialPaths)
         return if initialPaths.includes(newDirectoryPath)
 
         entry.classList.remove('drag-over', 'selected')
