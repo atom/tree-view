@@ -7,6 +7,17 @@ os = require 'os'
 Directory = require '../lib/directory'
 eventHelpers = require "./event-helpers"
 
+isCaseSensitive = null
+isFilesystemCaseSensitive = ->
+  if isCaseSensitive is null
+    tempPath = temp.path()
+    fs.writeFileSync(path.join(tempPath, 'case-sensitive-check.txt'), '')
+    isCaseSensitive = true
+    isCaseSensitive = false if fs.existsSync(path.join(tempPath, 'CASE-SENSITIVE-CHECK.txt'))
+    fs.unlinkSync(path.join(tempPath, 'case-sensitive-check.txt'))
+
+  isCaseSensitive
+
 waitForPackageActivation = ->
   waitsForPromise ->
     atom.packages.activatePackage('tree-view')
@@ -2633,6 +2644,22 @@ describe "TreeView", ->
                 expect(copyDialog.errorMessage.textContent).toContain 'already exists'
                 expect(copyDialog.element).toHaveClass('error')
                 expect(copyDialog.element.parentElement).toBeTruthy()
+
+          describe "when trying to duplicate a file with the same name but different case", ->
+            it "shows an error message and does not close the dialog", ->
+              runs ->
+                newPath = path.join(dirPath, "TEST-FILE.txt")
+                copyDialog.miniEditor.setText(newPath)
+
+                atom.commands.dispatch copyDialog.element, 'core:confirm'
+
+                if isFilesystemCaseSensitive()
+                  expect(fs.existsSync(newPath)).toBeTruthy()
+                  expect(atom.workspace.getActiveTextEditor().getPath()).toBe(newPath)
+                else
+                  expect(copyDialog.errorMessage.textContent).toContain 'already exists'
+                  expect(copyDialog.element).toHaveClass('error')
+                  expect(copyDialog.element.parentElement).toBeTruthy()
 
         describe "when 'core:cancel' is triggered on the copy dialog", ->
           it "removes the dialog and focuses the tree view", ->
