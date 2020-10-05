@@ -23,7 +23,7 @@ class CopyDialog extends Dialog
       @close()
       return
 
-    unless @isNewPathValid(newPath)
+    if fs.existsSync(newPath)
       @showError("'#{newPath}' already exists.")
       return
 
@@ -46,17 +46,3 @@ class CopyDialog extends Dialog
       @close()
     catch error
       @showError("#{error.message}.")
-
-  isNewPathValid: (newPath) ->
-    try
-      oldStat = fs.statSync(@initialPath)
-      newStat = fs.statSync(newPath)
-
-      # New path exists so check if it points to the same file as the initial
-      # path to see if the case of the file name is being changed on a on a
-      # case insensitive filesystem.
-      @initialPath.toLowerCase() is newPath.toLowerCase() and
-        oldStat.dev is newStat.dev and
-        oldStat.ino is newStat.ino
-    catch
-      true # new path does not exist so it is valid
