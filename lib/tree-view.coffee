@@ -572,8 +572,10 @@ class TreeView
   showSelectedEntryInFileManager: ->
     return unless filePath = @selectedEntry()?.getPath()
 
-    unless shell.showItemInFolder(filePath)
+    return unless fs.existsSync(filePath)
       atom.notifications.addWarning("Unable to show #{filePath} in #{@getFileManagerName()}")
+    
+    shell.showItemInFolder(filePath)
 
   showCurrentFileInFileManager: ->
     return unless filePath = atom.workspace.getCenter().getActiveTextEditor()?.getPath()
