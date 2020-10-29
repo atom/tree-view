@@ -3854,7 +3854,7 @@ describe "TreeView", ->
       expect(shell.showItemInFolder).toHaveBeenCalled()
 
     it "displays a notification if showing the file fails", ->
-      spyOn(fs,'existsSync').andReturn(false)
+      spyOn(fs, 'existsSync').andReturn(false)
       treeView.showSelectedEntryInFileManager()
       expect(atom.notifications.getNotifications().length).toBe(1)
       expect(atom.notifications.getNotifications()[0].getMessage()).toContain('Unable to show')
@@ -3891,7 +3891,7 @@ describe "TreeView", ->
     it "shows a notification if showing the file fails", ->
       filePath = path.join(os.tmpdir(), 'non-project-file.txt')
       fs.writeFileSync(filePath, 'test')
-      spyOn(fs,'existsSync').andReturn(false)
+      spyOn(fs, 'existsSync').andReturn(false)
       waitsForPromise ->
         atom.workspace.open(filePath)
 
