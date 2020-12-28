@@ -28,6 +28,7 @@
     {'label': 'Rename', 'command': 'tree-view:move'}
     {'label': 'Duplicate', 'command': 'tree-view:duplicate'}
     {'label': 'Delete', 'command': 'tree-view:remove'}
+    {'label': 'Delete Permanently', 'command': 'tree-view:remove-permanently'}
     {'label': 'Copy', 'command': 'tree-view:copy'}
     {'label': 'Cut', 'command': 'tree-view:cut'}
     {'label': 'Paste', 'command': 'tree-view:paste'}
@@ -57,6 +58,7 @@
     {'label': 'Rename', 'command': 'tree-view:move'}
     {'label': 'Duplicate', 'command': 'tree-view:duplicate'}
     {'label': 'Delete', 'command': 'tree-view:remove'}
+    {'label': 'Delete Permanently', 'command': 'tree-view:remove-permanently'}
     {'label': 'Copy', 'command': 'tree-view:copy'}
     {'label': 'Cut', 'command': 'tree-view:cut'}
     {'label': 'Paste', 'command': 'tree-view:paste'}
@@ -86,6 +88,7 @@
 
   '.tree-view .multi-select': [
     {'label': 'Delete', 'command': 'tree-view:remove'}
+    {'label': 'Delete Permanently', 'command': 'tree-view:remove-permanently'}
     {'label': 'Copy', 'command': 'tree-view:copy'}
     {'label': 'Cut', 'command': 'tree-view:cut'}
     {'label': 'Paste', 'command': 'tree-view:paste'}

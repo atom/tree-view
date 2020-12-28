@@ -612,7 +612,7 @@ class TreeView
         @emitter.emit 'entry-copied', {initialPath, newPath}
     dialog.attach()
 
-  removeSelectedEntries: ->
+  removeSelectedEntries: (shouldDeletePermanently = false) ->
     if @hasFocus()
       selectedPaths = @selectedPaths()
       selectedEntries = @getSelectedEntries()
@@ -632,9 +632,9 @@ class TreeView
         return
 
     atom.confirm({
-      message: "Are you sure you want to delete the selected #{if selectedPaths.length > 1 then 'items' else 'item'}?",
+      message: "Are you sure you want to #{if shouldDeletePermanently then 'permanently ' else ''}delete the selected #{if selectedPaths.length > 1 then 'items' else 'item'}?",
       detailedMessage: "You are deleting:\n#{selectedPaths.join('\n')}",
-      buttons: ['Move to Trash', 'Cancel']
+      buttons: [(if shouldDeletePermanently then 'Permanently Delete ⚠️' else 'Move to Trash'), 'Cancel']
     }, (response) =>
       if response is 0 # Move to Trash
         failedDeletions = []
@@ -646,7 +646,7 @@ class TreeView
           continue unless fs.existsSync(selectedPath)
 
           @emitter.emit 'will-delete-entry', {pathToDelete: selectedPath}
-          if shell.moveItemToTrash(selectedPath)
+          if shell.moveItemToTrash(selectedPath, shouldDeletePermanently)
             @emitter.emit 'entry-deleted', {pathToDelete: selectedPath}
           else
             @emitter.emit 'delete-entry-failed', {pathToDelete: selectedPath}
