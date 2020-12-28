@@ -5,6 +5,7 @@ _ = require 'underscore-plus'
 {BufferedProcess, CompositeDisposable, Emitter} = require 'atom'
 {repoForPath, getStyleObject, getFullExtension} = require "./helpers"
 fs = require 'fs-plus'
+del = require 'del'
 
 AddDialog = require './add-dialog'
 MoveDialog = require './move-dialog'
@@ -649,25 +650,42 @@ class TreeView
           if shell.moveItemToTrash(selectedPath, shouldDeletePermanently)
             @emitter.emit 'entry-deleted', {pathToDelete: selectedPath}
           else
-            @emitter.emit 'delete-entry-failed', {pathToDelete: selectedPath}
+            if not shouldDeletePermanently
+              @emitter.emit 'delete-entry-failed', {pathToDelete: selectedPath}
             failedDeletions.push selectedPath
 
           if repo = repoForPath(selectedPath)
             repo.getPathStatus(selectedPath)
 
         if failedDeletions.length > 0
-          atom.notifications.addError @formatTrashFailureMessage(failedDeletions),
-            description: @formatTrashEnabledMessage()
-            detail: "#{failedDeletions.join('\n')}"
-            dismissable: true
+          if shouldDeletePermanently
+            del(selectedPaths, {force: true})
+            .then( (deletedPaths) ->
+              for deletedPath in deletedPaths
+                @emitter.emit 'entry-deleted', {pathToDelete: deletedPath}
+              )
+            .catch((err) ->
+              atom.notifications.addError @formatTrashFailureMessage(failedDeletions, true),
+                description: err
+                dismissable: true
+              for selectedPath in selectedPaths
+                @emitter.emit 'delete-entry-failed', {pathToDelete: selectedPath}
+              )
+            .finally( -> @finishRemoval(selectedEntries[0]))
+          else
+            atom.notifications.addError @formatTrashFailureMessage(failedDeletions, false),
+              description: @formatTrashEnabledMessage()
+              detail: "#{failedDeletions.join('\n')}"
+              dismissable: true
 
-        finishRemoval(selectedEntries[0])
+        if not shouldDeletePermanently
+          @finishRemoval(selectedEntries[0])
     )
 
-  formatTrashFailureMessage: (failedDeletions) ->
+  formatTrashFailureMessage: (failedDeletions, shouldDeletePermanently = false) ->
     fileText = if failedDeletions.length > 1 then 'files' else 'file'
 
-    "The following #{fileText} couldn't be moved to the trash."
+    "The following #{fileText} couldn't be #{if shouldDeletePermanently then "deleted permanently" else "moved to the trash."}"
 
   formatTrashEnabledMessage: ->
     switch process.platform
