@@ -661,10 +661,7 @@ class TreeView
             detail: "#{failedDeletions.join('\n')}"
             dismissable: true
 
-        # Focus the first parent folder
-        if firstSelectedEntry = selectedEntries[0]
-          @selectEntry(firstSelectedEntry.closest('.directory:not(.selected)'))
-        @updateRoots() if atom.config.get('tree-view.squashDirectoryNames')
+        finishRemoval(selectedEntries[0])
     )
 
   formatTrashFailureMessage: (failedDeletions) ->
@@ -677,6 +674,12 @@ class TreeView
       when 'linux' then 'Is `gvfs-trash` installed?'
       when 'darwin' then 'Is Trash enabled on the volume where the files are stored?'
       when 'win32' then 'Is there a Recycle Bin on the drive where the files are stored?'
+
+  finishRemoval: (firstSelectedEntry) ->
+    # Focus the first parent folder
+    if firstSelectedEntry
+      @selectEntry(firstSelectedEntry.closest('.directory:not(.selected)'))
+    @updateRoots() if atom.config.get('tree-view.squashDirectoryNames')
 
   # Public: Copy the path of the selected entry element.
   #         Save the path in localStorage, so that copying from 2 different
