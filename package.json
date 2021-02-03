@@ -94,6 +94,11 @@
       "type": "boolean",
       "default": false,
       "description": "When opening a file, always focus an already-existing view of the file even if it's in another pane."
+    },
+    "showOnAttach": {
+      "type": "boolean",
+      "default": true,
+      "description": "Show tree view when a new window is opened."
     }
   }
 }
