@@ -685,6 +685,8 @@ class TreeView
     @updateRoots() if atom.config.get('tree-view.squashDirectoryNames')
 
   removeSelectedPathsPermanently: (selectedPaths, selectedEntries) ->
+    for selectedPath in selectedPaths
+      @emitter.emit 'will-delete-entry', {pathToDelete: selectedPath}
     del(selectedPaths, {force: true})
     .then( (deletedPaths) ->
       for deletedPath in deletedPaths
