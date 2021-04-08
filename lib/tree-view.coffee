@@ -856,12 +856,15 @@ class TreeView
   moveEntry: (initialPath, newDirectoryPath) ->
     # Do not allow moving test/a/ into test/a/b/
     # Note: A trailing path.sep is added to prevent false positives, such as test/a -> test/ab
-    realNewDirectoryPath = fs.realpathSync(newDirectoryPath) + path.sep
-    realInitialPath = fs.realpathSync(initialPath) + path.sep
-    if fs.isDirectorySync(initialPath) and realNewDirectoryPath.startsWith(realInitialPath)
-      unless fs.isSymbolicLinkSync(initialPath)
-        atom.notifications.addWarning('Cannot move a folder into itself')
-        return
+    try
+      realNewDirectoryPath = fs.realpathSync(newDirectoryPath) + path.sep
+      realInitialPath = fs.realpathSync(initialPath) + path.sep
+      if fs.isDirectorySync(initialPath) and realNewDirectoryPath.startsWith(realInitialPath)
+        unless fs.isSymbolicLinkSync(initialPath)
+          atom.notifications.addWarning('Cannot move a folder into itself')
+          return
+    catch error
+      atom.notifications.addWarning("Failed to move entry #{initialPath} to #{newDirectoryPath}", detail: error.message)
 
     newPath = path.join(newDirectoryPath, path.basename(initialPath))
 
