@@ -687,7 +687,7 @@ class TreeView
   removeSelectedPathsPermanently: (selectedPaths, selectedEntries) ->
     for selectedPath in selectedPaths
       @emitter.emit 'will-delete-entry', {pathToDelete: selectedPath}
-    del(selectedPaths, {force: true})
+    return del(selectedPaths, {force: true})
     .then( (deletedPaths) ->
       for deletedPath in deletedPaths
         @emitter.emit 'entry-deleted', {pathToDelete: deletedPath}
