@@ -3159,8 +3159,15 @@ describe "TreeView", ->
           expect(args.buttons).toEqual ['Permanently Delete ⚠️', 'Cancel']
 
 
-      it "calls removeSelectedEntries and removeSelectedPathsPermanently", ->
+      it "calls removeSelectedPathsPermanently, onWillDeleteEntry, onEntryDeleted, finishRemoval", ->
         spyOn(atom, 'confirm').andCallFake (options, callback) -> callback(0)
+        onEntryDeletedSpy = jasmine.createSpy('onEntryDeleted')
+        treeView.onEntryDeleted(onEntryDeletedSpy)
+
+        onWillDeleteEntrySpy = jasmine.createSpy('onWillDeleteEntry')
+        treeView.onWillDeleteEntry(onWillDeleteEntrySpy)
+
+        finishRemovalSpy = spyOn(treeView, 'finishRemoval').andCallThrough()
 
         removeSelectedPathsPermanentlySpy = spyOnAsyncAndCallThrough(treeView, 'removeSelectedPathsPermanently')
         removeSelectedEntriesSpy = spyOn(treeView, 'removeSelectedEntries').andCallThrough()
@@ -3181,6 +3188,19 @@ describe "TreeView", ->
           removeSelectedEntriesSpy.callCount is 1 and
           removeSelectedEntriesSpy.mostRecentCall.args[0] is true and
           removeSelectedPathsPermanentlySpy.calledWith[0] is [filePath]
+
+        # The internal functionality of the followings are already tested in treeview:remove
+        waitsFor 'it calls onWillDeleteEntry', ->
+          onWillDeleteEntrySpy.callCount is 1 and
+          onWillDeleteEntrySpy.mostRecentCall.args[0] is {pathToDelete: filePath}
+
+        waitsFor 'it calls onEntryDeleted', ->
+          onEntryDeletedSpy.callCount is 1 and
+          onEntryDeletedSpy.mostRecentCall.args[0] is {pathToDelete: filePath}
+
+        waitsFor 'it calls finishRemoval', ->
+          finishRemovalSpy.callCount is 1 and
+          finishRemovalSpy.mostRecentCall.args[0] is removeSelectedPathsPermanentlySpy.calledWith[1][0]
 
   describe "file system events", ->
     temporaryFilePath = null
