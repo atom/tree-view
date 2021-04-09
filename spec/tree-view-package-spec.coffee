@@ -3185,18 +3185,24 @@ describe "TreeView", ->
           removeSelectedEntriesSpy.mostRecentCall.args[0] is true and
           removeSelectedPathsPermanentlySpy.mostRecentCall.args[0][0] is filePath
 
-        # The internal functionality of the followings are already tested in treeview:remove
-        waitsFor 'it calls onWillDeleteEntry', ->
-          onWillDeleteEntrySpy.callCount is 1 and
-          onWillDeleteEntrySpy.mostRecentCall.args[0].pathToDelete is filePath
+        runs: ->
+          # The internal functionality of the followings are already tested in treeview:remove
+          expect(
+            onWillDeleteEntrySpy.callCount is 1 and
+            onWillDeleteEntrySpy.mostRecentCall.args[0].pathToDelete is filePath
+          ).toBe(true, 'it calls onWillDeleteEntry')
 
-        waitsFor 'it calls onEntryDeleted', ->
-          onEntryDeletedSpy.callCount is 1 and
-          onEntryDeletedSpy.mostRecentCall.args[0].pathToDelete is filePath
+          expect(
+            onEntryDeletedSpy.callCount is 1 and
+            onEntryDeletedSpy.mostRecentCall.args[0].pathToDelete is filePath
+          ).toBe(true, 'it calls onEntryDeleted')
 
-        waitsFor 'it calls finishRemoval', ->
-          finishRemovalSpy.callCount is 1 and
-          finishRemovalSpy.mostRecentCall.args[0] is removeSelectedPathsPermanentlySpy.mostRecentCall.args[1][0]
+          expect(
+            finishRemovalSpy.callCount is 1 and
+            finishRemovalSpy.mostRecentCall.args[0] is removeSelectedPathsPermanentlySpy.mostRecentCall.args[1][0]
+          ).toBe(true, 'it calls finishRemoval')
+
+          expect(fs.existsSync(filePath)).toBe(false, 'it deletes the file')
 
   describe "file system events", ->
     temporaryFilePath = null
