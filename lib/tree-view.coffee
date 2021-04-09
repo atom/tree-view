@@ -5,6 +5,7 @@ _ = require 'underscore-plus'
 {BufferedProcess, CompositeDisposable, Emitter} = require 'atom'
 {repoForPath, getStyleObject, getFullExtension} = require "./helpers"
 fs = require 'fs-plus'
+del = require 'del'
 
 AddDialog = require './add-dialog'
 MoveDialog = require './move-dialog'
@@ -612,7 +613,7 @@ class TreeView
         @emitter.emit 'entry-copied', {initialPath, newPath}
     dialog.attach()
 
-  removeSelectedEntries: ->
+  removeSelectedEntries: (shouldDeletePermanently = false) ->
     if @hasFocus()
       selectedPaths = @selectedPaths()
       selectedEntries = @getSelectedEntries()
@@ -632,11 +633,13 @@ class TreeView
         return
 
     atom.confirm({
-      message: "Are you sure you want to delete the selected #{if selectedPaths.length > 1 then 'items' else 'item'}?",
+      message: "Are you sure you want to #{if shouldDeletePermanently then 'permanently ' else ''}delete the selected #{if selectedPaths.length > 1 then 'items' else 'item'}?",
       detailedMessage: "You are deleting:\n#{selectedPaths.join('\n')}",
-      buttons: ['Move to Trash', 'Cancel']
+      buttons: [(if shouldDeletePermanently then 'Permanently Delete ⚠️' else 'Move to Trash'), 'Cancel']
     }, (response) =>
       if response is 0 # Move to Trash
+        if shouldDeletePermanently
+          return @removeSelectedPathsPermanently(selectedPaths, selectedEntries)
         failedDeletions = []
         for selectedPath in selectedPaths
           # Don't delete entries which no longer exist. This can happen, for example, when:
@@ -656,27 +659,47 @@ class TreeView
             repo.getPathStatus(selectedPath)
 
         if failedDeletions.length > 0
-          atom.notifications.addError @formatTrashFailureMessage(failedDeletions),
+          atom.notifications.addError @formatTrashFailureMessage(failedDeletions, false),
             description: @formatTrashEnabledMessage()
             detail: "#{failedDeletions.join('\n')}"
             dismissable: true
 
-        # Focus the first parent folder
-        if firstSelectedEntry = selectedEntries[0]
-          @selectEntry(firstSelectedEntry.closest('.directory:not(.selected)'))
-        @updateRoots() if atom.config.get('tree-view.squashDirectoryNames')
+        @finishRemoval(selectedEntries[0])
     )
 
-  formatTrashFailureMessage: (failedDeletions) ->
+  formatTrashFailureMessage: (failedDeletions, shouldDeletePermanently = false) ->
     fileText = if failedDeletions.length > 1 then 'files' else 'file'
 
-    "The following #{fileText} couldn't be moved to the trash."
+    "The following #{fileText} couldn't be #{if shouldDeletePermanently then "deleted permanently" else "moved to the trash."}"
 
   formatTrashEnabledMessage: ->
     switch process.platform
       when 'linux' then 'Is `gvfs-trash` installed?'
       when 'darwin' then 'Is Trash enabled on the volume where the files are stored?'
       when 'win32' then 'Is there a Recycle Bin on the drive where the files are stored?'
+
+  finishRemoval: (firstSelectedEntry) ->
+    # Focus the first parent folder
+    if firstSelectedEntry
+      @selectEntry(firstSelectedEntry.closest('.directory:not(.selected)'))
+    @updateRoots() if atom.config.get('tree-view.squashDirectoryNames')
+
+  removeSelectedPathsPermanently: (selectedPaths, selectedEntries) ->
+    for selectedPath in selectedPaths
+      @emitter.emit 'will-delete-entry', {pathToDelete: selectedPath}
+    return del(selectedPaths, {force: true})
+    .then( (deletedPaths) =>
+      for deletedPath in deletedPaths
+        @emitter.emit 'entry-deleted', {pathToDelete: deletedPath}
+      )
+    .catch((err) =>
+      atom.notifications.addError @formatTrashFailureMessage(selectedPaths, true),
+        description: err
+        dismissable: true
+      for selectedPath in selectedPaths
+        @emitter.emit 'delete-entry-failed', {pathToDelete: selectedPath}
+      )
+    .finally( => @finishRemoval(selectedEntries[0]))
 
   # Public: Copy the path of the selected entry element.
   #         Save the path in localStorage, so that copying from 2 different
