@@ -688,18 +688,18 @@ class TreeView
     for selectedPath in selectedPaths
       @emitter.emit 'will-delete-entry', {pathToDelete: selectedPath}
     return del(selectedPaths, {force: true})
-    .then( (deletedPaths) ->
+    .then( (deletedPaths) =>
       for deletedPath in deletedPaths
         @emitter.emit 'entry-deleted', {pathToDelete: deletedPath}
       )
-    .catch((err) ->
+    .catch((err) =>
       atom.notifications.addError @formatTrashFailureMessage(selectedPaths, true),
         description: err
         dismissable: true
       for selectedPath in selectedPaths
         @emitter.emit 'delete-entry-failed', {pathToDelete: selectedPath}
       )
-    .finally( -> @finishRemoval(selectedEntries[0]))
+    .finally( => @finishRemoval(selectedEntries[0]))
 
   # Public: Copy the path of the selected entry element.
   #         Save the path in localStorage, so that copying from 2 different
