@@ -1,6 +1,6 @@
 /**
  * Spy on an async method and call through
- * @param obj {Record<string, Function> | any}
+ * @param obj {Record<string, Function>}
  * @param method {string}
  * @returns {Jasmine.Spy & {resolvedWith: any, calledWith: Array<any>}}
  */
@@ -14,7 +14,7 @@ function spyOnAsyncAndCallThrough (obj, method) {
   let asyncSpy = spyOn(obj, method)
     .andCallFake((...args) => {
       calledWith = args
-      originalMethod(...args)
+      originalMethod.call(obj, ...args)
         .then((returnValue) => {
           resolvedWith = returnValue
           // update spy call information
