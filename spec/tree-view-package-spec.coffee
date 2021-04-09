@@ -6,6 +6,7 @@ os = require 'os'
 {remote, shell} = require 'electron'
 Directory = require '../lib/directory'
 eventHelpers = require "./event-helpers"
+spyOnAsyncAndCallThrough = require('./async-helper').spyOnAsyncAndCallThrough
 
 isCaseSensitive = null
 isFilesystemCaseSensitive = ->
@@ -3132,6 +3133,54 @@ describe "TreeView", ->
 
           runs ->
             expect(atom.notifications.getNotifications().length).toBe 0
+
+    describe "treev-view:remove-permanently", ->
+      beforeEach ->
+        jasmine.attachToDOM(workspaceElement)
+
+      it "won't remove the root directory", ->
+        spyOn(atom, 'confirm')
+        treeView.focus()
+        root1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+        atom.commands.dispatch(treeView.element, 'tree-view:remove-permanently')
+
+        args = atom.confirm.mostRecentCall.args[0]
+        expect(args.buttons).toEqual ['OK']
+
+      it "shows the native alert dialog", ->
+        spyOn(atom, 'confirm')
+
+        waitForWorkspaceOpenEvent ->
+          fileView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+
+        runs ->
+          atom.commands.dispatch(treeView.element, 'tree-view:remove-permanently')
+          args = atom.confirm.mostRecentCall.args[0]
+          expect(args.buttons).toEqual ['Permanently Delete ⚠️', 'Cancel']
+
+
+      it "calls removeSelectedEntries and removeSelectedPathsPermanently", ->
+        spyOn(atom, 'confirm')
+
+        removeSelectedPathsPermanentlySpy = spyOnAsyncAndCallThrough(treeView, 'removeSelectedPathsPermanently')
+        removeSelectedEntriesSpy = spyOn(treeView, 'removeSelectedEntries').andCallThrough()
+
+        filePath = path.join(os.tmpdir(), 'non-project-file.txt')
+        fs.writeFileSync(filePath, 'test')
+
+        waitsForPromise ->
+          atom.workspace.open(filePath)
+
+        waitsForPromise ->
+          atom.commands.dispatch(treeView.element, 'tree-view:remove-permanently')
+
+        waitsFor ->
+          removeSelectedPathsPermanentlySpy.calledWith isnt undefined
+
+        waitsFor 'removeSelectedEntries amd removeSelectedPathsPermanently to be called', ->
+          removeSelectedEntriesSpy.callCount is 1 and
+          removeSelectedEntriesSpy.mostRecentCall.args[0] is true and
+          removeSelectedPathsPermanentlySpy.calledWith[0] is [filePath]
 
   describe "file system events", ->
     temporaryFilePath = null
