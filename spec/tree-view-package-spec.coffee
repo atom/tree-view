@@ -3160,7 +3160,7 @@ describe "TreeView", ->
 
 
       it "calls removeSelectedEntries and removeSelectedPathsPermanently", ->
-        spyOn(atom, 'confirm')
+        spyOn(atom, 'confirm').andCallFake (options, callback) -> callback(0)
 
         removeSelectedPathsPermanentlySpy = spyOnAsyncAndCallThrough(treeView, 'removeSelectedPathsPermanently')
         removeSelectedEntriesSpy = spyOn(treeView, 'removeSelectedEntries').andCallThrough()
