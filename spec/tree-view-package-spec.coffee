@@ -6,7 +6,6 @@ os = require 'os'
 {remote, shell} = require 'electron'
 Directory = require '../lib/directory'
 eventHelpers = require "./event-helpers"
-spyOnAsyncAndCallThrough = require('./async-helper').spyOnAsyncAndCallThrough
 
 isCaseSensitive = null
 isFilesystemCaseSensitive = ->
@@ -3169,7 +3168,7 @@ describe "TreeView", ->
 
         finishRemovalSpy = spyOn(treeView, 'finishRemoval').andCallThrough()
 
-        removeSelectedPathsPermanentlySpy = spyOnAsyncAndCallThrough(treeView, 'removeSelectedPathsPermanently')
+        removeSelectedPathsPermanentlySpy = spyOn(treeView, 'removeSelectedPathsPermanently').andCallThrough()
         removeSelectedEntriesSpy = spyOn(treeView, 'removeSelectedEntries').andCallThrough()
 
         filePath = path.join(os.tmpdir(), 'non-project-file.txt')
@@ -3181,26 +3180,23 @@ describe "TreeView", ->
         waitsForPromise ->
           atom.commands.dispatch(treeView.element, 'tree-view:remove-permanently')
 
-        waitsFor ->
-          removeSelectedPathsPermanentlySpy.calledWith isnt undefined
-
         waitsFor 'removeSelectedEntries amd removeSelectedPathsPermanently to be called', ->
           removeSelectedEntriesSpy.callCount is 1 and
           removeSelectedEntriesSpy.mostRecentCall.args[0] is true and
-          removeSelectedPathsPermanentlySpy.calledWith[0] is [filePath]
+          removeSelectedPathsPermanentlySpy.mostRecentCall.args[0][0] is filePath
 
         # The internal functionality of the followings are already tested in treeview:remove
         waitsFor 'it calls onWillDeleteEntry', ->
           onWillDeleteEntrySpy.callCount is 1 and
-          onWillDeleteEntrySpy.mostRecentCall.args[0] is {pathToDelete: filePath}
+          onWillDeleteEntrySpy.mostRecentCall.args[0].pathToDelete is filePath
 
         waitsFor 'it calls onEntryDeleted', ->
           onEntryDeletedSpy.callCount is 1 and
-          onEntryDeletedSpy.mostRecentCall.args[0] is {pathToDelete: filePath}
+          onEntryDeletedSpy.mostRecentCall.args[0].pathToDelete is filePath
 
         waitsFor 'it calls finishRemoval', ->
           finishRemovalSpy.callCount is 1 and
-          finishRemovalSpy.mostRecentCall.args[0] is removeSelectedPathsPermanentlySpy.calledWith[1][0]
+          finishRemovalSpy.mostRecentCall.args[0] is removeSelectedPathsPermanentlySpy.mostRecentCall.args[1][0]
 
   describe "file system events", ->
     temporaryFilePath = null
