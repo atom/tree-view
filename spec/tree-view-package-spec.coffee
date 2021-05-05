@@ -2353,6 +2353,19 @@ describe "TreeView", ->
               expect(callback).not.toHaveBeenCalled()
 
     describe "tree-view:move", ->
+      describe "when rename is selected on a root directory", ->
+        beforeEach ->
+          jasmine.attachToDOM(workspaceElement)
+
+        it "won't be renamed", ->
+          spyOn(atom, 'confirm')
+          treeView.focus()
+          root1.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
+          atom.commands.dispatch(treeView.element, 'tree-view:move')
+
+          args = atom.confirm.mostRecentCall.args[0]
+          expect(args.buttons).toEqual ['OK']
+
       describe "when a file is selected", ->
         [moveDialog, callback] = []
 
