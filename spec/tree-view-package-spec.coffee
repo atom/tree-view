@@ -5254,3 +5254,42 @@ describe 'Icon class handling', ->
 
       files = workspaceElement.querySelectorAll('li[is="tree-view-file"]')
       expect(files[0].fileName.className).toBe('name icon icon-file-text')
+
+describe 'Hidden on startup', ->
+
+  describe 'When not configured', ->
+    it 'defaults to false', ->
+      expect(atom.config.get("tree-view.hiddenOnStartup")).toBeFalsy()
+
+  describe 'When set to true', ->
+  it 'hides the tree view pane on startup', ->
+    waitsForPromise ->
+      # First deactivate the package so that we can start from scratch
+      atom.packages.deactivatePackage('tree-view')
+
+    runs ->
+      atom.config.set("tree-view.hiddenOnStartup", true)
+
+    # activate the package and wait for focus to settle on editor
+    beforeEach ->
+      waitsForPromise ->
+        atom.packages.activatePackage('tree-view')
+      waitsForPromise ->
+        atom.workspace.open()
+
+    runs ->
+      expect(atom.workspace.getLeftDock().isVisible()).toBe(false)
+
+  describe 'When set to false', ->
+    it 'allows the pane to show up as normal', ->
+      waitsForPromise ->
+        # First deactivate the package so that we can start from scratch
+        atom.packages.deactivatePackage('tree-view')
+
+      runs ->
+        atom.config.set("tree-view.hiddenOnStartup", false)
+
+      waitForPackageActivation()
+
+      runs ->
+        expect(atom.workspace.getLeftDock().isVisible()).toBe(true)
