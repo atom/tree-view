@@ -9,9 +9,8 @@ jobs:
   Test:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
         channel: [stable, beta]
-    runs-on: ${{ matrix.os }}
+    runs-on: macos-latest
     steps:
     - uses: actions/checkout@v1
     - uses: UziTech/action-setup-atom@v2
