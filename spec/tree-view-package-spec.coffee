@@ -5255,7 +5255,7 @@ describe 'Icon class handling', ->
       files = workspaceElement.querySelectorAll('li[is="tree-view-file"]')
       expect(files[0].fileName.className).toBe('name icon icon-file-text')
 
-ffdescribe 'Hidden on startup', ->
+describe 'Hidden on startup', ->
 
   describe 'When not configured', ->
     it 'defaults to false', ->
