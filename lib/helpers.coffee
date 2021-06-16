@@ -1,11 +1,12 @@
+{Directory} = require "atom"
 path = require "path"
 
 module.exports =
-  repoForPath: (goalPath) ->
-    for projectPath, i in atom.project.getPaths()
-      if goalPath is projectPath or goalPath.indexOf(projectPath + path.sep) is 0
-        return atom.project.getRepositories()[i]
-    null
+  repositoryForPath: (goalPath) ->
+    if goalPath
+      directory = new Directory goalPath
+      return atom.project.repositoryForDirectory directory
+    Promise.resolve(null)
 
   getStyleObject: (el) ->
     styleProperties = window.getComputedStyle(el)

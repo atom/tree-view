@@ -5,7 +5,7 @@ const path = require('path')
 const helpers = require('../lib/helpers')
 
 describe('Helpers', () => {
-  describe('repoForPath', () => {
+  describe('repositoryForPath', () => {
     let fixturesPath, fixturesRepo
 
     beforeEach(async () => {
@@ -14,15 +14,15 @@ describe('Helpers', () => {
     })
 
     it('returns the repository for a given project path', () => {
-      expect(helpers.repoForPath(fixturesPath)).toEqual(fixturesRepo)
+      expect(helpers.repositoryForPath(fixturesPath)).toEqual(fixturesRepo)
     })
 
     it('returns the project repository for a subpath', () => {
-      expect(helpers.repoForPath(path.join(fixturesPath, 'root-dir1', 'tree-view.txt'))).toEqual(fixturesRepo)
+      expect(helpers.repositoryForPath(path.join(fixturesPath, 'root-dir1', 'tree-view.txt'))).toEqual(fixturesRepo)
     })
 
     it('returns null for a path outside the project', () => {
-      expect(helpers.repoForPath(path.join(fixturesPath, '..'))).toEqual(null)
+      expect(helpers.repositoryForPath(path.join(fixturesPath, '..'))).toEqual(null)
     })
   })
 

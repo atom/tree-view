@@ -1,7 +1,7 @@
 path = require 'path'
 fs = require 'fs-plus'
 Dialog = require './dialog'
-{repoForPath} = require './helpers'
+{repositoryForPath} = require './helpers'
 
 module.exports =
 class AddDialog extends Dialog
@@ -49,7 +49,8 @@ class AddDialog extends Dialog
           @showError("File names must not end with a '#{path.sep}' character.")
         else
           fs.writeFileSync(newPath, '')
-          repoForPath(newPath)?.getPathStatus(newPath)
+          repositoryForPath(newPath).then (repo) ->
+            repo?.getPathStatus(newPath)
           @emitter.emit('did-create-file', newPath)
           @close()
       else

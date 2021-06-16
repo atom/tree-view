@@ -1,7 +1,7 @@
 path = require 'path'
 fs = require 'fs-plus'
 Dialog = require './dialog'
-{repoForPath} = require "./helpers"
+{repositoryForPath} = require "./helpers"
 
 module.exports =
 class CopyDialog extends Dialog
@@ -40,9 +40,10 @@ class CopyDialog extends Dialog
             activatePane: true
             initialLine: activeEditor?.getLastCursor().getBufferRow()
             initialColumn: activeEditor?.getLastCursor().getBufferColumn()
-      if repo = repoForPath(newPath)
-        repo.getPathStatus(@initialPath)
-        repo.getPathStatus(newPath)
+      repositoryForPath(newPath).then (repo) ->
+        if (repo)
+          repo.getPathStatus(@initialPath)
+          repo.getPathStatus(newPath)
       @close()
     catch error
       @showError("#{error.message}.")
