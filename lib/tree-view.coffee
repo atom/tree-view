@@ -243,8 +243,13 @@ class TreeView
         @openSelectedEntryInPane index
 
     @disposables.add atom.workspace.getCenter().onDidChangeActivePaneItem =>
-      @selectActiveFile()
-      @revealActiveFile({show: false, focus: false}) if atom.config.get('tree-view.autoReveal')
+      # migrate old tree-view.autoReveal config
+      if atom.config.get 'tree-view.autoReveal'
+        atom.config.set 'tree-view.autoTrackActivePane.autoReveal', true
+        atom.config.unset 'tree-view.autoReveal'
+      autoTrackActivePane = atom.config.get('tree-view.autoTrackActivePane.enabled')
+      @selectActiveFile() if autoTrackActivePane
+      @revealActiveFile({show: false, focus: false}) if autoTrackActivePane and atom.config.get('tree-view.autoTrackActivePane.autoReveal')
     @disposables.add atom.project.onDidChangePaths =>
       @updateRoots()
     @disposables.add atom.config.onDidChange 'tree-view.hideVcsIgnoredFiles', =>
