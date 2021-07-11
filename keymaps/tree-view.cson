@@ -5,8 +5,8 @@
   'ctrl-0': 'tree-view:toggle-focus'
 
 '.platform-win32, .platform-linux':
-  'ctrl-\\': 'tree-view:toggle'
   'ctrl-k ctrl-b': 'tree-view:toggle'
+  'ctrl-\\': 'tree-view:toggle'
   'ctrl-|': 'tree-view:reveal-active-file'
   'alt-\\': 'tree-view:toggle-focus'
 
