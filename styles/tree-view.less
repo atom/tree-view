@@ -4,8 +4,11 @@
   -webkit-user-drag: element;
 }
 
+@contain_all: size layout paint style;
+@contain_except_size: layout paint style;
+
 .tree-view {
-  contain: size;
+  contain: @contain_all;
   overflow: auto;
   z-index: 2;
   -webkit-user-select: none;
@@ -14,6 +17,7 @@
   flex-direction: column;
 
   #add-projects-view {
+    contain: @contain_all;
     display: flex;
     flex: 1;
     flex-direction: column;
@@ -37,6 +41,7 @@
   }
 
   .icon-large::before {
+    contain: @contain_except_size;
     margin-right: 0;
     margin-bottom: 50px;
     width: auto;
@@ -45,6 +50,7 @@
   }
 
   .tree-view-root {
+    contain: @contain_except_size;
     padding-left: @component-icon-padding;
     padding-right: @component-padding;
     background-color: inherit;
@@ -74,15 +80,18 @@
   }
 
   .header {
+    contain: @contain_except_size;
     position: relative;
   }
 
   .tree-view-root .list-tree {
+    contain: @contain_except_size;
     // Keeps selections expanded while dragging
     position: static;
   }
 
   .entry {
+    contain: style;
     // This fixes #110, see that issue for more details
     &::before {
       content: '';
@@ -92,6 +101,7 @@
 
   /* Drag and Drop */
   .placeholder {
+    contain: @contain_all;
     position: absolute;
     left: @component-icon-padding;
     padding: 0;
