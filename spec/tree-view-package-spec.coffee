@@ -2688,6 +2688,8 @@ describe "TreeView", ->
             dotFileView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
 
           runs ->
+            workspaceElement = atom.views.getView(atom.workspace)
+            jasmine.attachToDOM(workspaceElement)
             atom.commands.dispatch(treeView.element, "tree-view:duplicate")
             copyDialog = atom.workspace.getModalPanels()[0].getItem()
 
@@ -2710,6 +2712,8 @@ describe "TreeView", ->
             dotFileView.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}))
 
           runs ->
+            workspaceElement = atom.views.getView(atom.workspace)
+            jasmine.attachToDOM(workspaceElement)
             atom.commands.dispatch(treeView.element, "tree-view:duplicate")
             copyDialog = atom.workspace.getModalPanels()[0].getItem()
 
@@ -2732,6 +2736,8 @@ describe "TreeView", ->
             atom.workspace.open('tree-view.js')
 
           runs ->
+            workspaceElement = atom.views.getView(atom.workspace)
+            jasmine.attachToDOM(workspaceElement)
             editorElement = atom.views.getView(atom.workspace.getCenter().getActivePaneItem())
             atom.commands.dispatch(editorElement, "tree-view:duplicate")
             copyDialog = atom.workspace.getModalPanels()[0].getItem()
@@ -5244,6 +5250,7 @@ describe 'Icon class handling', ->
     waitForPackageActivation()
 
     runs ->
+      jasmine.attachToDOM(workspaceElement)
       treeView = atom.packages.getActivePackage("tree-view").mainModule.getTreeViewInstance()
       files = workspaceElement.querySelectorAll('li[is="tree-view-file"]')
 
