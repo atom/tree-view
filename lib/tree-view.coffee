@@ -151,7 +151,7 @@ class TreeView
 
   getURI: -> TREE_VIEW_URI
 
-  getPreferredLocation: ->
+  getDefaultLocation: ->
     if atom.config.get('tree-view.showOnRightSide')
       'right'
     else
