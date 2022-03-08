@@ -38,9 +38,10 @@ class MoveDialog extends Dialog
       fs.makeTreeSync(directoryPath) unless fs.existsSync(directoryPath)
       fs.moveSync(@initialPath, newPath)
       @onMove?(initialPath: @initialPath, newPath: newPath)
-      if repo = repoForPath(newPath)
-        repo.getPathStatus(@initialPath)
-        repo.getPathStatus(newPath)
+      repoForPath(newPath).then (repo) ->
+        if (repo)
+          repo.getPathStatus(@initialPath)
+          repo.getPathStatus(newPath)
       @close()
     catch error
       @showError("#{error.message}.")
