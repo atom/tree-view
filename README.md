@@ -1,4 +1,5 @@
-# Tree View package
+##### Atom and all repositories under Atom will be archived on December 15, 2022. Learn more in our [official announcement](https://github.blog/2022-06-08-sunsetting-atom/)
+ # Tree View package
 [![CI](https://github.com/atom/tree-view/actions/workflows/ci.yml/badge.svg)](https://github.com/atom/tree-view/actions/workflows/ci.yml)
 
 Explore and open files in the current project.
