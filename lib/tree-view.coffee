@@ -652,8 +652,9 @@ class TreeView
             @emitter.emit 'delete-entry-failed', {pathToDelete: selectedPath}
             failedDeletions.push selectedPath
 
-          if repo = repoForPath(selectedPath)
-            repo.getPathStatus(selectedPath)
+          repoForPath(selectedPath).then (repo) ->
+            if (repo)
+              repo.getPathStatus(selectedPath)
 
         if failedDeletions.length > 0
           atom.notifications.addError @formatTrashFailureMessage(failedDeletions),
@@ -844,9 +845,10 @@ class TreeView
         fs.writeFileSync(newPath, fs.readFileSync(initialPath))
       @emitter.emit 'entry-copied', {initialPath, newPath}
 
-      if repo = repoForPath(newPath)
-        repo.getPathStatus(initialPath)
-        repo.getPathStatus(newPath)
+      repoForPath(newPath).then (repo) ->
+        if (repo)
+          repo.getPathStatus(initialPath)
+          repo.getPathStatus(newPath)
 
     catch error
       @emitter.emit 'copy-entry-failed', {initialPath, newPath}
@@ -873,9 +875,10 @@ class TreeView
       fs.moveSync(initialPath, newPath)
       @emitter.emit 'entry-moved', {initialPath, newPath}
 
-      if repo = repoForPath(newPath)
-        repo.getPathStatus(initialPath)
-        repo.getPathStatus(newPath)
+      repoForPath(newPath).then (repo) ->
+        if (repo)
+          repo.getPathStatus(initialPath)
+          repo.getPathStatus(newPath)
 
     catch error
       if error.code is 'EEXIST'
@@ -900,9 +903,10 @@ class TreeView
             fs.renameSync(initialPath, newPath)
             @emitter.emit 'entry-moved', {initialPath, newPath}
 
-            if repo = repoForPath(newPath)
-              repo.getPathStatus(initialPath)
-              repo.getPathStatus(newPath)
+            repoForPath(newPath).then (repo) ->
+              if (repo)
+                repo.getPathStatus(initialPath)
+                repo.getPathStatus(newPath)
             break
           when 2 # Cancel
             return false
