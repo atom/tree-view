@@ -41,7 +41,7 @@
     {'label': 'Open in New Window', 'command': 'tree-view:open-in-new-window'}
   ]
 
-  '.tree-view .full-menu [is="tree-view-file"]': [
+  '.tree-view .full-menu [is^="tree-view"]': [
     {'label': 'Split Up', 'command': 'tree-view:open-selected-entry-up'}
     {'label': 'Split Down', 'command': 'tree-view:open-selected-entry-down'}
     {'label': 'Split Left', 'command': 'tree-view:open-selected-entry-left'}
